@@ -16,11 +16,11 @@
     },
     {
       "source": "/steam-designer/(.*)",
-      "destination": "https://pathway-teacher-toolkit-steam.vercel.app/$1"
+      "destination": "https://pathway-teacher-toolkit-m1vr.vercel.app/$1"
     },
     {
       "source": "/academy-ops/(.*)",
-      "destination": "https://pathway-teacher-toolkit-ops.vercel.app/$1"
+      "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/$1"
     }
   ]
 }
