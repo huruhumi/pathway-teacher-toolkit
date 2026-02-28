@@ -3,24 +3,24 @@
   "trailingSlash": true,
   "rewrites": [
     {
-      "source": "/planner/(.*)",
-      "destination": "https://pathway-teacher-toolkit-4nl1.vercel.app/$1"
+      "source": "/planner/:path*",
+      "destination": "https://pathway-teacher-toolkit-4nl1.vercel.app/:path*"
     },
     {
-      "source": "/essay-lab/(.*)",
-      "destination": "https://pathway-teacher-toolkit-bdub.vercel.app/$1"
+      "source": "/essay-lab/:path*",
+      "destination": "https://pathway-teacher-toolkit-bdub.vercel.app/:path*"
     },
     {
-      "source": "/nature-compass/(.*)",
-      "destination": "https://pathway-teacher-toolkit-xj5a.vercel.app/$1"
+      "source": "/nature-compass/:path*",
+      "destination": "https://pathway-teacher-toolkit-xj5a.vercel.app/:path*"
     },
     {
-      "source": "/steam-designer/(.*)",
-      "destination": "https://pathway-teacher-toolkit-m1vr.vercel.app/$1"
+      "source": "/steam-designer/:path*",
+      "destination": "https://pathway-teacher-toolkit-m1vr.vercel.app/:path*"
     },
     {
-      "source": "/academy-ops/(.*)",
-      "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/$1"
+      "source": "/academy-ops/:path*",
+      "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/:path*"
     }
   ]
 }
