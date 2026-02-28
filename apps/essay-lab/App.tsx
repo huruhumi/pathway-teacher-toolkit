@@ -123,7 +123,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100">
       {/* Header hidden during full-screen preview */}
       {!isPreviewing && (
-        <header className="bg-white border-b border-slate-100 sticky top-0 z-50 print:hidden">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
           <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
@@ -155,7 +155,7 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <i className="fa-solid fa-school text-indigo-500"></i>
@@ -164,7 +164,7 @@ const App: React.FC = () => {
                 <select
                   value={selectedGrade}
                   onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
                 >
                   {Object.values(StudentGrade).map(grade => (
                     <option key={grade} value={grade}>{grade}</option>
@@ -179,7 +179,7 @@ const App: React.FC = () => {
                 <select
                   value={selectedCEFR}
                   onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
+                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
                 >
                   {Object.values(CEFRLevel).map(level => (
                     <option key={level} value={level}>{level}</option>
@@ -190,7 +190,7 @@ const App: React.FC = () => {
 
             <div className="grid lg:grid-cols-12 gap-6">
               <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                       <i className="fa-solid fa-bullseye text-indigo-500"></i>
@@ -206,7 +206,7 @@ const App: React.FC = () => {
                   </div>
 
                   {topicImage && (
-                    <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 flex items-center justify-between">
+                    <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
                       <div className="flex items-center gap-2 truncate">
                         <i className="fa-solid fa-image text-indigo-400"></i>
                         <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
@@ -221,14 +221,14 @@ const App: React.FC = () => {
                     value={topicText}
                     onChange={(e) => setTopicText(e.target.value)}
                     placeholder="输入命题内容或粘贴题目..."
-                    className="w-full h-32 p-4 bg-slate-50 rounded-xl border border-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none"
+                    className="w-full h-32 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none"
                   />
                   <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
                 </div>
               </div>
 
               <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-4">
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                       <i className="fa-solid fa-pen-nib text-indigo-500"></i>
@@ -244,7 +244,7 @@ const App: React.FC = () => {
                   </div>
 
                   {essayImage && (
-                    <div className="bg-indigo-50 p-2 rounded-lg border border-indigo-100 flex items-center justify-between">
+                    <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
                       <div className="flex items-center gap-2 truncate">
                         <i className="fa-solid fa-file-image text-indigo-400"></i>
                         <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
@@ -259,14 +259,14 @@ const App: React.FC = () => {
                     value={essayText}
                     onChange={(e) => setEssayText(e.target.value)}
                     placeholder="在此粘贴作文文本..."
-                    className="w-full h-64 p-4 bg-slate-50 rounded-xl border border-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none font-sans"
+                    className="w-full h-64 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none font-sans"
                   />
                   <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
                 </div>
 
                 <button
                   onClick={handleSubmit}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <i className="fa-solid fa-wand-magic-sparkles"></i>
                   开始专家级批改

@@ -2,6 +2,7 @@ import React from 'react';
 import { BadgeCheck, Edit2, Download, Loader2, Sparkles } from 'lucide-react';
 import { sanitizeFilename, downloadImage } from '../../utils/fileHelpers';
 import { BasicInfoState } from '../../stores/useLessonStore';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface TabBadgeProps {
     badgePrompt: string;
@@ -22,12 +23,13 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
     setBadgePrompt,
     handleGenerateBadge
 }) => {
+    const { t } = useLanguage();
     return (
         <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[400px]">
             <div className="text-center max-w-lg mx-auto mb-4 w-full px-4">
                 <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
                     <BadgeCheck size={28} className="text-emerald-500" />
-                    Achievement Badge
+                    {t('badge.title')}
                 </h3>
 
                 <div className="w-full relative group">
@@ -67,7 +69,7 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
                         ) : (
                             <>
                                 <BadgeCheck size={48} className="mb-2 opacity-50" />
-                                <span className="text-sm font-semibold">No Badge Yet</span>
+                                <span className="text-sm font-semibold">{t('badge.noBadge')}</span>
                             </>
                         )}
                     </div>
@@ -81,7 +83,7 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
                     className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {loadingBadge ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
-                    {badgeImage ? "Regenerate Badge" : "Generate Badge"}
+                    {badgeImage ? t("badge.regenerate") : t("badge.generate")}
                 </button>
             </div>
         </div>

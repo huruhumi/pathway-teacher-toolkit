@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image as ImageIcon, Loader2, Trash2, Plus } from 'lucide-react';
 import { VisualReferenceItem } from '../../types';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const ART_STYLES = [
     "Realistic Photo",
@@ -43,11 +44,12 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
     handleAddVisualRef,
     setZoomedImage
 }) => {
+    const { t } = useLanguage();
     return (
         <div className="space-y-6 animate-fade-in">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <ImageIcon size={20} className="text-emerald-600" />
-                Visual Reference Aids
+                {t('vis.title')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {visualRefs.map((item, idx) => (
@@ -125,7 +127,7 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
                     className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-6 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[160px]"
                 >
                     {isAddingVisual ? <Loader2 size={24} className="animate-spin mb-2" /> : <Plus size={32} className="mb-2" />}
-                    <span className="font-semibold text-sm">Add Visual Reference</span>
+                    <span className="font-semibold text-sm">{t('vis.addRef')}</span>
                 </button>
             </div>
         </div>

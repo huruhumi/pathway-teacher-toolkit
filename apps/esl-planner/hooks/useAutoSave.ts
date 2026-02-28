@@ -5,10 +5,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 interface UseAutoSaveProps {
     getCurrentContentObject: () => GeneratedContent;
-    onSave: (content: GeneratedContent, cnContent?: GeneratedContent) => void;
-    dualContent: { en: GeneratedContent; cn: GeneratedContent | null };
-    setDualContent: (dc: { en: GeneratedContent; cn: GeneratedContent | null }) => void;
-    viewLang: 'en' | 'cn';
+    onSave: (content: GeneratedContent) => void;
     editablePlan: any;
     debounceMs?: number;
 }
@@ -16,9 +13,6 @@ interface UseAutoSaveProps {
 export const useAutoSave = ({
     getCurrentContentObject,
     onSave,
-    dualContent,
-    setDualContent,
-    viewLang,
     editablePlan,
     debounceMs = 3000,
 }: UseAutoSaveProps) => {
@@ -42,12 +36,7 @@ export const useAutoSave = ({
         setSaveStatus('saving');
         try {
             const currentData = getCurrentContentObject();
-            const updatedDual = {
-                ...dualContent,
-                [viewLang]: currentData,
-            };
-            setDualContent(updatedDual);
-            onSave(updatedDual.en, updatedDual.cn || undefined);
+            onSave(currentData);
 
             const snapshot = JSON.stringify(currentData);
             lastSnapshotRef.current = snapshot;
@@ -62,7 +51,7 @@ export const useAutoSave = ({
                 setSaveStatus('unsaved');
             }
         }
-    }, [editablePlan, getCurrentContentObject, dualContent, viewLang, setDualContent, onSave]);
+    }, [editablePlan, getCurrentContentObject, onSave]);
 
     // Watch for changes and debounce
     useEffect(() => {

@@ -7,70 +7,99 @@
     <title>Pathway Academy | Teacher Toolkit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <!-- Background Elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
     <header>
         <div class="container nav">
             <div class="logo-container">
-                <!-- Using a placeholder for the logo, will reference path later -->
-                <div class="brand-name">PATHWAY ACADEMY</div>
+                <img src="logo.png" alt="Pathway Academy Logo" class="logo-img">
+                <div class="brand-name">
+                    PATHWAY <span class="highlight">ACADEMY</span>
+                </div>
             </div>
             <div class="toolkit-status">
-                <span style="font-size: 0.8rem; font-weight: 600; color: var(--global-blue);">● TOOLKIT ACTIVE</span>
+                <span class="status-dot"></span>
+                <span>TOOLKIT ACTIVE</span>
             </div>
         </div>
     </header>
 
     <main class="container">
         <section class="hero">
-            <h1>Teacher Toolkit</h1>
-            <p>Empowering educators with AI-driven precision and global pedagogical excellence.</p>
+            <div class="hero-content">
+                <div class="badge">✨ Global Learning, Elevated</div>
+                <h1>Empowering Educators with <br /><span class="gradient-text">AI-Driven Precision</span></h1>
+                <p>Welcome to the Teacher Toolkit. Explore our holistic suite of pedagogical tools designed for modern,
+                    immersive learning experiences.</p>
+                <div class="hero-actions">
+                    <a href="#tools-container" class="btn btn-primary btn-lg">Explore Tools <span
+                            class="arrow">↓</span></a>
+                </div>
+            </div>
         </section>
 
         <section class="toolkit-grid" id="tools-container">
-            <!-- Cards will be populated or hardcoded for simplicity -->
             <div class="tool-card">
-                <div class="tool-icon">📝</div>
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon planner-icon">📝</div>
+                </div>
                 <h3>ESL Smart Planner</h3>
                 <p>Holistic lesson planning suite designed specifically for English language educators.</p>
-                <a href="/planner/" target="_blank" class="btn btn-primary">Launch Planner</a>
+                <div class="card-footer">
+                    <a href="http://localhost:3001" target="_blank" class="btn btn-outline">Launch Planner</a>
+                </div>
             </div>
 
             <div class="tool-card">
-                <div class="tool-icon">✍️</div>
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon lab-icon">✍️</div>
+                </div>
                 <h3>Essay Correction Lab</h3>
                 <p>Advanced AI grading and feedback system for professional English essay assessment.</p>
-                <a href="/essay-lab/" target="_blank" class="btn btn-primary">Open Lab</a>
+                <div class="card-footer">
+                    <a href="http://localhost:3002" target="_blank" class="btn btn-outline">Open Lab</a>
+                </div>
             </div>
 
             <div class="tool-card">
-                <div class="tool-icon">🌿</div>
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon nature-icon">🌿</div>
+                </div>
                 <h3>Nature Compass</h3>
-                <p>Educational curriculum designer for immersive outdoor and nature-based learning.</p>
-                <a href="/nature-compass/" target="_blank" class="btn btn-primary">Design Lessons</a>
+                <p>STEAM curriculum planner & lesson kit generator for immersive outdoor learning experiences.</p>
+                <div class="card-footer">
+                    <a href="http://localhost:3003" target="_blank" class="btn btn-outline">Design
+                        Lessons</a>
+                </div>
             </div>
 
-            <div class="tool-card">
-                <div class="tool-icon">⚙️</div>
-                <h3>STEAM Designer</h3>
-                <p>Integrated Science, Tech, Engineering, Arts, and Math curriculum creator.</p>
-                <a href="/steam-designer/" target="_blank" class="btn btn-primary">Create Projects</a>
-            </div>
+
 
             <div class="tool-card">
-                <div class="tool-icon">📱</div>
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon ops-icon">📱</div>
+                </div>
                 <h3>Academy Ops</h3>
                 <p>Internal tools for social media operations and academy growth management.</p>
-                <a href="/academy-ops/" target="_blank" class="btn btn-primary">Manage Ops</a>
+                <div class="card-footer">
+                    <a href="http://localhost:3005" target="_blank" class="btn btn-outline">Manage Ops</a>
+                </div>
             </div>
         </section>
     </main>
 
     <footer>
-        <div class="container">
+        <div class="container footer-content">
+            <img src="logo.png" alt="Pathway Academy Logo" class="footer-logo">
             <p>&copy; 2026 Pathway Academy. Global Learning, Elevated.</p>
         </div>
     </footer>

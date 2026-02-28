@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Plus, X, Shield } from 'lucide-react';
 import { SupplyList } from '../../types';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface TabSuppliesProps {
     supplies: SupplyList;
@@ -23,17 +24,18 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
     addSafetyItem,
     removeSafetyItem
 }) => {
+    const { t } = useLanguage();
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Box size={20} className="text-emerald-600" />
-                    Supply List
+                    {t('sup.supplyList')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase">Permanent Tools</h4>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase">{t('sup.permanentTools')}</h4>
                         </div>
                         <div className="space-y-2">
                             {supplies.permanent.map((item, idx) => (
@@ -50,13 +52,13 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                                 </div>
                             ))}
                             <button onClick={() => addSupplyItem('permanent')} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-2">
-                                <Plus size={14} /> Add Item
+                                <Plus size={14} /> {t('sup.addItem')}
                             </button>
                         </div>
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase">Consumables</h4>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase">{t('sup.consumables')}</h4>
                         </div>
                         <div className="space-y-2">
                             {supplies.consumables.map((item, idx) => (
@@ -73,7 +75,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                                 </div>
                             ))}
                             <button onClick={() => addSupplyItem('consumables')} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-2">
-                                <Plus size={14} /> Add Item
+                                <Plus size={14} /> {t('sup.addItem')}
                             </button>
                         </div>
                     </div>
@@ -83,7 +85,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
             <div className="bg-amber-50 rounded-xl border border-amber-100 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-amber-900 mb-4 flex items-center gap-2">
                     <Shield size={20} className="text-amber-600" />
-                    Safety Protocol
+                    {t('sup.safetyProtocol')}
                 </h3>
                 <div className="space-y-2">
                     {safetyProtocol.map((item, idx) => (
@@ -103,7 +105,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                         </div>
                     ))}
                     <button onClick={addSafetyItem} className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 mt-2">
-                        <Plus size={14} /> Add Rule
+                        <Plus size={14} /> {t('sup.addItem')}
                     </button>
                 </div>
             </div>

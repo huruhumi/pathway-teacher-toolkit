@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FileText, Clipboard, ImageIcon, Info, Check } from 'lucide-react';
 import { LessonPlanResponse, HandbookPage } from '../../types';
 import { RichTextEditor } from '../RichTextEditor';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface TabHandbookProps {
     plan: LessonPlanResponse;
@@ -22,6 +23,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
     copiedImagePrompt,
     copiedContentPrompt
 }) => {
+    const { t } = useLanguage();
     const [copiedStylePrompt, setCopiedStylePrompt] = useState(false);
 
     return (

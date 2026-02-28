@@ -3,6 +3,7 @@ import { BookOpen, Sparkles, Download, ImageIcon, Loader2, Trash2, Printer, Plus
 import { VocabularyItem } from '../../types';
 import { sanitizeFilename, downloadImage } from '../../utils/fileHelpers';
 import { BasicInfoState } from '../../stores/useLessonStore';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const ART_STYLES = [
     "Realistic Photo",
@@ -53,6 +54,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
     handleAddWord,
     setZoomedImage
 }) => {
+    const { t } = useLanguage();
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center mb-2">
@@ -108,7 +110,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                     ) : (
                                         <>
                                             <ImageIcon size={32} className="text-slate-300 mb-2" />
-                                            <span className="text-xs text-slate-400 mb-4">No image generated</span>
+                                            <span className="text-xs text-slate-400 mb-4">{t('fc.noImage')}</span>
                                             <div className="flex flex-col gap-2 w-full">
                                                 <select
                                                     className="text-xs bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-emerald-500"
@@ -163,7 +165,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                     className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-6 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[300px]"
                 >
                     {isAddingWord ? <Loader2 size={24} className="animate-spin mb-2" /> : <Plus size={32} className="mb-2" />}
-                    <span className="font-semibold text-sm">Add New Word</span>
+                    <span className="font-semibold text-sm">{t('fc.addWord')}</span>
                 </button>
             </div>
         </div>

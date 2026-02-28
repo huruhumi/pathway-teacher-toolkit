@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CEFRLevel } from '../types';
 import { Upload, FileText, Image as ImageIcon, X, ArrowRight } from 'lucide-react';
 
@@ -15,9 +15,18 @@ interface InputSectionProps {
     lessonTitle: string
   ) => void;
   isLoading: boolean;
+  initialValues?: {
+    text: string;
+    level: CEFRLevel;
+    topic: string;
+    slideCount: number;
+    duration: string;
+    studentCount: string;
+    lessonTitle: string;
+  } | null;
 }
 
-export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading }) => {
+export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues }) => {
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [level, setLevel] = useState<CEFRLevel>(CEFRLevel.Beginner);
@@ -28,6 +37,19 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
   const [lessonTitle, setLessonTitle] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-fill fields when initialValues changes (from curriculum)
+  useEffect(() => {
+    if (initialValues) {
+      setText(initialValues.text);
+      setLevel(initialValues.level);
+      setTopic(initialValues.topic);
+      setSlideCount(initialValues.slideCount);
+      setDuration(initialValues.duration);
+      setStudentCount(initialValues.studentCount);
+      setLessonTitle(initialValues.lessonTitle);
+    }
+  }, [initialValues]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -44,6 +66,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
     e.preventDefault();
     onGenerate(text, files, level, topic, slideCount, duration, studentCount, lessonTitle);
   };
+
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 mb-8 border border-gray-100">

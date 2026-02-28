@@ -3,6 +3,7 @@ import { LessonPlanResponse, RoadmapItem, VocabularyItem, VisualReferenceItem } 
 import { Clipboard, Check, Box, BookOpen, ImageIcon, FileText, BadgeCheck, Printer, Loader2, Sparkles, Download, Compass, Languages, ChevronDown, Share2, Save, X } from 'lucide-react';
 import { generateSingleStep, generateImagePrompt, generateImage, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateBadgePrompt, generateSingleBackgroundInfo, generateSingleTeachingTip } from '../services/geminiService';
 import { useLessonStore } from '../stores/useLessonStore';
+import { useLanguage } from '../i18n/LanguageContext';
 import { RichTextEditor } from './RichTextEditor';
 
 // Tab Components
@@ -25,6 +26,7 @@ type Tab = 'roadmap' | 'supplies' | 'flashcards' | 'visuals' | 'handbook' | 'bad
 
 export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSave }) => {
     const [activeTab, setActiveTab] = useState<Tab>('roadmap');
+    const { t, lang } = useLanguage();
     const [copiedNotebook, setCopiedNotebook] = useState(false);
     const [copiedStylePrompt, setCopiedStylePrompt] = useState(false);
     const [copiedImagePrompt, setCopiedImagePrompt] = useState<number | null>(null);
@@ -846,7 +848,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                     ${backgroundInfoHtml}
                     ${teachingTipsHtml}
                     <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Instructions</h4>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">${t('print.instructions')}</h4>
                         <ul class="text-sm">${stepsHtml}</ul>
                     </div>
                 </div>
@@ -855,18 +857,18 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
             bodyContent = `
             <div class="mb-8">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">Workshop Overview</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">${t('print.workshopOverview')}</h2>
                 <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
                     <div class="p-3 border rounded">
-                        <div class="text-slate-400 text-xs uppercase font-bold">Theme</div>
+                        <div class="text-slate-400 text-xs uppercase font-bold">${t('print.theme')}</div>
                         <div class="font-semibold">${basicInfo.theme}</div>
                     </div>
                     <div class="p-3 border rounded">
-                        <div class="text-slate-400 text-xs uppercase font-bold">Type</div>
+                        <div class="text-slate-400 text-xs uppercase font-bold">${t('print.type')}</div>
                         <div class="font-semibold">${basicInfo.activityType}</div>
                     </div>
                     <div class="p-3 border rounded">
-                        <div class="text-slate-400 text-xs uppercase font-bold">Audience</div>
+                        <div class="text-slate-400 text-xs uppercase font-bold">${t('print.audience')}</div>
                         <div class="font-semibold">${basicInfo.targetAudience}</div>
                     </div>
                     <div class="p-3 border rounded">
@@ -1142,12 +1144,12 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm mb-8 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 flex flex-col sm:flex-row justify-between items-center gap-2">
                 <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
                     {[
-                        { id: 'roadmap', label: 'Roadmap', icon: Compass },
-                        { id: 'supplies', label: 'Supplies', icon: Box },
-                        { id: 'flashcards', label: 'Flashcards', icon: BookOpen },
-                        { id: 'visuals', label: 'Visuals', icon: ImageIcon },
-                        { id: 'handbook', label: 'Handbook', icon: FileText },
-                        { id: 'badge', label: 'Badge', icon: BadgeCheck },
+                        { id: 'roadmap', label: t('tab.roadmap'), icon: Compass },
+                        { id: 'supplies', label: t('tab.supplies'), icon: Box },
+                        { id: 'flashcards', label: t('tab.flashcards'), icon: BookOpen },
+                        { id: 'visuals', label: t('tab.visuals'), icon: ImageIcon },
+                        { id: 'handbook', label: t('tab.handbook'), icon: FileText },
+                        { id: 'badge', label: t('tab.badge'), icon: BadgeCheck },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         return (
@@ -1173,17 +1175,17 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                             }`}
-                        title="Translate to Chinese"
+                        title={lang === 'zh' ? '切换到英文' : 'Translate to Chinese'}
                     >
                         <Languages size={16} className={displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'} />
-                        <span className="hidden md:inline">{displayLanguage === 'zh' ? '中文' : 'EN / 中'}</span>
+                        <span className="hidden md:inline">{displayLanguage === 'zh' ? t('lp.langToggle') : 'EN / 中'}</span>
                     </button>
                     <button
                         onClick={handlePrint}
                         className="flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold text-xs sm:text-sm hover:bg-slate-200 transition-colors whitespace-nowrap"
                     >
                         <Printer size={16} />
-                        <span className="hidden md:inline">Print</span>
+                        <span className="hidden md:inline">{t('lp.print')}</span>
                     </button>
                     {onSave && (
                         <button
@@ -1193,7 +1195,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                                 }`}
                         >
                             {isSaved ? <Check size={16} /> : <Save size={16} />}
-                            <span className="hidden md:inline">{isSaved ? 'Saved!' : 'Save'}</span>
+                            <span className="hidden md:inline">{isSaved ? t('lp.saved') : t('lp.save')}</span>
                         </button>
                     )}
                 </div>

@@ -3,6 +3,7 @@ import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbul
 import { RichTextEditor } from '../RichTextEditor';
 import { RoadmapItem } from '../../types';
 import { BasicInfoState } from '../../stores/useLessonStore';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 interface TabRoadmapProps {
     basicInfo: BasicInfoState;
@@ -71,16 +72,16 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
     handleRoadmapDragOver,
     handleRoadmapDrop
 }) => {
+    const { t } = useLanguage();
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Info size={20} className="text-emerald-600" />
-                    Workshop Details
-                </h3>
+                    {t('road.workshopDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Theme</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.theme')}</label>
                         <input
                             value={basicInfo.theme}
                             onChange={(e) => handleBasicInfoChange('theme', e.target.value)}
@@ -88,7 +89,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Activity Type</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.activityType')}</label>
                         <input
                             value={basicInfo.activityType}
                             onChange={(e) => handleBasicInfoChange('activityType', e.target.value)}
@@ -96,7 +97,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Target Audience</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.targetAudience')}</label>
                         <input
                             value={basicInfo.targetAudience}
                             onChange={(e) => handleBasicInfoChange('targetAudience', e.target.value)}
@@ -104,7 +105,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Location</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.location')}</label>
                         <div className="flex items-center gap-2">
                             <MapPin size={16} className="text-emerald-500" />
                             <input
@@ -117,7 +118,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Introduction / Context</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.introContext')}</label>
                     <RichTextEditor
                         value={missionBriefing.narrative}
                         onChange={(html) => (setMissionBriefing as any)(prev => ({ ...prev, narrative: html }))}
@@ -128,7 +129,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Learning Goals</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{t('road.learningGoals')}</label>
                     <div className="space-y-2">
                         {basicInfo.learningGoals.map((goal, i) => (
                             <div key={i} className="flex items-center gap-2 group">
@@ -144,8 +145,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             </div>
                         ))}
                         <button onClick={addGoal} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-2">
-                            <Plus size={14} /> Add Goal
-                        </button>
+                            <Plus size={14} /> {t('road.addGoal')}</button>
                     </div>
                 </div>
             </div>
@@ -166,7 +166,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             </div>
                             <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4">
                                 <div className="md:col-span-2">
-                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Time</label>
+                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('road.time')}</label>
                                     <input
                                         value={item.timeRange}
                                         onChange={(e) => handleRoadmapChange(idx, 'timeRange', e.target.value)}
@@ -174,7 +174,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     />
                                 </div>
                                 <div className="md:col-span-4">
-                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Phase</label>
+                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('road.phase')}</label>
                                     <input
                                         value={item.phase}
                                         onChange={(e) => handleRoadmapChange(idx, 'phase', e.target.value)}
@@ -182,7 +182,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     />
                                 </div>
                                 <div className="md:col-span-6">
-                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Activity Name</label>
+                                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('road.activityName')}</label>
                                     <input
                                         value={item.activity}
                                         onChange={(e) => handleRoadmapChange(idx, 'activity', e.target.value)}
@@ -198,7 +198,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.description')}</label>
                                     <textarea
                                         value={item.description}
                                         onChange={(e) => handleRoadmapChange(idx, 'description', e.target.value)}
@@ -209,7 +209,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 <div>
                                     <div className="grid grid-cols-2 gap-4 mb-3">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Type</label>
+                                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.type')}</label>
                                             <input
                                                 value={item.activityType}
                                                 onChange={(e) => handleRoadmapChange(idx, 'activityType', e.target.value)}
@@ -217,7 +217,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Location</label>
+                                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.location')}</label>
                                             <input
                                                 value={item.location}
                                                 onChange={(e) => handleRoadmapChange(idx, 'location', e.target.value)}
@@ -226,7 +226,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Objective</label>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.objective')}</label>
                                         <input
                                             value={item.learningObjective}
                                             onChange={(e) => handleRoadmapChange(idx, 'learningObjective', e.target.value)}
@@ -238,8 +238,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
 
                             <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
                                 <label className="block text-xs font-bold text-blue-500 uppercase mb-2 flex items-center gap-1">
-                                    <BookOpen size={12} /> Background Knowledge
-                                </label>
+                                    <BookOpen size={12} /> {t('road.backgroundInfo')}</label>
                                 <div className="space-y-2">
                                     {(item.backgroundInfo && item.backgroundInfo.length > 0) ? item.backgroundInfo.map((info, infoIdx) => (
                                         <div key={infoIdx} className="flex items-start gap-2">
@@ -256,7 +255,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 <X size={14} />
                                             </button>
                                         </div>
-                                    )) : <div className="text-sm text-blue-300 italic px-2">No background info added.</div>}
+                                    )) : <div className="text-sm text-blue-300 italic px-2">{t('fc.noImage') || 'No info'}</div>}
                                 </div>
                                 <div className="flex justify-end mt-2">
                                     <button
@@ -265,15 +264,13 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                     >
                                         {generatingExtraFor?.roadmapIndex === idx && generatingExtraFor?.type === 'info' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                                        Add Info
-                                    </button>
+                                        {t('road.addBgInfo')}</button>
                                 </div>
                             </div>
 
                             <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
                                 <label className="block text-xs font-bold text-purple-500 uppercase mb-2 flex items-center gap-1">
-                                    <Lightbulb size={12} /> Teaching Tips & Methodology
-                                </label>
+                                    <Lightbulb size={12} /> {t('road.teachingTips')}</label>
                                 <div className="space-y-2">
                                     {(item.teachingTips && item.teachingTips.length > 0) ? item.teachingTips.map((tip, tipIdx) => (
                                         <div key={tipIdx} className="flex items-start gap-2">
@@ -290,7 +287,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 <X size={14} />
                                             </button>
                                         </div>
-                                    )) : <div className="text-sm text-purple-300 italic px-2">No teaching tips added.</div>}
+                                    )) : <div className="text-sm text-purple-300 italic px-2">无教学建议。</div>}
                                 </div>
                                 <div className="flex justify-end mt-2">
                                     <button
@@ -299,15 +296,13 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         className="text-xs font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1"
                                     >
                                         {generatingExtraFor?.roadmapIndex === idx && generatingExtraFor?.type === 'tip' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                                        Add Tip
-                                    </button>
+                                        {t('road.addTip')}</button>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">
-                                    <Layout size={14} /> Teacher Instructions
-                                </label>
+                                    <Layout size={14} /> {t('road.teacherInstructions')}</label>
                                 <div className="space-y-2">
                                     {item.steps.map((step, sIdx) => (
                                         <div
@@ -349,8 +344,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     className="mt-3 text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-2 px-2 py-1 rounded hover:bg-emerald-50 transition-colors"
                                 >
                                     {generatingStepFor === idx ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
-                                    Generate Next Step
-                                </button>
+                                    {t('road.generateStep')}</button>
                             </div>
                         </div>
                     </div>
@@ -362,8 +356,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                     className="w-full py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-semibold hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
                 >
                     {isAddingRoadmapItem ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-                    Add Roadmap Phase
-                </button>
+                    {t('road.addPhaseBtn')}</button>
             </div>
         </div>
     );

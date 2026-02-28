@@ -762,3 +762,296 @@ export const translateLessonPlan = async (plan: LessonPlanResponse, targetLangua
     return JSON.parse(text) as LessonPlanResponse;
   }, signal);
 };
+
+// --- Curriculum Planning Functions (from STEAM Designer) ---
+
+import { Curriculum, CurriculumLesson } from "../types";
+
+export const suggestLocations = async (city: string): Promise<string[]> => {
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  return await retryOperation(async () => {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `List 8-10 well-known outdoor locations in ${city} that are suitable for STEAM education activities with K-12 students. Include parks, lakes, botanical gardens, science museums, nature reserves, wetlands, riverside areas, etc. Only return locations that actually exist in ${city}. Use the local language name for each location.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            locations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ["locations"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("AI returned an empty response.");
+    const parsed = JSON.parse(text);
+    return parsed.locations || [];
+  });
+};
+
+export const generateCurriculum = async (
+  ageGroup: string, englishLevel: string, lessonCount: number,
+  duration: string, preferredLocation: string, customTheme: string,
+  city: string = "武汉"
+): Promise<Curriculum> => {
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  return await retryOperation(async () => {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Design a systematic STEAM outdoor curriculum for students in ${city}.
+    Theme: ${customTheme || "General STEAM Exploration"}
+    Age Group: ${ageGroup}
+    English Level: ${englishLevel}
+    Number of Lessons: ${lessonCount}
+    Duration per Lesson: ${duration}
+    ${preferredLocation ? `Preferred Location/Area: ${preferredLocation}` : ''}
+    
+    Requirements:
+    1. The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".
+    2. It should have exactly ${lessonCount} progressive lessons.
+    3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
+    4. Each lesson must include a STEAM focus (Science, Technology, Engineering, Arts, Math).
+    5. Each lesson must include a specific, explicit, and actionable ESL focus.
+    6. Each lesson must have a specific "Rainy Day" indoor alternative activity.
+    7. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot.
+    8. English vocabulary and concepts should be integrated based on the provided level.
+    9. The tone should be professional, educational, and inspiring.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            theme: { type: Type.STRING },
+            overview: { type: Type.STRING },
+            lessons: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  steam_focus: { type: Type.STRING },
+                  esl_focus: { type: Type.STRING },
+                  location: { type: Type.STRING },
+                  outdoor_activity: { type: Type.STRING },
+                  indoor_alternative: { type: Type.STRING },
+                  english_vocabulary: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                  }
+                },
+                required: ["title", "description", "steam_focus", "esl_focus", "location", "outdoor_activity", "indoor_alternative", "english_vocabulary"]
+              }
+            }
+          },
+          required: ["theme", "overview", "lessons"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("The AI returned an empty response.");
+    return JSON.parse(text) as Curriculum;
+  });
+};
+
+// ===== Chinese-only STEAM Curriculum (no ESL) =====
+export const generateCurriculumCN = async (
+  ageGroup: string, lessonCount: number,
+  duration: string, preferredLocation: string, customTheme: string,
+  city: string = "武汉"
+): Promise<Curriculum> => {
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  return await retryOperation(async () => {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `请为${city}的学生设计一套系统化的STEAM户外课程。全部内容必须用中文回答。
+
+    主题: ${customTheme || "综合STEAM探索"}
+    年龄段: ${ageGroup}
+    课时数量: ${lessonCount}
+    每课时长: ${duration}
+    ${preferredLocation ? `首选地点/区域: ${preferredLocation}` : ''}
+    
+    要求:
+    1. 课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。
+    2. 必须包含恰好${lessonCount}节循序渐进的课。
+    3. 地点必须是${city}具体的、知名的、方便到达的户外地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
+    4. 每节课必须包含STEAM要素（科学、技术、工程、艺术、数学）。
+    5. 每节课必须有具体的、可执行的"雨天室内替代活动"。
+    6. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。
+    7. 语气应专业、教育性强、鼓舞人心。
+    8. 所有内容必须用中文书写。
+    9. esl_focus字段请填写空字符串""，english_vocabulary请填写空数组[]。`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            theme: { type: Type.STRING },
+            overview: { type: Type.STRING },
+            lessons: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  description: { type: Type.STRING },
+                  steam_focus: { type: Type.STRING },
+                  esl_focus: { type: Type.STRING },
+                  location: { type: Type.STRING },
+                  outdoor_activity: { type: Type.STRING },
+                  indoor_alternative: { type: Type.STRING },
+                  english_vocabulary: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                  }
+                },
+                required: ["title", "description", "steam_focus", "esl_focus", "location", "outdoor_activity", "indoor_alternative", "english_vocabulary"]
+              }
+            }
+          },
+          required: ["theme", "overview", "lessons"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("AI返回了空响应。");
+    return JSON.parse(text) as Curriculum;
+  });
+};
+
+// ===== Chinese-only Lesson Plan Streaming (no ESL) =====
+export const generateLessonPlanStreamingCN = async (
+  input: LessonInput,
+  onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
+  signal?: AbortSignal,
+): Promise<LessonPlanResponse> => {
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const handbookPageCount = input.handbookPages || 15;
+
+  const systemInstruction = `
+    你是一位资深STEAM课程设计师。所有内容必须用中文回答。
+    目标：生成一个${input.duration}分钟的"Nature Compass自然指南针"STEAM周末工坊方案，适用于${input.studentAge}岁学生。
+    
+    [教学框架：5E教学模型]
+    你必须按照5E顺序构建"教学流程"，确保系统化的学习体验：
+    1. 引入(Engage)：吸引学生注意力，激活已有知识，引入故事线。
+    2. 探索(Explore)：动手探索，学生与材料/自然互动。  
+    3. 解释(Explain)：正式引入科学概念和专业术语。
+    4. 拓展(Elaborate)：将知识应用于新的挑战或创意项目。
+    5. 评估(Evaluate)：回顾学习成果，检验理解，庆祝成功。
+
+    [参数]
+    - 主题：${input.theme || "来自上传材料"}
+    - 背景/介绍：${input.topicIntroduction}
+    - 季节：${input.season}
+    - 天气条件：${input.weather}
+    - 活动重点：${input.activityFocus.join(', ')}
+
+    [核心逻辑：天气适应性策略]
+    - "晴天"：优先安排高参与度的户外探索和数据收集。
+    - "雨天"：转向室内创客/实验场景，使用自然标本、模拟或室内实验。
+
+    [教学流程要求]
+    - 生成恰好5-6个遵循5E模型的逻辑阶段。
+    - 每个阶段必须包含详细的"步骤"、"背景知识"（科学/事实准确性）和"教学建议"（具体的教学方法建议）。
+
+    [学生手册设计规则（关键）]
+    你必须设计一本${handbookPageCount}页的学生手册，与教学流程直接同步并深度整合。
+    1. 全局风格：生成一个"handbookStylePrompt"，定义全局统一的美学风格。
+    2. 顺序：封面 -> 安全/工具 -> 5E旅程 -> 数据记录/观察 -> 反思 -> 证书。
+    3. 严格同步：每个教学流程阶段都必须有至少一个对应的手册页面。
+    4. 背景知识整合：必须将背景知识转化为面向学生的阅读材料或图表。
+    5. 丰富精确的内容："contentPrompt"必须包含页面上的确切文字内容。
+    6. 年龄适配（目标：${input.studentAge}岁）：
+       - 低龄/小学低年级(3-8岁)：使用简单词汇、简短指令、大字标签、描画练习、配对游戏和绘画活动。
+       - 小学高年级/初中(9-14岁)：编写详细的多段落阅读材料、复杂的图形组织器、批判性思维问题。
+    7. 证书页：最后一页必须是精美的"结业证书"，包含3x3cm圆形贴纸区域。
+    8. 所有手册内容必须用中文书写。
+
+    结构要求：
+    - 任务简报：引人入胜的标题和叙事。
+    - 词汇：8-10个STEAM关键术语及简单定义（中文）。
+    - 手册：恰好${handbookPageCount}页精心设计的教学内容。
+  `;
+
+  let contents: any = [{ text: "请根据以上要求生成STEAM课程方案。" }];
+
+  if (input.uploadedFiles && input.uploadedFiles.length > 0) {
+    const parts: Part[] = [];
+    input.uploadedFiles.forEach(file => {
+      parts.push({
+        inlineData: {
+          mimeType: file.type,
+          data: file.data
+        }
+      });
+    });
+    parts.push({ text: "以上是参考材料，请据此设计主题和活动。" });
+    contents = [{ parts }];
+  }
+
+  let accumulatedText = '';
+  let lastKnownKeys: string[] = [];
+
+  const tryPartialParse = (text: string) => {
+    try {
+      const parsed = JSON.parse(text);
+      const keys = Object.keys(parsed);
+      if (keys.length > lastKnownKeys.length) {
+        lastKnownKeys = keys;
+        onPartialResult(parsed, keys);
+      }
+    } catch {
+      let attempt = text;
+      const openBraces = (attempt.match(/{/g) || []).length;
+      const closeBraces = (attempt.match(/}/g) || []).length;
+      const openBrackets = (attempt.match(/\[/g) || []).length;
+      const closeBrackets = (attempt.match(/\]/g) || []).length;
+      attempt = attempt.replace(/,\s*$/, '');
+      for (let i = 0; i < openBrackets - closeBrackets; i++) attempt += ']';
+      for (let i = 0; i < openBraces - closeBraces; i++) attempt += '}';
+      try {
+        const parsed = JSON.parse(attempt);
+        const keys = Object.keys(parsed);
+        if (keys.length > lastKnownKeys.length) {
+          lastKnownKeys = keys;
+          onPartialResult(parsed, keys);
+        }
+      } catch { /* skip */ }
+    }
+  };
+
+  return await retryOperation(async () => {
+    const response = await ai.models.generateContentStream({
+      model: 'gemini-3-flash-preview',
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: lessonPlanSchema,
+        temperature: 0.5,
+      },
+      contents: contents,
+    });
+
+    for await (const chunk of response) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const chunkText = chunk.text;
+      if (chunkText) {
+        accumulatedText += chunkText;
+        tryPartialParse(accumulatedText);
+      }
+    }
+
+    if (!accumulatedText) throw new Error("Gemini流式响应为空");
+    return JSON.parse(accumulatedText) as LessonPlanResponse;
+  }, signal);
+};

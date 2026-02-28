@@ -15,10 +15,6 @@
       "destination": "https://pathway-teacher-toolkit-xj5a.vercel.app/$1"
     },
     {
-      "source": "/steam-designer/(.*)",
-      "destination": "https://pathway-teacher-toolkit-m1vr.vercel.app/$1"
-    },
-    {
       "source": "/academy-ops/(.*)",
       "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/$1"
     }

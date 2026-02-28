@@ -515,8 +515,8 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
     setIsGeneratingImages(true);
     setGeneratedImages([]);
 
-    // Use the editable prompts, limited by the selected count
-    const promptsToUse = editablePrompts.slice(0, imageCount);
+    // Use all editable prompts
+    const promptsToUse = editablePrompts.filter(p => p.trim());
     const newImages: string[] = [];
 
     try {
@@ -893,49 +893,33 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
         {/* Image Generation Settings (Only visible after content generation) */}
         {generatedContent && (
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-            <div className="flex items-center gap-2 mb-2 text-slate-900 font-bold">
-              <ImageIcon size={20} className="text-purple-500" />
-              <h3>AI 配图生成 (NanoBanana)</h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">生成数量</label>
-                <select
-                  value={imageCount}
-                  onChange={(e) => setImageCount(Number(e.target.value))}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                    <option key={num} value={num}>{num} 张</option>
-                  ))}
-                </select>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <ImageIcon size={20} className="text-purple-500" />
+                <h3>AI 配图生成 (NanoBanana)</h3>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">图片风格</label>
-                <select
-                  value={imageStyle}
-                  onChange={(e) => setImageStyle(e.target.value)}
-                  className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
-                >
-                  <option value="Photography, Realistic, High Quality">真实摄影 (Photography)</option>
-                  <option value="Minimalist Illustration, Flat Design">扁平插画 (Illustration)</option>
-                  <option value="3D Render, Cute, Clay style">3D 可爱风 (3D Cute)</option>
-                  <option value="Line Art, Clean, Educational">极简线条 (Line Art)</option>
-                </select>
-              </div>
+              <select
+                value={imageStyle}
+                onChange={(e) => setImageStyle(e.target.value)}
+                className="p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
+              >
+                <option value="Photography, Realistic, High Quality">真实摄影</option>
+                <option value="Minimalist Illustration, Flat Design">扁平插画</option>
+                <option value="3D Render, Cute, Clay style">3D 可爱风</option>
+                <option value="Line Art, Clean, Educational">极简线条</option>
+              </select>
             </div>
 
             {/* Logo Settings UI */}
             {brandData.logoUrl && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-4 space-y-4">
-                <div className="flex items-center gap-2 text-slate-700 font-medium text-sm border-b border-slate-200 pb-2">
-                  <ImageIcon size={16} className="text-rose-500" />
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center gap-2 text-slate-700 font-medium text-sm">
+                  <ImageIcon size={14} className="text-rose-500" />
                   Logo 叠加设置
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-500">Logo 尺寸</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-500">尺寸</label>
                     <div className="flex bg-white rounded-lg border border-slate-200 p-1">
                       {['小', '中', '大'].map(size => (
                         <button
@@ -948,8 +932,8 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-500">Logo 位置</label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-500">位置</label>
                     <select
                       value={logoPosition}
                       onChange={(e) => setLogoPosition(e.target.value as any)}
@@ -966,74 +950,130 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
               </div>
             )}
 
-            {/* Editable Prompts List */}
+            {/* Individual Prompt Cards */}
             {editablePrompts.length > 0 && (
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-700">编辑提示词 (Prompts)</label>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                  {editablePrompts.slice(0, imageCount).map((prompt, idx) => (
-                    <div key={idx} className="flex gap-2 items-start">
-                      <span className="text-xs font-bold text-slate-400 mt-2 w-4">{idx + 1}</span>
-                      <textarea
-                        value={prompt}
-                        onChange={(e) => {
-                          const newPrompts = [...editablePrompts];
-                          newPrompts[idx] = e.target.value;
-                          setEditablePrompts(newPrompts);
-                        }}
-                        className="flex-1 p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50 min-h-[60px]"
-                      />
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => handleGenerateSingleImage(idx)}
-                          disabled={generatingImageIndices.includes(idx) || isGeneratingImages}
-                          className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-[34px] flex items-center justify-center w-10"
-                          title="生成这张配图"
-                        >
-                          {generatingImageIndices.includes(idx) ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                        </button>
-                        {brandData.logoUrl && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700">逐张配图 ({editablePrompts.length} 张)</label>
+                  <button
+                    onClick={() => {
+                      // Add a new empty prompt
+                      setEditablePrompts(prev => [...prev, '']);
+                    }}
+                    className="text-xs text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+                  >
+                    + 添加一张
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {editablePrompts.map((prompt, idx) => (
+                    <div key={idx} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                      {/* Prompt Header */}
+                      <div className="flex items-center justify-between px-4 py-2 bg-slate-100/50 border-b border-slate-200">
+                        <span className="text-xs font-bold text-slate-500">
+                          {idx === 0 ? '🖼️ 封面图' : `📷 配图 ${idx + 1}`}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {brandData.logoUrl && (
+                            <button
+                              onClick={() => {
+                                if (addLogoIndices.includes(idx)) {
+                                  setAddLogoIndices(prev => prev.filter(i => i !== idx));
+                                } else {
+                                  setAddLogoIndices(prev => [...prev, idx]);
+                                }
+                              }}
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors border ${addLogoIndices.includes(idx) ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                            >
+                              {addLogoIndices.includes(idx) ? '✓ Logo' : '+ Logo'}
+                            </button>
+                          )}
                           <button
                             onClick={() => {
-                              if (addLogoIndices.includes(idx)) {
-                                setAddLogoIndices(prev => prev.filter(i => i !== idx));
-                              } else {
-                                setAddLogoIndices(prev => [...prev, idx]);
-                              }
+                              setEditablePrompts(prev => prev.filter((_, i) => i !== idx));
+                              setGeneratedImages(prev => prev.filter((_, i) => i !== idx));
                             }}
-                            className={`p-1.5 flex items-center justify-center w-10 h-[22px] rounded text-[10px] font-bold transition-colors border ${addLogoIndices.includes(idx) ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}`}
-                            title={addLogoIndices.includes(idx) ? "取消添加 Logo" : "生成时添加 Logo"}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                            title="删除此提示词"
                           >
-                            +Logo
+                            <X size={14} />
                           </button>
-                        )}
+                        </div>
+                      </div>
+
+                      {/* Prompt Body */}
+                      <div className="p-4 space-y-3">
+                        <textarea
+                          value={prompt}
+                          onChange={(e) => {
+                            const newPrompts = [...editablePrompts];
+                            newPrompts[idx] = e.target.value;
+                            setEditablePrompts(newPrompts);
+                          }}
+                          placeholder="在此编辑图片提示词 (Prompt)..."
+                          className="w-full p-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white min-h-[80px] resize-y"
+                        />
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleGenerateSingleImage(idx)}
+                            disabled={generatingImageIndices.includes(idx) || isGeneratingImages || !prompt.trim()}
+                            className={`flex-1 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all ${generatingImageIndices.includes(idx)
+                              ? 'bg-purple-100 text-purple-400 cursor-not-allowed'
+                              : !prompt.trim()
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-purple-500 text-white hover:bg-purple-600 shadow-sm'
+                              }`}
+                          >
+                            {generatingImageIndices.includes(idx) ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>生成中...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles size={16} />
+                                <span>生成此图</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Show generated image thumbnail inline */}
+                          {generatedImages[idx] && (
+                            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                              <img src={generatedImages[idx]} alt={`配图 ${idx + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Batch Generate (secondary) */}
+                <button
+                  onClick={handleGenerateImages}
+                  disabled={isGeneratingImages || editablePrompts.every(p => !p.trim())}
+                  className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all border ${isGeneratingImages
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
+                    : 'bg-white text-purple-600 hover:bg-purple-50 border-purple-200'
+                    }`}
+                >
+                  {isGeneratingImages ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>正在批量绘图 ({generatedImages.filter(Boolean).length}/{editablePrompts.length})...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon size={16} />
+                      <span>一键批量生成全部配图</span>
+                    </>
+                  )}
+                </button>
               </div>
             )}
-
-            <button
-              onClick={handleGenerateImages}
-              disabled={isGeneratingImages}
-              className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${isGeneratingImages
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
-                }`}
-            >
-              {isGeneratingImages ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  <span>正在批量绘图 ({generatedImages.filter(Boolean).length}/{imageCount})...</span>
-                </>
-              ) : (
-                <>
-                  <ImageIcon size={18} />
-                  <span>批量生成配图</span>
-                </>
-              )}
-            </button>
           </div>
         )}
 

@@ -25,7 +25,7 @@ export interface Curriculum {
   lessons: Lesson[];
 }
 
-export async function generateCurriculum(ageGroup: string, englishLevel: string, lessonCount: number, duration: string, preferredLocation: string, customTheme: string): Promise<Curriculum> {
+export async function suggestLocations(city: string): Promise<string[]> {
   const key = process.env.GEMINI_API_KEY;
   if (!key || key === "undefined") {
     throw new Error("Gemini API key is not configured. Please ensure GEMINI_API_KEY is set in your environment.");
@@ -33,8 +33,44 @@ export async function generateCurriculum(ageGroup: string, englishLevel: string,
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Design a systematic STEAM outdoor curriculum for students in Wuhan.
+      model: "gemini-2.5-flash",
+      contents: `List 8-10 well-known outdoor locations in ${city} that are suitable for STEAM education activities with K-12 students. Include parks, lakes, botanical gardens, science museums, nature reserves, wetlands, riverside areas, etc. Only return locations that actually exist in ${city}. Use the local language name for each location.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            locations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ["locations"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("AI returned an empty response.");
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    return parsed.locations || [];
+  } catch (error: any) {
+    console.error("suggestLocations error:", error);
+    throw new Error("Failed to get location suggestions. Please try again.");
+  }
+}
+
+export async function generateCurriculum(ageGroup: string, englishLevel: string, lessonCount: number, duration: string, preferredLocation: string, customTheme: string, city: string = "武汉"): Promise<Curriculum> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key || key === "undefined") {
+    throw new Error("Gemini API key is not configured. Please ensure GEMINI_API_KEY is set in your environment.");
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Design a systematic STEAM outdoor curriculum for students in ${city}.
     Theme: ${customTheme || "General STEAM Exploration"}
     Age Group: ${ageGroup}
     English Level: ${englishLevel}
@@ -45,7 +81,7 @@ export async function generateCurriculum(ageGroup: string, englishLevel: string,
     Requirements:
     1. The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".
     2. It should have exactly ${lessonCount} progressive lessons.
-    3. Locations must be specific, well-known, and accessible outdoor spots in Wuhan (e.g., East Lake, Jiefang Park, Wuhan Botanical Garden). ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
+    3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
     4. Each lesson must include a STEAM focus (Science, Technology, Engineering, Arts, Math).
     5. Each lesson must include a specific, explicit, and actionable ESL (English as a Second Language) focus. Provide concrete examples of language points (e.g., 'Present Continuous for describing ongoing nature processes'), functional language (e.g., 'Asking for directions in a park'), or specific conversational tasks relevant to the theme and the ${englishLevel} level.
     6. Each lesson must have a specific "Rainy Day" indoor alternative activity.

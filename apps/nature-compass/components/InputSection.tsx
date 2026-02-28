@@ -3,6 +3,7 @@ import { LessonInput, UploadedFile } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
 import { Sun, CloudRain, Shuffle, Loader2, UploadCloud, X, FileText, Image as ImageIcon, Square } from 'lucide-react';
 import { generateRandomTheme } from '../services/geminiService';
+import { useLanguage, TranslationKey } from '../i18n/LanguageContext';
 
 interface InputSectionProps {
   input: LessonInput;
@@ -13,6 +14,7 @@ interface InputSectionProps {
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onSubmit, onStop, isLoading }) => {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
 
@@ -114,8 +116,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-3">
-              Weather Forecast
-            </label>
+              {t('input.weatherLabel')}</label>
             <div className="flex bg-slate-100 p-1 rounded-xl w-full">
               <button
                 onClick={() => setInput({ ...input, weather: 'Sunny' })}
@@ -126,8 +127,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 }`}
               >
                 <Sun size={18} />
-                Sunny
-              </button>
+                {t('input.sunny')}</button>
               <button
                 onClick={() => setInput({ ...input, weather: 'Rainy' })}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
@@ -137,15 +137,13 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 }`}
               >
                 <CloudRain size={18} />
-                Rainy/Indoor
-              </button>
+                {t('input.rainy')}</button>
             </div>
           </div>
 
           <div>
              <label className="block text-sm font-semibold text-slate-700 mb-3">
-               Season
-             </label>
+               {t('input.seasonLabel')}</label>
              <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl">
                {SEASONS.map((s) => (
                  <button
@@ -156,9 +154,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                        ? 'bg-white text-emerald-600 shadow-sm font-bold'
                        : 'text-slate-500 hover:text-slate-700'
                    }`}
-                 >
-                   {s}
-                 </button>
+                 >{t(`season.${s}` as TranslationKey)}</button>
                ))}
              </div>
           </div>
@@ -166,8 +162,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-3">
-          Activity Focus (Multi-select)
-        </label>
+          {t('input.focusLabel')}</label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {ACTIVITY_FOCUS_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -182,8 +177,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                     : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} />
-                {opt.label}
+                <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
               </button>
             );
           })}
@@ -193,8 +187,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            Target Age Group
-          </label>
+            {t('input.ageLabel')}</label>
           <select
             value={input.studentAge}
             onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
@@ -205,8 +198,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            Number of Students
-          </label>
+            {t('input.studentsLabel')}</label>
           <input
             type="number"
             min={1}
@@ -221,8 +213,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            Duration (Minutes)
-          </label>
+            {t('input.durationLabel')}</label>
           <input
             type="number"
             min={30}
@@ -234,8 +225,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            CEFR Level
-          </label>
+            {t('input.cefrLabel')}</label>
           <select
             value={input.cefrLevel}
             onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
@@ -246,8 +236,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            Handbook Pages
-          </label>
+            {t('input.handbookLabel')}</label>
           <input
             type="number"
             min={1}

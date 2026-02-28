@@ -27,7 +27,7 @@ import {
   Trash2,
   Edit3
 } from 'lucide-react';
-import { generateCurriculum, Curriculum, Lesson } from './services/gemini';
+import { generateCurriculum, suggestLocations, Curriculum, Lesson } from './services/gemini';
 
 interface SavedCurriculum {
   id: string;
@@ -76,20 +76,20 @@ function ErrorModal({ message, onClose }: ErrorModalProps) {
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-red-100"
+        className="bg-white rounded-xl p-8 max-w-md w-full shadow-lg border border-red-100"
       >
         <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
           <Trash2 size={32} />
         </div>
-        <h3 className="text-2xl font-bold text-zinc-900 text-center mb-4 italic font-serif">Oops! Something went wrong</h3>
-        <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-100 mb-6">
-          <p className="text-zinc-600 text-sm leading-relaxed text-center font-medium">
+        <h3 className="text-2xl font-bold text-slate-900 text-center mb-4">Oops! Something went wrong</h3>
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-6">
+          <p className="text-slate-600 text-sm leading-relaxed text-center font-medium">
             {message}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="w-full bg-zinc-900 text-white rounded-xl py-4 font-bold hover:bg-zinc-800 transition-all shadow-lg"
+          className="w-full bg-slate-900 text-white rounded-xl py-4 font-bold hover:bg-slate-800 transition-all shadow-lg"
         >
           I Understand
         </button>
@@ -226,8 +226,12 @@ export default function App() {
   const [ageGroup, setAgeGroup] = useState(AGE_GROUPS[0]);
   const [englishLevel, setEnglishLevel] = useState(ENGLISH_LEVELS[0]);
   const [lessonCount, setLessonCount] = useState(4);
-  const [duration, setDuration] = useState("90 minutes");
-  const [preferredLocation, setPreferredLocation] = useState("");
+  const [duration, setDuration] = useState("180 minutes");
+  const [city, setCity] = useState("");
+  const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [customLocation, setCustomLocation] = useState("");
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [customTheme, setCustomTheme] = useState("");
   const [loading, setLoading] = useState(false);
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
@@ -242,11 +246,30 @@ export default function App() {
     }
   });
 
+  const effectiveCity = city.trim() || "武汉";
+
+  const handleConfirmCity = async () => {
+    setLoadingLocations(true);
+    setSuggestedLocations([]);
+    setSelectedLocation("");
+    try {
+      const locations = await suggestLocations(effectiveCity);
+      setSuggestedLocations(locations);
+      if (locations.length > 0) setSelectedLocation(locations[0]);
+    } catch (error: any) {
+      console.error("Failed to get location suggestions:", error);
+      setErrorStatus(error.message || "Failed to get location suggestions.");
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
     setErrorStatus(null);
     try {
-      const data = await generateCurriculum(ageGroup, englishLevel, lessonCount, duration, preferredLocation, customTheme);
+      const combinedLocation = [selectedLocation, customLocation.trim()].filter(Boolean).join(", ");
+      const data = await generateCurriculum(ageGroup, englishLevel, lessonCount, duration, combinedLocation, customTheme, effectiveCity);
       setCurriculum(data);
     } catch (error: any) {
       console.error("Failed to generate curriculum:", error);
@@ -267,7 +290,7 @@ export default function App() {
         englishLevel,
         lessonCount,
         duration,
-        preferredLocation,
+        preferredLocation: [selectedLocation, customLocation.trim()].filter(Boolean).join(", "),
         customTheme
       },
       curriculum
@@ -284,7 +307,9 @@ export default function App() {
     setEnglishLevel(record.params.englishLevel);
     setLessonCount(record.params.lessonCount);
     setDuration(record.params.duration);
-    setPreferredLocation(record.params.preferredLocation);
+    setCustomLocation(record.params.preferredLocation || "");
+    setSuggestedLocations([]);
+    setSelectedLocation("");
     setCustomTheme(record.params.customTheme);
     setCurriculum(record.curriculum);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -436,27 +461,23 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <header className="relative h-[40vh] flex items-center justify-center overflow-hidden bg-zinc-900">
-        <img
-          src="https://picsum.photos/seed/wuhan-nature/1920/1080?blur=2"
-          className="absolute inset-0 w-full h-full object-cover opacity-40"
-          alt="Wuhan Nature"
-          referrerPolicy="no-referrer"
-        />
+      <header className="relative py-16 md:py-20 flex items-center justify-center overflow-hidden bg-gradient-to-br from-teal-600 to-emerald-600">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div className="relative z-10 text-center px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase mb-4 border border-emerald-500/30">
+            <span className="inline-block px-3 py-1 rounded-xl bg-white/20 text-white text-xs font-bold tracking-widest uppercase mb-4 border border-white/30">
               STEAM Outdoor Expert
             </span>
-            <h1 className="text-5xl md:text-7xl font-serif text-white mb-6">
-              Curriculum <span className="italic">Designer</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Curriculum Designer
             </h1>
-            <p className="text-zinc-300 max-w-xl mx-auto text-lg">
-              Crafting immersive STEAM experiences in the heart of Wuhan's natural landscapes.
+            <p className="text-teal-100 max-w-xl mx-auto text-lg">
+              Crafting immersive STEAM experiences in the heart of {effectiveCity}'s natural landscapes.
             </p>
           </motion.div>
         </div>
@@ -464,10 +485,10 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-6 -mt-12 relative z-20">
         {/* Configuration Panel */}
-        <section className="glass rounded-3xl p-8 mb-12 shadow-2xl">
+        <section className="glass rounded-xl p-8 mb-12 shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
             <div className="space-y-4 md:col-span-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-zinc-500 uppercase tracking-wider">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
                 <Sparkles size={16} /> Curriculum Theme
               </label>
               <input
@@ -475,7 +496,7 @@ export default function App() {
                 placeholder="e.g., Biodiversity of East Lake, Urban Engineering in Wuhan, Seasonal Changes..."
                 value={customTheme}
                 onChange={(e) => setCustomTheme(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all font-medium"
               />
             </div>
 
@@ -486,7 +507,7 @@ export default function App() {
               <select
                 value={ageGroup}
                 onChange={(e) => setAgeGroup(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               >
                 {AGE_GROUPS.map(age => (
                   <option key={age} value={age}>{age}</option>
@@ -501,7 +522,7 @@ export default function App() {
               <select
                 value={englishLevel}
                 onChange={(e) => setEnglishLevel(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               >
                 {ENGLISH_LEVELS.map(level => (
                   <option key={level} value={level}>{level}</option>
@@ -519,7 +540,7 @@ export default function App() {
                 max="12"
                 value={lessonCount}
                 onChange={(e) => setLessonCount(parseInt(e.target.value) || 1)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               />
             </div>
 
@@ -532,20 +553,66 @@ export default function App() {
                 placeholder="e.g., 90 minutes, 2 hours"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               />
             </div>
 
-            <div className="space-y-4">
-              <label className="flex items-center gap-2 text-sm font-semibold text-zinc-500 uppercase tracking-wider">
-                <Search size={16} /> Preferred Location (Wuhan)
+            <div className="space-y-4 md:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                <MapPin size={16} /> City (留空默认武汉)
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  placeholder="e.g., 上海, 北京, 成都..."
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                />
+                <button
+                  onClick={handleConfirmCity}
+                  disabled={loadingLocations}
+                  className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                >
+                  {loadingLocations ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <>
+                      <Search size={18} /> 确认
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {suggestedLocations.length > 0 && (
+              <div className="space-y-4 md:col-span-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                  <Compass size={16} /> 推荐地点 ({effectiveCity})
+                </label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                >
+                  <option value="">-- 不选择推荐地点 --</option>
+                  {suggestedLocations.map((loc, i) => (
+                    <option key={i} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="space-y-4 md:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                <Edit3 size={16} /> 自定义地点 (可选)
               </label>
               <input
                 type="text"
-                placeholder="e.g., East Lake, Hankou Bund"
-                value={preferredLocation}
-                onChange={(e) => setPreferredLocation(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                placeholder="输入自定义地点名称，可与推荐地点同时使用"
+                value={customLocation}
+                onChange={(e) => setCustomLocation(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
               />
             </div>
 
@@ -553,7 +620,7 @@ export default function App() {
               <button
                 onClick={handleGenerate}
                 disabled={loading}
-                className="w-full bg-zinc-900 text-white rounded-xl py-4 font-semibold flex items-center justify-center gap-3 hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="w-full bg-teal-600 text-white rounded-xl py-4 font-semibold flex items-center justify-center gap-3 hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg"
               >
                 {loading ? (
                   <Loader2 className="animate-spin" />
@@ -581,13 +648,13 @@ export default function App() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   onClick={() => handleLoad(item)}
-                  className="bg-white border border-zinc-100 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group relative"
+                  className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer group relative"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-zinc-800 line-clamp-1 pr-6">{item.curriculum.theme}</h3>
+                    <h3 className="font-bold text-slate-800 line-clamp-1 pr-6">{item.curriculum.theme}</h3>
                     <button
                       onClick={(e) => handleDelete(item.id, e)}
-                      className="text-zinc-300 hover:text-red-500 transition-colors p-1"
+                      className="text-slate-300 hover:text-red-500 transition-colors p-1"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -621,8 +688,8 @@ export default function App() {
               {/* Theme Overview */}
               <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 print:hidden">
                 <div className="text-center md:text-left space-y-4 max-w-2xl">
-                  <h2 className="text-4xl font-serif font-bold text-zinc-900">{curriculum.theme}</h2>
-                  <p className="text-zinc-600 leading-relaxed text-lg italic">
+                  <h2 className="text-4xl font-bold text-slate-900">{curriculum.theme}</h2>
+                  <p className="text-slate-600 leading-relaxed text-lg">
                     "{curriculum.overview}"
                   </p>
                 </div>
@@ -667,14 +734,14 @@ export default function App() {
               key="placeholder"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-20 border-2 border-dashed border-zinc-200 rounded-3xl"
+              className="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl"
             >
               <div className="max-w-xs mx-auto space-y-4">
-                <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto text-zinc-400">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
                   <BookOpen size={32} />
                 </div>
-                <h3 className="text-xl font-medium text-zinc-400">No curriculum generated yet</h3>
-                <p className="text-sm text-zinc-400">
+                <h3 className="text-xl font-medium text-slate-400">No curriculum generated yet</h3>
+                <p className="text-sm text-slate-400">
                   Select your target audience and English level to start designing your STEAM adventure.
                 </p>
               </div>
@@ -684,7 +751,7 @@ export default function App() {
       </main>
 
       {/* Footer Branding */}
-      <footer className="mt-20 border-t border-zinc-200 pt-10 text-center text-zinc-400 text-sm">
+      <footer className="mt-20 border-t border-slate-200 pt-10 text-center text-slate-400 text-sm">
         <p>© 2026 STEAM Wuhan Outdoor Study Design. Inspired by Nature, Driven by Science.</p>
       </footer>
     </div>

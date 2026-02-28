@@ -15,9 +15,10 @@ export const ACTIVITY_FOCUS_OPTIONS = [
 ];
 
 export const AGE_RANGES = [
-  "6-8 years (Early Primary)",
-  "9-10 years (Middle Primary)",
-  "11-12 years (Late Primary)"
+  "6-9 Years (Primary Lower)",
+  "10-12 Years (Primary Upper)",
+  "13-15 Years (Middle School)",
+  "16-18 Years (High School)"
 ];
 
 export const CEFR_LEVELS = [
@@ -35,21 +36,21 @@ export const SAMPLE_THEMES = [
   "Photosynthesis Wizards: How Plants Eat Light",
   "The Mushroom Network: Nature's Internet",
   "Bird Song Symphony: Communication in the Canopy",
-  
+
   // Module 2: Physical World (Physics/Chemistry)
   "The Secret Life of Flour: Chemistry of Baking",
   "Wind Chasers: Harnessing Kinetic Energy",
   "Water's Magic Tricks: States of Matter & Surface Tension",
   "The Gravity Games: Falling, Floating, & Flying",
   "Color Alchemists: Extracting Pigments from Nature",
-  
+
   // Module 3: Earth & Space (Geology/Astronomy)
   "The Water Cycle Expedition: From Puddle to Cloud",
   "Rock Detectives: Reading the Earth's History",
   "Mars Rover: Backyard Edition (Robotics & Space)",
   "Lunar Legends: Phases of the Moon & Tides",
   "Soil Superheroes: The Foundation of Life",
-  
+
   // Module 4: Engineering & Design
   "Bridge Builders of the Forest: Structural Integrity",
   "Bio-Mimicry Lab: Designing Like Nature",

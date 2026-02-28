@@ -153,12 +153,52 @@ export interface SavedLesson {
   topic: string;
   level: string;
   content: GeneratedContent;
-  cnContent?: GeneratedContent;
 }
 
 export interface AppState {
   isLoading: boolean;
   generatedContent: GeneratedContent | null;
-  cnContent?: GeneratedContent | null;
   error: string | null;
+}
+
+// --- Curriculum Types ---
+
+export interface CurriculumLesson {
+  lessonNumber: number;
+  title: string;
+  topic: string;
+  description: string;
+  objectives: string[];
+  suggestedVocabulary: string[];
+  grammarFocus: string;
+  suggestedActivities: string[];
+  textbookReference: string;
+}
+
+export interface ESLCurriculum {
+  textbookTitle: string;
+  overview: string;
+  totalLessons: number;
+  targetLevel: string;
+  lessons: CurriculumLesson[];
+}
+
+export interface CurriculumParams {
+  lessonCount: number;
+  level: CEFRLevel;
+  duration: string;
+  studentCount: string;
+  slideCount: number;
+  customInstructions: string;
+}
+
+export interface SavedCurriculum {
+  id: string;
+  timestamp: number;
+  lastModified: number;
+  textbookTitle: string;
+  targetLevel: string;
+  totalLessons: number;
+  curriculum: ESLCurriculum;
+  params: CurriculumParams;
 }

@@ -89,4 +89,43 @@ export interface SavedLessonPlan {
   name: string;
   plan: LessonPlanResponse;
   coverImage?: string; // Optional badge image for projects
+  language?: 'en' | 'zh';
+}
+
+// --- Curriculum Planning Types (from STEAM Designer) ---
+
+export interface CurriculumLesson {
+  title: string;
+  description: string;
+  steam_focus: string;
+  esl_focus: string;
+  location: string;
+  outdoor_activity: string;
+  indoor_alternative: string;
+  english_vocabulary: string[];
+}
+
+export interface Curriculum {
+  theme: string;
+  overview: string;
+  lessons: CurriculumLesson[];
+}
+
+export interface CurriculumParams {
+  city: string;
+  ageGroup: string;
+  englishLevel: string;
+  lessonCount: number;
+  duration: string;
+  preferredLocation: string;
+  customTheme: string;
+}
+
+export interface SavedCurriculum {
+  id: string;
+  timestamp: number;
+  name: string;
+  curriculum: Curriculum;
+  params: CurriculumParams;
+  language: 'en' | 'zh';
 }

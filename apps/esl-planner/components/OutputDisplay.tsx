@@ -15,8 +15,7 @@ import { CompanionTab } from './tabs/CompanionTab';
 
 interface OutputDisplayProps {
     content: GeneratedContent;
-    cnContent?: GeneratedContent;
-    onSave: (content: GeneratedContent, cnContent?: GeneratedContent) => void;
+    onSave: (content: GeneratedContent) => void;
 }
 
 const ASPECT_RATIOS = [
@@ -103,27 +102,8 @@ const CorrectionLegend = () => (
     </div>
 );
 
-export const OutputDisplay: React.FC<OutputDisplayProps> = ({ content, cnContent, onSave }) => {
-    const [dualContent, setDualContent] = useState<{ en: GeneratedContent, cn: GeneratedContent | null }>({ en: content, cn: cnContent || null });
-    const [viewLang, setViewLang] = useState<'en' | 'cn'>('en');
-    const [isTranslatingInit, setIsTranslatingInit] = useState(false);
-
-    useEffect(() => {
-        if (!cnContent && !dualContent.cn && !isTranslatingInit) {
-            setIsTranslatingInit(true);
-            translateLessonKit(content, "Chinese").then(res => {
-                if (res.structuredLessonPlan?.classInformation) {
-                    res.structuredLessonPlan.classInformation.topic =
-                        (res.structuredLessonPlan.classInformation.topic || 'Lesson') + " (中文)";
-                }
-                setDualContent(prev => ({ ...prev, cn: res }));
-                setIsTranslatingInit(false);
-            }).catch(e => {
-                console.error("Auto translation failed:", e);
-                setIsTranslatingInit(false);
-            });
-        }
-    }, [content, cnContent, dualContent.cn]);
+export const OutputDisplay: React.FC<OutputDisplayProps> = ({ content, onSave }) => {
+    const viewLang = 'en';
 
     const [activeTab, setActiveTab] = useState<'plan' | 'slides' | 'materials' | 'games' | 'companion'>('plan');
     const [isSaving, setIsSaving] = useState(false);
@@ -275,45 +255,12 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ content, cnContent
         decodableTextImages: decodableTextImages
     });
 
-    const switchLanguage = (target: 'en' | 'cn') => {
-        if (target === 'cn' && !dualContent.cn) return;
-
-        const currentData = getCurrentContentObject();
-        const updatedDual = {
-            ...dualContent,
-            [viewLang]: currentData
-        };
-        setDualContent(updatedDual);
-
-        const targetData = updatedDual[target]!;
-        setEditablePlan(targetData.structuredLessonPlan);
-        setEditableSlides(targetData.slides || []);
-        setLocalFlashcards(targetData.flashcards || []);
-        setEditableGames(targetData.games || []);
-        setEditableReadingCompanion(targetData.readingCompanion);
-        setWorksheets(targetData.worksheets || []);
-        setGrammarInfographicUrl(targetData.grammarInfographicUrl);
-        setBlackboardImageUrl(targetData.blackboardImageUrl);
-
-        const rawPhonics = targetData.phonics;
-        if (rawPhonics) {
-            const texts = rawPhonics.decodableTexts || ((rawPhonics as any).decodableText ? [(rawPhonics as any).decodableText] : []);
-            const prompts = rawPhonics.decodableTextPrompts || texts.map(() => "");
-            setPhonicsContent({ ...rawPhonics, decodableTexts: texts, decodableTextPrompts: prompts });
-        }
-
-        setFlashcardImages(targetData.flashcardImages || {});
-        setDecodableTextImages(targetData.decodableTextImages || {});
-
-        setViewLang(target);
-    };
-
     const { saveStatus, lastSaved, saveNow } = useAutoSave({
         getCurrentContentObject,
         onSave,
-        dualContent,
-        setDualContent,
-        viewLang,
+        dualContent: { en: content, cn: null },
+        setDualContent: () => { },
+        viewLang: 'en',
         editablePlan,
     });
 
@@ -1355,17 +1302,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({ content, cnContent
                     ))}
                 </div>
                 <div className="p-2 md:p-0 pr-4 no-print flex items-center gap-2">
-                    <button
-                        onClick={() => switchLanguage(viewLang === 'en' ? 'cn' : 'en')}
-                        disabled={viewLang === 'en' && (isTranslatingInit || !dualContent.cn)}
-                        className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 ${viewLang === 'en' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'} rounded-lg transition-colors shadow-sm disabled:opacity-70 text-sm font-semibold`}
-                    >
-                        {isTranslatingInit && viewLang === 'en' ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Generating 中文...</>
-                        ) : (
-                            <><Globe className="w-4 h-4" /> {viewLang === 'en' ? 'Switch to 中文' : 'Switch to English'}</>
-                        )}
-                    </button>
                     <div className="flex items-center gap-3">
                         <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400">
                             <span className={`w-2 h-2 rounded-full ${saveStatus === 'saved' ? 'bg-green-400' : saveStatus === 'saving' ? 'bg-yellow-400 animate-pulse' : 'bg-orange-400 animate-pulse'}`} />
