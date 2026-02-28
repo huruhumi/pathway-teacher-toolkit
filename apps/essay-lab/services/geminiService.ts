@@ -187,8 +187,12 @@ export const analyzeEssay = async (
   if (typeof essayInput === 'string') parts.push({ text: `【作文】：\n${essayInput}` });
   else parts.push({ text: "【作文图片】：", inlineData: { data: essayInput.base64, mimeType: essayInput.mimeType } });
 
+  if (!import.meta.env.VITE_GEMINI_API_KEY) {
+    throw new Error("未检测到 API Key，请确保 Vercel 环境变量 VITE_GEMINI_API_KEY 已正确配置。");
+  }
+
   const response: GenerateContentResponse = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: { parts },
     config: { systemInstruction: SYSTEM_INSTRUCTION, responseMimeType: "application/json", responseSchema: responseSchema },
   });
@@ -212,8 +216,12 @@ export const generateAdditionalItem = async (
     languageEnhancement: { type: Type.OBJECT, properties: { original: { type: Type.STRING }, level2: { type: Type.STRING }, level3: { type: Type.STRING } }, required: ["original", "level2", "level3"] },
   };
 
+  if (!import.meta.env.VITE_GEMINI_API_KEY) {
+    throw new Error("未检测到 API Key，请确保 Vercel 环境变量 VITE_GEMINI_API_KEY 已正确配置。");
+  }
+
   const response = await ai.models.generateContent({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     contents: `根据命题 "${topic}" 和作文 "${essay}"，再生成一条全新的、不重复于 [${JSON.stringify(existingItems)}] 的 "${type}" 条目。对于 languageEnhancement，确保 Level 2 和 Level 3 中使用星号 * 包裹升级词汇。`,
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
