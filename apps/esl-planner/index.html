@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ESL Smart Planner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4f46e5',
+            secondary: '#10b981',
+            accent: '#f59e0b',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          keyframes: {
+            'fade-in-up': {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          },
+          animation: {
+            'fade-in-up': 'fade-in-up 0.5s ease-out forwards',
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Advanced Print Styles - Option 1 Implementation */
+    @media print {
+      @page {
+        margin: 1.5cm;
+        size: auto;
+      }
+
+      /* Hide interface elements that shouldn't be in a document */
+      nav,
+      footer,
+      .no-print,
+      button,
+      .lucide,
+      [role="tablist"],
+      .flex.overflow-x-auto,
+      .border-b.no-print {
+        display: none !important;
+      }
+
+      body {
+        background-color: white !important;
+        color: black !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      main {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        display: block !important;
+      }
+
+      /* Ensure containers look clean for print */
+      .bg-white,
+      .bg-gray-50,
+      .bg-gray-50\/30,
+      .bg-indigo-50\/30,
+      .bg-teal-50\/30,
+      .bg-orange-50 {
+        background-color: transparent !important;
+        border: 1px solid #eee !important;
+        box-shadow: none !important;
+        border-radius: 4px !important;
+      }
+
+      .shadow-lg,
+      .shadow-md,
+      .shadow-sm {
+        box-shadow: none !important;
+      }
+
+      /* Handle Page Breaks */
+      h2,
+      h3,
+      h4 {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+      }
+
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+
+      /* Avoid cutting off specific blocks */
+      .rounded-xl,
+      .border,
+      .space-y-6>div,
+      .space-y-4>div {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 1rem;
+      }
+
+      /* Keep headers forced color if useful, or allow them to be white-back-black-text */
+      .bg-[#14b8a6],
+      .bg-indigo-600,
+      .bg-purple-600,
+      .bg-orange-600,
+      .bg-teal-600 {
+        color: black !important;
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+
+      /* Textarea and Input normalization for print */
+      textarea,
+      input {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        color: black !important;
+        resize: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+        width: 100% !important;
+        font-family: inherit !important;
+      }
+
+      /* Special handling for flashcards grid in print */
+      .grid {
+        display: block !important;
+      }
+
+      /* Ensure flashcards are properly sized and spaced */
+      .flex-col.sm\:flex-row.h-auto {
+        display: flex !important;
+        flex-direction: row !important;
+        margin-bottom: 2cm !important;
+        border: 1px solid #ddd !important;
+        height: 8cm !important;
+        /* Fixed height for consistent printing */
+      }
+
+      /* Force image display */
+      img {
+        max-height: 100% !important;
+        display: block !important;
+        margin: 0 auto !important;
+      }
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "jszip": "https://esm.sh/jszip@3.10.1"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

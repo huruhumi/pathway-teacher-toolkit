@@ -1,0 +1,7 @@
+{
+  "name": "ESL Master - English Essay Correction Lab",
+  "description": "A specialized AI tool for Chinese K12 students to receive professional ESL essay feedback, focusing on mechanics, grammar, vocabulary, logic, and content.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
