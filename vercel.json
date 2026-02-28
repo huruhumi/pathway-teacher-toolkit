@@ -2,23 +2,23 @@
   "rewrites": [
     {
       "source": "/planner/:path*",
-      "destination": "https://pathway-esl-planner.vercel.app/:path*"
+      "destination": "https://pathway-teacher-toolkit-4nl1.vercel.app/:path*"
     },
     {
       "source": "/essay-lab/:path*",
-      "destination": "https://pathway-essay-lab.vercel.app/:path*"
+      "destination": "https://pathway-teacher-toolkit-bdub.vercel.app/:path*"
     },
     {
       "source": "/nature-compass/:path*",
-      "destination": "https://pathway-nature-compass.vercel.app/:path*"
+      "destination": "https://pathway-teacher-toolkit-xj5a.vercel.app/:path*"
     },
     {
       "source": "/steam-designer/:path*",
-      "destination": "https://pathway-steam-designer.vercel.app/:path*"
+      "destination": "https://pathway-teacher-toolkit-m1vr.vercel.app/:path*"
     },
     {
       "source": "/academy-ops/:path*",
-      "destination": "https://pathway-academy-ops.vercel.app/:path*"
+      "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/:path*"
     }
   ]
 }
