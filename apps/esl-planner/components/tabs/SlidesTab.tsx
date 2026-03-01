@@ -68,7 +68,7 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Presentation Slides Outline</h3>
+                <h3 className="text-xl font-bold text-slate-800">Presentation Slides Outline</h3>
                 <div className="flex gap-2 no-print">
                     <button
                         onClick={() => openViewer('slides')}
@@ -115,30 +115,30 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {editableSlides.map((slide, idx) => (
-                    <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col h-full hover:border-indigo-300 transition-colors">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col h-full hover:border-indigo-300 transition-colors">
                         <div className="flex justify-between items-start mb-4">
                             <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Slide {idx + 1}</span>
-                            <button onClick={() => handleDeleteSlide(idx)} className="p-1 text-gray-300 hover:text-red-500 transition-colors no-print"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteSlide(idx)} className="p-1 text-slate-300 hover:text-red-500 transition-colors no-print"><Trash2 className="w-4 h-4" /></button>
                         </div>
                         <input
                             value={slide.title}
                             onChange={(e) => handleSlideChange(idx, 'title', e.target.value)}
-                            className="font-bold text-gray-800 mb-3 bg-transparent border-none outline-none w-full focus:bg-indigo-50/30 rounded px-1 py-0.5"
+                            className="font-bold text-slate-800 dark:text-slate-200 mb-3 bg-transparent border-none outline-none w-full focus:bg-indigo-50/30 dark:focus:bg-indigo-900/20 rounded px-1 py-0.5"
                             placeholder="Slide title..."
                         />
                         <AutoResizeTextarea
                             value={slide.content}
                             onChange={(e) => handleSlideChange(idx, 'content', e.target.value)}
-                            className="flex-1 text-sm text-gray-600 mb-4 leading-relaxed bg-transparent border-none outline-none w-full focus:bg-gray-50 rounded px-1 py-0.5"
+                            className="flex-1 text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed bg-transparent border-none outline-none w-full focus:bg-slate-50 dark:focus:bg-slate-800/50 rounded px-1 py-0.5"
                             placeholder="Slide content..."
                             minRows={2}
                         />
-                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2">
-                            <span className="font-bold text-[9px] uppercase block mb-1 tracking-widest text-gray-400">Visual</span>
+                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
+                            <span className="font-bold text-[9px] uppercase block mb-1 tracking-widest text-slate-400">Visual</span>
                             <AutoResizeTextarea
                                 value={slide.visual}
                                 onChange={(e) => handleSlideChange(idx, 'visual', e.target.value)}
-                                className="text-[11px] italic text-gray-500 bg-transparent border-none outline-none w-full focus:bg-white rounded px-1 py-0.5"
+                                className="text-[11px] italic text-slate-500 bg-transparent border-none outline-none w-full focus:bg-white rounded px-1 py-0.5"
                                 placeholder="Visual description..."
                                 minRows={1}
                             />

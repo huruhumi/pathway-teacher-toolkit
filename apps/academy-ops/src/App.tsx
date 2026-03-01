@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
-import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun } from 'lucide-react';
+import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Planner from './components/Planner';
 import ContentGenerator from './components/ContentGenerator';
@@ -11,6 +11,9 @@ import { INITIAL_BRAND_DATA } from './data/brandData';
 import { SavedNote } from './types';
 import { safeStorage } from '@shared/safeStorage';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeroBanner } from '@shared/components/HeroBanner';
+import { PageLayout } from '@shared/components/PageLayout';
+import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
@@ -138,12 +141,12 @@ function AppContent() {
   );
 
   return (
-    <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900'}`}>
       <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#334155', color: '#fff', borderRadius: '12px' } }} />
 
       <AppHeader
-        appName="Pathway Ops"
-        logoIcon={<span className="font-bold text-lg">P</span>}
+        appName="Rednote Ops"
+        logoIcon={<Library className="w-5 h-5" />}
         brand={{
           logoBg: 'bg-rose-500',
           activeBg: 'bg-rose-50',
@@ -156,16 +159,30 @@ function AppContent() {
         rightContent={headerToggles}
       />
 
-      <main className="p-4 md:p-8 max-w-6xl mx-auto">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {renderContent()}
-        </motion.div>
-      </main>
+      <PageLayout>
+        <HeroBanner
+          title={lang === 'zh' ? '小红书智能运营助手' : 'Rednote Content Operations'}
+          description={lang === 'zh'
+            ? '一站式管理品牌设定、内容日历和AI文案生成，高效打造专业小红书运营工作流。'
+            : 'Manage brand settings, content calendar, and AI copywriting in one place to streamline your Rednote operations workflow.'}
+          gradient="from-rose-600 via-pink-600 to-fuchsia-600"
+          tags={[
+            { label: lang === 'zh' ? '品牌管理' : 'Brand Management' },
+            { label: lang === 'zh' ? '内容日历' : 'Content Calendar' },
+            { label: lang === 'zh' ? 'AI 文案' : 'AI Copywriting' },
+          ]}
+        />
+        <BodyContainer>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderContent()}
+          </motion.div>
+        </BodyContainer>
+      </PageLayout>
     </div>
   );
 }

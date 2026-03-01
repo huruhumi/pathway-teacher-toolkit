@@ -263,6 +263,7 @@ export const translations = {
     'focus.Theater & Drama': { en: 'Theater & Drama', zh: '戏剧与表演' },
     'focus.Social Science': { en: 'Social Science', zh: '社会科学' },
     'focus.Economy & Trade': { en: 'Economy & Trade', zh: '经济与贸易' },
+    'focus.History & Culture': { en: 'History & Culture', zh: '历史与文化' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

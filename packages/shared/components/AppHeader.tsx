@@ -47,7 +47,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     rightContent,
 }) => {
     return (
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
+        <header className="bg-white dark:bg-slate-950/80 dark:backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 shadow-sm dark:shadow-none print:hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 {/* Logo */}
                 <div
@@ -58,7 +58,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         {logoIcon}
                     </div>
                     <div className="flex flex-col justify-center">
-                        <h1 className={`text-lg font-bold tracking-tight ${brand.logoText || 'text-slate-800'} truncate`}>
+                        <h1 className={`text-lg font-bold tracking-tight ${brand.logoText || 'text-slate-800 dark:text-slate-100'} truncate`}>
                             {appName}
                         </h1>
                         {subtitle && (
@@ -70,15 +70,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </div>
 
                 {/* Center: Pill Tabs (desktop) */}
-                <nav className="hidden md:flex items-center bg-slate-100 rounded-xl p-1 gap-0.5">
+                <nav className="hidden md:flex items-center bg-slate-100 dark:bg-white/5 dark:ring-1 dark:ring-white/10 rounded-xl p-1 gap-0.5">
                     {tabs.map(tab => (
                         <button
                             key={tab.key}
                             onClick={() => onTabChange(tab.key)}
                             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
                 ${activeTab === tab.key
-                                    ? `bg-white ${brand.activeText} shadow-sm`
-                                    : 'text-slate-500 hover:text-slate-700'
+                                    ? `bg-white dark:bg-white/10 ${brand.activeText} shadow-sm dark:shadow-none`
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                 }`}
                         >
                             {tab.icon}
@@ -118,7 +118,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                     {rightContent && (
                         <>
-                            <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block" />
+                            <div className="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1 hidden sm:block" />
                             {rightContent}
                         </>
                     )}

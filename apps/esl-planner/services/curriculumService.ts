@@ -62,7 +62,7 @@ CRITICAL INSTRUCTIONS:
     prompt += `\n\n--- TEXTBOOK CONTENT ---\n${textbookText}`;
 
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -76,7 +76,7 @@ CRITICAL INSTRUCTIONS:
 export const translateLessonKit = async (content: any, targetLanguage: string = "Chinese"): Promise<any> => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-2.5-flash',
         contents: `You are an expert educational translator. I am providing a JSON object representing an English ESL lesson kit. 
 Translate ALL nested string values (including lesson plans, slide outlines, games, reading passages, worksheets, phonics texts, etc.) into natural, professional ${targetLanguage}.
 CRITICAL INSTRUCTIONS:

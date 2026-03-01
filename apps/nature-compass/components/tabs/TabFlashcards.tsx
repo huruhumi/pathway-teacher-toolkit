@@ -80,7 +80,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {vocabList.map((item, idx) => (
-                    <div key={idx} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group hover:border-emerald-300 hover:shadow-md transition-all">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-gray-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm flex flex-col group relative hover:border-emerald-300 hover:shadow-md transition-all">
                         <div className="aspect-[4/3] bg-slate-100 relative group-hover:bg-slate-50 transition-colors">
                             {generatedImages[idx] ? (
                                 <div className="relative w-full h-full">

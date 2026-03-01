@@ -37,7 +37,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
     return (
         <div className="max-w-4xl mx-auto space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-xl font-bold text-gray-800">Lesson Infographic Generator</h3>
+                <h3 className="text-xl font-bold text-slate-800">Lesson Infographic Generator</h3>
                 <div className="flex gap-2">
                     {grammarInfographicUrl && (
                         <button onClick={handleDownloadGrammarInfographic} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold">
@@ -50,7 +50,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                 </div>
             </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-8 no-print">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm space-y-8 no-print">
                 <div className="space-y-4">
                     <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
                         <Bot className="w-5 h-5 text-indigo-500" />
@@ -61,7 +61,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                             value={customGrammarPrompt}
                             onChange={(e) => setCustomGrammarPrompt(e.target.value)}
                             placeholder="e.g. Use a forest theme, make it very colorful for kids..."
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                         />
                         <button
                             onClick={handleGenerateGrammarInfographic}
@@ -72,28 +72,28 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                             {grammarInfographicUrl ? 'Regenerate Infographic' : 'Generate Infographic'}
                         </button>
                     </div>
-                    <p className="text-[10px] text-gray-400 italic">This will integrate both Grammar Points and Target Vocabulary into a single visual handout.</p>
+                    <p className="text-[10px] text-slate-400 italic">This will integrate both Grammar Points and Target Vocabulary into a single visual handout.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Grammar Points Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Key Grammar Points</h4>
+                            <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Key Grammar Points</h4>
                             <button onClick={handleGenerateSingleGrammar} disabled={isGeneratingSingleGrammar} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
                                 {isGeneratingSingleGrammar ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Smart Point
                             </button>
                         </div>
                         <div className="space-y-3">
                             {editablePlan?.lessonDetails.grammarSentences.map((s, i) => (
-                                <div key={i} className="flex gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 group">
+                                <div key={i} className="flex gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 group">
                                     <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-black text-[10px] mt-1 shrink-0">{i + 1}</div>
                                     <AutoResizeTextarea
                                         value={s}
                                         onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)}
-                                        className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 leading-relaxed font-medium"
+                                        className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 leading-relaxed font-medium"
                                     />
-                                    <button onClick={() => deleteArrayItem('grammarSentences', i)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => deleteArrayItem('grammarSentences', i)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -103,7 +103,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Target Vocabulary</h4>
+                            <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Target Vocabulary</h4>
                         </div>
                         <div className="space-y-3">
                             {editablePlan?.lessonDetails.targetVocab.map((v, i) => (
@@ -124,7 +124,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                                 </div>
                             ))}
                             {(!editablePlan?.lessonDetails.targetVocab || editablePlan?.lessonDetails.targetVocab.length === 0) && (
-                                <p className="text-xs text-gray-400 italic text-center py-4">No vocabulary items to illustrate yet.</p>
+                                <p className="text-xs text-slate-400 italic text-center py-4">No vocabulary items to illustrate yet.</p>
                             )}
                         </div>
                     </div>
@@ -133,7 +133,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
 
             {grammarInfographicUrl && (
                 <div className="space-y-4 animate-fade-in-up">
-                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest text-center">Generated Handout</h4>
+                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest text-center">Generated Handout</h4>
                     <div className="bg-white p-4 rounded-[2.5rem] border-[12px] border-indigo-50 shadow-2xl overflow-hidden group text-center">
                         <img src={grammarInfographicUrl} className="w-full h-auto rounded-[1.5rem] mx-auto max-w-4xl" alt="infographic handout" />
                     </div>

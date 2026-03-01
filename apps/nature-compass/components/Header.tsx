@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowA
       onLogoClick={() => onNavigate('curriculum')}
       rightContent={
         <div className="flex items-center gap-2">
-          <HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />
+          <HeaderToggles lang={lang} onLangChange={setLang} />
           {authContent}
         </div>
       }

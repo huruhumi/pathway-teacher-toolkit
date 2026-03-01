@@ -47,7 +47,7 @@ const CorrectionRecords: React.FC = () => {
 
     if (viewingReport) {
         return (
-            <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="max-w-5xl mx-auto px-4 py-6">
                 <button
                     onClick={() => setViewingReport(null)}
                     className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium mb-4 transition-colors"
@@ -79,7 +79,7 @@ const CorrectionRecords: React.FC = () => {
                     <select
                         value={filterGrade}
                         onChange={e => setFilterGrade(e.target.value)}
-                        className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
+                        className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
                     >
                         <option value="all">{t('records.filterAll')}</option>
                         {Object.values(StudentGrade).map(g => (
@@ -89,7 +89,7 @@ const CorrectionRecords: React.FC = () => {
                     <select
                         value={filterCefr}
                         onChange={e => setFilterCefr(e.target.value)}
-                        className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
+                        className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
                     >
                         <option value="all">{t('records.filterAll')}</option>
                         {Object.values(CEFRLevel).map(c => (
@@ -112,7 +112,7 @@ const CorrectionRecords: React.FC = () => {
                     {filtered.map(record => (
                         <div
                             key={record.id}
-                            className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md hover:border-indigo-200 transition-all group"
+                            className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-white/10 transition-all group"
                         >
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
@@ -124,8 +124,8 @@ const CorrectionRecords: React.FC = () => {
                                             <Gauge className="w-3 h-3" /> {record.cefr}
                                         </span>
                                         <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md ${record.report.overallGrade.startsWith('A') ? 'bg-emerald-50 text-emerald-700' :
-                                                record.report.overallGrade.startsWith('B') ? 'bg-blue-50 text-blue-700' :
-                                                    'bg-amber-50 text-amber-700'
+                                            record.report.overallGrade.startsWith('B') ? 'bg-blue-50 text-blue-700' :
+                                                'bg-amber-50 text-amber-700'
                                             }`}>
                                             <Award className="w-3 h-3" /> {record.report.overallGrade}
                                         </span>

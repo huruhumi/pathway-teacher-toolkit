@@ -243,7 +243,7 @@ const EssayLibrary: React.FC = () => {
             {allEssays.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
                     <Filter className="w-4 h-4 text-slate-400" />
-                    <select value={filterSource} onChange={e => setFilterSource(e.target.value as any)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <select value={filterSource} onChange={e => setFilterSource(e.target.value as any)} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 outline-none">
                         <option value="all">{t('records.filterAll')}</option>
                         <option value="generated">{t('essays.aiGenerated')}</option>
                         <option value="correction">{t('essays.fromCorrection')}</option>
@@ -295,7 +295,7 @@ const EssayLibrary: React.FC = () => {
                         const gen = isGenerated ? essay as GeneratedEssay : null;
 
                         return (
-                            <div key={essay.id} className={`bg-white rounded-xl border transition-all ${isExpanded ? 'border-indigo-300 shadow-lg' : 'border-slate-200 hover:shadow-md hover:border-indigo-200'}`}>
+                            <div key={essay.id} className={`bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border transition-all ${isExpanded ? 'border-indigo-300 shadow-lg' : 'border-slate-200 dark:border-white/5 hover:shadow-md hover:border-indigo-200'}`}>
                                 {/* Card Header */}
                                 <div className="p-5">
                                     <div className="flex items-start justify-between gap-4">

@@ -175,7 +175,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h3 className="text-xl font-bold text-gray-800">7-Day Post-Class Review Plan</h3>
+                <h3 className="text-xl font-bold text-slate-800">7-Day Post-Class Review Plan</h3>
                 <div className="flex gap-2 no-print">
                     <button onClick={() => openViewer('companion')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold shadow-sm">
                         <ExternalLink className="w-4 h-4" /> Interactive View
@@ -235,7 +235,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 newDays[dIdx].activity = e.target.value;
                                                 setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                             }}
-                                            className="w-full text-base font-bold text-gray-800 bg-transparent border-none outline-none focus:bg-orange-50/30 p-2 rounded-xl"
+                                            className="w-full text-base font-bold text-slate-800 bg-transparent border-none outline-none focus:bg-orange-50/30 p-2 rounded-xl"
                                             minRows={1}
                                         />
                                         <AutoResizeTextarea
@@ -245,7 +245,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 newDays[dIdx].activity_cn = e.target.value;
                                                 setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                             }}
-                                            className="w-full text-xs text-gray-400 italic bg-transparent border-none outline-none focus:bg-orange-50/30 p-2 rounded-xl"
+                                            className="w-full text-xs text-slate-400 italic bg-transparent border-none outline-none focus:bg-orange-50/30 p-2 rounded-xl"
                                             minRows={1}
                                         />
                                     </div>
@@ -255,7 +255,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                     <h5 className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-4">Step-by-Step Guidance</h5>
                                     <div className="space-y-3">
                                         {day.tasks?.map((task, tIdx) => (
-                                            <div key={tIdx} className="flex gap-4 items-start bg-gray-50/50 p-4 rounded-2xl border border-gray-100 group">
+                                            <div key={tIdx} className="flex gap-4 items-start bg-slate-50/50 p-4 rounded-2xl border border-slate-100 group">
                                                 <button
                                                     onClick={() => handleTaskChange(dIdx, tIdx, 'isCompleted', !task.isCompleted)}
                                                     className={`w-5 h-5 rounded-md border-2 shrink-0 transition-all mt-1 ${task.isCompleted ? 'bg-orange-500 border-orange-500 text-white flex items-center justify-center' : 'bg-white border-orange-200 hover:border-orange-500'}`}
@@ -266,20 +266,20 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                     <input
                                                         value={task.text}
                                                         onChange={(e) => handleTaskChange(dIdx, tIdx, 'text', e.target.value)}
-                                                        className={`w-full text-sm font-medium bg-transparent border-none outline-none ${task.isCompleted ? 'text-gray-400 line-through' : 'text-gray-700'}`}
+                                                        className={`w-full text-sm font-medium bg-transparent border-none outline-none ${task.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700'}`}
                                                     />
                                                     <input
                                                         value={task.text_cn}
                                                         onChange={(e) => handleTaskChange(dIdx, tIdx, 'text_cn', e.target.value)}
-                                                        className={`w-full text-xs italic bg-transparent border-none outline-none ${task.isCompleted ? 'text-gray-300' : 'text-gray-400'}`}
+                                                        className={`w-full text-xs italic bg-transparent border-none outline-none ${task.isCompleted ? 'text-slate-300' : 'text-slate-400'}`}
                                                     />
                                                 </div>
-                                                <button onClick={() => handleDeleteTask(dIdx, tIdx)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                <button onClick={() => handleDeleteTask(dIdx, tIdx)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity no-print">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         ))}
-                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-xs text-gray-300 italic text-center py-4">No specific tasks defined. Click 'Add Smart Task' above.</p>}
+                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-xs text-slate-300 italic text-center py-4">No specific tasks defined. Click 'Add Smart Task' above.</p>}
                                     </div>
                                 </div>
                             </div>
@@ -327,7 +327,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                 )}
 
                                 <div className="space-y-4">
-                                    <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Recommended Web Resources</h5>
+                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recommended Web Resources</h5>
                                     <div className="space-y-4">
                                         {day.resources?.map((res, rIdx) => (
                                             <div key={rIdx} className="bg-blue-50/30 p-6 rounded-[1.5rem] border border-blue-100 relative group">
@@ -347,13 +347,13 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 <input
                                                     value={res.url}
                                                     onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'url', e.target.value)}
-                                                    className="w-full text-[10px] text-gray-400 truncate mb-2 bg-transparent border-none outline-none italic"
+                                                    className="w-full text-[10px] text-slate-400 truncate mb-2 bg-transparent border-none outline-none italic"
                                                     placeholder="https://..."
                                                 />
                                                 <AutoResizeTextarea
                                                     value={res.description}
                                                     onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'description', e.target.value)}
-                                                    className="w-full text-[11px] text-gray-500 leading-relaxed bg-transparent border-none outline-none focus:bg-blue-50 rounded"
+                                                    className="w-full text-[11px] text-slate-500 leading-relaxed bg-transparent border-none outline-none focus:bg-blue-50 rounded"
                                                     minRows={1}
                                                 />
                                             </div>

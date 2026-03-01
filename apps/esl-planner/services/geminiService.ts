@@ -259,7 +259,7 @@ export const generateLessonPlan = async (
   }
 
   const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-2.5-flash',
     contents: { parts },
     config: {
       responseMimeType: "application/json",

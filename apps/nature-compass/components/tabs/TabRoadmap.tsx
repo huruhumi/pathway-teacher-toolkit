@@ -75,7 +75,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
     const { t } = useLanguage();
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Info size={20} className="text-emerald-600" />
                     {t('road.workshopDetails')}</h3>
@@ -158,7 +158,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         onDragStart={(e) => handleRoadmapDragStart(e, idx)}
                         onDragOver={handleRoadmapDragOver}
                         onDrop={(e) => handleRoadmapDrop(e, idx)}
-                        className={`bg-white rounded-xl border transition-all ${draggedRoadmapIndex === idx ? 'border-emerald-400 shadow-lg opacity-50' : 'border-slate-200 hover:border-emerald-300 shadow-sm'}`}
+                        className={`bg-white dark:bg-slate-900/80 rounded-xl border transition-all ${draggedRoadmapIndex === idx ? 'border-emerald-400 shadow-lg opacity-50' : 'border-slate-200 dark:border-white/5 hover:border-emerald-300 shadow-sm'}`}
                     >
                         <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
                             <div className="mt-1 text-slate-400 group-hover:text-slate-600">

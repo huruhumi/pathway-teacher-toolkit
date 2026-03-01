@@ -69,8 +69,8 @@
             zh: '设计课程',
         },
         'tool.ops.title': {
-            en: 'Academy Ops',
-            zh: '学院运营中心',
+            en: 'Rednote Ops',
+            zh: '小红书运营',
         },
         'tool.ops.desc': {
             en: 'Internal tools for social media operations and academy growth management.',

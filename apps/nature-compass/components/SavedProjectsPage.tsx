@@ -180,7 +180,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                     <input
                         autoFocus
-                        className="text-xl font-bold text-slate-800 border-b-2 border-emerald-500 outline-none bg-transparent w-full"
+                        className="text-base font-bold text-slate-800 border-b-2 border-emerald-500 outline-none bg-transparent w-full"
                         value={tempName}
                         onChange={(e) => setTempName(e.target.value)}
                         onKeyDown={(e) => {
@@ -196,7 +196,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
         }
         return (
             <h3
-                className="text-xl font-bold text-slate-800 mb-3 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors cursor-pointer"
+                className="text-base font-bold text-slate-800 mb-2 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); startEditing(id, name); }}
                 title="Click to rename"
             >
@@ -211,7 +211,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     }) => (
         <div className="relative">
             <select
-                className="appearance-none bg-white border border-slate-200 rounded-lg pl-4 pr-10 py-2 text-sm font-medium text-slate-600 focus:border-emerald-500 outline-none cursor-pointer hover:bg-slate-50 min-w-[140px]"
+                className="appearance-none bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-lg pl-4 pr-10 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 focus:border-emerald-500 outline-none cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 min-w-[140px]"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
             >
@@ -224,25 +224,14 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const totalCount = savedCurricula.length + savedPlans.length;
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Saved Projects</h1>
-                    <p className="text-slate-500">Manage your curricula and lesson kits.</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-400 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                    <Calendar size={16} />
-                    <span>{totalCount} total records</span>
-                </div>
-            </div>
+        <div className="animate-fade-in space-y-8">
 
             {/* Tab Switcher */}
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 w-fit">
                 <button
                     onClick={() => setActiveTab('curricula')}
                     className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'curricula'
-                        ? 'bg-white text-emerald-700 shadow-sm'
+                        ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700'
                         }`}
                 >
@@ -267,7 +256,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
             {activeTab === 'curricula' && (
                 <>
                     {/* Filters */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-8">
+                    <div className="mb-8">
                         <div className="flex flex-col gap-4">
                             {/* Row 1: Search */}
                             <div className="relative">
@@ -318,7 +307,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
 
                     {/* Curriculum Grid */}
                     {filteredCurricula.length === 0 ? (
-                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+                        <div className="text-center py-20 bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-white/5">
                             <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-400">
                                 <FileText size={32} />
                             </div>
@@ -328,34 +317,34 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {filteredCurricula.map(item => (
                                 <div
                                     key={item.id}
-                                    className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-100 transition-all group flex flex-col overflow-hidden"
+                                    className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-lg dark:hover:shadow-2xl hover:border-emerald-100 dark:hover:border-white/10 transition-all group flex flex-col overflow-hidden"
                                 >
-                                    <div className="p-6 flex-1">
+                                    <div className="p-4 flex-1">
                                         <EditableTitle
                                             id={item.id}
                                             name={item.name}
                                             onSaveEdit={onRenameCurriculum}
                                         />
-                                        <p className="text-sm text-slate-500 line-clamp-2 mb-4">{item.curriculum.overview}</p>
+                                        <p className="text-xs text-slate-500 line-clamp-2 mb-2">{item.curriculum.overview}</p>
 
-                                        <div className="flex flex-wrap gap-2 mb-3">
-                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg flex items-center gap-1">
-                                                <MapPin size={12} /> {item.params.city}
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
+                                                <MapPin size={11} /> {item.params.city}
                                             </span>
-                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg flex items-center gap-1">
-                                                <Users size={12} /> {item.params.ageGroup.split(' ')[0]}
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
+                                                <Users size={11} /> {item.params.ageGroup.split(' ')[0]}
                                             </span>
-                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-lg flex items-center gap-1">
-                                                <GraduationCap size={12} /> {item.params.englishLevel.split(' ')[0]}
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
+                                                <GraduationCap size={11} /> {item.params.englishLevel.split(' ')[0]}
                                             </span>
-                                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg flex items-center gap-1">
-                                                <BookOpen size={12} /> {item.curriculum.lessons.length} lessons
+                                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-md flex items-center gap-1">
+                                                <BookOpen size={11} /> {item.curriculum.lessons.length} lessons
                                             </span>
-                                            <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${item.language === 'zh'
+                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${item.language === 'zh'
                                                 ? 'bg-red-50 text-red-600'
                                                 : 'bg-blue-50 text-blue-600'
                                                 }`}>
@@ -369,7 +358,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                         </div>
                                     </div>
 
-                                    <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                                    <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => onLoadCurriculum(item)}
@@ -420,7 +409,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
             {activeTab === 'kits' && (
                 <>
                     {/* Filters */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-8">
+                    <div className="mb-8">
                         <div className="flex flex-col gap-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -470,7 +459,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {filteredPlans.map(item => {
                                 const stats = getStats(item.plan);
                                 const CategoryIcon = getCategoryIcon(item.plan.basicInfo?.activityType || '');
@@ -480,7 +469,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                         key={item.id}
                                         className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-100 transition-all group flex flex-col overflow-hidden"
                                     >
-                                        <div className="p-6 flex-1 flex gap-4">
+                                        <div className="p-4 flex-1 flex gap-4">
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start mb-3">
                                                     {getLevelBadge(item.plan.basicInfo?.targetAudience || '')}
@@ -546,7 +535,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                             </div>
                                         </div>
 
-                                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                                        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                                             <button
                                                 onClick={() => onLoad(item)}
                                                 className="text-sm font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1.5 transition-all"

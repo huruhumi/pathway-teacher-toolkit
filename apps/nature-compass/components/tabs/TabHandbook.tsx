@@ -74,7 +74,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
 
             <div className="space-y-4">
                 {handbookPages.map((page, idx) => (
-                    <div key={idx} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
                         <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
                             <div>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Page {page.pageNumber}</span>

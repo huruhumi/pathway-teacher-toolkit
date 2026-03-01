@@ -146,7 +146,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">运营日历</h2>

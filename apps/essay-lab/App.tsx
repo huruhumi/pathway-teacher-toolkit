@@ -7,6 +7,9 @@ import CorrectionRecords, { saveRecord } from './components/CorrectionRecords';
 import EssayLibrary from './components/EssayLibrary';
 import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather, BookOpen } from 'lucide-react';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeroBanner } from '@shared/components/HeroBanner';
+import { PageLayout } from '@shared/components/PageLayout';
+import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
@@ -139,7 +142,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 dark:text-slate-300">
       {/* Header hidden during full-screen preview */}
       {!isPreviewing && (
         <AppHeader
@@ -158,174 +161,198 @@ const AppContent: React.FC = () => {
           activeTab={viewMode}
           onTabChange={(key) => { setViewMode(key as typeof viewMode); if (key === 'correction') { setReport(null); setIsPreviewing(false); } }}
           onLogoClick={() => { setViewMode('correction'); setReport(null); setIsPreviewing(false); }}
-          rightContent={<HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />}
+          rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
         />
       )}
 
-      <main className={`max-w-6xl mx-auto px-4 py-8 ${isPreviewing ? 'print:p-0' : ''}`}>
-        {viewMode === 'essays' ? (
-          <EssayLibrary />
-        ) : viewMode === 'records' ? (
-          <CorrectionRecords />
-        ) : !report && !loading ? (
-          <div className="max-w-5xl mx-auto space-y-8">
-
-            <div className="card flex flex-col md:flex-row gap-6">
-              <div className="flex-1 space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <School className="w-4 h-4 text-indigo-500" />
-                  {t('input.grade')}
-                </label>
-                <select
-                  value={selectedGrade}
-                  onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                  className="input-field appearance-none cursor-pointer"
-                >
-                  {Object.values(StudentGrade).map(grade => (
-                    <option key={grade} value={grade}>{grade}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <Gauge className="w-4 h-4 text-indigo-500" />
-                  {t('input.cefr')}
-                </label>
-                <select
-                  value={selectedCEFR}
-                  onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                  className="input-field appearance-none cursor-pointer"
-                >
-                  {Object.values(CEFRLevel).map(level => (
-                    <option key={level} value={level}>{level}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-5 space-y-6">
-                <div className="card space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <Target className="w-4 h-4 text-indigo-500" />
-                      {t('input.prompt')}
-                    </label>
-                    <button
-                      onClick={() => topicFileRef.current?.click()}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                    >
-                      <CloudUpload className="w-4 h-4" />
-                      {topicImage ? t('input.changeImage') : t('input.uploadImage')}
-                    </button>
-                  </div>
-
-                  {topicImage && (
-                    <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2 truncate">
-                        <ImageIcon className="w-4 h-4 text-indigo-400" />
-                        <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
-                      </div>
-                      <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  <textarea
-                    value={topicText}
-                    onChange={(e) => setTopicText(e.target.value)}
-                    placeholder={t('input.promptPlaceholder')}
-                    className="input-field h-32 text-sm resize-none"
-                  />
-                  <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
-                </div>
-              </div>
-
-              <div className="lg:col-span-7 space-y-6">
-                <div className="card space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <PenTool className="w-4 h-4 text-indigo-500" />
-                      {t('input.essay')}
-                    </label>
-                    <button
-                      onClick={() => essayFileRef.current?.click()}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                    >
-                      <Camera className="w-4 h-4" />
-                      {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
-                    </button>
-                  </div>
-
-                  {essayImage && (
-                    <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2 truncate">
-                        <ImageIcon className="w-4 h-4 text-indigo-400" />
-                        <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
-                      </div>
-                      <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  <textarea
-                    value={essayText}
-                    onChange={(e) => setEssayText(e.target.value)}
-                    placeholder={t('input.essayPlaceholder')}
-                    className="input-field h-64 text-sm resize-none font-sans"
-                  />
-                  <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
-                </div>
-
-                <button
-                  onClick={handleSubmit}
-                  className="btn btn-primary w-full py-4 text-lg shadow-lg shadow-indigo-200"
-                >
-                  <Sparkles className="w-4 h-4" />
+      <PageLayout className={isPreviewing ? 'print:p-0' : ''}>
+        {!isPreviewing && (
+          <HeroBanner
+            title={lang === 'zh' ? 'AI 驱动的作文精批系统' : 'AI-Powered Essay Correction'}
+            description={lang === 'zh'
+              ? '上传学生作文，获取细致的语法纠错、词汇提升、句式分析和个性化教学建议，全方位提升写作能力。'
+              : 'Upload student essays to receive detailed grammar corrections, vocabulary enhancement, sentence analysis, and personalized teaching suggestions.'}
+            gradient="from-indigo-600 via-violet-600 to-purple-700"
+            tags={[
+              { label: lang === 'zh' ? '智能批改' : 'Smart Grading' },
+              { label: lang === 'zh' ? '词汇提升' : 'Vocabulary Boost' },
+              { label: lang === 'zh' ? '句式分析' : 'Sentence Analysis' },
+            ]}
+          />
+        )}
+        <BodyContainer>
+          {viewMode === 'essays' ? (
+            <EssayLibrary />
+          ) : viewMode === 'records' ? (
+            <CorrectionRecords />
+          ) : !report && !loading ? (
+            <>
+              <div className="space-y-8">
+                {/* Title */}
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-indigo-500" />
                   {t('input.submit')}
-                </button>
-              </div>
-            </div>
+                </h2>
 
-            {
-              error && (
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto">
+                {/* Grade & CEFR Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <School className="w-4 h-4 text-indigo-500" />
+                      {t('input.grade')}
+                    </label>
+                    <select
+                      value={selectedGrade}
+                      onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
+                      className="input-field appearance-none cursor-pointer py-3"
+                    >
+                      {Object.values(StudentGrade).map(grade => (
+                        <option key={grade} value={grade}>{grade}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <Gauge className="w-4 h-4 text-indigo-500" />
+                      {t('input.cefr')}
+                    </label>
+                    <select
+                      value={selectedCEFR}
+                      onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
+                      className="input-field appearance-none cursor-pointer py-3"
+                    >
+                      {Object.values(CEFRLevel).map(level => (
+                        <option key={level} value={level}>{level}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Prompt & Essay Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Essay Prompt */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <Target className="w-4 h-4 text-indigo-500" />
+                        {t('input.prompt')}
+                      </label>
+                      <button
+                        onClick={() => topicFileRef.current?.click()}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                      >
+                        <CloudUpload className="w-4 h-4" />
+                        {topicImage ? t('input.changeImage') : t('input.uploadImage')}
+                      </button>
+                    </div>
+
+                    {topicImage && (
+                      <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate">
+                          <ImageIcon className="w-4 h-4 text-indigo-400" />
+                          <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
+                        </div>
+                        <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    <textarea
+                      value={topicText}
+                      onChange={(e) => setTopicText(e.target.value)}
+                      placeholder={t('input.promptPlaceholder')}
+                      className="input-field h-48 text-sm resize-none"
+                    />
+                    <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
+                  </div>
+
+                  {/* Student Essay */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <PenTool className="w-4 h-4 text-indigo-500" />
+                        {t('input.essay')}
+                      </label>
+                      <button
+                        onClick={() => essayFileRef.current?.click()}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                      >
+                        <Camera className="w-4 h-4" />
+                        {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
+                      </button>
+                    </div>
+
+                    {essayImage && (
+                      <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate">
+                          <ImageIcon className="w-4 h-4 text-indigo-400" />
+                          <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
+                        </div>
+                        <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    <textarea
+                      value={essayText}
+                      onChange={(e) => setEssayText(e.target.value)}
+                      placeholder={t('input.essayPlaceholder')}
+                      className="input-field h-48 text-sm resize-none font-sans"
+                    />
+                    <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="pt-2">
+                  <button
+                    onClick={handleSubmit}
+                    className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    {t('input.submit')}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto mt-6">
                   <AlertCircle className="w-4 h-4" />
                   {error}
                 </div>
-              )
-            }
-          </div >
-        ) : loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
-            <div className="relative">
-              <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Feather className="w-5 h-5 text-indigo-600 animate-bounce" />
+              )}
+            </>
+          ) : loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
+              <div className="relative">
+                <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Feather className="w-5 h-5 text-indigo-600 animate-bounce" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
+                <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
-              <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
-            </div>
-          </div>
-        ) : (
-          report && (
-            <ReportDisplay
-              report={report}
-              onReset={reset}
-              readOnly={isPreviewing}
-              onTogglePreview={handleTogglePreview}
-            />
-          )
-        )}
-      </main >
+          ) : (
+            report && (
+              <ReportDisplay
+                report={report}
+                onReset={reset}
+                readOnly={isPreviewing}
+                onTogglePreview={handleTogglePreview}
+              />
+            )
+          )}
+        </BodyContainer>
+      </PageLayout>
 
       {!isPreviewing && (
-        <footer className="py-12 border-t border-slate-200 mt-12 print:hidden">
-          <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
+        <footer className="py-12 border-t border-slate-200 dark:border-white/5 mt-12 print:hidden backdrop-blur-sm dark:bg-slate-950/50">
+          <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
             <div className="flex items-center gap-2 grayscale opacity-50">
               <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white">
                 <GraduationCap className="w-4 h-4" />
@@ -336,7 +363,7 @@ const AppContent: React.FC = () => {
           </div>
         </footer>
       )}
-    </div >
+    </div>
   );
 };
 

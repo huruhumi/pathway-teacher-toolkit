@@ -735,7 +735,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
   };
 
   return (
-    <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Left Column: Input */}
       <div className="space-y-8">
         <div>

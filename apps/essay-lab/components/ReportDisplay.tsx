@@ -267,10 +267,10 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
   };
 
   return (
-    <div className={`max-w-6xl mx-auto space-y-8 pb-12 print:pb-0 print:space-y-6 print:w-full ${readOnly ? 'animate-in fade-in duration-500' : ''}`}>
+    <div className={`space-y-8 pb-12 print:pb-0 print:space-y-6 print:w-full ${readOnly ? 'animate-in fade-in duration-500' : ''}`}>
 
       {/* Header Section */}
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:border-b-2 print:border-slate-800 print:rounded-none relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:border-b-2 print:border-slate-800 print:rounded-none relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-50 to-white rounded-bl-full -mr-8 -mt-8 print:hidden opacity-50"></div>
         {readOnly && (
           <button
@@ -348,7 +348,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
       </div>
 
       {/* 1. 原文转录 & Sidebar */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+      <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
             <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm print:hidden">
@@ -485,7 +485,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
 
       {/* 2. 成绩单 & 句式分析 */}
       <div className="grid lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-100 overflow-hidden print:shadow-none print:p-0 print:break-inside-avoid">
+        <section className="lg:col-span-2 bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden print:shadow-none print:p-0 print:break-inside-avoid">
           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
             <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm print:hidden">
               <BarChart3 className="w-4 h-4" />
@@ -552,7 +552,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
         </section>
 
         {/* Sentence Variety Stats */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+        <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <PieChart className="w-4 h-4 text-indigo-500 print:hidden" />
             {t('report.sentenceVariety')}
@@ -595,7 +595,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
       </div>
 
       {/* 3. 细节诊断 */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+      <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
         <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-3">
           <span className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm print:hidden">
             <Stethoscope className="w-4 h-4" />
@@ -701,7 +701,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
 
       {/* 4. Language Enhancement */}
       {editableReport.languageEnhancement && editableReport.languageEnhancement.length > 0 && (
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+        <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm print:hidden">
@@ -790,7 +790,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
       {/* Word Bank & Topic Extensions */}
       <div className="grid md:grid-cols-2 gap-6 print:grid-cols-1 print:break-before-page">
         {/* Word Bank */}
-        <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:border-none">
+        <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:border-none">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-sm print:hidden">
@@ -854,7 +854,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
         </section>
 
         {/* Topic Extensions */}
-        <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:border-none">
+        <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:border-none">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm print:hidden">
@@ -922,7 +922,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
 
       {/* Quiz Section */}
       {editableReport.errorQuiz && editableReport.errorQuiz.length > 0 && (
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+        <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
             <span className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm print:hidden">
               <Pencil className="w-4 h-4" />
@@ -978,7 +978,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
       )}
 
       {/* Teacher's Note */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
+      <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
         <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
           <span className="w-8 h-8 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-sm print:hidden">
             <Heart className="w-4 h-4" />

@@ -288,7 +288,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h3 className="text-xl font-bold text-gray-800">Detailed Lesson Plan</h3>
+                <h3 className="text-xl font-bold text-slate-800">Detailed Lesson Plan</h3>
                 <div className="flex gap-2 no-print">
                     <button
                         onClick={() => openViewer('plan')}
@@ -316,7 +316,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                 </div>
             </div>
 
-            <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+            <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                 <div className="bg-[#14b8a6] p-4 text-white grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {['level', 'date', 'topic', 'students'].map((f) => (
                         <div key={f}>
@@ -341,7 +341,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                         <AutoResizeTextarea
                                             value={obj}
                                             onChange={(e) => handleArrayChange('objectives', i, e.target.value)}
-                                            className="w-full bg-white/50 border-none text-gray-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
+                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
                                             minRows={1}
                                             placeholder="Enter objective..."
                                         />
@@ -370,7 +370,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                         <AutoResizeTextarea
                                             value={mat}
                                             onChange={(e) => handleArrayChange('materials', i, e.target.value)}
-                                            className="w-full bg-white/50 border-none text-gray-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
+                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
                                             minRows={1}
                                             placeholder="Enter material..."
                                         />
@@ -406,7 +406,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                         <AutoResizeTextarea
                                             value={p.problem}
                                             onChange={(e) => handleProblemSolutionChange(i, 'problem', e.target.value)}
-                                            className="w-full bg-white/50 border-none text-gray-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
+                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
                                             minRows={2}
                                             placeholder="Problem..."
                                         />
@@ -415,7 +415,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                         <AutoResizeTextarea
                                             value={p.solution}
                                             onChange={(e) => handleProblemSolutionChange(i, 'solution', e.target.value)}
-                                            className="w-full bg-white/30 border-none text-gray-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
+                                            className="w-full bg-white/30 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
                                             minRows={2}
                                             placeholder="Solution..."
                                         />
@@ -440,7 +440,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                     <div key={i} className="bg-white p-3 rounded-lg border border-teal-100 shadow-sm relative group flex gap-2">
                                         <div className="flex-1 space-y-2">
                                             <input value={v.word} onChange={(e) => handleVocabChange(i, 'word', e.target.value)} placeholder="Word/Phrase" className="font-bold text-teal-700 bg-transparent w-full border-b border-teal-50 focus:border-teal-300 outline-none p-1" />
-                                            <AutoResizeTextarea value={v.definition} onChange={(e) => handleVocabChange(i, 'definition', e.target.value)} placeholder="Definition/Example" className="w-full text-xs text-gray-500 bg-transparent outline-none p-1" minRows={1} />
+                                            <AutoResizeTextarea value={v.definition} onChange={(e) => handleVocabChange(i, 'definition', e.target.value)} placeholder="Definition/Example" className="w-full text-xs text-slate-500 bg-transparent outline-none p-1" minRows={1} />
                                         </div>
                                         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
                                             <button onClick={() => moveVocabItem(i, 'up')} className="p-1 text-teal-400 hover:text-teal-600"><ChevronUp className="w-3 h-3" /></button>
@@ -460,7 +460,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                                 {editablePlan.lessonDetails.grammarSentences.map((s, i) => (
                                     <div key={i} className="flex gap-2 items-start bg-white p-3 rounded-lg border border-indigo-50 shadow-sm group">
                                         <span className="text-indigo-400 font-bold mt-2">•</span>
-                                        <AutoResizeTextarea value={s} onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)} placeholder="Grammar point or target sentence..." className="w-full bg-transparent outline-none text-sm text-gray-700 p-1" minRows={1} />
+                                        <AutoResizeTextarea value={s} onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)} placeholder="Grammar point or target sentence..." className="w-full bg-transparent outline-none text-sm text-slate-700 p-1" minRows={1} />
                                         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
                                             <button onClick={() => moveArrayItem('grammarSentences', i, 'up')} className="p-1 text-indigo-400 hover:text-indigo-600"><ChevronUp className="w-3 h-3" /></button>
                                             <button onClick={() => moveArrayItem('grammarSentences', i, 'down')} className="p-1 text-indigo-400 hover:text-indigo-600"><ChevronDown className="w-3 h-3" /></button>
@@ -478,53 +478,53 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         {/* The Phonics focus section inside Plan tab */}
                         <div className="bg-purple-50 px-4 py-2 border-b border-purple-100 flex justify-between items-center">
                             <h4 className="font-bold text-purple-900 text-sm">Teaching Stages & Flow</h4>
-                            <button onClick={() => addStageEntry()} disabled={isGeneratingStage} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition-colors flex items-center gap-1 shadow-sm no-print">
+                            <button onClick={() => addStageEntry()} disabled={isGeneratingStage} className="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition-colors flex items-center gap-1 shadow-sm no-print">
                                 {isGeneratingStage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Stage
                             </button>
                         </div>
-                        <div className="overflow-x-auto rounded-xl border border-gray-200">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200">
                             <table className="w-full min-w-[800px] text-sm text-left border-collapse">
-                                <thead className="bg-gray-100 text-gray-600 font-bold">
+                                <thead className="bg-slate-100 text-slate-600 font-bold">
                                     <tr>
-                                        <th className="px-4 py-3 border-b border-gray-200 w-32">Stage</th>
-                                        <th className="px-4 py-3 border-b border-gray-200 w-24">Timing</th>
-                                        <th className="px-4 py-3 border-b border-gray-200 w-1/3">Teacher Activity (Script)</th>
-                                        <th className="px-4 py-3 border-b border-gray-200 w-1/3">Student Activity</th>
-                                        <th className="px-4 py-3 border-b border-gray-200 w-24 text-center no-print">Actions</th>
+                                        <th className="px-4 py-3 border-b border-slate-200 w-32">Stage</th>
+                                        <th className="px-4 py-3 border-b border-slate-200 w-24">Timing</th>
+                                        <th className="px-4 py-3 border-b border-slate-200 w-1/3">Teacher Activity (Script)</th>
+                                        <th className="px-4 py-3 border-b border-slate-200 w-1/3">Student Activity</th>
+                                        <th className="px-4 py-3 border-b border-slate-200 w-24 text-center no-print">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200">
+                                <tbody className="divide-y divide-slate-200">
                                     {editablePlan.stages.map((stage, i) => (
-                                        <tr key={i} className="align-top hover:bg-gray-50/50 transition-colors group">
-                                            <td className="p-2 border-r border-gray-200">
+                                        <tr key={i} className="align-top hover:bg-slate-50/50 transition-colors group">
+                                            <td className="p-2 border-r border-slate-200">
                                                 <input value={stage.stage} onChange={(e) => handleStageChange(i, 'stage', e.target.value)} className="w-full font-bold text-teal-700 bg-transparent outline-none p-2 focus:bg-white rounded border border-transparent focus:border-teal-200" />
                                             </td>
-                                            <td className="p-2 border-r border-gray-200">
-                                                <input value={stage.timing} onChange={(e) => handleStageChange(i, 'timing', e.target.value)} className="w-full text-gray-500 bg-transparent outline-none p-2 focus:bg-white rounded border border-transparent focus:border-indigo-200" />
+                                            <td className="p-2 border-r border-slate-200">
+                                                <input value={stage.timing} onChange={(e) => handleStageChange(i, 'timing', e.target.value)} className="w-full text-slate-500 bg-transparent outline-none p-2 focus:bg-white rounded border border-transparent focus:border-indigo-200" />
                                             </td>
-                                            <td className="p-2 border-r border-gray-200 bg-yellow-50/10">
+                                            <td className="p-2 border-r border-slate-200 bg-yellow-50/10">
                                                 <AutoResizeTextarea
                                                     value={stage.teacherActivity}
                                                     onChange={(e) => handleStageChange(i, 'teacherActivity', e.target.value)}
-                                                    className="w-full bg-transparent text-gray-800 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
+                                                    className="w-full bg-transparent text-slate-800 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
                                                     minRows={5}
                                                     placeholder="Teacher says..."
                                                 />
                                             </td>
-                                            <td className="p-2 border-r border-gray-200">
+                                            <td className="p-2 border-r border-slate-200">
                                                 <AutoResizeTextarea
                                                     value={stage.studentActivity}
                                                     onChange={(e) => handleStageChange(i, 'studentActivity', e.target.value)}
-                                                    className="w-full bg-transparent text-gray-600 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
+                                                    className="w-full bg-transparent text-slate-600 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
                                                     minRows={5}
                                                     placeholder="Students respond..."
                                                 />
                                             </td>
                                             <td className="p-2 align-middle text-center no-print">
                                                 <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                                    <button onClick={() => moveStageEntry(i, 'up')} className="p-1 text-gray-400 hover:text-indigo-600" title="Move Up"><ChevronUp className="w-4 h-4" /></button>
+                                                    <button onClick={() => moveStageEntry(i, 'up')} className="p-1 text-slate-400 hover:text-indigo-600" title="Move Up"><ChevronUp className="w-4 h-4" /></button>
                                                     <button onClick={() => addStageEntry(i)} className="p-1 text-teal-400 hover:text-teal-600" title="Insert Below"><Plus className="w-4 h-4" /></button>
-                                                    <button onClick={() => moveStageEntry(i, 'down')} className="p-1 text-gray-400 hover:text-indigo-600" title="Move Down"><ChevronDown className="w-4 h-4" /></button>
+                                                    <button onClick={() => moveStageEntry(i, 'down')} className="p-1 text-slate-400 hover:text-indigo-600" title="Move Down"><ChevronDown className="w-4 h-4" /></button>
                                                     <button onClick={() => deleteStageEntry(i)} className="p-1 text-red-400 hover:text-red-600" title="Delete"><Trash2 className="w-4 h-4" /></button>
                                                 </div>
                                             </td>

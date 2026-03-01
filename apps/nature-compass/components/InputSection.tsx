@@ -110,7 +110,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
   };
 
   return (
-    <div className="card md:p-8 space-y-8">
+    <div className="space-y-8">
 
       {/* Environmental Context: Weather & Season */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -43,9 +43,9 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-                <h3 className="text-xl font-bold text-gray-800">Teaching Flashcards</h3>
+                <h3 className="text-xl font-bold text-slate-800">Teaching Flashcards</h3>
                 <div className="flex gap-2">
-                    <button onClick={handleDownloadAllFlashcards} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-bold">
+                    <button onClick={handleDownloadAllFlashcards} className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all text-sm font-bold">
                         <Download className="w-4 h-4" /> Download All
                     </button>
                     <button
@@ -64,13 +64,13 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {localFlashcards.map((card, idx) => (
-                    <div key={idx} className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm flex flex-col group relative">
-                        <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-4 border-b border-gray-100 relative">
+                    <div key={idx} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm flex flex-col group relative">
+                        <div className="aspect-[4/3] bg-slate-50 flex items-center justify-center p-4 border-b border-slate-100 relative">
                             {flashcardImages[idx] ? (
                                 <img src={flashcardImages[idx]} className="w-full h-full object-contain" alt={card.word} />
                             ) : (
                                 <div className="text-center">
-                                    <ImageIcon className="w-12 h-12 text-gray-200 mx-auto mb-2" />
+                                    <ImageIcon className="w-12 h-12 text-slate-200 mx-auto mb-2" />
                                     <button
                                         onClick={() => handleGenerateFlashcardImage(idx, card.visualPrompt || card.word)}
                                         disabled={generatingCardIndex === idx}
@@ -85,7 +85,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                                     <button
                                         onClick={() => handleGenerateFlashcardImage(idx, card.visualPrompt || card.word)}
                                         disabled={generatingCardIndex === idx}
-                                        className="p-1.5 bg-white/80 hover:bg-indigo-50 hover:text-white rounded-full text-gray-400 transition-all shadow-sm"
+                                        className="p-1.5 bg-white/80 hover:bg-indigo-50 hover:text-white rounded-full text-slate-400 transition-all shadow-sm"
                                         title="Regenerate Image"
                                     >
                                         {generatingCardIndex === idx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
@@ -94,7 +94,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                                 {flashcardImages[idx] && (
                                     <button
                                         onClick={() => handleDownloadFlashcard(idx)}
-                                        className="p-1.5 bg-white/80 hover:bg-indigo-50 hover:text-white rounded-full text-gray-400 transition-all shadow-sm"
+                                        className="p-1.5 bg-white/80 hover:bg-indigo-50 hover:text-white rounded-full text-slate-400 transition-all shadow-sm"
                                         title="Download Front (Image)"
                                     >
                                         <ImageIcon className="w-3.5 h-3.5" />
@@ -102,19 +102,19 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                                 )}
                                 <button
                                     onClick={() => handleDownloadFlashcardText(idx)}
-                                    className="p-1.5 bg-white/80 hover:bg-teal-500 hover:text-white rounded-full text-gray-400 transition-all shadow-sm"
+                                    className="p-1.5 bg-white/80 hover:bg-teal-500 hover:text-white rounded-full text-slate-400 transition-all shadow-sm"
                                     title="Download Back (Explanation)"
                                 >
                                     <FileText className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                     onClick={() => handleDownloadFlashcardPDF(idx)}
-                                    className="p-1.5 bg-white/80 hover:bg-purple-500 hover:text-white rounded-full text-gray-400 transition-all shadow-sm"
+                                    className="p-1.5 bg-white/80 hover:bg-purple-500 hover:text-white rounded-full text-slate-400 transition-all shadow-sm"
                                     title="Download Complete PDF"
                                 >
                                     <Download className="w-3.5 h-3.5" />
                                 </button>
-                                <button onClick={(e) => removeFlashcard(idx, e)} className="p-1.5 bg-white/80 hover:bg-red-500 hover:text-white rounded-full text-gray-400 transition-all shadow-sm" title="Remove Flashcard">
+                                <button onClick={(e) => removeFlashcard(idx, e)} className="p-1.5 bg-white/80 hover:bg-red-500 hover:text-white rounded-full text-slate-400 transition-all shadow-sm" title="Remove Flashcard">
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
@@ -128,7 +128,7 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
                             <AutoResizeTextarea
                                 value={card.definition}
                                 onChange={(e) => handleFlashcardChange(idx, 'definition', e.target.value)}
-                                className="text-xs text-gray-500 italic mt-2 text-center bg-transparent border-none outline-none"
+                                className="text-xs text-slate-500 italic mt-2 text-center bg-transparent border-none outline-none"
                                 minRows={1}
                             />
                         </div>

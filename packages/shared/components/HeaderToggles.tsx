@@ -89,6 +89,13 @@ export const HeaderToggles: React.FC<HeaderTogglesProps> = ({
         }
     }, [isDark, onDarkChange]);
 
+    // Apply dark class on mount (persist across refreshes)
+    useEffect(() => {
+        if (!onDarkChange) {
+            document.documentElement.classList.toggle('dark', isDark);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Sync cross-tab
     useEffect(() => {
         const handler = (e: StorageEvent) => {

@@ -12,8 +12,30 @@ import { AuthModal } from './components/AuthModal';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
+import { HeroBanner } from '@shared/components/HeroBanner';
+import { PageLayout } from '@shared/components/PageLayout';
+import { BodyContainer } from '@shared/components/BodyContainer';
 import { Compass } from 'lucide-react';
 import { useBatchGenerate } from './hooks/useBatchGenerate';
+import { useLanguage } from './i18n/LanguageContext';
+
+const NatureHeroBanner = () => {
+  const { lang } = useLanguage();
+  return (
+    <HeroBanner
+      title={lang === 'zh' ? 'STEAM 自然教育课程设计' : 'STEAM Nature Education Designer'}
+      description={lang === 'zh'
+        ? '输入主题即可生成完整的 STEAM 自然教育方案，包含教学路线图、学生手册、词汇卡和物料清单，一键部署户外课堂。'
+        : 'Enter a theme to generate complete STEAM nature education plans with teaching roadmaps, student handbooks, flashcards, and supply lists.'}
+      gradient="from-emerald-600 via-teal-600 to-cyan-600"
+      tags={[
+        { label: lang === 'zh' ? '教学路线图' : 'Roadmap' },
+        { label: lang === 'zh' ? '学生手册' : 'Handbook' },
+        { label: lang === 'zh' ? '词汇闪卡' : 'Flashcards' },
+      ]}
+    />
+  );
+};
 
 export const App: React.FC = () => {
   const [input, setInput] = useState<LessonInput>({
@@ -333,7 +355,7 @@ export const App: React.FC = () => {
 
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
         <Header
           currentView={view}
           onNavigate={setView}
@@ -342,10 +364,12 @@ export const App: React.FC = () => {
 
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-        <main className="flex-1 w-full">
+        <PageLayout className="flex-1">
+          <NatureHeroBanner />
+
           {/* Curriculum view — always mounted, hidden when not active */}
           <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+            <BodyContainer>
               <CurriculumPlanner
                 onGenerateKit={handleGenerateLessonKit}
                 onSave={handleSaveCurriculum}
@@ -359,24 +383,12 @@ export const App: React.FC = () => {
                 onOpenPlan={handleOpenBatchPlan}
                 onResetBatch={resetBatch}
               />
-            </div>
+            </BodyContainer>
           </div>
 
           {/* Lesson Kit view — always mounted, hidden when not active */}
           <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12 flex flex-col gap-12">
-              {/* Intro Text */}
-              {!lessonPlan && !isLoading && (
-                <div className="text-center space-y-3 max-w-2xl mx-auto mb-4">
-                  <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-                    Design Your Next <span className="text-emerald-600">Adventure</span>
-                  </h1>
-                  <p className="text-slate-600 text-lg">
-                    Generate comprehensive, weather-adaptive STEAM lesson kits for ESL students in seconds.
-                  </p>
-                </div>
-              )}
-
+            <BodyContainer className="flex flex-col gap-8">
               {/* Input Form */}
               <div className="w-full max-w-3xl mx-auto">
                 <InputSection
@@ -444,12 +456,12 @@ export const App: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </BodyContainer>
           </div>
 
           {/* Saved view — always mounted, hidden when not active */}
           <div style={{ display: view === 'saved' ? 'block' : 'none' }}>
-            <div className="bg-slate-50 min-h-full">
+            <BodyContainer>
               <SavedProjectsPage
                 savedPlans={savedPlans}
                 savedCurricula={savedCurricula}
@@ -463,11 +475,11 @@ export const App: React.FC = () => {
                   setView('curriculum');
                 }}
               />
-            </div>
+            </BodyContainer>
           </div>
-        </main>
+        </PageLayout>
 
-        <footer className="bg-white border-t border-slate-200 py-8 text-center text-slate-400 text-sm">
+        <footer className="bg-white dark:bg-slate-950/50 border-t border-slate-200 dark:border-white/5 py-8 text-center text-slate-400 text-sm">
           <p>&copy; {new Date().getFullYear()} Nature Compass. Powered by Google Gemini.</p>
         </footer>
       </div>

@@ -27,7 +27,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
     const { t } = useLanguage();
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Box size={20} className="text-emerald-600" />
                     {t('sup.supplyList')}

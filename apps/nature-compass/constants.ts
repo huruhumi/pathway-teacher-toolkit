@@ -1,4 +1,4 @@
-import { Clock, BookOpen, Sun, CloudRain, Microscope, Palette, Theater, Utensils, Hammer, Calculator, Globe, Coins, Music } from 'lucide-react';
+import { Clock, BookOpen, Sun, CloudRain, Microscope, Palette, Theater, Utensils, Hammer, Calculator, Globe, Coins, Music, Landmark } from 'lucide-react';
 
 export const ACTIVITY_FOCUS_OPTIONS = [
   { id: 'biology', label: 'Biology & Ecology', icon: Microscope },
@@ -12,6 +12,7 @@ export const ACTIVITY_FOCUS_OPTIONS = [
   { id: 'music', label: 'Music & Sound', icon: Music },
   { id: 'social', label: 'Social Science', icon: Globe },
   { id: 'economy', label: 'Economy & Trade', icon: Coins },
+  { id: 'history', label: 'History & Culture', icon: Landmark },
 ];
 
 export const AGE_RANGES = [

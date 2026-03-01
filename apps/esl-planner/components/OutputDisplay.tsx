@@ -116,14 +116,13 @@ const CorrectionLegend = () => (
   <div className="bg-white border-2 border-indigo-100 rounded-2xl p-4 shadow-sm viewer-correction-legend">
     <h5 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-3 flex items-center gap-2">
       <Info className="w-3 h-3 text-indigo-500" />
-      Proofreading Marks Reference / 修改符号参考
-    </h5>
+      Proofreading Marks Reference / 修改符号参�?    </h5>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="flex items-center gap-2">
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           ^
         </span>
-        <span className="text-[10px] font-medium text-gray-600">
+        <span className="text-[10px] font-medium text-slate-600">
           Insert / 插入
         </span>
       </div>
@@ -131,15 +130,14 @@ const CorrectionLegend = () => (
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           /
         </span>
-        <span className="text-[10px] font-medium text-gray-600">
+        <span className="text-[10px] font-medium text-slate-600">
           Delete / 删除
         </span>
       </div>
       <div className="flex items-center gap-2">
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
-          ○
-        </span>
-        <span className="text-[10px] font-medium text-gray-600">
+          �?        </span>
+        <span className="text-[10px] font-medium text-slate-600">
           Replace / 替换
         </span>
       </div>
@@ -147,7 +145,7 @@ const CorrectionLegend = () => (
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           ~
         </span>
-        <span className="text-[10px] font-medium text-gray-600">
+        <span className="text-[10px] font-medium text-slate-600">
           Spelling / 拼写
         </span>
       </div>
@@ -540,7 +538,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     doc.text(card.word, 148 / 2, 40, { align: "center" } as any);
 
     doc.setFontSize(14);
-    doc.setTextColor(107, 114, 128); // gray-500
+    doc.setTextColor(107, 114, 128); // slate-500
     doc.setFont("helvetica", "italic");
     const splitText = doc.splitTextToSize(card.definition, 120);
     doc.text(splitText, 148 / 2, 60, { align: "center" } as any);
@@ -582,7 +580,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
       doc.text(card.word, 148 / 2, 40, { align: "center" } as any);
 
       doc.setFontSize(14);
-      doc.setTextColor(107, 114, 128); // gray-500
+      doc.setTextColor(107, 114, 128); // slate-500
       doc.setFont("helvetica", "italic");
       const splitText = doc.splitTextToSize(card.definition, 120);
       doc.text(splitText, 148 / 2, 60, { align: "center" } as any);
@@ -613,7 +611,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         phonicsContent.decodableTextPrompts[index] ||
         phonicsContent.decodableTexts[index];
       const safePrompt = promptText.trim().substring(0, 300);
-      const enhancedPrompt = `A four-panel comic strip (四宫格漫画) reflecting the plot of the story: ${safePrompt}. Whimsical cartoon style, detailed, soft colors, high-quality character design, professional illustration.`;
+      const enhancedPrompt = `A four-panel comic strip (四宫格漫�? reflecting the plot of the story: ${safePrompt}. Whimsical cartoon style, detailed, soft colors, high-quality character design, professional illustration.`;
       const imageUrl = await generateLessonImage(enhancedPrompt, "3:4");
       setDecodableTextImages((prev) => ({ ...prev, [index]: imageUrl }));
     } catch (error) {
@@ -807,15 +805,15 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden flex flex-col">
-      <div className="flex flex-col md:flex-row border-b border-gray-100 justify-between items-stretch md:items-center no-print">
+    <div className="overflow-hidden flex flex-col">
+      <div className="flex flex-col md:flex-row border-b border-slate-100 justify-between items-stretch md:items-center no-print">
         <div className="flex overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-6 py-4 font-medium text-sm md:text-base transition-colors whitespace-nowrap
-                ${activeTab === tab.id ? "text-primary border-b-2 border-primary bg-indigo-50/50" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}`}
+                ${activeTab === tab.id ? "text-primary border-b-2 border-primary bg-indigo-50/50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
             >
               <tab.icon className="w-5 h-5" />
               {tab.label}
@@ -824,7 +822,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         </div>
         <div className="p-2 md:p-0 pr-4 no-print flex items-center gap-2">
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-xs text-gray-400">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
               <span
                 className={`w-2 h-2 rounded-full ${saveStatus === "saved" ? "bg-green-400" : saveStatus === "saving" ? "bg-yellow-400 animate-pulse" : "bg-orange-400 animate-pulse"}`}
               />
@@ -854,7 +852,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         </div>
       </div>
 
-      <div className="p-4 md:p-8 flex-1 bg-gray-50/30 min-h-[500px]">
+      <div className="p-4 md:p-8 flex-1 bg-slate-50/30 min-h-[500px]">
         {activeTab === "plan" && editablePlan && (
           <LessonPlanTab
             editablePlan={editablePlan}
@@ -878,7 +876,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
         {activeTab === "materials" && (
           <div className="space-y-6">
-            <div className="flex border-b border-gray-200 mb-6 overflow-x-auto no-print scrollbar-hide">
+            <div className="flex border-b border-slate-200 mb-6 overflow-x-auto no-print scrollbar-hide">
               {[
                 { id: "flashcards", label: "Flashcards", icon: ImageIcon },
                 { id: "worksheets", label: "Worksheets", icon: FileText },
@@ -889,7 +887,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setMaterialTab(tab.id as any)}
-                  className={`px-6 py-3 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${materialTab === tab.id ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}
+                  className={`px-6 py-3 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${materialTab === tab.id ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}
                 >
                   <tab.icon className="w-4 h-4" />
                   {tab.label}

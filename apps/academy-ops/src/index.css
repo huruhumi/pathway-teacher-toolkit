@@ -2,6 +2,9 @@
 @import "../../../packages/shared/styles/tokens.css";
 @source "../../../packages/shared";
 
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Academy Ops Brand Colors ── */
 @theme {
     --color-brand: #e11d48;
