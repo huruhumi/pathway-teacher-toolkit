@@ -24,6 +24,12 @@ export const translations = {
     'cp.outdoor': { en: 'Outdoor Activity', zh: '户外活动' },
     'cp.indoor': { en: 'Rainy Day Alternative', zh: '雨天替代活动' },
     'cp.genKit': { en: 'Generate Lesson Kit', zh: '生成课件' },
+    'cp.batchGenerate': { en: 'Generate All Kits', zh: '一键生成所有课件' },
+    'cp.batchStop': { en: 'Stop Generating', zh: '终止生成' },
+    'cp.batchProgress': { en: 'kits completed', zh: '课件已完成' },
+    'cp.openKit': { en: 'Open Kit', zh: '打开课件' },
+    'cp.retryKit': { en: 'Retry', zh: '重试' },
+    'cp.batchGenerating': { en: 'Generating...', zh: '正在生成...' },
 
     // InputSection
     'input.theme': { en: 'Theme / Topic', zh: '主题' },

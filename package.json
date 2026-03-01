@@ -8,6 +8,12 @@
         "dev:planner": "npm -w apps/esl-planner run dev",
         "dev:essay": "npm -w apps/essay-lab run dev",
         "dev:nature": "npm -w apps/nature-compass run dev",
-        "dev:ops": "npm -w apps/academy-ops run dev"
+        "dev:ops": "npm -w apps/academy-ops run dev",
+        "build:planner": "npm -w apps/esl-planner run build",
+        "build:essay": "npm -w apps/essay-lab run build",
+        "build:nature": "npm -w apps/nature-compass run build",
+        "build:ops": "npm -w apps/academy-ops run build",
+        "build:apps": "npm run build:planner && npm run build:essay && npm run build:nature && npm run build:ops",
+        "build": "npm run build:apps && node scripts/build-landing.js"
     }
 }

@@ -22,15 +22,30 @@ const ENGLISH_LEVELS = [
     "Proficient (C2)"
 ];
 
+import { BatchItemStatus } from '../hooks/useBatchGenerate';
+
 interface CurriculumPlannerProps {
     onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => void;
     onSave?: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void;
     externalCurriculum?: { curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh' } | null;
+    // Batch generate
+    batchStatus?: Record<number, BatchItemStatus>;
+    batchLessonMap?: Record<number, string>;
+    batchRunning?: boolean;
+    batchProgress?: { done: number; total: number; errors: number };
+    onBatchGenerate?: (lessons: CurriculumLesson[], params: CurriculumParams, language: 'en' | 'zh') => void;
+    onCancelBatch?: () => void;
+    onOpenPlan?: (savedId: string) => void;
+    onResetBatch?: () => void;
 }
 
 const STORAGE_KEY = 'nature-compass-curriculum';
 
-export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerateKit, onSave, externalCurriculum }) => {
+export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
+    onGenerateKit, onSave, externalCurriculum,
+    batchStatus = {}, batchLessonMap = {}, batchRunning = false, batchProgress,
+    onBatchGenerate, onCancelBatch, onOpenPlan, onResetBatch,
+}) => {
     // Config state
     const [ageGroup, setAgeGroup] = useState(AGE_RANGES[0]);
     const [englishLevel, setEnglishLevel] = useState(ENGLISH_LEVELS[0]);
@@ -403,6 +418,37 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                         </div>
                     </div>
 
+                    {/* Batch Generate */}
+                    {onBatchGenerate && curriculum && (
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {batchRunning ? (
+                                <>
+                                    <button
+                                        onClick={onCancelBatch}
+                                        className="btn bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                                    >
+                                        <Loader2 size={16} className="animate-spin" />
+                                        {t('cp.batchStop')}
+                                    </button>
+                                    {batchProgress && (
+                                        <span className="text-sm text-slate-500 font-medium">
+                                            {batchProgress.done}/{batchProgress.total} {t('cp.batchProgress')}
+                                            {batchProgress.errors > 0 && <span className="text-red-400 ml-1">({batchProgress.errors} errors)</span>}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => onBatchGenerate(curriculum.lessons, savedParams || getCurrentParams(), activeLanguage)}
+                                    className="btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-sm"
+                                >
+                                    <Sparkles size={16} />
+                                    {t('cp.batchGenerate')}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* Overview */}
                     <div className="card">
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.theme}</h2>
@@ -504,15 +550,40 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                 </div>
                             )}
 
-                            {/* Generate Kit Button */}
-                            <button
-                                onClick={() => onGenerateKit(lesson, savedParams || getCurrentParams(), activeLanguage)}
-                                className="btn btn-secondary w-full mt-2 py-3"
-                            >
-                                <FileText size={18} />
-                                {t('cp.genKit')}
-                                <ArrowRight size={16} />
-                            </button>
+                            {/* Generate Kit / Status Button */}
+                            {batchStatus[index] === 'generating' ? (
+                                <button disabled className="btn btn-secondary w-full mt-2 py-3 opacity-60 cursor-not-allowed animate-pulse">
+                                    <Loader2 size={18} className="animate-spin" />
+                                    {t('cp.batchGenerating')}
+                                </button>
+                            ) : batchStatus[index] === 'done' && batchLessonMap[index] ? (
+                                <button
+                                    onClick={() => onOpenPlan?.(batchLessonMap[index])}
+                                    className="btn w-full mt-2 py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                                >
+                                    <CheckIcon size={18} />
+                                    {t('cp.openKit')}
+                                    <ArrowRight size={16} />
+                                </button>
+                            ) : batchStatus[index] === 'error' ? (
+                                <button
+                                    onClick={() => onGenerateKit(lesson, savedParams || getCurrentParams(), activeLanguage)}
+                                    className="btn w-full mt-2 py-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                                >
+                                    <FileText size={18} />
+                                    {t('cp.retryKit')}
+                                    <ArrowRight size={16} />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => onGenerateKit(lesson, savedParams || getCurrentParams(), activeLanguage)}
+                                    className="btn btn-secondary w-full mt-2 py-3"
+                                >
+                                    <FileText size={18} />
+                                    {t('cp.genKit')}
+                                    <ArrowRight size={16} />
+                                </button>
+                            )}
                         </motion.div>
                     ))}
                 </div>

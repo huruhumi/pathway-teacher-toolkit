@@ -1,22 +1,24 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": true,
   "rewrites": [
     {
       "source": "/planner/(.*)",
-      "destination": "https://pathway-teacher-toolkit-4nl1.vercel.app/$1"
+      "destination": "/planner/index.html"
     },
     {
       "source": "/essay-lab/(.*)",
-      "destination": "https://pathway-teacher-toolkit-bdub.vercel.app/$1"
+      "destination": "/essay-lab/index.html"
     },
     {
       "source": "/nature-compass/(.*)",
-      "destination": "https://pathway-teacher-toolkit-xj5a.vercel.app/$1"
+      "destination": "/nature-compass/index.html"
     },
     {
       "source": "/academy-ops/(.*)",
-      "destination": "https://pathway-teacher-toolkit-3tdz.vercel.app/$1"
+      "destination": "/academy-ops/index.html"
     }
   ]
 }

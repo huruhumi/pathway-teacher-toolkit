@@ -13,6 +13,7 @@ import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
 import { Compass } from 'lucide-react';
+import { useBatchGenerate } from './hooks/useBatchGenerate';
 
 export const App: React.FC = () => {
   const [input, setInput] = useState<LessonInput>({
@@ -38,6 +39,9 @@ export const App: React.FC = () => {
 
   // Save/Load State
   const [savedPlans, setSavedPlans] = useState<SavedLessonPlan[]>([]);
+  const savedPlansRef = useRef<SavedLessonPlan[]>(savedPlans);
+  // Keep ref in sync
+  useEffect(() => { savedPlansRef.current = savedPlans; }, [savedPlans]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [view, setView] = useState<'curriculum' | 'lesson' | 'saved'>('curriculum');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -48,6 +52,12 @@ export const App: React.FC = () => {
 
   // Track current language for lesson kit generation
   const [currentKitLanguage, setCurrentKitLanguage] = useState<'en' | 'zh'>('en');
+
+  // Batch Generate
+  const {
+    batchStatus, batchLessonMap, batchRunning, batchProgress,
+    handleBatchGenerate, handleCancelBatch, resetBatch,
+  } = useBatchGenerate(savedPlansRef, setSavedPlans);
 
   // Auth
   const { user, initialize: initAuth } = useAuthStore();
@@ -237,6 +247,14 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handler: open a batch-generated plan by its saved ID
+  const handleOpenBatchPlan = (savedId: string) => {
+    const found = savedPlansRef.current.find(p => p.id === savedId);
+    if (found) {
+      handleLoadPlan(found);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setLoadingStep(0);
@@ -328,7 +346,19 @@ export const App: React.FC = () => {
           {/* Curriculum view — always mounted, hidden when not active */}
           <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
             <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-              <CurriculumPlanner onGenerateKit={handleGenerateLessonKit} onSave={handleSaveCurriculum} externalCurriculum={externalCurriculum} />
+              <CurriculumPlanner
+                onGenerateKit={handleGenerateLessonKit}
+                onSave={handleSaveCurriculum}
+                externalCurriculum={externalCurriculum}
+                batchStatus={batchStatus}
+                batchLessonMap={batchLessonMap}
+                batchRunning={batchRunning}
+                batchProgress={batchProgress}
+                onBatchGenerate={handleBatchGenerate}
+                onCancelBatch={handleCancelBatch}
+                onOpenPlan={handleOpenBatchPlan}
+                onResetBatch={resetBatch}
+              />
             </div>
           </div>
 

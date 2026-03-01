@@ -6,7 +6,8 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, '../..'), '');
   return {
-    base: './',
+    base: '/academy-ops/',
+    envDir: path.resolve(__dirname, '../..'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

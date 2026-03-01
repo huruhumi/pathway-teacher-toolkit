@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, '../..'), '');
   return {
-    base: './',
+    base: '/nature-compass/',
     envDir: path.resolve(__dirname, '../..'),
     server: {
       port: 3003,
