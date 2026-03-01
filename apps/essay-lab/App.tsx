@@ -3,6 +3,8 @@ import React, { useState, useRef, useCallback } from 'react';
 import { analyzeEssay } from './services/geminiService';
 import { CorrectionReport, StudentGrade, CEFRLevel } from './types';
 import ReportDisplay from './components/ReportDisplay';
+import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather } from 'lucide-react';
+import { AppHeader } from '@shared/components/AppHeader';
 
 interface FileData {
   base64: string;
@@ -123,24 +125,24 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100">
       {/* Header hidden during full-screen preview */}
       {!isPreviewing && (
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
-          <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                <i className="fa-solid fa-graduation-cap text-lg"></i>
-              </div>
-              <div>
-                <h1 className="font-bold text-slate-800 leading-tight">ESL Master</h1>
-                <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Essay Lab</p>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-500">
-              <span className="text-indigo-600 cursor-pointer" onClick={() => window.location.reload()}>批改首页</span>
-              <span className="cursor-pointer">关于实验室</span>
-              <span className="cursor-pointer">K12 资源</span>
-            </div>
-          </div>
-        </header>
+        <AppHeader
+          appName="ESL Master"
+          subtitle="Essay Lab"
+          logoIcon={<GraduationCap className="w-5 h-5" />}
+          brand={{
+            logoBg: 'bg-indigo-600',
+            activeBg: 'bg-indigo-50',
+            activeText: 'text-indigo-700',
+          }}
+          tabs={[
+            { key: 'home', label: '批改首页', icon: <Feather className="w-4 h-4" /> },
+            { key: 'about', label: '关于实验室', icon: <Sparkles className="w-4 h-4" /> },
+            { key: 'resources', label: 'K12 资源', icon: <GraduationCap className="w-4 h-4" /> },
+          ]}
+          activeTab="home"
+          onTabChange={(key) => { if (key === 'home') window.location.reload(); }}
+          onLogoClick={() => window.location.reload()}
+        />
       )}
 
       <main className={`max-w-6xl mx-auto px-4 py-8 ${isPreviewing ? 'print:p-0' : ''}`}>
@@ -155,16 +157,16 @@ const App: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row gap-6">
+            <div className="card flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <i className="fa-solid fa-school text-indigo-500"></i>
+                  <School className="w-4 h-4 text-indigo-500" />
                   学生年级 (K-12)
                 </label>
                 <select
                   value={selectedGrade}
                   onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
+                  className="input-field appearance-none cursor-pointer"
                 >
                   {Object.values(StudentGrade).map(grade => (
                     <option key={grade} value={grade}>{grade}</option>
@@ -173,13 +175,13 @@ const App: React.FC = () => {
               </div>
               <div className="flex-1 space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                  <i className="fa-solid fa-gauge-high text-indigo-500"></i>
+                  <Gauge className="w-4 h-4 text-indigo-500" />
                   目标 CEFR 等级
                 </label>
                 <select
                   value={selectedCEFR}
                   onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                  className="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer"
+                  className="input-field appearance-none cursor-pointer"
                 >
                   {Object.values(CEFRLevel).map(level => (
                     <option key={level} value={level}>{level}</option>
@@ -190,17 +192,17 @@ const App: React.FC = () => {
 
             <div className="grid lg:grid-cols-12 gap-6">
               <div className="lg:col-span-5 space-y-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
+                <div className="card space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <i className="fa-solid fa-bullseye text-indigo-500"></i>
+                      <Target className="w-4 h-4 text-indigo-500" />
                       作文命题 (Prompt)
                     </label>
                     <button
                       onClick={() => topicFileRef.current?.click()}
                       className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                     >
-                      <i className="fa-solid fa-cloud-arrow-up"></i>
+                      <CloudUpload className="w-4 h-4" />
                       {topicImage ? '更改图片' : '上传图片'}
                     </button>
                   </div>
@@ -208,11 +210,11 @@ const App: React.FC = () => {
                   {topicImage && (
                     <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
                       <div className="flex items-center gap-2 truncate">
-                        <i className="fa-solid fa-image text-indigo-400"></i>
+                        <ImageIcon className="w-4 h-4 text-indigo-400" />
                         <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
                       </div>
                       <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
-                        <i className="fa-solid fa-xmark"></i>
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   )}
@@ -221,24 +223,24 @@ const App: React.FC = () => {
                     value={topicText}
                     onChange={(e) => setTopicText(e.target.value)}
                     placeholder="输入命题内容或粘贴题目..."
-                    className="w-full h-32 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none"
+                    className="input-field h-32 text-sm resize-none"
                   />
                   <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
                 </div>
               </div>
 
               <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
+                <div className="card space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                      <i className="fa-solid fa-pen-nib text-indigo-500"></i>
+                      <PenTool className="w-4 h-4 text-indigo-500" />
                       学生作文 (Essay)
                     </label>
                     <button
                       onClick={() => essayFileRef.current?.click()}
                       className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                     >
-                      <i className="fa-solid fa-camera"></i>
+                      <Camera className="w-4 h-4" />
                       {essayImage ? '更改手写图片' : '拍照上传'}
                     </button>
                   </div>
@@ -246,11 +248,11 @@ const App: React.FC = () => {
                   {essayImage && (
                     <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
                       <div className="flex items-center gap-2 truncate">
-                        <i className="fa-solid fa-file-image text-indigo-400"></i>
+                        <ImageIcon className="w-4 h-4 text-indigo-400" />
                         <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
                       </div>
                       <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
-                        <i className="fa-solid fa-xmark"></i>
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   )}
@@ -259,34 +261,36 @@ const App: React.FC = () => {
                     value={essayText}
                     onChange={(e) => setEssayText(e.target.value)}
                     placeholder="在此粘贴作文文本..."
-                    className="w-full h-64 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm resize-none font-sans"
+                    className="input-field h-64 text-sm resize-none font-sans"
                   />
                   <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
                 </div>
 
                 <button
                   onClick={handleSubmit}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="btn btn-primary w-full py-4 text-lg shadow-lg shadow-indigo-200"
                 >
-                  <i className="fa-solid fa-wand-magic-sparkles"></i>
+                  <Sparkles className="w-4 h-4" />
                   开始专家级批改
                 </button>
               </div>
             </div>
 
-            {error && (
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto">
-                <i className="fa-solid fa-circle-exclamation"></i>
-                {error}
-              </div>
-            )}
-          </div>
+            {
+              error && (
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto">
+                  <AlertCircle className="w-4 h-4" />
+                  {error}
+                </div>
+              )
+            }
+          </div >
         ) : loading ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
             <div className="relative">
               <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <i className="fa-solid fa-feather-pointed text-indigo-600 text-xl animate-bounce"></i>
+                <Feather className="w-5 h-5 text-indigo-600 animate-bounce" />
               </div>
             </div>
             <div className="space-y-2">
@@ -304,14 +308,14 @@ const App: React.FC = () => {
             />
           )
         )}
-      </main>
+      </main >
 
       {!isPreviewing && (
         <footer className="py-12 border-t border-slate-200 mt-12 print:hidden">
           <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
             <div className="flex items-center gap-2 grayscale opacity-50">
               <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white">
-                <i className="fa-solid fa-graduation-cap"></i>
+                <GraduationCap className="w-4 h-4" />
               </div>
               <span className="font-bold">ESL Master</span>
             </div>
@@ -319,7 +323,7 @@ const App: React.FC = () => {
           </div>
         </footer>
       )}
-    </div>
+    </div >
   );
 };
 

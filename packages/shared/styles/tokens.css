@@ -1,0 +1,117 @@
+/* ══════════════════════════════════════════════════
+   Pathway Academy — Shared Design Tokens
+   Import this in each app's index.css
+   ══════════════════════════════════════════════════ */
+
+@theme {
+    /* ── Typography ── */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+    /* ── Border Radius ── */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    /* ── Shadows ── */
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    /* ── Animations ── */
+    --animate-fade-in: fade-in 0.3s ease-out forwards;
+    --animate-fade-in-up: fade-in-up 0.4s ease-out forwards;
+}
+
+/* ── Keyframes ── */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Custom Scrollbar (shared) ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ── Components ── */
+@layer components {
+
+    /* Cards */
+    .card {
+        @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden;
+    }
+
+    .card-hover {
+        @apply transition-shadow hover:shadow-md;
+    }
+
+    /* Buttons */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] outline-none;
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-sm rounded-lg;
+    }
+
+    .btn-lg {
+        @apply px-8 py-3 text-lg;
+    }
+
+    .btn-primary {
+        @apply bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] shadow-sm border border-transparent;
+    }
+
+    .btn-secondary {
+        @apply bg-[var(--color-brand-light)] text-[var(--color-brand-dark)] hover:opacity-80;
+    }
+
+    .btn-outline {
+        @apply bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-sm;
+    }
+
+    .btn-ghost {
+        @apply bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent;
+    }
+
+    /* Form Inputs */
+    .input-field {
+        @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-[var(--color-brand)] focus:border-transparent transition-all outline-none placeholder:text-slate-400;
+    }
+
+    .input-label {
+        @apply block text-sm font-semibold text-slate-700 mb-1.5;
+    }
+}

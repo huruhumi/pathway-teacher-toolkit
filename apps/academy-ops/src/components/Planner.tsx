@@ -168,14 +168,14 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
         <p className="text-slate-500 mt-1">基于您的当前目标，为您规划接下来的内容节奏。</p>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">规划月份</label>
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50"
+              className="input-field"
             >
               {months.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
@@ -188,7 +188,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
             <select
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50"
+              className="input-field"
             >
               <option value={3}>3 天 (短期冲刺)</option>
               <option value={7}>7 天 (周计划)</option>
@@ -204,7 +204,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
               placeholder="例如：夏令营招募、提升品牌知名度..."
-              className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50"
+              className="input-field"
             />
           </div>
 
@@ -215,7 +215,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
               value={promotionProduct}
               onChange={(e) => setPromotionProduct(e.target.value)}
               placeholder="例如：STEAM周末班、哲学思辨课、春季插班生..."
-              className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50"
+              className="input-field"
             />
             <p className="text-xs text-slate-400">AI 将在生成的计划中优先围绕此主题展开。</p>
           </div>
@@ -225,10 +225,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
           <button
             onClick={handleGeneratePlan}
             disabled={isGenerating}
-            className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all ${isGenerating
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-rose-500 text-white hover:bg-rose-600 shadow-md shadow-rose-200'
-              }`}
+            className="btn btn-primary"
           >
             {isGenerating ? (
               <>
@@ -263,7 +260,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
 
           <div className="grid gap-4">
             {generatedPlan.map((item, index) => (
-              <div key={index} className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 md:items-center relative">
+              <div key={index} className="card card-hover !p-5 flex flex-col md:flex-row gap-4 md:items-center">
                 <div className="flex-shrink-0 w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 font-bold text-lg">
                   {item.day}
                 </div>

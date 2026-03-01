@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { GeneratedContent } from '../types';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
-interface UseAutoSaveProps {
-    getCurrentContentObject: () => GeneratedContent;
-    onSave: (content: GeneratedContent) => void;
+interface UseAutoSaveProps<T> {
+    getCurrentContentObject: () => T;
+    onSave: (content: T) => void;
     editablePlan: any;
     debounceMs?: number;
 }
 
-export const useAutoSave = ({
+export const useAutoSave = <T>({
     getCurrentContentObject,
     onSave,
     editablePlan,
     debounceMs = 3000,
-}: UseAutoSaveProps) => {
+}: UseAutoSaveProps<T>) => {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

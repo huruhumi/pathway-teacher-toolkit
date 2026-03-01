@@ -10,20 +10,20 @@ export const translations = {
     'cp.numLessons': { en: 'NUMBER OF LESSONS', zh: '课时数量' },
     'cp.duration': { en: 'LESSON DURATION', zh: '每课时长' },
     'cp.city': { en: 'CITY (留空默认武汉)', zh: '城市（留空默认武汉）' },
-    'cp.confirm': { en: '🔍 确认', zh: '🔍 确认' },
-    'cp.customLocation': { en: '✏️ 自定义地点 (可选)', zh: '✏️ 自定义地点（可选）' },
-    'cp.customTheme': { en: '✨ CUSTOM THEME (可选)', zh: '✨ 自定义主题（可选）' },
+    'cp.confirm': { en: 'Confirm', zh: '确认' },
+    'cp.customLocation': { en: 'Custom Location (可选)', zh: '自定义地点（可选）' },
+    'cp.customTheme': { en: 'CUSTOM THEME (可选)', zh: '自定义主题（可选）' },
     'cp.generate': { en: 'Generate Curriculum', zh: '生成课程' },
     'cp.generating': { en: 'Generating EN + CN...', zh: '正在生成中英课程...' },
-    'cp.save': { en: '💾 保存课程', zh: '💾 保存课程' },
-    'cp.saved': { en: '✅ 已保存', zh: '✅ 已保存' },
-    'cp.new': { en: '📝 新建课程', zh: '📝 新建课程' },
+    'cp.save': { en: 'Save Curriculum', zh: '保存课程' },
+    'cp.saved': { en: 'Saved', zh: '已保存' },
+    'cp.new': { en: 'New Curriculum', zh: '新建课程' },
     'cp.steamFocus': { en: 'STEAM Focus', zh: 'STEAM 重点' },
     'cp.eslFocus': { en: 'ESL Focus', zh: 'ESL 重点' },
     'cp.location': { en: 'Location', zh: '地点' },
-    'cp.outdoor': { en: '☀️ Outdoor Activity', zh: '☀️ 户外活动' },
-    'cp.indoor': { en: '🌧️ Rainy Day Alternative', zh: '🌧️ 雨天替代活动' },
-    'cp.genKit': { en: '📋 生成课件 (Lesson Kit)', zh: '📋 生成课件' },
+    'cp.outdoor': { en: 'Outdoor Activity', zh: '户外活动' },
+    'cp.indoor': { en: 'Rainy Day Alternative', zh: '雨天替代活动' },
+    'cp.genKit': { en: 'Generate Lesson Kit', zh: '生成课件' },
 
     // InputSection
     'input.theme': { en: 'Theme / Topic', zh: '主题' },
@@ -42,7 +42,7 @@ export const translations = {
     'input.handbook': { en: 'Handbook Pages', zh: '手册页数' },
     'input.generate': { en: 'Generate Lesson Kit', zh: '生成课件' },
     'input.stop': { en: 'Stop Generating', zh: '停止生成' },
-    'input.randomTheme': { en: '🎲 Random Theme', zh: '🎲 随机主题' },
+    'input.randomTheme': { en: 'Random Theme', zh: '随机主题' },
     'input.upload': { en: 'Upload Materials', zh: '上传参考资料' },
     'input.uploadDesc': { en: 'Drop images or PDF here, or click to browse', zh: '拖拽图片或PDF到此处，或点击浏览' },
 
@@ -145,8 +145,8 @@ export const translations = {
     // SavedProjectsPage
     'saved.title': { en: 'Saved Projects', zh: '已保存项目' },
     'saved.desc': { en: 'Manage your curricula and lesson kits.', zh: '管理您的课程和课件。' },
-    'saved.curricula': { en: '📋 Curricula', zh: '📋 课程' },
-    'saved.kits': { en: '📕 Lesson Kits', zh: '📕 课件' },
+    'saved.curricula': { en: 'Curricula', zh: '课程' },
+    'saved.kits': { en: 'Lesson Kits', zh: '课件' },
     'saved.allLangs': { en: 'All Languages', zh: '所有语言' },
     'saved.allCities': { en: 'All Cities', zh: '所有城市' },
     'saved.allAges': { en: 'All Ages', zh: '所有年龄' },
@@ -178,7 +178,7 @@ export const translations = {
     'road.teacherInstructions': { en: 'Teacher Instructions', zh: '教师执行指令' },
     'road.generateStep': { en: 'Generate Next Step', zh: '生成下一步' },
     'road.addPhaseBtn': { en: 'Add Roadmap Phase', zh: '添加教学阶段' },
-    
+
     // Extra InputSection
     'input.weatherLabel': { en: 'Weather Forecast', zh: '天气预报' },
     'input.seasonLabel': { en: 'Season', zh: '季节' },

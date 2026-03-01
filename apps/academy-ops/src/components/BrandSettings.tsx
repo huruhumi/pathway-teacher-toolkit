@@ -32,8 +32,8 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
           onClick={handleSave}
           disabled={isSaved}
           className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-colors ${isSaved
-              ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-              : 'bg-slate-900 text-white hover:bg-slate-800'
+            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+            : 'bg-slate-900 text-white hover:bg-slate-800'
             }`}
         >
           {isSaved ? <Check size={18} /> : <Save size={18} />}
@@ -41,7 +41,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
         </button>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">品牌名称</label>
@@ -49,7 +49,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full h-12 px-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 bg-slate-50"
+              className="input-field"
             />
           </div>
           <div className="space-y-2">
@@ -106,7 +106,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
           <textarea
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
-            className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 bg-slate-50 min-h-[100px]"
+            className="input-field min-h-[100px]"
           />
         </div>
 
@@ -116,7 +116,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
             type="text"
             value={formData.tone}
             onChange={(e) => handleChange('tone', e.target.value)}
-            className="w-full h-12 px-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 bg-slate-50"
+            className="input-field"
           />
         </div>
 
@@ -133,7 +133,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
                   newValues[idx] = e.target.value;
                   handleChange('coreValues', newValues);
                 }}
-                className="w-full h-12 px-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 bg-slate-50"
+                className="input-field"
               />
             ))}
           </div>

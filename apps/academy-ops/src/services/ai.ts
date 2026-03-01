@@ -6,7 +6,7 @@
 // Re-export Type enum for schema definitions used by callers
 export { Type } from "@google/genai";
 
-const API_KEY = process.env.GEMINI_API_KEY || "";
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 export const generateContent = async (prompt: string, systemInstruction?: string, config: any = {}) => {

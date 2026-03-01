@@ -51,24 +51,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     )}
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Email</label>
+                        <label className="input-label text-xs uppercase text-slate-400">Email</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                            className="input-field"
                             placeholder="you@example.com"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Password</label>
+                        <label className="input-label text-xs uppercase text-slate-400">Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                            className="input-field"
                             placeholder="••••••••"
                             required
                             minLength={6}
@@ -78,7 +78,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     <button
                         type="submit"
                         disabled={isAuthLoading}
-                        className="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="btn btn-primary w-full py-3"
                     >
                         {isAuthLoading ? (
                             <Loader2 size={18} className="animate-spin" />

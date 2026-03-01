@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CEFRLevel, ESLCurriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { generateESLCurriculum } from '../services/geminiService';
+import { safeStorage } from '@shared/safeStorage';
 
 interface CurriculumPlannerProps {
     onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams) => void;
@@ -54,22 +55,17 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
     // Restore from localStorage
     useEffect(() => {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                const saved = JSON.parse(raw);
-                if (saved.curriculum) setCurriculum(saved.curriculum);
-                if (saved.params) {
-                    setSavedParams(saved.params);
-                    setLessonCount(saved.params.lessonCount || 6);
-                    setLevel(saved.params.level || CEFRLevel.A1);
-                    setDuration(saved.params.duration || '90');
-                    setStudentCount(saved.params.studentCount || '12');
-                    setSlideCount(saved.params.slideCount || 15);
-                    setCustomInstructions(saved.params.customInstructions || '');
-                }
-            }
-        } catch { /* ignore */ }
+        const saved = safeStorage.get<{ curriculum?: ESLCurriculum; params?: CurriculumParams }>(STORAGE_KEY, {});
+        if (saved.curriculum) setCurriculum(saved.curriculum);
+        if (saved.params) {
+            setSavedParams(saved.params);
+            setLessonCount(saved.params.lessonCount || 6);
+            setLevel(saved.params.level || CEFRLevel.A1);
+            setDuration(saved.params.duration || '90');
+            setStudentCount(saved.params.studentCount || '12');
+            setSlideCount(saved.params.slideCount || 15);
+            setCustomInstructions(saved.params.customInstructions || '');
+        }
     }, []);
 
     // Load curriculum from Records
@@ -90,11 +86,11 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     // Auto-save to localStorage
     useEffect(() => {
         if (curriculum) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            safeStorage.set(STORAGE_KEY, {
                 curriculum,
                 params: savedParams,
                 timestamp: Date.now(),
-            }));
+            });
         }
     }, [curriculum, savedParams]);
 
@@ -179,7 +175,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         setCurriculum(null);
         setSavedParams(null);
         setExpandedLessons(new Set());
-        localStorage.removeItem(STORAGE_KEY);
+        safeStorage.remove(STORAGE_KEY);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -383,7 +379,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <span className="text-sm text-gray-500 font-medium">
-                                📚 {curriculum.totalLessons} lessons · {curriculum.targetLevel}
+                                {curriculum.totalLessons} lessons · {curriculum.targetLevel}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -403,7 +399,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:from-violet-700 hover:to-purple-700 transition-all shadow-sm"
                                     >
                                         <Rocket size={16} />
-                                        🚀 一键生成所有课件
+                                        一键生成所有课件
                                     </button>
                                 )
                             )}
@@ -419,7 +415,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         }`}
                                 >
                                     <Save size={16} />
-                                    {isSaved ? '✓ 已保存' : '💾 保存课程'}
+                                    {isSaved ? '✓ 已保存' : '保存课程'}
                                 </button>
                             )}
                             <button
@@ -427,7 +423,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                             >
                                 <Edit3 size={16} />
-                                📝 新建课程
+                                新建课程
                             </button>
                         </div>
                     </div>
@@ -437,12 +433,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">{curriculum.textbookTitle}</h2>
                         <p className="text-gray-600 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-500">
-                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium">📖 {curriculum.totalLessons} 课时</span>
-                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium">🎓 {curriculum.targetLevel}</span>
+                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} 课时</span>
+                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><GraduationCap size={14} /> {curriculum.targetLevel}</span>
                             {savedParams && (
                                 <>
-                                    <span className="px-3 py-1 bg-gray-100 rounded-lg">⏱️ {savedParams.duration} min</span>
-                                    <span className="px-3 py-1 bg-gray-100 rounded-lg">👥 {savedParams.studentCount} students</span>
+                                    <span className="px-3 py-1 bg-gray-100 rounded-lg flex items-center gap-1.5"><Clock size={14} /> {savedParams.duration} min</span>
+                                    <span className="px-3 py-1 bg-gray-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams.studentCount} students</span>
                                 </>
                             )}
                         </div>
@@ -474,7 +470,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         </div>
                                         <div className="flex items-center gap-2 ml-2">
                                             <span className="hidden sm:inline text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">
-                                                📄 {lesson.textbookReference}
+                                                {lesson.textbookReference}
                                             </span>
                                             {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
                                         </div>
@@ -547,7 +543,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             if (status === 'generating') {
                                                 return (
                                                     <div className="w-full mt-2 bg-violet-50 border border-violet-200 text-violet-600 rounded-xl py-3 font-semibold flex items-center justify-center gap-2">
-                                                        <Loader2 size={18} className="animate-spin" /> ⏳ 正在生成...
+                                                        <Loader2 size={18} className="animate-spin" /> 正在生成...
                                                     </div>
                                                 );
                                             }
@@ -557,7 +553,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                         onClick={(e) => { e.stopPropagation(); onOpenKit?.(kitId); }}
                                                         className="w-full mt-2 bg-green-50 border border-green-200 text-green-700 rounded-xl py-3 font-semibold hover:bg-green-100 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <CheckCircle2 size={18} /> ✅ 打开课件
+                                                        <CheckCircle2 size={18} /> 打开课件
                                                         <ExternalLink size={14} />
                                                     </button>
                                                 );
@@ -571,7 +567,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                         }}
                                                         className="w-full mt-2 bg-red-50 border border-red-200 text-red-600 rounded-xl py-3 font-semibold hover:bg-red-100 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <AlertCircle size={18} /> ❌ 生成失败 — 点击重试
+                                                        <AlertCircle size={18} /> 生成失败 — 点击重试
                                                     </button>
                                                 );
                                             }
@@ -585,7 +581,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                     className="w-full mt-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 text-violet-700 rounded-xl py-3 font-semibold hover:from-violet-100 hover:to-purple-100 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <FileText size={18} />
-                                                    📋 生成课件 (Generate Lesson Kit)
+                                                    生成课件 (Generate Lesson Kit)
                                                     <ArrowRight size={16} />
                                                 </button>
                                             );

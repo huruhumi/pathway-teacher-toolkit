@@ -31,28 +31,28 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
   const handleRandomTheme = async () => {
     setIsGeneratingTheme(true);
     try {
-        const result = await generateRandomTheme(
-          input.season,
-          input.weather,
-          input.activityFocus,
-          input.studentAge,
-          input.uploadedFiles
-        );
-        setInput(prev => ({ 
-            ...prev, 
-            theme: result.theme,
-            topicIntroduction: result.introduction
-        }));
+      const result = await generateRandomTheme(
+        input.season,
+        input.weather,
+        input.activityFocus,
+        input.studentAge,
+        input.uploadedFiles
+      );
+      setInput(prev => ({
+        ...prev,
+        theme: result.theme,
+        topicIntroduction: result.introduction
+      }));
     } catch (error) {
-        console.error("Theme generation failed, using fallback.");
-        const random = SAMPLE_THEMES[Math.floor(Math.random() * SAMPLE_THEMES.length)];
-        setInput(prev => ({ 
-            ...prev, 
-            theme: random,
-            topicIntroduction: "An exciting journey to explore nature."
-        }));
+      console.error("Theme generation failed, using fallback.");
+      const random = SAMPLE_THEMES[Math.floor(Math.random() * SAMPLE_THEMES.length)];
+      setInput(prev => ({
+        ...prev,
+        theme: random,
+        topicIntroduction: "An exciting journey to explore nature."
+      }));
     } finally {
-        setIsGeneratingTheme(false);
+      setIsGeneratingTheme(false);
     }
   };
 
@@ -60,7 +60,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
     const newFiles: UploadedFile[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       // Simple validation for PDF or Images
       if (!file.type.match('image.*') && file.type !== 'application/pdf' && file.type !== 'text/plain') {
         alert(`File ${file.name} is not a supported format (PDF, Image, Text only).`);
@@ -83,7 +83,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         reader.readAsDataURL(file);
       });
     }
-    
+
     setInput(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...newFiles] }));
   };
 
@@ -110,58 +110,55 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-8">
-      
+    <div className="card md:p-8 space-y-8">
+
       {/* Environmental Context: Weather & Season */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-3">
-              {t('input.weatherLabel')}</label>
-            <div className="flex bg-slate-100 p-1 rounded-xl w-full">
-              <button
-                onClick={() => setInput({ ...input, weather: 'Sunny' })}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  input.weather === 'Sunny'
-                    ? 'bg-white text-amber-600 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+        <div>
+          <label className="input-label">
+            {t('input.weatherLabel')}</label>
+          <div className="flex bg-slate-100 p-1 rounded-xl w-full">
+            <button
+              onClick={() => setInput({ ...input, weather: 'Sunny' })}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Sunny'
+                  ? 'bg-white text-amber-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
                 }`}
-              >
-                <Sun size={18} />
-                {t('input.sunny')}</button>
-              <button
-                onClick={() => setInput({ ...input, weather: 'Rainy' })}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  input.weather === 'Rainy'
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+            >
+              <Sun size={18} />
+              {t('input.sunny')}</button>
+            <button
+              onClick={() => setInput({ ...input, weather: 'Rainy' })}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Rainy'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
                 }`}
-              >
-                <CloudRain size={18} />
-                {t('input.rainy')}</button>
-            </div>
+            >
+              <CloudRain size={18} />
+              {t('input.rainy')}</button>
           </div>
+        </div>
 
-          <div>
-             <label className="block text-sm font-semibold text-slate-700 mb-3">
-               {t('input.seasonLabel')}</label>
-             <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl">
-               {SEASONS.map((s) => (
-                 <button
-                   key={s}
-                   onClick={() => setInput({ ...input, season: s })}
-                   className={`flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all ${
-                     input.season === s
-                       ? 'bg-white text-emerald-600 shadow-sm font-bold'
-                       : 'text-slate-500 hover:text-slate-700'
-                   }`}
-                 >{t(`season.${s}` as TranslationKey)}</button>
-               ))}
-             </div>
+        <div>
+          <label className="input-label">
+            {t('input.seasonLabel')}</label>
+          <div className="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl">
+            {SEASONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => setInput({ ...input, season: s })}
+                className={`flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all ${input.season === s
+                    ? 'bg-white text-emerald-600 shadow-sm font-bold'
+                    : 'text-slate-500 hover:text-slate-700'
+                  }`}
+              >{t(`season.${s}` as TranslationKey)}</button>
+            ))}
           </div>
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-3">
+        <label className="input-label">
           {t('input.focusLabel')}</label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {ACTIVITY_FOCUS_OPTIONS.map((opt) => {
@@ -171,11 +168,10 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
               <button
                 key={opt.id}
                 onClick={() => handleFocusChange(opt.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${
-                  isSelected
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${isSelected
                     ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
                     : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-600'
-                }`}
+                  }`}
               >
                 <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
               </button>
@@ -186,18 +182,18 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="input-label">
             {t('input.ageLabel')}</label>
           <select
             value={input.studentAge}
             onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="input-field py-3"
           >
             {AGE_RANGES.map(age => <option key={age} value={age}>{age}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="input-label">
             {t('input.studentsLabel')}</label>
           <input
             type="number"
@@ -205,14 +201,14 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             max={50}
             value={input.studentCount}
             onChange={(e) => setInput({ ...input, studentCount: parseInt(e.target.value) || 0 })}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="input-field py-3"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="input-label">
             {t('input.durationLabel')}</label>
           <input
             type="number"
@@ -220,22 +216,22 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             step={15}
             value={input.duration}
             onChange={(e) => setInput({ ...input, duration: parseInt(e.target.value) || 0 })}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="input-field py-3"
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="input-label">
             {t('input.cefrLabel')}</label>
           <select
             value={input.cefrLevel}
             onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="input-field py-3"
           >
             {CEFR_LEVELS.map(level => <option key={level} value={level}>{level}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="input-label">
             {t('input.handbookLabel')}</label>
           <input
             type="number"
@@ -243,14 +239,14 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             max={20}
             value={input.handbookPages}
             onChange={(e) => setInput({ ...input, handbookPages: parseInt(e.target.value) || 0 })}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
+            className="input-field py-3"
             placeholder="e.g. 5"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">
+        <label className="input-label">
           Workshop Theme
         </label>
         <div className="relative">
@@ -259,9 +255,9 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             value={input.theme}
             onChange={(e) => setInput({ ...input, theme: e.target.value })}
             placeholder="e.g. The Secret Life of Flour (or leave blank and upload a file)"
-            className="w-full pl-4 pr-14 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+            className="input-field py-3 pr-14"
           />
-          <button 
+          <button
             onClick={handleRandomTheme}
             disabled={isGeneratingTheme}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
@@ -273,7 +269,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">
+        <label className="input-label">
           Introduction / Context (Optional)
         </label>
         <textarea
@@ -281,31 +277,31 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
           onChange={(e) => setInput({ ...input, topicIntroduction: e.target.value })}
           placeholder="e.g. Students will explore how bees find flowers and why pollination is important. (Auto-filled by 'Random Theme')"
           rows={3}
-          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all resize-none"
+          className="input-field py-3 resize-none"
         />
       </div>
 
-       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">
+      <div>
+        <label className="input-label">
           Teaching Materials (Optional)
         </label>
-        <div 
+        <div
           className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-400 hover:bg-slate-50 transition-colors cursor-pointer"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            multiple 
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            multiple
             accept=".pdf,image/*,.txt"
             onChange={handleFileChange}
           />
           <div className="flex flex-col items-center gap-2 text-slate-500">
             <div className="p-3 bg-slate-100 rounded-full text-slate-400">
-               <UploadCloud size={24} />
+              <UploadCloud size={24} />
             </div>
             <p className="text-sm font-medium">Click to upload or drag & drop</p>
             <p className="text-xs text-slate-400">PDFs, Images, or Text files (Max 5 files)</p>
@@ -323,7 +319,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                   </div>
                   <span className="text-sm text-slate-700 truncate font-medium">{file.name}</span>
                 </div>
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
                   className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                 >
@@ -340,13 +336,12 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         <button
           onClick={isLoading ? onStop : onSubmit}
           disabled={!isLoading && (!input.theme && input.uploadedFiles.length === 0)}
-          className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${
-            isLoading 
+          className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
               ? 'bg-red-500 hover:bg-red-600'
               : (!input.theme && input.uploadedFiles.length === 0)
-                ? 'bg-slate-400 cursor-not-allowed' 
+                ? 'bg-slate-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-emerald-600 to-teal-600'
-          }`}
+            }`}
         >
           {isLoading ? (
             <>

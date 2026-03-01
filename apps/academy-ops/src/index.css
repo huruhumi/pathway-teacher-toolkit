@@ -1,1 +1,11 @@
 @import "tailwindcss";
+@import "../../../packages/shared/styles/tokens.css";
+@source "../../../packages/shared";
+
+/* ── Academy Ops Brand Colors ── */
+@theme {
+    --color-brand: #e11d48;
+    --color-brand-light: #fff1f2;
+    --color-brand-hover: #be123c;
+    --color-brand-dark: #9f1239;
+}

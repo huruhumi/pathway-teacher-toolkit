@@ -1,32 +1,14 @@
 
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { GeneratedContent, CEFRLevel, Game, Worksheet, ReadingPlanDay, ReadingTask, Flashcard, PhonicsContent, WebResource, LessonStage, ESLCurriculum, CurriculumParams } from '../types';
+import { GeneratedContent, CEFRLevel } from '../types';
 
-// Helper function to retry API calls with exponential backoff
-async function retryApiCall<T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> {
-  try {
-    return await apiCall();
-  } catch (error: any) {
-    const status = error.status || error?.error?.code;
-    const message = error.message || '';
+import { retryWithBackoff } from '@shared/retryWithBackoff';
 
-    // Retry on rate limits or transient server errors
-    // 429 is RESOURCE_EXHAUSTED (quota reached)
-    const isRateLimit = status === 429 || message.toLowerCase().includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('resource_exhausted');
-    const isServerError = status === 503 || status === 500 || message.toLowerCase().includes('no image generated');
+// Exported for sub-modules (worksheetService, itemGenerators, curriculumService)
+export const retryApiCall = <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> =>
+  retryWithBackoff(apiCall, { maxRetries: retries, baseDelay: delay });
 
-    if ((isRateLimit || isServerError) && retries > 0) {
-      // If it's a rate limit, use a longer initial delay to respect the window
-      const waitTime = isRateLimit ? delay * 2 : delay;
-      console.warn(`API limit or error encountered (${status}). Retrying in ${waitTime}ms... (Retries left: ${retries})`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-      return retryApiCall(apiCall, retries - 1, delay * 1.5);
-    }
-    throw error;
-  }
-}
-
-const RESPONSE_SCHEMA = {
+export const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
     structuredLessonPlan: {
@@ -241,8 +223,8 @@ const RESPONSE_SCHEMA = {
   required: ["structuredLessonPlan", "lessonPlanMarkdown", "slides", "flashcards", "games", "readingCompanion", "notebookLMPrompt", "summary", "phonics"]
 };
 
-// Utility to strip markdown bold prefixes
-const cleanMarkdownPrefix = (s: string) => s.replace(/^\*\*.*?\*\*[:\s]*/, '').trim();
+// Utility to strip markdown bold prefixes (exported for sub-modules)
+export const cleanMarkdownPrefix = (s: string) => s.replace(/^\*\*.*?\*\*[:\s]*/, '').trim();
 
 export const generateLessonPlan = async (
   textInput: string,
@@ -254,7 +236,7 @@ export const generateLessonPlan = async (
   studentCount: string,
   lessonTitle: string
 ): Promise<GeneratedContent> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
   const parts: any[] = [{
     text: `Generate a complete lesson kit for Level: ${level}, Topic: ${lessonTitle}${topic ? ` (${topic})` : ''}, Duration: ${duration} mins, Students: ${studentCount}. ${textInput ? `Context: ${textInput}` : ''}. 
@@ -302,7 +284,7 @@ export const generateLessonPlan = async (
 };
 
 export const generateLessonImage = async (prompt: string, aspectRatio: string = "1:1"): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
   const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: prompt }] },
@@ -321,422 +303,6 @@ export const generateLessonImage = async (prompt: string, aspectRatio: string = 
   throw new Error("No image generated");
 };
 
-export const generateWorksheet = async (level: CEFRLevel, topic: string, configs: any[]): Promise<Worksheet> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  let instructionsText = `Generate a worksheet for Level: ${level}, Topic: ${topic} based on these configs: ${JSON.stringify(configs)}. `;
-
-  if (configs.some(c => c.type === 'Cloze Test')) {
-    instructionsText += `CRITICAL for "Cloze Test" type: You MUST generate a reading passage in the 'passage' field with numbered blanks like (1), (2), (3), etc. The corresponding items in that section MUST have 'question' text like "Blank (1)", "Blank (2)", etc., and MUST use 'multiple-choice' layout with exactly 4 options each. Set the 'layout' field of the Cloze Test section to 'multiple-choice'. `;
-  }
-
-  if (configs.some(c => c.type === 'Error Correction')) {
-    instructionsText += `CRITICAL for "Error Correction" type: You MUST generate a short reading passage in the 'passage' field that contains a specific number of errors (equal to the 'count' provided). Each section item should identify the wrong word/phrase in 'question' and the correct version in 'answer'. Set the 'layout' field of the Error Correction section to 'error-correction'. `;
-  }
-
-  if (configs.some(c => c.type === 'Picture Description')) {
-    instructionsText += `CRITICAL for "Picture Description" type: This is a writing task. Set the 'layout' to 'essay'. Provide a descriptive writing prompt in 'question' and suggest a target word count (e.g. 50 or 100) in the 'wordCount' field of the item. `;
-  }
-
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: instructionsText,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING },
-          type: { type: Type.STRING },
-          instructions: { type: Type.STRING },
-          sections: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                passageTitle: { type: Type.STRING },
-                passage: { type: Type.STRING },
-                layout: { type: Type.STRING, enum: ["standard", "matching", "multiple-choice", "essay", "error-correction"] },
-                items: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      question: { type: Type.STRING },
-                      answer: { type: Type.STRING },
-                      options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      visualPrompt: { type: Type.STRING },
-                      wordCount: { type: Type.NUMBER, description: "Suggested word count for writing tasks" }
-                    },
-                    required: ["question", "answer"]
-                  }
-                }
-              },
-              required: ["title", "items"]
-            }
-          }
-        },
-        required: ["title", "instructions", "sections"]
-      } as any
-    }
-  }));
-
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSingleGame = async (level: CEFRLevel, topic: string, skill: string, type: string, context: string): Promise<Game> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate a single educational game for Level: ${level}, Topic: ${topic}, Skill: ${skill}, Type: ${type}. Context: ${context}. Return the result in the specified JSON format.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          name: { type: Type.STRING },
-          type: { type: Type.STRING },
-          interactionType: { type: Type.STRING },
-          instructions: { type: Type.STRING },
-          materials: { type: Type.ARRAY, items: { type: Type.STRING } }
-        },
-        required: ["name", "type", "interactionType", "instructions", "materials"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateReadingTask = async (level: CEFRLevel, topic: string, focus: string): Promise<ReadingTask> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate a post-class reading or review task for Level: ${level}, Topic: ${topic}, Focus: ${focus}. Provide both English and Chinese. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          text: { type: Type.STRING },
-          text_cn: { type: Type.STRING },
-          isCompleted: { type: Type.BOOLEAN }
-        },
-        required: ["text", "text_cn"]
-      } as any
-    }
-  }));
-  const data = JSON.parse(response.text || "{}");
-  return { ...data, isCompleted: false };
-};
-
-export const generateWebResource = async (topic: string, focus: string): Promise<WebResource> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Suggest a high-quality educational web resource (YouTube, National Geographic, etc.) for Topic: ${topic}, Focus: ${focus}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING },
-          title_cn: { type: Type.STRING },
-          url: { type: Type.STRING },
-          description: { type: Type.STRING },
-          description_cn: { type: Type.STRING }
-        },
-        required: ["title", "title_cn", "url", "description", "description_cn"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateNewCompanionDay = async (level: CEFRLevel, topic: string, dayNum: number): Promise<ReadingPlanDay> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate Day ${dayNum} of a 7-day review plan for Level: ${level}, Topic: ${topic}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: (RESPONSE_SCHEMA.properties.readingCompanion.properties.days as any).items
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, existingWords: string[]): Promise<Flashcard> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate a new target vocabulary flashcard for Level: ${level}, Topic: ${topic}. Avoid: ${existingWords.join(", ")}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: (RESPONSE_SCHEMA.properties.flashcards as any).items
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSingleGrammarPoint = async (level: CEFRLevel, topic: string, existingPoints: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate one new grammar rule or target sentence for Level: ${level}, Topic: ${topic}. Avoid repeating: ${existingPoints.join(". ")}. DO NOT use markdown bold headers. Return ONLY the plain text string of the rule/sentence.`,
-  }));
-  return cleanMarkdownPrefix(response.text || "");
-};
-
-export const generateSingleObjective = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate one specific learning objective for Level: ${level}, Topic: ${topic}. It MUST follow the format: "Students will be able to [action] [content]". Existing ones: ${existing.join(". ")}. Return ONLY the objective text string.`,
-  }));
-  return response.text?.trim() || "";
-};
-
-export const generateSingleMaterial = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Suggest one teaching material or piece of equipment for Level: ${level}, Topic: ${topic}. Existing: ${existing.join(", ")}. Return ONLY the material name string.`,
-  }));
-  return response.text?.trim() || "";
-};
-
-export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ problem: string, solution: string }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Identify one anticipated learning problem and its practical solution for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          problem: { type: Type.STRING },
-          solution: { type: Type.STRING }
-        },
-        required: ["problem", "solution"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ word: string, definition: string }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate one new target vocabulary word and its simple English definition for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          word: { type: Type.STRING },
-          definition: { type: Type.STRING }
-        },
-        required: ["word", "definition"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[]): Promise<LessonStage> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: (RESPONSE_SCHEMA.properties.structuredLessonPlan.properties.stages as any).items
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string, existingPoints: string[], vocab: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Identify one specific phonics pattern or sound for Level: ${level}, Topic: ${topic} using vocabulary like ${vocab.join(", ")}. 
-    You MUST use the format: "Category name: Word1, Word2, Word3". 
-    Example: "Initial sound S: Sun, Sit, Sad". 
-    Return ONLY the string. Do NOT provide any introductory text. Avoid repeating: ${existingPoints.join(", ")}`,
-  }));
-  return response.text?.trim() || "";
-};
-
-export const generateSingleDecodableText = async (level: CEFRLevel, topic: string, points: string[], vocab: string[]): Promise<{ text: string, visualPrompt: string }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Create a highly logical, engaging decodable rhyming story for Level: ${level}.
-Focus heavily on the target sounds: ${points.join(", ")}.
-Include the target vocabulary: ${vocab.join(", ")}.
-CRITICAL LENGTH LIMITS: The story MUST be EXACTLY 5 to 8 lines long. Each line MUST have EXACTLY 5 to 8 words.
-CRITICAL VOCABULARY & COLOR LIMITS: 
-1. The story must make logical sense.
-2. Target words must be wrapped in <span style='color: #8b5cf6; font-weight: bold;'>word</span> (Purple).
-3. Sight words must be wrapped in <span style='color: #eab308; font-weight: bold;'>word</span> (Yellow).
-4. Phonics extension words (words following the target sound rules but not in target vocab) must be wrapped in <span style='color: #10b981; font-weight: bold;'>word</span> (Green).
-5. You may NOT use more than 5 words that fall completely outside of these categories.
-CRITICAL RHYMING: The story MUST be written with a fun, rhythmic, rhyming structure (e.g., AABB or ABAB rhyme scheme).
-Format: Start with a catchy ALL CAPS TITLE on the first line. Then write the story below it, using <br/> for line breaks so EVERY SINGLE SENTENCE starts on a new line. Return HTML inside the JSON string.
-Also provide a simple visual prompt describing the scene for an AI image generator. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          text: { type: Type.STRING },
-          visualPrompt: { type: Type.STRING }
-        },
-        required: ["text", "visualPrompt"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateTrivia = async (topic: string, focus: string): Promise<{ en: string; cn: string }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate a trivia fact about ${topic} focusing on ${focus}. Return JSON.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          en: { type: Type.STRING },
-          cn: { type: Type.STRING }
-        },
-        required: ["en", "cn"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const generateReadingPassage = async (level: string, topic: string, vocab: string[]): Promise<{ title: string, text: string }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Generate a short reading passage (about 100-150 words) appropriate for ESL Level: ${level}, Topic: ${topic}. Try to incorporate some of this target vocabulary if relevant: ${vocab.join(", ")}. Return the result as a JSON object with 'title' and 'text' fields.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          title: { type: Type.STRING },
-          text: { type: Type.STRING }
-        },
-        required: ["title", "text"]
-      } as any
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-export const translateLessonKit = async (content: any, targetLanguage: string = "Chinese"): Promise<any> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: `You are an expert educational translator. I am providing a JSON object representing an English ESL lesson kit. 
-Translate ALL nested string values (including lesson plans, slide outlines, games, reading passages, worksheets, phonics texts, etc.) into natural, professional ${targetLanguage}.
-CRITICAL INSTRUCTIONS:
-1. DO NOT translate any JSON keys or property names. Keep them exactly as they are.
-2. DO NOT translate or alter any HTML tags (like <span style='...'>, <br/>, etc.). Only translate the text content inside them.
-3. DO NOT change the structure of the JSON arrays or objects.
-4. If a string contains a URL or a specific grammatical pattern that shouldn't be translated, adapt it reasonably or leave it in English if appropriate.
-5. Return ONLY the translated JSON object.
-
-JSON to translate:
-${JSON.stringify(content)}`,
-    config: {
-      responseMimeType: "application/json",
-    }
-  }));
-  return JSON.parse(response.text || "{}");
-};
-
-// --- Curriculum Generation ---
-
-const CURRICULUM_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    textbookTitle: { type: Type.STRING, description: "Title of the textbook or a generated title based on the content" },
-    overview: { type: Type.STRING, description: "A brief overview of the curriculum and what students will learn" },
-    totalLessons: { type: Type.NUMBER },
-    targetLevel: { type: Type.STRING },
-    lessons: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          lessonNumber: { type: Type.NUMBER },
-          title: { type: Type.STRING, description: "A clear, engaging lesson title" },
-          topic: { type: Type.STRING, description: "The specific topic or theme of this lesson" },
-          description: { type: Type.STRING, description: "2-3 sentence description of what this lesson covers" },
-          objectives: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 specific learning objectives" },
-          suggestedVocabulary: { type: Type.ARRAY, items: { type: Type.STRING }, description: "8-12 key vocabulary words from the textbook content" },
-          grammarFocus: { type: Type.STRING, description: "The main grammar point or structure for this lesson" },
-          suggestedActivities: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-4 suggested classroom activities" },
-          textbookReference: { type: Type.STRING, description: "Which section/pages/chapters of the textbook this lesson covers" }
-        },
-        required: ["lessonNumber", "title", "topic", "description", "objectives", "suggestedVocabulary", "grammarFocus", "suggestedActivities", "textbookReference"]
-      }
-    }
-  },
-  required: ["textbookTitle", "overview", "totalLessons", "targetLevel", "lessons"]
-};
-
-export const generateESLCurriculum = async (
-  textbookText: string,
-  params: CurriculumParams
-): Promise<ESLCurriculum> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  let prompt = `You are an expert ESL curriculum designer. I am providing the extracted text content from a textbook or teaching material. Your task is to analyze this content and split it into EXACTLY ${params.lessonCount} well-structured ESL lessons.
-
-Target Level: ${params.level}
-Lesson Duration: ${params.duration} minutes each
-Student Count: ${params.studentCount}
-Total Lessons Required: ${params.lessonCount}
-
-CRITICAL INSTRUCTIONS:
-1. You MUST generate EXACTLY ${params.lessonCount} lessons. No more, no less.
-2. Each lesson should cover a logical, progressive portion of the textbook content.
-3. Lessons should build upon each other in difficulty and topic progression.
-4. Extract REAL vocabulary, grammar points, and topics FROM the provided textbook content — do NOT invent content that isn't in the material.
-5. The textbookReference field should indicate which part of the content each lesson draws from.
-6. Objectives should follow the format: "Students will be able to [action] [content]".
-7. Suggested activities should be practical, level-appropriate, and varied (mix of individual, pair, and group work).`;
-
-  if (params.customInstructions) {
-    prompt += `\n\nAdditional Instructions from Teacher:\n${params.customInstructions}`;
-  }
-
-  prompt += `\n\n--- TEXTBOOK CONTENT ---\n${textbookText}`;
-
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: CURRICULUM_SCHEMA as any,
-    }
-  }));
-
-  return JSON.parse(response.text || "{}");
-};
-
 // Utility to convert File to base64
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -747,3 +313,8 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+// --- Barrel re-exports from sub-modules ---
+// Consumers can keep importing from 'geminiService' unchanged.
+export { generateWorksheet, generateSingleGame, generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia, generateReadingPassage } from './worksheetService';
+export { generateSingleFlashcard, generateSingleGrammarPoint, generateSingleObjective, generateSingleMaterial, generateSingleAnticipatedProblem, generateSingleVocabItem, generateSingleStage, generateSinglePhonicsPoint, generateSingleDecodableText } from './itemGenerators';
+export { generateESLCurriculum, translateLessonKit } from './curriculumService';

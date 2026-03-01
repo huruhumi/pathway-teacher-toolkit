@@ -245,7 +245,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                         }`}
                 >
                     <FileText size={16} />
-                    📋 Curricula
+                    Curricula
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">{savedCurricula.length}</span>
                 </button>
                 <button
@@ -256,7 +256,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                         }`}
                 >
                     <BookOpen size={16} />
-                    📄 Lesson Kits
+                    Lesson Kits
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">{savedPlans.length}</span>
                 </button>
             </div>
@@ -354,8 +354,8 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                                 <BookOpen size={12} /> {item.curriculum.lessons.length} lessons
                                             </span>
                                             <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${item.language === 'zh'
-                                                    ? 'bg-red-50 text-red-600'
-                                                    : 'bg-blue-50 text-blue-600'
+                                                ? 'bg-red-50 text-red-600'
+                                                : 'bg-blue-50 text-blue-600'
                                                 }`}>
                                                 {item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN'}
                                             </span>

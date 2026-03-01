@@ -165,7 +165,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="card !p-0 overflow-hidden">
         <div className="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
           {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map(day => (
             <div key={day} className="py-3 text-center text-sm font-medium text-slate-500">
@@ -217,7 +217,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
                   )}
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors text-sm font-medium shadow-sm shadow-rose-200"
+                    className="btn btn-primary px-3 py-1.5 text-sm"
                   >
                     <Save size={16} />
                     保存

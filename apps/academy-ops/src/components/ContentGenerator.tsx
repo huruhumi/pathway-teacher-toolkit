@@ -743,7 +743,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
           <p className="text-slate-500 mt-1">打造高转化、高互动的优质笔记。</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <div className="card space-y-6">
           {/* Quick Select from Plan */}
           {currentPlan.length > 0 && (
             <div className="space-y-3">
@@ -770,7 +770,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="例如：如何培养孩子的英语思辨能力？"
-                className="w-full p-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50 min-h-[100px]"
+                className="input-field p-4 min-h-[100px]"
               />
             </div>
 
@@ -807,7 +807,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50"
+                className="input-field cursor-pointer"
               >
                 <option>专业干货 (Educational) - 强调知识点，权威感</option>
                 <option>情感共鸣 (Emotional) - 讲故事，触动家长焦虑或期望</option>
@@ -820,10 +820,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${isGenerating
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-rose-500 to-orange-500 text-white hover:shadow-lg hover:shadow-rose-200 transform hover:-translate-y-0.5'
-              }`}
+            className="btn w-full py-4 text-lg bg-gradient-to-r from-rose-500 to-orange-500 text-white hover:shadow-lg hover:shadow-rose-200 transform hover:-translate-y-0.5 border-none"
           >
             {isGenerating ? (
               <>
@@ -868,10 +865,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
                 <button
                   onClick={handleGenerateCustom}
                   disabled={isGenerating}
-                  className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${isGenerating
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-rose-100 text-rose-600 hover:bg-rose-200 border border-rose-200'
-                    }`}
+                  className="btn btn-secondary w-full py-3 border border-rose-200"
                 >
                   {isGenerating ? (
                     <>
@@ -892,7 +886,7 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
 
         {/* Image Generation Settings (Only visible after content generation) */}
         {generatedContent && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="card space-y-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-slate-900 font-bold">
                 <ImageIcon size={20} className="text-purple-500" />

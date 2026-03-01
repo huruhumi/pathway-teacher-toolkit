@@ -23,7 +23,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
         </div>
         <button
           onClick={() => onNavigate('generator')}
-          className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-colors shadow-lg shadow-rose-200"
+          className="btn btn-primary shadow-lg shadow-rose-200"
         >
           <Sparkles size={18} />
           <span>立即创作</span>
@@ -32,7 +32,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
 
       {/* Stats / Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="card flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 flex-shrink-0">
             <FileText size={24} />
           </div>
@@ -45,7 +45,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="card flex items-center gap-4">
           <div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 flex-shrink-0">
             <Calendar size={24} />
           </div>
@@ -58,7 +58,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+        <div className="card flex items-center gap-4">
           <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 flex-shrink-0">
             <LayoutList size={24} />
           </div>

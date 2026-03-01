@@ -10,6 +10,7 @@ import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../s
 import { Curriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { AGE_RANGES, CEFR_LEVELS } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
+import { safeStorage } from '@shared/safeStorage';
 
 const ENGLISH_LEVELS = [
     "Zero Foundation (零基础)",
@@ -87,36 +88,30 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
     // Persist to localStorage
     useEffect(() => {
         if (curriculumEN || curriculumCN) {
-            const data = {
+            safeStorage.set(STORAGE_KEY, {
                 en: curriculumEN,
                 cn: curriculumCN,
                 lang: activeLanguage,
                 params: savedParams || getCurrentParams(),
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            });
         }
     }, [curriculumEN, curriculumCN, activeLanguage]);
 
     // Load from localStorage
     useEffect(() => {
         if (externalCurriculum) return;
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                const data = JSON.parse(raw);
-                if (data.en) setCurriculumEN(data.en);
-                if (data.cn) setCurriculumCN(data.cn);
-                if (data.lang) setActiveLanguage(data.lang);
-                if (data.params) {
-                    setSavedParams(data.params);
-                    if (data.params.city) setCity(data.params.city);
-                    if (data.params.ageGroup) setAgeGroup(data.params.ageGroup);
-                    if (data.params.lessonCount) setLessonCount(data.params.lessonCount);
-                    if (data.params.duration) setDuration(data.params.duration);
-                    if (data.params.customTheme) setCustomTheme(data.params.customTheme);
-                }
-            }
-        } catch { }
+        const data = safeStorage.get<{ en?: Curriculum; cn?: Curriculum; lang?: 'en' | 'zh'; params?: CurriculumParams }>(STORAGE_KEY, {});
+        if (data.en) setCurriculumEN(data.en);
+        if (data.cn) setCurriculumCN(data.cn);
+        if (data.lang) setActiveLanguage(data.lang);
+        if (data.params) {
+            setSavedParams(data.params);
+            if (data.params.city) setCity(data.params.city);
+            if (data.params.ageGroup) setAgeGroup(data.params.ageGroup);
+            if (data.params.lessonCount) setLessonCount(data.params.lessonCount);
+            if (data.params.duration) setDuration(data.params.duration);
+            if (data.params.customTheme) setCustomTheme(data.params.customTheme);
+        }
     }, []);
 
     const handleConfirmCity = async () => {
@@ -165,7 +160,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
         setCurriculumEN(null);
         setCurriculumCN(null);
         setSavedParams(null);
-        localStorage.removeItem(STORAGE_KEY);
+        safeStorage.remove(STORAGE_KEY);
         setIsSavedEN(false);
         setIsSavedCN(false);
         setActiveLanguage('en');
@@ -187,7 +182,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
             {/* Config Panel — only visible when no curriculum generated */}
             {!curriculum && (
                 <>
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                    <div className="card md:p-8">
                         <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                             <Compass size={22} className="text-teal-600" />
                             Curriculum Planner
@@ -196,13 +191,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Age Group */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <Users size={16} /> {t('cp.ageGroup')}
                                 </label>
                                 <select
                                     value={ageGroup}
                                     onChange={(e) => setAgeGroup(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 >
                                     {AGE_RANGES.map(age => <option key={age} value={age}>{age}</option>)}
                                 </select>
@@ -210,13 +205,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
 
                             {/* English Level */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <GraduationCap size={16} /> {t('cp.englishLevel')}
                                 </label>
                                 <select
                                     value={englishLevel}
                                     onChange={(e) => setEnglishLevel(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 >
                                     {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
                                 </select>
@@ -224,7 +219,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
 
                             {/* Lesson Count */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <BookOpen size={16} /> {t('cp.numLessons')}
                                 </label>
                                 <input
@@ -233,13 +228,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                     max={12}
                                     value={lessonCount}
                                     onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 />
                             </div>
 
                             {/* Duration */}
                             <div className="space-y-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <Wind size={16} /> {t('cp.duration')}
                                 </label>
                                 <input
@@ -247,13 +242,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                     placeholder="e.g., 180 minutes"
                                     value={duration}
                                     onChange={(e) => setDuration(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 />
                             </div>
 
                             {/* City */}
                             <div className="space-y-2 md:col-span-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <MapPin size={16} /> {t('cp.city')}
                                 </label>
                                 <div className="flex gap-3">
@@ -262,12 +257,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                         placeholder="e.g., 上海, 北京, 成都..."
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
-                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                        className="input-field flex-1 py-3"
                                     />
                                     <button
                                         onClick={handleConfirmCity}
                                         disabled={loadingLocations}
-                                        className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                                        className="btn btn-primary px-6 py-3"
                                     >
                                         {loadingLocations ? (
                                             <Loader2 size={18} className="animate-spin" />
@@ -281,13 +276,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                             {/* Suggested Locations */}
                             {suggestedLocations.length > 0 && (
                                 <div className="space-y-2 md:col-span-2">
-                                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                    <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                         <Compass size={16} /> 推荐地点 ({effectiveCity})
                                     </label>
                                     <select
                                         value={selectedLocation}
                                         onChange={(e) => setSelectedLocation(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                        className="input-field py-3"
                                     >
                                         <option value="">-- 不选择推荐地点 --</option>
                                         {suggestedLocations.map((loc, i) => (
@@ -299,7 +294,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
 
                             {/* Custom Location */}
                             <div className="space-y-2 md:col-span-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <Edit3 size={16} /> {t('cp.customLocation')}
                                 </label>
                                 <input
@@ -307,13 +302,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                     placeholder="输入自定义地点名称"
                                     value={customLocation}
                                     onChange={(e) => setCustomLocation(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 />
                             </div>
 
                             {/* Custom Theme */}
                             <div className="space-y-2 md:col-span-2">
-                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                     <Sparkles size={16} /> {t('cp.customTheme')}
                                 </label>
                                 <input
@@ -321,7 +316,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                     placeholder="e.g., Marine Biology, Urban Ecology..."
                                     value={customTheme}
                                     onChange={(e) => setCustomTheme(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                    className="input-field py-3"
                                 />
                             </div>
 
@@ -390,9 +385,9 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                                         setIsSaved(true);
                                     }}
                                     disabled={isSaved}
-                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm ${isSaved
-                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-600 cursor-default'
-                                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                    className={`btn ${isSaved
+                                        ? 'bg-emerald-50 text-emerald-600 cursor-default border border-emerald-200'
+                                        : 'btn-primary'
                                         }`}
                                 >
                                     {isSaved ? <><CheckIcon size={16} /> {t('cp.saved')}</> : <><Save size={16} /> {t('cp.save')}</>}
@@ -400,7 +395,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                             )}
                             <button
                                 onClick={handleNewCurriculum}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                                className="btn btn-outline"
                             >
                                 <Edit3 size={16} />
                                 {t('cp.new')}
@@ -409,13 +404,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                     </div>
 
                     {/* Overview */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <div className="card">
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.theme}</h2>
                         <p className="text-slate-600 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
-                            <span className="px-3 py-1 bg-slate-100 rounded-lg">📍 {savedParams?.city || effectiveCity}</span>
-                            <span className="px-3 py-1 bg-slate-100 rounded-lg">👥 {savedParams?.ageGroup || ageGroup}</span>
-                            <span className="px-3 py-1 bg-slate-100 rounded-lg">📚 {curriculum.lessons.length} {t('saved.lessons')}</span>
+                            <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><MapPin size={14} /> {savedParams?.city || effectiveCity}</span>
+                            <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams?.ageGroup || ageGroup}</span>
+                            <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.lessons.length} {t('saved.lessons')}</span>
                         </div>
                     </div>
 
@@ -426,7 +421,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4"
+                            className="card space-y-4"
                         >
                             {/* Header */}
                             <div className="flex items-start justify-between">
@@ -512,7 +507,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({ onGenerate
                             {/* Generate Kit Button */}
                             <button
                                 onClick={() => onGenerateKit(lesson, savedParams || getCurrentParams(), activeLanguage)}
-                                className="w-full mt-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl py-3 font-semibold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
+                                className="btn btn-secondary w-full mt-2 py-3"
                             >
                                 <FileText size={18} />
                                 {t('cp.genKit')}

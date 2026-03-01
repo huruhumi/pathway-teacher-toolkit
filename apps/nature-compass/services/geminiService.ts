@@ -1,96 +1,16 @@
 import { GoogleGenAI, Type, Schema, Part } from "@google/genai";
-import { LessonInput, LessonPlanResponse, VocabularyItem, VisualReferenceItem, RoadmapItem, UploadedFile } from "../types";
+import { LessonInput, LessonPlanResponse, UploadedFile } from "../types";
 
-// --- Retry Logic Helpers ---
+// --- Retry Logic (shared utility) ---
+import { retryWithBackoff } from '@shared/retryWithBackoff';
 const MAX_RETRIES = 5;
 const BASE_DELAY = 3000;
 
-async function retryOperation<T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> {
-  let lastError: any;
+// Exported for sub-modules (themeService, imageService, contentGenerators, curriculumService)
+export const retryOperation = <T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> =>
+  retryWithBackoff(operation, { maxRetries: MAX_RETRIES, baseDelay: BASE_DELAY, signal });
 
-  for (let i = 0; i < MAX_RETRIES; i++) {
-    if (signal?.aborted) {
-      throw new Error("Operation aborted");
-    }
-
-    try {
-      return await operation();
-    } catch (error: any) {
-      if (signal?.aborted) {
-        throw new Error("Operation aborted");
-      }
-      lastError = error;
-
-      const errorMessage = error?.message || JSON.stringify(error);
-      const errorCode = error?.status || error?.code;
-
-      const nestedErrorCode = error?.error?.code || error?.error?.status;
-      const nestedErrorMessage = error?.error?.message;
-
-      const isOverloaded =
-        errorMessage.includes('503') ||
-        errorMessage.includes('overloaded') ||
-        errorCode === 503 ||
-        nestedErrorCode === 503 ||
-        (nestedErrorMessage && nestedErrorMessage.includes('overloaded'));
-
-      const isRateLimited =
-        errorMessage.includes('429') ||
-        errorCode === 429 ||
-        nestedErrorCode === 429;
-
-      const isAuthError =
-        errorMessage.includes('401') ||
-        errorMessage.includes('403') ||
-        errorMessage.includes('API key') ||
-        errorCode === 401 ||
-        errorCode === 403;
-
-      if ((isOverloaded || isRateLimited) && i < MAX_RETRIES - 1) {
-        const delay = BASE_DELAY * Math.pow(2, i);
-        console.warn(`Gemini API busy (503/429). Retrying in ${delay}ms... (Attempt ${i + 1}/${MAX_RETRIES})`);
-
-        // Wait with abort support
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            removeListeners();
-            resolve();
-          }, delay);
-
-          const onAbort = () => {
-            clearTimeout(timeout);
-            removeListeners();
-            reject(new Error("Operation aborted"));
-          };
-
-          const removeListeners = () => {
-            signal?.removeEventListener('abort', onAbort);
-          };
-
-          signal?.addEventListener('abort', onAbort);
-        });
-
-        continue;
-      }
-
-      // If we reach here, it's a non-retryable error or we ran out of retries
-      if (isAuthError) {
-        throw new Error("Invalid API Key or authentication failed. Please check your .env file.");
-      }
-      if (isRateLimited) {
-        throw new Error("Rate limit exceeded. Please wait a moment and try again.");
-      }
-      if (isOverloaded) {
-        throw new Error("Gemini API is currently overloaded. Please try again in a few seconds.");
-      }
-
-      throw new Error(nestedErrorMessage || errorMessage || "An unexpected error occurred during AI generation.");
-    }
-  }
-  throw lastError;
-}
-
-const THEME_PERSPECTIVES = [
+export const THEME_PERSPECTIVES = [
   "Microscopic View (Zoom in on tiny details)",
   "Time Travel (Ancient past or distant future)",
   "Detective Mystery (Solving a nature riddle)",
@@ -103,7 +23,7 @@ const THEME_PERSPECTIVES = [
   "Sky Pirates (Wind and weather)"
 ];
 
-const lessonPlanSchema: Schema = {
+export const lessonPlanSchema: Schema = {
   type: Type.OBJECT,
   properties: {
     missionBriefing: {
@@ -481,452 +401,12 @@ export const generateLessonPlanStreaming = async (
   }, signal);
 };
 
-export const generateRandomTheme = async (season: string, weather: string, focus: string[], age: string, uploadedFiles: UploadedFile[] = []): Promise<{ theme: string; introduction: string }> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const randomSeed = Math.floor(Math.random() * 10000);
-    const perspective = THEME_PERSPECTIVES[Math.floor(Math.random() * THEME_PERSPECTIVES.length)];
-
-    let promptText = `
-            Role: Creative Curriculum Designer.
-            Task: Generate a UNIQUE, catchy, and educational workshop theme for kids aged ${age}.
-            
-            Constraints:
-            - Season: ${season}
-            - Weather: ${weather}
-            - Focus Areas: ${focus.join(', ')}
-            - Random Perspective to Adopt: "${perspective}" (Strictly apply this perspective!)
-            - Random Seed: ${randomSeed}
-            
-            Instruction:
-            1. If reference materials are provided, analyze them deeply. Find a specific, overlooked detail (e.g., a background object, a footnote fact) and combine it with the "${perspective}" perspective.
-            2. If no materials are provided, use the perspective to brainstorm a wild, non-cliché theme.
-            3. Avoid generic titles like "Summer Science" or "Solar Power". Be specific and adventurous.
-            4. IMPORTANT: Keep the theme title SHORT (approx 5 words).
-            5. Provide a brief introduction (1-2 sentences) explaining the theme concept.
-            
-            Output JSON format: { "theme": "...", "introduction": "..." }
-        `;
-
-    let contents: any = [{ text: promptText }];
-
-    if (uploadedFiles && uploadedFiles.length > 0) {
-      const parts: Part[] = [];
-      uploadedFiles.forEach(file => {
-        parts.push({
-          inlineData: {
-            mimeType: file.type,
-            data: file.data
-          }
-        });
-      });
-      parts.push({ text: promptText });
-      contents = [{ parts }];
-    }
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: contents,
-      config: {
-        temperature: 1.0,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            theme: { type: Type.STRING },
-            introduction: { type: Type.STRING }
-          },
-          required: ['theme', 'introduction']
-        }
-      }
-    });
-
-    const json = JSON.parse(response.text!);
-    return {
-      theme: json.theme || `The ${perspective} Adventure`,
-      introduction: json.introduction || "An exciting journey into nature."
-    };
-  });
-};
-
-export const generateSingleStep = async (context: any, currentSteps: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Context: A teaching activity "${context.activity}" (${context.description}).
-            Current steps: ${JSON.stringify(currentSteps)}.
-            Task: Write the NEXT single logical instructional step for the teacher. Keep it actionable and concise. Return only the step text.`,
-    });
-    return response.text?.trim() || "Guide students through the next part of the activity.";
-  });
-};
-
-export const generateImagePrompt = async (subject: string, theme: string, activityType: string, style: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Create a detailed image generation prompt for "${subject}".
-            Context: Educational workshop theme "${theme}", Activity type "${activityType}".
-            Art Style: ${style}.
-            The prompt should be descriptive, specifying lighting, composition, and mood, suitable for a text-to-image model. Return ONLY the prompt.`,
-    });
-    return response.text?.trim() || `A detailed illustration of ${subject} in ${style} style.`;
-  });
-};
-
-export const generateImage = async (prompt: string, aspectRatio: string = "4:3"): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
-  try {
-    return await retryOperation(async () => {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image', // Specific for image generation
-        contents: {
-          parts: [{ text: prompt }]
-        },
-        config: {
-          imageConfig: { aspectRatio: aspectRatio }
-        }
-      });
-
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-      }
-      throw new Error("No image generated");
-    });
-  } catch (e) {
-    console.error("Image generation failed", e);
-    return "";
-  }
-};
-
-export const generateVocabularyItem = async (theme: string, existingWords: string[]): Promise<VocabularyItem> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Theme: ${theme}. Existing words: ${existingWords.join(', ')}.
-            Generate ONE new relevant vocabulary word and a simple definition for a child.
-            Return JSON: { "word": "...", "definition": "..." }`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            word: { type: Type.STRING },
-            definition: { type: Type.STRING }
-          },
-          required: ['word', 'definition']
-        }
-      }
-    });
-    return JSON.parse(response.text!) as VocabularyItem;
-  });
-};
-
-export const generateVisualReferenceItem = async (theme: string, activityType: string, existingLabels: string[]): Promise<VisualReferenceItem> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Theme: ${theme}. Activity: ${activityType}. Existing visuals: ${existingLabels.join(', ')}.
-            Suggest ONE new visual reference aid (diagram, photo, etc) that would help the teacher.
-            Return JSON: { "label": "...", "description": "...", "type": "..." }`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            label: { type: Type.STRING },
-            description: { type: Type.STRING },
-            type: { type: Type.STRING }
-          },
-          required: ['label', 'description', 'type']
-        }
-      }
-    });
-    return JSON.parse(response.text!) as VisualReferenceItem;
-  });
-};
-
-export const generateRoadmapItem = async (theme: string, activityType: string, currentRoadmap: RoadmapItem[]): Promise<RoadmapItem> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  // Define schema for single roadmap item to ensure type safety
-  const roadmapItemSchema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-      timeRange: { type: Type.STRING },
-      phase: { type: Type.STRING },
-      activity: { type: Type.STRING },
-      activityType: { type: Type.STRING },
-      location: { type: Type.STRING },
-      description: { type: Type.STRING },
-      learningObjective: { type: Type.STRING },
-      steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-      backgroundInfo: { type: Type.ARRAY, items: { type: Type.STRING } },
-      teachingTips: { type: Type.ARRAY, items: { type: Type.STRING } }
-    },
-    required: ["timeRange", "phase", "activity", "activityType", "location", "description", "learningObjective", "steps", "backgroundInfo", "teachingTips"]
-  };
-
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Theme: ${theme}. Activity Type: ${activityType}.
-            Current phases: ${currentRoadmap.map(r => r.phase).join(', ')}.
-            Generate the NEXT logical phase/activity for this workshop.
-            Return JSON.`,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: roadmapItemSchema
-      }
-    });
-    return JSON.parse(response.text!) as RoadmapItem;
-  });
-};
-
-export const generateBadgePrompt = async (theme: string, activityType: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Create a prompt to generate a circular achievement badge icon for a workshop.
-            Theme: ${theme}. Activity: ${activityType}.
-            The badge should be simple, vector style, white background, suitable for a sticker.
-            Return ONLY the prompt.`,
-    });
-    return response.text?.trim() || `A vector badge icon for ${theme}`;
-  });
-};
-
-export const generateSingleBackgroundInfo = async (theme: string, activity: string, currentInfo: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Theme: ${theme}. Activity: ${activity}.
-            Current background info: ${currentInfo.join(' | ')}.
-            Provide ONE new interesting fact or concept explanation for the teacher. Keep it brief. Return only text.`,
-    });
-    return response.text?.trim() || "Interesting fact about the topic.";
-  });
-};
-
-export const generateSingleTeachingTip = async (theme: string, activity: string, currentTips: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Theme: ${theme}. Activity: ${activity}.
-            Current teaching tips: ${currentTips.join(' | ')}.
-            Provide ONE new specific teaching tip (methodology, safety, or engagement). Keep it actionable and brief. Return only text.`,
-    });
-    return response.text?.trim() || "Guide students effectively.";
-  });
-};
-
-export const translateLessonPlan = async (plan: LessonPlanResponse, targetLanguage: string, signal?: AbortSignal): Promise<LessonPlanResponse> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-
-  const systemInstruction = `
-    You are an expert translator specializing in educational materials.
-    Translate the provided JSON content into ${targetLanguage}.
-    
-    CRITICAL RULES:
-    1. Translate all student-facing and teacher-facing descriptive text (titles, descriptions, facts, tips, roadmap activities, handbook content prompts, etc.).
-    2. Maintain the EXACT SAME JSON structure, keys, and array lengths as the input.
-    3. EXCEPTION: Do not translate the English 'keywords' in the vocabulary section. Only translate their 'definition'.
-    4. EXCEPTION: Do not translate 'imagePrompts', 'visualPrompt', or 'handbookStylePrompt' if they are instructions for an AI image generator. Keep them in English for better image generation results.
-    
-    Return pure JSON matching the input structure.
-  `;
-
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      config: {
-        systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: lessonPlanSchema,
-        temperature: 0.1, // Low temp for accurate translation without hallucination
-      },
-      contents: [{ text: JSON.stringify(plan) }]
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("No response from Gemini during translation");
-    return JSON.parse(text) as LessonPlanResponse;
-  }, signal);
-};
-
-// --- Curriculum Planning Functions (from STEAM Designer) ---
-
-import { Curriculum, CurriculumLesson } from "../types";
-
-export const suggestLocations = async (city: string): Promise<string[]> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `List 8-10 well-known outdoor locations in ${city} that are suitable for STEAM education activities with K-12 students. Include parks, lakes, botanical gardens, science museums, nature reserves, wetlands, riverside areas, etc. Only return locations that actually exist in ${city}. Use the local language name for each location.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            locations: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            }
-          },
-          required: ["locations"]
-        }
-      }
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("AI returned an empty response.");
-    const parsed = JSON.parse(text);
-    return parsed.locations || [];
-  });
-};
-
-export const generateCurriculum = async (
-  ageGroup: string, englishLevel: string, lessonCount: number,
-  duration: string, preferredLocation: string, customTheme: string,
-  city: string = "武汉"
-): Promise<Curriculum> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Design a systematic STEAM outdoor curriculum for students in ${city}.
-    Theme: ${customTheme || "General STEAM Exploration"}
-    Age Group: ${ageGroup}
-    English Level: ${englishLevel}
-    Number of Lessons: ${lessonCount}
-    Duration per Lesson: ${duration}
-    ${preferredLocation ? `Preferred Location/Area: ${preferredLocation}` : ''}
-    
-    Requirements:
-    1. The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".
-    2. It should have exactly ${lessonCount} progressive lessons.
-    3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
-    4. Each lesson must include a STEAM focus (Science, Technology, Engineering, Arts, Math).
-    5. Each lesson must include a specific, explicit, and actionable ESL focus.
-    6. Each lesson must have a specific "Rainy Day" indoor alternative activity.
-    7. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot.
-    8. English vocabulary and concepts should be integrated based on the provided level.
-    9. The tone should be professional, educational, and inspiring.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            theme: { type: Type.STRING },
-            overview: { type: Type.STRING },
-            lessons: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  steam_focus: { type: Type.STRING },
-                  esl_focus: { type: Type.STRING },
-                  location: { type: Type.STRING },
-                  outdoor_activity: { type: Type.STRING },
-                  indoor_alternative: { type: Type.STRING },
-                  english_vocabulary: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING }
-                  }
-                },
-                required: ["title", "description", "steam_focus", "esl_focus", "location", "outdoor_activity", "indoor_alternative", "english_vocabulary"]
-              }
-            }
-          },
-          required: ["theme", "overview", "lessons"]
-        }
-      }
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("The AI returned an empty response.");
-    return JSON.parse(text) as Curriculum;
-  });
-};
-
-// ===== Chinese-only STEAM Curriculum (no ESL) =====
-export const generateCurriculumCN = async (
-  ageGroup: string, lessonCount: number,
-  duration: string, preferredLocation: string, customTheme: string,
-  city: string = "武汉"
-): Promise<Curriculum> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `请为${city}的学生设计一套系统化的STEAM户外课程。全部内容必须用中文回答。
-
-    主题: ${customTheme || "综合STEAM探索"}
-    年龄段: ${ageGroup}
-    课时数量: ${lessonCount}
-    每课时长: ${duration}
-    ${preferredLocation ? `首选地点/区域: ${preferredLocation}` : ''}
-    
-    要求:
-    1. 课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。
-    2. 必须包含恰好${lessonCount}节循序渐进的课。
-    3. 地点必须是${city}具体的、知名的、方便到达的户外地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
-    4. 每节课必须包含STEAM要素（科学、技术、工程、艺术、数学）。
-    5. 每节课必须有具体的、可执行的"雨天室内替代活动"。
-    6. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。
-    7. 语气应专业、教育性强、鼓舞人心。
-    8. 所有内容必须用中文书写。
-    9. esl_focus字段请填写空字符串""，english_vocabulary请填写空数组[]。`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            theme: { type: Type.STRING },
-            overview: { type: Type.STRING },
-            lessons: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  steam_focus: { type: Type.STRING },
-                  esl_focus: { type: Type.STRING },
-                  location: { type: Type.STRING },
-                  outdoor_activity: { type: Type.STRING },
-                  indoor_alternative: { type: Type.STRING },
-                  english_vocabulary: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING }
-                  }
-                },
-                required: ["title", "description", "steam_focus", "esl_focus", "location", "outdoor_activity", "indoor_alternative", "english_vocabulary"]
-              }
-            }
-          },
-          required: ["theme", "overview", "lessons"]
-        }
-      }
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("AI返回了空响应。");
-    return JSON.parse(text) as Curriculum;
-  });
-};
+// --- Barrel re-exports from sub-modules ---
+// Consumers can keep importing from 'geminiService' unchanged.
+export { generateRandomTheme } from './themeService';
+export { generateImagePrompt, generateImage, generateBadgePrompt } from './imageService';
+export { generateSingleStep, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateSingleBackgroundInfo, generateSingleTeachingTip, translateLessonPlan } from './contentGenerators';
+export { suggestLocations, generateCurriculum, generateCurriculumCN } from './curriculumService';
 
 // ===== Chinese-only Lesson Plan Streaming (no ESL) =====
 export const generateLessonPlanStreamingCN = async (
@@ -938,50 +418,50 @@ export const generateLessonPlanStreamingCN = async (
   const handbookPageCount = input.handbookPages || 15;
 
   const systemInstruction = `
-    你是一位资深STEAM课程设计师。所有内容必须用中文回答。
-    目标：生成一个${input.duration}分钟的"Nature Compass自然指南针"STEAM周末工坊方案，适用于${input.studentAge}岁学生。
-    
-    [教学框架：5E教学模型]
+你是一位资深STEAM课程设计师。所有内容必须用中文回答。
+目标：生成一个${input.duration}分钟的"Nature Compass自然指南针"STEAM周末工坊方案，适用于${input.studentAge} 岁学生。
+
+[教学框架：5E教学模型]
     你必须按照5E顺序构建"教学流程"，确保系统化的学习体验：
-    1. 引入(Engage)：吸引学生注意力，激活已有知识，引入故事线。
-    2. 探索(Explore)：动手探索，学生与材料/自然互动。  
-    3. 解释(Explain)：正式引入科学概念和专业术语。
-    4. 拓展(Elaborate)：将知识应用于新的挑战或创意项目。
-    5. 评估(Evaluate)：回顾学习成果，检验理解，庆祝成功。
+1. 引入(Engage)：吸引学生注意力，激活已有知识，引入故事线。
+2. 探索(Explore)：动手探索，学生与材料 / 自然互动。
+3. 解释(Explain)：正式引入科学概念和专业术语。
+4. 拓展(Elaborate)：将知识应用于新的挑战或创意项目。
+5. 评估(Evaluate)：回顾学习成果，检验理解，庆祝成功。
 
-    [参数]
-    - 主题：${input.theme || "来自上传材料"}
-    - 背景/介绍：${input.topicIntroduction}
-    - 季节：${input.season}
-    - 天气条件：${input.weather}
-    - 活动重点：${input.activityFocus.join(', ')}
+[参数]
+  - 主题：${input.theme || "来自上传材料"}
+- 背景 / 介绍：${input.topicIntroduction}
+- 季节：${input.season}
+- 天气条件：${input.weather}
+- 活动重点：${input.activityFocus.join(', ')}
 
-    [核心逻辑：天气适应性策略]
-    - "晴天"：优先安排高参与度的户外探索和数据收集。
-    - "雨天"：转向室内创客/实验场景，使用自然标本、模拟或室内实验。
+[核心逻辑：天气适应性策略]
+  - "晴天"：优先安排高参与度的户外探索和数据收集。
+- "雨天"：转向室内创客 / 实验场景，使用自然标本、模拟或室内实验。
 
-    [教学流程要求]
-    - 生成恰好5-6个遵循5E模型的逻辑阶段。
-    - 每个阶段必须包含详细的"步骤"、"背景知识"（科学/事实准确性）和"教学建议"（具体的教学方法建议）。
+[教学流程要求]
+  - 生成恰好5 - 6个遵循5E模型的逻辑阶段。
+- 每个阶段必须包含详细的"步骤"、"背景知识"（科学 / 事实准确性）和"教学建议"（具体的教学方法建议）。
 
-    [学生手册设计规则（关键）]
-    你必须设计一本${handbookPageCount}页的学生手册，与教学流程直接同步并深度整合。
-    1. 全局风格：生成一个"handbookStylePrompt"，定义全局统一的美学风格。
-    2. 顺序：封面 -> 安全/工具 -> 5E旅程 -> 数据记录/观察 -> 反思 -> 证书。
-    3. 严格同步：每个教学流程阶段都必须有至少一个对应的手册页面。
-    4. 背景知识整合：必须将背景知识转化为面向学生的阅读材料或图表。
-    5. 丰富精确的内容："contentPrompt"必须包含页面上的确切文字内容。
-    6. 年龄适配（目标：${input.studentAge}岁）：
-       - 低龄/小学低年级(3-8岁)：使用简单词汇、简短指令、大字标签、描画练习、配对游戏和绘画活动。
-       - 小学高年级/初中(9-14岁)：编写详细的多段落阅读材料、复杂的图形组织器、批判性思维问题。
-    7. 证书页：最后一页必须是精美的"结业证书"，包含3x3cm圆形贴纸区域。
-    8. 所有手册内容必须用中文书写。
+[学生手册设计规则（关键）]
+    你必须设计一本${handbookPageCount} 页的学生手册，与教学流程直接同步并深度整合。
+1. 全局风格：生成一个"handbookStylePrompt"，定义全局统一的美学风格。
+2. 顺序：封面 -> 安全 / 工具 -> 5E旅程 -> 数据记录 / 观察 -> 反思 -> 证书。
+3. 严格同步：每个教学流程阶段都必须有至少一个对应的手册页面。
+4. 背景知识整合：必须将背景知识转化为面向学生的阅读材料或图表。
+5. 丰富精确的内容："contentPrompt"必须包含页面上的确切文字内容。
+6. 年龄适配（目标：${input.studentAge} 岁）：
+- 低龄 / 小学低年级(3 - 8岁)：使用简单词汇、简短指令、大字标签、描画练习、配对游戏和绘画活动。
+- 小学高年级 / 初中(9 - 14岁)：编写详细的多段落阅读材料、复杂的图形组织器、批判性思维问题。
+7. 证书页：最后一页必须是精美的"结业证书"，包含3x3cm圆形贴纸区域。
+8. 所有手册内容必须用中文书写。
 
-    结构要求：
-    - 任务简报：引人入胜的标题和叙事。
-    - 词汇：8-10个STEAM关键术语及简单定义（中文）。
-    - 手册：恰好${handbookPageCount}页精心设计的教学内容。
-  `;
+结构要求：
+- 任务简报：引人入胜的标题和叙事。
+- 词汇：8 - 10个STEAM关键术语及简单定义（中文）。
+- 手册：恰好${handbookPageCount} 页精心设计的教学内容。
+`;
 
   let contents: any = [{ text: "请根据以上要求生成STEAM课程方案。" }];
 

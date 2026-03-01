@@ -11,6 +11,7 @@ import { useAuthStore } from './stores/useAuthStore';
 import { AuthModal } from './components/AuthModal';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider } from './i18n/LanguageContext';
+import { safeStorage } from '@shared/safeStorage';
 import { Compass } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -65,23 +66,8 @@ export const App: React.FC = () => {
   // Load from LocalStorage on mount + init auth
   useEffect(() => {
     initAuth();
-    const stored = localStorage.getItem('nature-compass-plans');
-    if (stored) {
-      try {
-        setSavedPlans(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse saved plans", e);
-      }
-    }
-    // Load saved curricula
-    const storedCurricula = localStorage.getItem('nature-compass-curricula');
-    if (storedCurricula) {
-      try {
-        setSavedCurricula(JSON.parse(storedCurricula));
-      } catch (e) {
-        console.error("Failed to parse saved curricula", e);
-      }
-    }
+    setSavedPlans(safeStorage.get('nature-compass-plans', []));
+    setSavedCurricula(safeStorage.get('nature-compass-curricula', []));
   }, []);
 
   // When user logs in, merge cloud plans
@@ -97,7 +83,7 @@ export const App: React.FC = () => {
                 merged.push(cp);
               }
             }
-            localStorage.setItem('nature-compass-plans', JSON.stringify(merged));
+            safeStorage.set('nature-compass-plans', merged);
             return merged;
           });
         }
@@ -137,7 +123,7 @@ export const App: React.FC = () => {
     }
 
     setSavedPlans(updatedPlans);
-    localStorage.setItem('nature-compass-plans', JSON.stringify(updatedPlans));
+    safeStorage.set('nature-compass-plans', updatedPlans);
 
     // Cloud sync
     if (user) {
@@ -165,7 +151,7 @@ export const App: React.FC = () => {
   const handleDeletePlan = (id: string) => {
     const updatedPlans = savedPlans.filter(p => p.id !== id);
     setSavedPlans(updatedPlans);
-    localStorage.setItem('nature-compass-plans', JSON.stringify(updatedPlans));
+    safeStorage.set('nature-compass-plans', updatedPlans);
 
     // Cloud sync
     if (user) deleteCloudPlan(user.id, id);
@@ -181,7 +167,7 @@ export const App: React.FC = () => {
       p.id === id ? { ...p, name: newName } : p
     );
     setSavedPlans(updatedPlans);
-    localStorage.setItem('nature-compass-plans', JSON.stringify(updatedPlans));
+    safeStorage.set('nature-compass-plans', updatedPlans);
 
     // Cloud sync
     if (user) renameCloudPlan(id, newName);
@@ -214,13 +200,13 @@ export const App: React.FC = () => {
     }
 
     setSavedCurricula(updated);
-    localStorage.setItem('nature-compass-curricula', JSON.stringify(updated));
+    safeStorage.set('nature-compass-curricula', updated);
   };
 
   const handleDeleteCurriculum = (id: string) => {
     const updated = savedCurricula.filter(c => c.id !== id);
     setSavedCurricula(updated);
-    localStorage.setItem('nature-compass-curricula', JSON.stringify(updated));
+    safeStorage.set('nature-compass-curricula', updated);
   };
 
   const handleRenameCurriculum = (id: string, newName: string) => {
@@ -228,7 +214,7 @@ export const App: React.FC = () => {
       c.id === id ? { ...c, name: newName } : c
     );
     setSavedCurricula(updated);
-    localStorage.setItem('nature-compass-curricula', JSON.stringify(updated));
+    safeStorage.set('nature-compass-curricula', updated);
   };
 
   const handleStop = () => {

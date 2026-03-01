@@ -1,4 +1,16 @@
-/* Main CSS file for ESL Master */
+@import "tailwindcss";
+@import "../../packages/shared/styles/tokens.css";
+@source "../../packages/shared";
+
+/* ── Essay Lab Brand Colors ── */
+@theme {
+    --color-brand: #4f46e5;
+    --color-brand-light: #eef2ff;
+    --color-brand-hover: #4338ca;
+    --color-brand-dark: #3730a3;
+}
+
+/* ── Base Resets ── */
 body {
     margin: 0;
     padding: 0;
