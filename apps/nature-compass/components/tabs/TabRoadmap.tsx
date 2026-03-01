@@ -74,12 +74,12 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <Info size={20} className="text-emerald-600" />
+        <div className="space-y-5 animate-fade-in">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Info size={18} className="text-emerald-600" />
                     {t('road.workshopDetails')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.theme')}</label>
                         <input
@@ -117,7 +117,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                     </div>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-4">
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.introContext')}</label>
                     <RichTextEditor
                         value={missionBriefing.narrative}
@@ -150,7 +150,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {roadmap.map((item, idx) => (
                     <div
                         key={idx}
@@ -160,9 +160,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         onDrop={(e) => handleRoadmapDrop(e, idx)}
                         className={`bg-white dark:bg-slate-900/80 rounded-xl border transition-all ${draggedRoadmapIndex === idx ? 'border-emerald-400 shadow-lg opacity-50' : 'border-slate-200 dark:border-white/5 hover:border-emerald-300 shadow-sm'}`}
                     >
-                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
+                        <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
                             <div className="mt-1 text-slate-400 group-hover:text-slate-600">
-                                <GripVertical size={20} />
+                                <GripVertical size={16} />
                             </div>
                             <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4">
                                 <div className="md:col-span-2">
@@ -195,8 +195,8 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.description')}</label>
                                     <textarea
@@ -207,7 +207,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <div className="grid grid-cols-2 gap-4 mb-3">
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.type')}</label>
                                             <input
@@ -236,7 +236,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 </div>
                             </div>
 
-                            <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                            <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100">
                                 <label className="block text-xs font-bold text-blue-500 uppercase mb-2 flex items-center gap-1">
                                     <BookOpen size={12} /> {t('road.backgroundInfo')}</label>
                                 <div className="space-y-2">
@@ -268,7 +268,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 </div>
                             </div>
 
-                            <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                            <div className="bg-purple-50 rounded-lg p-2.5 border border-purple-100">
                                 <label className="block text-xs font-bold text-purple-500 uppercase mb-2 flex items-center gap-1">
                                     <Lightbulb size={12} /> {t('road.teachingTips')}</label>
                                 <div className="space-y-2">
@@ -353,7 +353,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 <button
                     onClick={addRoadmapItem}
                     disabled={isAddingRoadmapItem}
-                    className="w-full py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-semibold hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-semibold hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
                 >
                     {isAddingRoadmapItem ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
                     {t('road.addPhaseBtn')}</button>

@@ -56,10 +56,10 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <BookOpen size={20} className="text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <BookOpen size={18} className="text-emerald-600" />
                     Vocabulary Flashcards
                 </h3>
                 <div className="flex gap-2">
@@ -78,7 +78,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {vocabList.map((item, idx) => (
                     <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-gray-200 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm flex flex-col group relative hover:border-emerald-300 hover:shadow-md transition-all">
                         <div className="aspect-[4/3] bg-slate-100 relative group-hover:bg-slate-50 transition-colors">
@@ -133,12 +133,12 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 border-t border-slate-100">
+                        <div className="p-3 border-t border-slate-100">
                             <div className="flex justify-between items-start mb-2">
                                 <input
                                     value={item.word}
                                     onChange={(e) => updateVocab(idx, 'word', e.target.value)}
-                                    className="text-lg font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full mr-2"
+                                    className="text-base font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full mr-2"
                                 />
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => handleDownloadFlashcard(idx)} className="text-slate-400 hover:text-emerald-600 p-1">
@@ -162,7 +162,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                 <button
                     onClick={handleAddWord}
                     disabled={isAddingWord}
-                    className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-6 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[300px]"
+                    className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-4 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[200px]"
                 >
                     {isAddingWord ? <Loader2 size={24} className="animate-spin mb-2" /> : <Plus size={32} className="mb-2" />}
                     <span className="font-semibold text-sm">{t('fc.addWord')}</span>

@@ -26,13 +26,13 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <Box size={20} className="text-emerald-600" />
+        <div className="space-y-5 animate-fade-in">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Box size={18} className="text-emerald-600" />
                     {t('sup.supplyList')}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <div className="flex justify-between items-center mb-3">
                             <h4 className="text-xs font-bold text-slate-400 uppercase">{t('sup.permanentTools')}</h4>
@@ -82,9 +82,9 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                 </div>
             </div>
 
-            <div className="bg-amber-50 rounded-xl border border-amber-100 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-amber-900 mb-4 flex items-center gap-2">
-                    <Shield size={20} className="text-amber-600" />
+            <div className="bg-amber-50 rounded-xl border border-amber-100 p-4 shadow-sm">
+                <h3 className="text-base font-bold text-amber-900 mb-3 flex items-center gap-2">
+                    <Shield size={18} className="text-amber-600" />
                     {t('sup.safetyProtocol')}
                 </h3>
                 <div className="space-y-2">

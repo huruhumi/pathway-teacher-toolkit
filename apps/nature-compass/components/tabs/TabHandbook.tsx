@@ -27,10 +27,10 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
     const [copiedStylePrompt, setCopiedStylePrompt] = useState(false);
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5 animate-fade-in">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <FileText size={20} className="text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <FileText size={18} className="text-emerald-600" />
                     Student Handbook Plan
                 </h3>
                 <button
@@ -42,7 +42,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
             </div>
 
             {plan.handbookStylePrompt && (
-                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 mb-6 shadow-sm">
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-4 shadow-sm">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="text-sm font-bold text-indigo-800 flex items-center gap-2">
                             <ImageIcon size={16} /> Global Style Prompt
@@ -74,11 +74,11 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
 
             <div className="space-y-4">
                 {handbookPages.map((page, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-6 shadow-sm">
-                        <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100">
                             <div>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Page {page.pageNumber}</span>
-                                <h4 className="text-lg font-bold text-slate-800 mt-1">{page.title}</h4>
+                                <h4 className="text-base font-bold text-slate-800 mt-1">{page.title}</h4>
                                 <span className="inline-block mt-2 px-2 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded">{page.section}</span>
                             </div>
                             <div className="max-w-xs text-right">
@@ -92,7 +92,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
                                     <ImageIcon size={12} /> Visual Prompt

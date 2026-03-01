@@ -46,12 +46,12 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="space-y-6 animate-fade-in">
-            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <ImageIcon size={20} className="text-emerald-600" />
+        <div className="space-y-5 animate-fade-in">
+            <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <ImageIcon size={18} className="text-emerald-600" />
                 {t('vis.title')}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {visualRefs.map((item, idx) => (
                     <div key={idx} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex gap-4 group hover:border-emerald-300 transition-all">
                         <div className="w-1/3 aspect-square bg-slate-100 rounded-lg flex-shrink-0 relative overflow-hidden">
@@ -124,7 +124,7 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
                 <button
                     onClick={handleAddVisualRef}
                     disabled={isAddingVisual}
-                    className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-6 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[160px]"
+                    className="bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-4 text-slate-400 hover:text-emerald-600 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-[140px]"
                 >
                     {isAddingVisual ? <Loader2 size={24} className="animate-spin mb-2" /> : <Plus size={32} className="mb-2" />}
                     <span className="font-semibold text-sm">{t('vis.addRef')}</span>

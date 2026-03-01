@@ -25,10 +25,10 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
 }) => {
     const { t } = useLanguage();
     return (
-        <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[400px]">
+        <div className="space-y-5 animate-fade-in flex flex-col items-center justify-center min-h-[300px]">
             <div className="text-center max-w-lg mx-auto mb-4 w-full px-4">
-                <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
-                    <BadgeCheck size={28} className="text-emerald-500" />
+                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center justify-center gap-2">
+                    <BadgeCheck size={22} className="text-emerald-500" />
                     {t('badge.title')}
                 </h3>
 
@@ -36,7 +36,7 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
                     <textarea
                         value={badgePrompt}
                         onChange={(e) => setBadgePrompt(e.target.value)}
-                        className="w-full text-center text-slate-600 bg-slate-50 hover:bg-white focus:bg-white border border-transparent hover:border-emerald-200 focus:border-emerald-500 rounded-xl p-4 outline-none transition-all resize-none shadow-sm text-sm leading-relaxed"
+                        className="w-full text-center text-slate-600 bg-slate-50 hover:bg-white focus:bg-white border border-transparent hover:border-emerald-200 focus:border-emerald-500 rounded-xl p-3 outline-none transition-all resize-none shadow-sm text-sm leading-relaxed"
                         rows={3}
                         placeholder="Enter badge description..."
                     />
@@ -48,11 +48,11 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
 
             <div className="relative group">
                 {badgeImage ? (
-                    <div className="relative p-4 bg-white rounded-full shadow-xl border-4 border-slate-100">
+                    <div className="relative p-3 bg-white rounded-full shadow-xl border-4 border-slate-100">
                         <img
                             src={badgeImage}
                             alt="Achievement Badge"
-                            className="w-64 h-64 object-contain rounded-full"
+                            className="w-48 h-48 object-contain rounded-full"
                         />
                         <button
                             onClick={() => downloadImage(badgeImage, `${sanitizeFilename(basicInfo.theme)} - Badge.png`)}
@@ -63,7 +63,7 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
                         </button>
                     </div>
                 ) : (
-                    <div className="w-64 h-64 rounded-full bg-slate-50 border-4 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                    <div className="w-48 h-48 rounded-full bg-slate-50 border-4 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
                         {loadingBadge ? (
                             <Loader2 size={48} className="animate-spin text-emerald-500" />
                         ) : (
@@ -80,7 +80,7 @@ export const TabBadge: React.FC<TabBadgeProps> = ({
                 <button
                     onClick={handleGenerateBadge}
                     disabled={loadingBadge}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {loadingBadge ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
                     {badgeImage ? t("badge.regenerate") : t("badge.generate")}

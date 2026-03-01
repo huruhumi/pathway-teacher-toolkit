@@ -31,6 +31,7 @@ export const translations = {
     'cp.openKit': { en: 'Open Kit', zh: '打开课件' },
     'cp.retryKit': { en: 'Retry', zh: '重试' },
     'cp.batchGenerating': { en: 'Generating...', zh: '正在生成...' },
+    'cp.backToConfig': { en: '← Back to Settings', zh: '← 返回设置' },
 
     // PDF Upload
     'cp.uploadPdf': { en: 'Upload PDF Reference (Optional)', zh: '上传PDF参考资料（可选）' },

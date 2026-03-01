@@ -4,6 +4,7 @@ import { InputSection } from './components/InputSection';
 import { LessonPlanDisplay } from './components/LessonPlanDisplay';
 import { SavedProjectsPage } from './components/SavedProjectsPage';
 import { CurriculumPlanner } from './components/CurriculumPlanner';
+import { CurriculumResultDisplay } from './components/CurriculumResultDisplay';
 import { LessonInput, LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
 import { generateLessonPlanStreaming, translateLessonPlan, generateLessonPlanStreamingCN } from './services/geminiService';
 import { fetchCloudPlans, upsertCloudPlan, deleteCloudPlan, renameCloudPlan } from './services/cloudDataService';
@@ -63,7 +64,6 @@ export const App: React.FC = () => {
   // Save/Load State
   const [savedPlans, setSavedPlans] = useState<SavedLessonPlan[]>([]);
   const savedPlansRef = useRef<SavedLessonPlan[]>(savedPlans);
-  // Keep ref in sync
   useEffect(() => { savedPlansRef.current = savedPlans; }, [savedPlans]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [view, setView] = useState<'curriculum' | 'lesson' | 'saved'>('curriculum');
@@ -75,6 +75,14 @@ export const App: React.FC = () => {
 
   // Track current language for lesson kit generation
   const [currentKitLanguage, setCurrentKitLanguage] = useState<'en' | 'zh'>('en');
+
+  // Curriculum result state — for separate result page
+  const [curriculumResult, setCurriculumResult] = useState<{
+    curriculumEN: Curriculum | null;
+    curriculumCN: Curriculum | null;
+    params: CurriculumParams;
+    activeLanguage: 'en' | 'zh';
+  } | null>(null);
 
   // Batch Generate
   const {
@@ -99,13 +107,10 @@ export const App: React.FC = () => {
   // Load from LocalStorage on mount + init auth
   useEffect(() => {
     initAuth();
-    // Load plans and hydrate coverImages from IndexedDB
     const plans: SavedLessonPlan[] = safeStorage.get('nature-compass-plans', []);
     setSavedPlans(plans);
-    // Hydrate coverImage refs from IndexedDB
     plans.forEach(p => {
       if (p.coverImage && !p.coverImage.startsWith('data:')) {
-        // It's an IndexedDB key reference — hydrate
         imageStore.get(p.coverImage).then(img => {
           if (img) {
             setSavedPlans(prev => prev.map(pp =>
@@ -142,7 +147,6 @@ export const App: React.FC = () => {
   const handleSavePlan = async (planToSave: LessonPlanResponse, coverImage?: string | null) => {
     const planId = currentPlanId || crypto.randomUUID();
 
-    // Store coverImage in IndexedDB, save key reference in localStorage
     let coverRef: string | undefined;
     if (coverImage) {
       const imgKey = `nc-${planId}-cover`;
@@ -176,14 +180,11 @@ export const App: React.FC = () => {
       setCurrentPlanId(planId);
     }
 
-    // In-memory state keeps hydrated base64 for display
     setSavedPlans(updatedPlans.map(p =>
       p.id === planId && coverImage ? { ...p, coverImage } : p
     ));
-    // localStorage gets key references only (no base64)
     safeStorage.setWithLimit('nature-compass-plans', updatedPlans, 50);
 
-    // Cloud sync
     if (user) {
       const savedPlan = currentPlanId
         ? updatedPlans.find(p => p.id === currentPlanId)
@@ -197,7 +198,6 @@ export const App: React.FC = () => {
     setCurrentPlanId(saved.id);
     setView('lesson');
 
-    // Smooth scroll to results
     setTimeout(() => {
       const resultsElement = document.getElementById('results-section');
       if (resultsElement) {
@@ -210,14 +210,8 @@ export const App: React.FC = () => {
     const updatedPlans = savedPlans.filter(p => p.id !== id);
     setSavedPlans(updatedPlans);
     safeStorage.set('nature-compass-plans', updatedPlans);
-
-    // Clean up IndexedDB images
     imageStore.removeByPrefix(`nc-${id}-`);
-
-    // Cloud sync
     if (user) deleteCloudPlan(user.id, id);
-
-    // If we delete the currently loaded plan, clear the current ID
     if (currentPlanId === id) {
       setCurrentPlanId(null);
     }
@@ -229,16 +223,12 @@ export const App: React.FC = () => {
     );
     setSavedPlans(updatedPlans);
     safeStorage.set('nature-compass-plans', updatedPlans);
-
-    // Cloud sync
     if (user) renameCloudPlan(id, newName);
   };
 
   // --- Curriculum CRUD ---
   const handleSaveCurriculum = (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => {
     const name = `${language === 'zh' ? '[中文] ' : ''}${curriculum.theme || `Curriculum ${new Date().toLocaleDateString()}`}`;
-
-    // Upsert: overwrite if same theme + language exists
     const existingIdx = savedCurricula.findIndex(
       c => c.curriculum.theme === curriculum.theme && c.language === language
     );
@@ -306,6 +296,29 @@ export const App: React.FC = () => {
     }
   };
 
+  // Handler: curriculum generated → show result page
+  const handleCurriculumGenerated = (data: {
+    curriculumEN: Curriculum | null;
+    curriculumCN: Curriculum | null;
+    params: CurriculumParams;
+    activeLanguage: 'en' | 'zh';
+  }) => {
+    setCurriculumResult(data);
+  };
+
+  // Handler: back from result → show config
+  const handleBackToConfig = () => {
+    setCurriculumResult(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: new curriculum from result page → clear everything
+  const handleNewCurriculum = () => {
+    setCurriculumResult(null);
+    safeStorage.remove('nature-compass-curriculum');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setLoadingStep(0);
@@ -329,7 +342,6 @@ export const App: React.FC = () => {
         controller.signal
       );
 
-      // Auto-translate only for EN kits
       if (currentKitLanguage === 'en') {
         setLoadingStep(5);
         try {
@@ -362,7 +374,6 @@ export const App: React.FC = () => {
         console.error(err);
       }
     } finally {
-      // Only turn off loading if this is still the active request
       if (abortControllerRef.current === controller) {
         setIsLoading(false);
         setLoadingStep(0);
@@ -377,7 +388,7 @@ export const App: React.FC = () => {
     if (isLoading) {
       interval = setInterval(() => {
         setLoadingStep(prev => (prev < LOADING_STEPS.length - 1 ? prev + 1 : prev));
-      }, 3500); // Change loading text every 3.5s
+      }, 3500);
     }
     return () => clearInterval(interval);
   }, [isLoading]);
@@ -396,22 +407,34 @@ export const App: React.FC = () => {
         <PageLayout className="flex-1">
           <NatureHeroBanner />
 
-          {/* Curriculum view — always mounted, hidden when not active */}
+          {/* Curriculum view — config or result */}
           <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
             <BodyContainer>
-              <CurriculumPlanner
-                onGenerateKit={handleGenerateLessonKit}
-                onSave={handleSaveCurriculum}
-                externalCurriculum={externalCurriculum}
-                batchStatus={batchStatus}
-                batchLessonMap={batchLessonMap}
-                batchRunning={batchRunning}
-                batchProgress={batchProgress}
-                onBatchGenerate={handleBatchGenerate}
-                onCancelBatch={handleCancelBatch}
-                onOpenPlan={handleOpenBatchPlan}
-                onResetBatch={resetBatch}
-              />
+              {curriculumResult ? (
+                <CurriculumResultDisplay
+                  curriculumEN={curriculumResult.curriculumEN}
+                  curriculumCN={curriculumResult.curriculumCN}
+                  activeLanguage={curriculumResult.activeLanguage}
+                  setActiveLanguage={(lang) => setCurriculumResult(prev => prev ? { ...prev, activeLanguage: lang } : prev)}
+                  savedParams={curriculumResult.params}
+                  onBack={handleBackToConfig}
+                  onNew={handleNewCurriculum}
+                  onSave={handleSaveCurriculum}
+                  onGenerateKit={handleGenerateLessonKit}
+                  batchStatus={batchStatus}
+                  batchLessonMap={batchLessonMap}
+                  batchRunning={batchRunning}
+                  batchProgress={batchProgress}
+                  onBatchGenerate={handleBatchGenerate}
+                  onCancelBatch={handleCancelBatch}
+                  onOpenPlan={handleOpenBatchPlan}
+                />
+              ) : (
+                <CurriculumPlanner
+                  onCurriculumGenerated={handleCurriculumGenerated}
+                  externalCurriculum={externalCurriculum}
+                />
+              )}
             </BodyContainer>
           </div>
 
@@ -447,7 +470,6 @@ export const App: React.FC = () => {
 
                 {isLoading && !lessonPlan && (
                   <div className="w-full relative mt-8">
-                    {/* Skeleton Overlay */}
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center -mt-20">
                       <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl flex flex-col items-center border border-slate-100 animate-pulse-glow">
                         <Compass className="animate-spin text-emerald-500 mb-6" size={56} />
@@ -455,8 +477,6 @@ export const App: React.FC = () => {
                         <p className="text-emerald-600 font-medium h-6 transition-all duration-300">
                           {LOADING_STEPS[loadingStep]}
                         </p>
-
-                        {/* Progress pill dots */}
                         <div className="flex gap-1.5 mt-6">
                           {LOADING_STEPS.map((_, i) => (
                             <div
@@ -467,8 +487,6 @@ export const App: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Wireframe Skeleton Content */}
                     <div className="hidden md:block w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 opacity-40 select-none pointer-events-none">
                       <div className="flex gap-2 border-b border-slate-100 pb-4 mb-6">
                         <div className="h-10 w-28 bg-slate-200 rounded-lg animate-pulse" />
@@ -476,7 +494,6 @@ export const App: React.FC = () => {
                         <div className="h-10 w-24 bg-slate-100 rounded-lg animate-pulse" />
                       </div>
                       <div className="h-8 w-1/3 bg-slate-200 rounded animate-pulse mb-8" />
-
                       <div className="space-y-6">
                         <div className="h-40 w-full bg-slate-100 rounded-xl animate-pulse" />
                         <div className="h-32 w-full bg-slate-100 rounded-xl animate-pulse" />
