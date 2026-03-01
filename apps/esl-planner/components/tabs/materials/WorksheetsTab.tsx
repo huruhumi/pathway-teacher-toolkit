@@ -36,6 +36,7 @@ import {
   CEFRLevel,
 } from "../../../types";
 import { AutoResizeTextarea } from "../../common/AutoResizeTextarea";
+import { useLanguage } from '../../../i18n/LanguageContext';
 import {
   generateWorksheet,
   generateLessonImage,
@@ -103,6 +104,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
   openViewer,
   handleDownloadWorksheetsMd,
 }) => {
+  const { t } = useLanguage();
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<
     string | null
   >(null);
@@ -548,7 +550,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                         )}
                         <div className="absolute inset-0 bg-indigo-600/80 flex items-center justify-center opacity-0 group-hover/gen:opacity-100 transition-opacity no-print">
                           {generatingWsImageKey ===
-                          `${wsIdx}-${sIdx}-${shuffledIdx}` ? (
+                            `${wsIdx}-${sIdx}-${shuffledIdx}` ? (
                             <Loader2 className="w-6 h-6 text-white animate-spin" />
                           ) : (
                             <Sparkles className="w-6 h-6 text-white" />
@@ -1149,7 +1151,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
               >
                 {Object.values(CEFRLevel).map((lvl) => (
                   <option key={lvl} value={lvl}>
-                    {lvl}
+                    {t(`cefr.${lvl}` as any)}
                   </option>
                 ))}
               </select>
@@ -1482,7 +1484,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                       className="text-[8px] font-black text-indigo-400 hover:underline uppercase mt-1"
                                     >
                                       {generatingWsImageKey ===
-                                      `${wsIdx}-${sIdx}-${itemIdx}`
+                                        `${wsIdx}-${sIdx}-${itemIdx}`
                                         ? "..."
                                         : "Gen"}
                                     </button>

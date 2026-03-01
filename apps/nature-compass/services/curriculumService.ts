@@ -35,9 +35,23 @@ export const suggestLocations = async (city: string): Promise<string[]> => {
 export const generateCurriculum = async (
     ageGroup: string, englishLevel: string, lessonCount: number,
     duration: string, preferredLocation: string, customTheme: string,
-    city: string = "武汉"
+    city: string = "Wuhan", pdfText?: string
 ): Promise<Curriculum> => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const truncatedPdf = pdfText ? pdfText.slice(0, 30000) : '';
+
+    const pdfSection = truncatedPdf ? `
+
+    === UPLOADED REFERENCE DOCUMENT ===
+    ${truncatedPdf}
+    === END OF DOCUMENT ===
+
+    IMPORTANT: You MUST analyze the uploaded document above and design the curriculum based on its content.
+    - Split the document's topics, chapters, or key concepts into exactly ${lessonCount} progressive outdoor STEAM lessons.
+    - Each lesson should cover a specific section or theme from the document.
+    - Adapt the document's content into hands-on outdoor and STEAM activities.
+    ` : '';
+
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -48,9 +62,9 @@ export const generateCurriculum = async (
     Number of Lessons: ${lessonCount}
     Duration per Lesson: ${duration}
     ${preferredLocation ? `Preferred Location/Area: ${preferredLocation}` : ''}
-    
+    ${pdfSection}
     Requirements:
-    1. The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".
+    1. ${truncatedPdf ? 'The curriculum MUST be based on the uploaded reference document above.' : `The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".`}
     2. It should have exactly ${lessonCount} progressive lessons.
     3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
     4. Each lesson must include a STEAM focus (Science, Technology, Engineering, Arts, Math).
@@ -102,9 +116,23 @@ export const generateCurriculum = async (
 export const generateCurriculumCN = async (
     ageGroup: string, lessonCount: number,
     duration: string, preferredLocation: string, customTheme: string,
-    city: string = "武汉"
+    city: string = "Wuhan", pdfText?: string
 ): Promise<Curriculum> => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const truncatedPdf = pdfText ? pdfText.slice(0, 30000) : '';
+
+    const pdfSection = truncatedPdf ? `
+
+    === 上传的参考文档 ===
+    ${truncatedPdf}
+    === 文档结束 ===
+
+    重要：你必须分析上述文档内容，并基于文档设计课程大纲。
+    - 将文档的主题、章节或核心概念拆分为恰好${lessonCount}节循序渐进的STEAM户外课程。
+    - 每节课应涵盖文档中的特定章节或主题。
+    - 将文档内容改编为动手实践的户外STEAM活动。
+    ` : '';
+
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -115,9 +143,9 @@ export const generateCurriculumCN = async (
     课时数量: ${lessonCount}
     每课时长: ${duration}
     ${preferredLocation ? `首选地点/区域: ${preferredLocation}` : ''}
-    
+    ${pdfSection}
     要求:
-    1. 课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。
+    1. ${truncatedPdf ? '课程必须基于上述参考文档内容设计。' : `课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。`}
     2. 必须包含恰好${lessonCount}节循序渐进的课。
     3. 地点必须是${city}具体的、知名的、方便到达的户外地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
     4. 每节课必须包含STEAM要素（科学、技术、工程、艺术、数学）。

@@ -118,7 +118,6 @@ const AppContent: React.FC = () => {
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
             <AppHeader
                 appName="ESL Smart Planner"
-                subtitle={t('app.subtitle')}
                 logoIcon={<Brain className="w-5 h-5" />}
                 brand={{
                     logoBg: 'bg-gradient-to-br from-violet-600 to-purple-600',
@@ -139,16 +138,6 @@ const AppContent: React.FC = () => {
                 {/* Curriculum Tab */}
                 {viewMode === 'curriculum' && (
                     <div className="animate-fade-in-up">
-                        <div className="mb-8 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
-                            <div className="relative z-10 max-w-2xl">
-                                <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Curriculum Designer</h2>
-                                <p className="text-violet-100 text-sm md:text-lg">
-                                    上传PDF教材，AI自动按课时数拆分为结构化课程大纲。点击任意课时即可一键生成完整Lesson Kit。
-                                </p>
-                            </div>
-                            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 md:w-64 md:h-64 bg-white/10 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-24 h-24 md:w-40 md:h-40 bg-white/10 rounded-full blur-2xl"></div>
-                        </div>
                         <CurriculumPlanner
                             onGenerateKit={handleGenerateLessonKit}
                             onSaveCurriculum={handleSaveCurriculum}
@@ -170,14 +159,14 @@ const AppContent: React.FC = () => {
                         {!state.generatedContent && !state.isLoading && (
                             <div className="mb-8 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
                                 <div className="relative z-10 max-w-2xl">
-                                    <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Transform Teaching Materials in Seconds</h2>
-                                    <p className="text-violet-100 mb-6 text-sm md:text-lg">Upload textbook pages, images, or paste text to generate comprehensive lesson plans, slides, and interactive games tailored to any CEFR level.</p>
+                                    <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">{t('plan.title')}</h2>
+                                    <p className="text-violet-100 mb-6 text-sm md:text-lg">{t('plan.desc')}</p>
                                     <div className="flex flex-wrap gap-3 md:gap-4">
                                         <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl backdrop-blur-sm text-xs md:text-base">
-                                            <Layout className="w-4 h-4 md:w-5 md:h-5" /><span className="font-medium">Structured Plans</span>
+                                            <Layout className="w-4 h-4 md:w-5 md:h-5" /><span className="font-medium">{t('plan.structuredPlans')}</span>
                                         </div>
                                         <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 md:px-4 md:py-2 rounded-xl backdrop-blur-sm text-xs md:text-base">
-                                            <Sparkles className="w-4 h-4 md:w-5 md:h-5" /><span className="font-medium">Interactive Games</span>
+                                            <Sparkles className="w-4 h-4 md:w-5 md:h-5" /><span className="font-medium">{t('plan.interactiveGames')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -193,7 +182,7 @@ const AppContent: React.FC = () => {
                             <div className="animate-fade-in-up">
                                 <div className="mb-4">
                                     <button onClick={() => { setState(prev => ({ ...prev, generatedContent: null })); setActiveLessonId(null); setPrefilledValues(null); }} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-4 text-sm md:text-base">
-                                        <ArrowLeft className="w-4 h-4" /> Back to Generator
+                                        <ArrowLeft className="w-4 h-4" /> {t('plan.backToGenerator')}
                                     </button>
                                     <OutputDisplay key={activeLessonId || 'new'} content={state.generatedContent} onSave={(c) => handleSaveLesson(c)} />
                                 </div>
@@ -206,8 +195,8 @@ const AppContent: React.FC = () => {
                 {viewMode === 'history' && (
                     <div className="animate-fade-in-up">
                         <div className="mb-6 md:mb-8">
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Saved Records</h2>
-                            <p className="text-sm md:text-base text-slate-500">管理已保存的课程大纲和Lesson Kit。</p>
+                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">{t('rec.title')}</h2>
+                            <p className="text-sm md:text-base text-slate-500">{t('rec.desc')}</p>
                         </div>
 
                         {/* Sub-tab toggle */}
@@ -217,7 +206,7 @@ const AppContent: React.FC = () => {
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${recordsTab === 'curricula' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 <BookOpen className="w-4 h-4" />
-                                Curricula
+                                {t('rec.curricula')}
                                 {savedCurricula.length > 0 && <span className="text-[10px] bg-violet-100 text-violet-600 rounded-full px-1.5 py-0.5 font-bold">{savedCurricula.length}</span>}
                             </button>
                             <button
@@ -225,7 +214,7 @@ const AppContent: React.FC = () => {
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all ${recordsTab === 'kits' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 <Sparkles className="w-4 h-4" />
-                                Lesson Kits
+                                {t('rec.lessonKits')}
                                 {savedLessons.length > 0 && <span className="text-[10px] bg-violet-100 text-violet-600 rounded-full px-1.5 py-0.5 font-bold">{savedLessons.length}</span>}
                             </button>
                         </div>
@@ -242,11 +231,11 @@ const AppContent: React.FC = () => {
                                         <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
                                             <Hash className="w-3.5 h-3.5 text-slate-400" />
                                             <select value={curLessonRange} onChange={(e) => setCurLessonRange(e.target.value)} className="bg-transparent text-sm text-slate-700 outline-none font-medium cursor-pointer">
-                                                <option value="all">All Counts</option>
-                                                <option value="1-10">1-10 课时</option>
-                                                <option value="11-20">11-20 课时</option>
-                                                <option value="21-40">21-40 课时</option>
-                                                <option value="40+">40+ 课时</option>
+                                                <option value="all">{t('rec.allCounts')}</option>
+                                                <option value="1-10">{t('rec.range1_10')}</option>
+                                                <option value="11-20">{t('rec.range11_20')}</option>
+                                                <option value="21-40">{t('rec.range21_40')}</option>
+                                                <option value="40+">{t('rec.range40plus')}</option>
                                             </select>
                                         </div>
                                     }
@@ -256,15 +245,15 @@ const AppContent: React.FC = () => {
                                         {savedCurricula.length === 0 ? (
                                             <>
                                                 <BookOpen className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4" />
-                                                <h3 className="text-base md:text-lg font-medium text-slate-600">还没有保存的课程大纲</h3>
-                                                <p className="text-sm text-slate-400">在 Curriculum 页面生成并保存课程大纲后即可在此查看。</p>
-                                                <button onClick={() => setViewMode('curriculum')} className="mt-4 text-violet-600 font-medium hover:underline">去设计课程 →</button>
+                                                <h3 className="text-base md:text-lg font-medium text-slate-600">{t('rec.noCurricula')}</h3>
+                                                <p className="text-sm text-slate-400">{t('rec.noCurriculaHint')}</p>
+                                                <button onClick={() => setViewMode('curriculum')} className="mt-4 text-violet-600 font-medium hover:underline">{t('rec.goDesign')}</button>
                                             </>
                                         ) : (
                                             <>
                                                 <Search className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4" />
-                                                <h3 className="text-base md:text-lg font-medium text-slate-600">没有匹配的结果</h3>
-                                                <button onClick={() => { setCurSearch(''); setCurLevel('All Levels'); setCurDate('all'); setCurLessonRange('all'); }} className="mt-4 text-violet-600 font-medium hover:underline">清除所有筛选</button>
+                                                <h3 className="text-base md:text-lg font-medium text-slate-600">{t('rec.noResults')}</h3>
+                                                <button onClick={() => { setCurSearch(''); setCurLevel('All Levels'); setCurDate('all'); setCurLessonRange('all'); }} className="mt-4 text-violet-600 font-medium hover:underline">{t('rec.clearFilters')}</button>
                                             </>
                                         )}
                                     </div>
@@ -288,7 +277,7 @@ const AppContent: React.FC = () => {
                                                     <h3 className="text-base md:text-lg font-bold text-slate-800 mb-2 line-clamp-2" title={cur.textbookTitle}>{cur.textbookTitle}</h3>
                                                     <div className="flex flex-wrap gap-2 text-xs text-slate-500">
                                                         <span className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md">
-                                                            <Hash className="w-3 h-3" /> {cur.totalLessons} 课时
+                                                            <Hash className="w-3 h-3" /> {cur.totalLessons} {t('rec.lessons')}
                                                         </span>
                                                         <span className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md">
                                                             <Clock className="w-3 h-3" /> {cur.params.duration} min
@@ -299,7 +288,7 @@ const AppContent: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="bg-slate-50 px-4 py-2.5 md:px-5 md:py-3 border-t border-slate-100 flex justify-between items-center text-xs md:text-sm font-medium text-violet-600 group-hover:bg-violet-50/50 transition-colors">
-                                                    <span>打开课程大纲</span>
+                                                    <span>{t('rec.openCurriculum')}</span>
                                                     <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 rotate-180" />
                                                 </div>
                                             </div>
@@ -323,15 +312,15 @@ const AppContent: React.FC = () => {
                                         {savedLessons.length === 0 ? (
                                             <>
                                                 <History className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4" />
-                                                <h3 className="text-base md:text-lg font-medium text-slate-600">还没有保存的 Lesson Kit</h3>
-                                                <p className="text-sm text-slate-400">生成并保存一个 Lesson Kit 后即可在此查看。</p>
-                                                <button onClick={() => setViewMode('create')} className="mt-4 text-violet-600 font-medium hover:underline">去创建 Lesson Kit →</button>
+                                                <h3 className="text-base md:text-lg font-medium text-slate-600">{t('rec.noKits')}</h3>
+                                                <p className="text-sm text-slate-400">{t('rec.noKitsHint')}</p>
+                                                <button onClick={() => setViewMode('create')} className="mt-4 text-violet-600 font-medium hover:underline">{t('rec.goCreate')}</button>
                                             </>
                                         ) : (
                                             <>
                                                 <Search className="w-12 h-12 md:w-16 md:h-16 text-slate-300 mx-auto mb-4" />
-                                                <h3 className="text-base md:text-lg font-medium text-slate-600">没有匹配的结果</h3>
-                                                <button onClick={() => { setKitSearch(''); setKitLevel('All Levels'); setKitDate('all'); }} className="mt-4 text-violet-600 font-medium hover:underline">清除所有筛选</button>
+                                                <h3 className="text-base md:text-lg font-medium text-slate-600">{t('rec.noResults')}</h3>
+                                                <button onClick={() => { setKitSearch(''); setKitLevel('All Levels'); setKitDate('all'); }} className="mt-4 text-violet-600 font-medium hover:underline">{t('rec.clearFilters')}</button>
                                             </>
                                         )}
                                     </div>
@@ -392,7 +381,7 @@ const AppContent: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div className="bg-slate-50 px-4 py-2 md:px-5 md:py-3 border-t border-slate-100 flex justify-between items-center text-xs md:text-sm font-medium text-violet-600 group-hover:bg-violet-50/50 transition-colors">
-                                                    <span>{activeLessonId === lesson.id ? 'Currently Editing' : 'Open Kit'}</span>
+                                                    <span>{activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}</span>
                                                     <Edit3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                                 </div>
                                             </div>
@@ -407,7 +396,7 @@ const AppContent: React.FC = () => {
 
             <footer className="bg-white border-t border-slate-200 mt-12 py-8">
                 <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-xs md:text-sm">
-                    <p>&copy; {new Date().getFullYear()} ESL Smart Planner. Built with Google Gemini.</p>
+                    <p>{t('footer')}</p>
                 </div>
             </footer>
         </div>

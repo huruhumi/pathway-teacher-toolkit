@@ -287,7 +287,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 <X size={14} />
                                             </button>
                                         </div>
-                                    )) : <div className="text-sm text-purple-300 italic px-2">无教学建议。</div>}
+                                    )) : <div className="text-sm text-purple-300 italic px-2">No teaching suggestions.</div>}
                                 </div>
                                 <div className="flex justify-end mt-2">
                                     <button

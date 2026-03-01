@@ -1,9 +1,11 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { analyzeEssay } from './services/geminiService';
-import { CorrectionReport, StudentGrade, CEFRLevel } from './types';
+import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord } from './types';
 import ReportDisplay from './components/ReportDisplay';
-import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather } from 'lucide-react';
+import CorrectionRecords, { saveRecord } from './components/CorrectionRecords';
+import EssayLibrary from './components/EssayLibrary';
+import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather, BookOpen } from 'lucide-react';
 import { AppHeader } from '@shared/components/AppHeader';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
@@ -20,6 +22,7 @@ const AppContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<CorrectionReport | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [viewMode, setViewMode] = useState<'correction' | 'essays' | 'records'>('correction');
 
   // Essay Inputs
   const [essayText, setEssayText] = useState('');
@@ -101,6 +104,17 @@ const AppContent: React.FC = () => {
     try {
       const result = await analyzeEssay(essay, selectedGrade, selectedCEFR, topic);
       setReport(result);
+      // Auto-save to records
+      const record: SavedRecord = {
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        grade: selectedGrade,
+        cefr: selectedCEFR,
+        topicText: topicText || undefined,
+        essayText: essayText || undefined,
+        report: result,
+      };
+      saveRecord(record);
     } catch (err: any) {
       setError(err.message || t('input.error'));
     } finally {
@@ -129,8 +143,7 @@ const AppContent: React.FC = () => {
       {/* Header hidden during full-screen preview */}
       {!isPreviewing && (
         <AppHeader
-          appName="ESL Master"
-          subtitle="Essay Lab"
+          appName="Essay Lab"
           logoIcon={<GraduationCap className="w-5 h-5" />}
           brand={{
             logoBg: 'bg-indigo-600',
@@ -138,28 +151,24 @@ const AppContent: React.FC = () => {
             activeText: 'text-indigo-700',
           }}
           tabs={[
-            { key: 'home', label: t('nav.home'), icon: <Feather className="w-4 h-4" /> },
-            { key: 'about', label: t('nav.about'), icon: <Sparkles className="w-4 h-4" /> },
-            { key: 'resources', label: t('nav.resources'), icon: <GraduationCap className="w-4 h-4" /> },
+            { key: 'correction', label: t('nav.home'), icon: <Feather className="w-4 h-4" /> },
+            { key: 'essays', label: t('nav.about'), icon: <BookOpen className="w-4 h-4" /> },
+            { key: 'records', label: t('nav.resources'), icon: <History className="w-4 h-4" /> },
           ]}
-          activeTab="home"
-          onTabChange={(key) => { if (key === 'home') window.location.reload(); }}
-          onLogoClick={() => window.location.reload()}
+          activeTab={viewMode}
+          onTabChange={(key) => { setViewMode(key as typeof viewMode); if (key === 'correction') { setReport(null); setIsPreviewing(false); } }}
+          onLogoClick={() => { setViewMode('correction'); setReport(null); setIsPreviewing(false); }}
           rightContent={<HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />}
         />
       )}
 
       <main className={`max-w-6xl mx-auto px-4 py-8 ${isPreviewing ? 'print:p-0' : ''}`}>
-        {!report && !loading ? (
+        {viewMode === 'essays' ? (
+          <EssayLibrary />
+        ) : viewMode === 'records' ? (
+          <CorrectionRecords />
+        ) : !report && !loading ? (
           <div className="max-w-5xl mx-auto space-y-8">
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-4xl font-black text-slate-800">
-                {t('hero.title')}<span className="text-indigo-600">{t('hero.titleHighlight')}</span>{t('hero.titleEnd')}
-              </h2>
-              <p className="text-slate-500 max-w-lg mx-auto leading-relaxed">
-                {t('hero.desc')}
-              </p>
-            </div>
 
             <div className="card flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-2">
@@ -321,7 +330,7 @@ const AppContent: React.FC = () => {
               <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white">
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <span className="font-bold">ESL Master</span>
+              <span className="font-bold">Essay Lab</span>
             </div>
             <p>{t('footer')}</p>
           </div>

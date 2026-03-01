@@ -121,8 +121,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             <button
               onClick={() => setInput({ ...input, weather: 'Sunny' })}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Sunny'
-                  ? 'bg-white text-amber-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-amber-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
               <Sun size={18} />
@@ -130,8 +130,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             <button
               onClick={() => setInput({ ...input, weather: 'Rainy' })}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Rainy'
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                ? 'bg-white text-indigo-600 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
               <CloudRain size={18} />
@@ -148,8 +148,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 key={s}
                 onClick={() => setInput({ ...input, season: s })}
                 className={`flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all ${input.season === s
-                    ? 'bg-white text-emerald-600 shadow-sm font-bold'
-                    : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-emerald-600 shadow-sm font-bold'
+                  : 'text-slate-500 hover:text-slate-700'
                   }`}
               >{t(`season.${s}` as TranslationKey)}</button>
             ))}
@@ -169,8 +169,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 key={opt.id}
                 onClick={() => handleFocusChange(opt.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${isSelected
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                    : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-600'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-600'
                   }`}
               >
                 <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
@@ -189,7 +189,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
             className="input-field py-3"
           >
-            {AGE_RANGES.map(age => <option key={age} value={age}>{age}</option>)}
+            {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}` as any)}</option>)}
           </select>
         </div>
         <div>
@@ -227,7 +227,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
             className="input-field py-3"
           >
-            {CEFR_LEVELS.map(level => <option key={level} value={level}>{level}</option>)}
+            {CEFR_LEVELS.map(level => <option key={level} value={level}>{t(`cefr.${level}` as any)}</option>)}
           </select>
         </div>
         <div>
@@ -247,21 +247,21 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       <div>
         <label className="input-label">
-          Workshop Theme
+          {t('input.workshopTheme')}
         </label>
         <div className="relative">
           <input
             type="text"
             value={input.theme}
             onChange={(e) => setInput({ ...input, theme: e.target.value })}
-            placeholder="e.g. The Secret Life of Flour (or leave blank and upload a file)"
+            placeholder={t('input.themePlaceholderLong')}
             className="input-field py-3 pr-14"
           />
           <button
             onClick={handleRandomTheme}
             disabled={isGeneratingTheme}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-            title="Generate Random Theme with AI"
+            title={t('input.randomThemeTitle')}
           >
             {isGeneratingTheme ? <Loader2 className="animate-spin" size={18} /> : <Shuffle size={18} />}
           </button>
@@ -270,12 +270,12 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       <div>
         <label className="input-label">
-          Introduction / Context (Optional)
+          {t('input.introLabel')}
         </label>
         <textarea
           value={input.topicIntroduction}
           onChange={(e) => setInput({ ...input, topicIntroduction: e.target.value })}
-          placeholder="e.g. Students will explore how bees find flowers and why pollination is important. (Auto-filled by 'Random Theme')"
+          placeholder={t('input.introPlaceholderLong')}
           rows={3}
           className="input-field py-3 resize-none"
         />
@@ -283,7 +283,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       <div>
         <label className="input-label">
-          Teaching Materials (Optional)
+          {t('input.materialsLabel')}
         </label>
         <div
           className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-400 hover:bg-slate-50 transition-colors cursor-pointer"
@@ -303,8 +303,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             <div className="p-3 bg-slate-100 rounded-full text-slate-400">
               <UploadCloud size={24} />
             </div>
-            <p className="text-sm font-medium">Click to upload or drag & drop</p>
-            <p className="text-xs text-slate-400">PDFs, Images, or Text files (Max 5 files)</p>
+            <p className="text-sm font-medium">{t('input.clickUpload')}</p>
+            <p className="text-xs text-slate-400">{t('input.fileTypes')}</p>
           </div>
         </div>
 
@@ -337,19 +337,19 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
           onClick={isLoading ? onStop : onSubmit}
           disabled={!isLoading && (!input.theme && input.uploadedFiles.length === 0)}
           className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
-              ? 'bg-red-500 hover:bg-red-600'
-              : (!input.theme && input.uploadedFiles.length === 0)
-                ? 'bg-slate-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-emerald-600 to-teal-600'
+            ? 'bg-red-500 hover:bg-red-600'
+            : (!input.theme && input.uploadedFiles.length === 0)
+              ? 'bg-slate-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-emerald-600 to-teal-600'
             }`}
         >
           {isLoading ? (
             <>
               <Square fill="currentColor" size={16} />
-              Stop Generation
+              {t('input.stopGeneration')}
             </>
           ) : (
-            "Generate Lesson Kit"
+            t('input.generateKit')
           )}
         </button>
       </div>

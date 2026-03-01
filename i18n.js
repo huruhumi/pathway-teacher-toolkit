@@ -12,11 +12,11 @@
         },
         'hero.title.before': {
             en: 'Empowering Educators with',
-            zh: '以',
+            zh: '以 AI 驱动精准赋能教育者',
         },
         'hero.highlight': {
             en: 'AI-Driven Precision',
-            zh: 'AI 驱动精准赋能教育者',
+            zh: '',
         },
         'hero.desc': {
             en: 'Welcome to the Teacher Toolkit. Explore our holistic suite of pedagogical tools designed for modern, immersive learning experiences.',
@@ -111,7 +111,7 @@
     function applyTranslations(lang) {
         document.querySelectorAll('[data-i18n]').forEach(function (el) {
             var key = el.getAttribute('data-i18n');
-            if (translations[key] && translations[key][lang]) {
+            if (translations[key] && key in translations && lang in translations[key]) {
                 el.textContent = translations[key][lang];
             }
         });

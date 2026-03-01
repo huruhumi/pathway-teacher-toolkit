@@ -1,8 +1,8 @@
 export const translations = {
     // Nav tabs
-    'nav.home': { en: 'Correction', zh: '批改首页' },
-    'nav.about': { en: 'About Lab', zh: '关于实验室' },
-    'nav.resources': { en: 'K12 Resources', zh: 'K12 资源' },
+    'nav.home': { en: 'Correction', zh: '批改' },
+    'nav.about': { en: 'Essays', zh: '范文' },
+    'nav.resources': { en: 'Records', zh: '记录' },
 
     // Hero / Input page
     'hero.title': { en: 'Better Writing Starts with a', zh: '提升写作，从一份' },
@@ -39,8 +39,8 @@ export const translations = {
     // Report Display
     'report.title': { en: 'Correction Report', zh: '批改报告' },
     'report.titleAccent': { en: 'Report', zh: 'Report' },
-    'report.subtitle': { en: 'ESL Master In-depth Assessment & Smart Heuristic Editing', zh: 'ESL Master 深度评估 & 智能启发式编辑' },
-    'report.docTitle': { en: 'ESL Master - Essay Correction Lab', zh: 'ESL Master - 英语作文批改实验室' },
+    'report.subtitle': { en: 'Essay Lab In-depth Assessment & Smart Heuristic Editing', zh: 'Essay Lab 深度评估 & 智能启发式编辑' },
+    'report.docTitle': { en: 'Essay Lab - Essay Correction', zh: 'Essay Lab - 英语作文批改' },
     'report.overallGrade': { en: 'Overall Grade', zh: 'Overall Grade' },
     'report.aiFailed': { en: 'AI generation failed. Please try again.', zh: 'AI 生成条目失败，请重试' },
 
@@ -89,6 +89,47 @@ export const translations = {
     'report.reportView': { en: 'Report View', zh: '报告视图' },
     'report.saveConfirm': { en: 'Changes saved!\\nThis report has been synced to local analysis log.', zh: '修改已保存！\\n该报告已同步至本地分析日志。' },
     'report.finalize': { en: 'Finalize Report', zh: '确认并结项' },
+
+    // Records page
+    'records.title': { en: 'Correction Records', zh: '批改记录' },
+    'records.empty': { en: 'No correction records yet. Submit an essay for correction to get started!', zh: '暂无批改记录。提交一篇作文开始批改吧！' },
+    'records.delete': { en: 'Delete', zh: '删除' },
+    'records.deleteConfirm': { en: 'Delete this record?', zh: '确定删除此记录？' },
+    'records.viewReport': { en: 'View Report', zh: '查看报告' },
+    'records.back': { en: 'Back to Records', zh: '返回记录列表' },
+    'records.grade': { en: 'Grade', zh: '评分' },
+    'records.filterAll': { en: 'All', zh: '全部' },
+
+    // Essays page
+    'essays.title': { en: 'Essay Library', zh: '范文库' },
+    'essays.empty': { en: 'No essays yet. Generate a model essay or submit a correction to build your library!', zh: '暂无范文。生成一篇范文或提交批改来积累你的范文库！' },
+    'essays.generate': { en: 'Generate Model Essay', zh: '生成范文' },
+    'essays.generating': { en: 'Generating...', zh: '正在生成...' },
+    'essays.topic': { en: 'Essay Topic', zh: '作文命题' },
+    'essays.topicPlaceholder': { en: 'e.g., My Favorite Holiday', zh: '例如：My Favorite Holiday' },
+    'essays.genre': { en: 'Genre', zh: '体裁' },
+    'essays.targetWords': { en: 'Target Words', zh: '目标字数' },
+    'essays.fromCorrection': { en: 'From Correction', zh: '批改提取' },
+    'essays.aiGenerated': { en: 'AI Generated', zh: 'AI 生成' },
+    'essays.highlights': { en: 'Highlight Sentences', zh: '亮点句' },
+    'essays.vocabulary': { en: 'Key Vocabulary', zh: '核心词汇' },
+    'essays.structure': { en: 'Structure Analysis', zh: '结构分析' },
+    'essays.teacherTip': { en: 'Teaching Tip', zh: '教学提示' },
+    'essays.words': { en: 'words', zh: '词' },
+    'essays.copy': { en: 'Copy', zh: '复制' },
+    'essays.copied': { en: 'Copied!', zh: '已复制！' },
+    'essays.regenerate': { en: 'Regenerate', zh: '重新生成' },
+    'essays.favorite': { en: 'Favorite', zh: '收藏' },
+    'essays.delete': { en: 'Delete', zh: '删除' },
+    'essays.collapse': { en: 'Collapse', zh: '收起' },
+    'essays.expand': { en: 'Expand', zh: '展开' },
+
+    // Genre labels
+    'genre.narrative': { en: 'Narrative', zh: '记叙文' },
+    'genre.argumentative': { en: 'Argumentative', zh: '议论文' },
+    'genre.expository': { en: 'Expository', zh: '说明文' },
+    'genre.practical': { en: 'Practical', zh: '应用文' },
+    'genre.picture': { en: 'Picture-based', zh: '看图写话' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

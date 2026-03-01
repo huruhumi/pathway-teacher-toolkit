@@ -1,18 +1,19 @@
 export const translations = {
     // Header / Nav
-    'nav.curriculum': { en: 'Curriculum', zh: '课程规划' },
+    'nav.curriculum': { en: 'Curriculum', zh: '课程' },
     'nav.lessonKit': { en: 'Lesson Kit', zh: '课件生成' },
-    'nav.saved': { en: 'Saved', zh: '已保存' },
+    'nav.saved': { en: 'Records', zh: '记录' },
+    'app.name': { en: 'Nature Compass', zh: '自然指针' },
 
     // CurriculumPlanner
-    'cp.ageGroup': { en: 'AGE GROUP', zh: '年龄段' },
-    'cp.englishLevel': { en: 'ENGLISH LEVEL', zh: '英语水平' },
-    'cp.numLessons': { en: 'NUMBER OF LESSONS', zh: '课时数量' },
-    'cp.duration': { en: 'LESSON DURATION', zh: '每课时长' },
-    'cp.city': { en: 'CITY (留空默认武汉)', zh: '城市（留空默认武汉）' },
+    'cp.ageGroup': { en: 'Age Group', zh: '年龄段' },
+    'cp.englishLevel': { en: 'Target Level', zh: '目标等级' },
+    'cp.numLessons': { en: 'Number of Lessons', zh: '课时数量' },
+    'cp.duration': { en: 'Duration (Minutes)', zh: '时长（分钟）' },
+    'cp.city': { en: 'City (Default: Wuhan)', zh: '城市（留空默认武汉）' },
     'cp.confirm': { en: 'Confirm', zh: '确认' },
-    'cp.customLocation': { en: 'Custom Location (可选)', zh: '自定义地点（可选）' },
-    'cp.customTheme': { en: 'CUSTOM THEME (可选)', zh: '自定义主题（可选）' },
+    'cp.customLocation': { en: 'Custom Location (Optional)', zh: '自定义地点（可选）' },
+    'cp.customTheme': { en: 'Custom Theme (Optional)', zh: '自定义主题（可选）' },
     'cp.generate': { en: 'Generate Curriculum', zh: '生成课程' },
     'cp.generating': { en: 'Generating EN + CN...', zh: '正在生成中英课程...' },
     'cp.save': { en: 'Save Curriculum', zh: '保存课程' },
@@ -30,6 +31,54 @@ export const translations = {
     'cp.openKit': { en: 'Open Kit', zh: '打开课件' },
     'cp.retryKit': { en: 'Retry', zh: '重试' },
     'cp.batchGenerating': { en: 'Generating...', zh: '正在生成...' },
+
+    // PDF Upload
+    'cp.uploadPdf': { en: 'Upload PDF Reference (Optional)', zh: '上传PDF参考资料（可选）' },
+    'cp.clickUpload': { en: 'Click to upload', zh: '点击上传' },
+    'cp.pdfFile': { en: 'PDF reference file', zh: 'PDF参考文件' },
+    'cp.pdfSupport': { en: 'Supports PDF files of any size, parsed locally', zh: '支持任意大小的PDF文件，在本地解析' },
+    'cp.extracting': { en: 'Extracting...', zh: '正在解析...' },
+    'cp.pagesExtracted': { en: 'pages extracted', zh: '页已提取' },
+    'cp.generateFromPdf': { en: 'Generate from PDF', zh: '基于PDF生成课程' },
+    'cp.title': { en: 'Curriculum Designer', zh: '课程设计器' },
+    'cp.durationPlaceholder': { en: 'e.g., 180', zh: '例如：180' },
+    'cp.cityPlaceholder': { en: 'e.g., Shanghai, Beijing, Chengdu...', zh: '例如：上海、北京、成都...' },
+    'cp.suggestedLocations': { en: 'Suggested Locations', zh: '推荐地点' },
+    'cp.noPreference': { en: '-- No preference --', zh: '-- 不限 --' },
+    'cp.locationPlaceholder': { en: 'Enter custom location name', zh: '输入自定义地点名称' },
+    'cp.themePlaceholder': { en: 'e.g., Marine Biology, Urban Ecology...', zh: '例如：海洋生物、城市生态...' },
+
+    // InputSection — additional
+    'input.workshopTheme': { en: 'Workshop Theme', zh: '工坊主题' },
+    'input.themePlaceholderLong': { en: 'e.g. The Secret Life of Flour (or leave blank and upload a file)', zh: '例如："面粉的秘密人生"（或留空并上传文件）' },
+    'input.randomThemeTitle': { en: 'Generate Random Theme with AI', zh: '使用AI生成随机主题' },
+    'input.introLabel': { en: 'Introduction / Context (Optional)', zh: '主题介绍 / 背景（可选）' },
+    'input.introPlaceholderLong': { en: 'e.g. Students will explore how bees find flowers and why pollination is important. (Auto-filled by \'Random Theme\')', zh: '例如：学生将探索蜜蜂如何找到花朵以及为什么授粉很重要。（可由"随机主题"自动填充）' },
+    'input.materialsLabel': { en: 'Teaching Materials (Optional)', zh: '教学素材（可选）' },
+    'input.clickUpload': { en: 'Click to upload or drag & drop', zh: '点击上传或拖拽文件' },
+    'input.fileTypes': { en: 'PDFs, Images, or Text files (Max 5 files)', zh: 'PDF、图片或文本文件（最多5个）' },
+    'input.stopGeneration': { en: 'Stop Generation', zh: '停止生成' },
+    'input.generateKit': { en: 'Generate Lesson Kit', zh: '生成课件' },
+
+    // Dropdown display text (value stays English for AI)
+    'age.6-9 Years (Primary Lower)': { en: '6-9 Years (Primary Lower)', zh: '6-9岁（小学低段）' },
+    'age.10-12 Years (Primary Upper)': { en: '10-12 Years (Primary Upper)', zh: '10-12岁（小学高段）' },
+    'age.13-15 Years (Middle School)': { en: '13-15 Years (Middle School)', zh: '13-15岁（初中）' },
+    'age.16-18 Years (High School)': { en: '16-18 Years (High School)', zh: '16-18岁（高中）' },
+
+    'level.Zero Foundation': { en: 'Zero Foundation', zh: '零基础' },
+    'level.Elementary (A1)': { en: 'Elementary (A1)', zh: '初级 (A1)' },
+    'level.Pre-Intermediate (A2)': { en: 'Pre-Intermediate (A2)', zh: '初中级 (A2)' },
+    'level.Intermediate (B1)': { en: 'Intermediate (B1)', zh: '中级 (B1)' },
+    'level.Upper-Intermediate (B2)': { en: 'Upper-Intermediate (B2)', zh: '中高级 (B2)' },
+    'level.Advanced (C1)': { en: 'Advanced (C1)', zh: '高级 (C1)' },
+    'level.Proficient (C2)': { en: 'Proficient (C2)', zh: '精通 (C2)' },
+
+    'cefr.Pre-A1 (Absolute Beginner)': { en: 'Pre-A1 (Absolute Beginner)', zh: 'Pre-A1（零基础）' },
+    'cefr.A1 (Beginner)': { en: 'A1 (Beginner)', zh: 'A1（入门）' },
+    'cefr.A2 (Elementary)': { en: 'A2 (Elementary)', zh: 'A2（初级）' },
+    'cefr.B1 (Intermediate)': { en: 'B1 (Intermediate)', zh: 'B1（中级）' },
+    'cefr.B2 (Upper Intermediate)': { en: 'B2 (Upper Intermediate)', zh: 'B2（中高级）' },
 
     // InputSection
     'input.theme': { en: 'Theme / Topic', zh: '主题' },

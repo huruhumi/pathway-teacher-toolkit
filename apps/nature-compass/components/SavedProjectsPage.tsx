@@ -7,6 +7,7 @@ import {
     Coins, Music, Compass, Theater, FileText, MapPin, Users, GraduationCap
 } from 'lucide-react';
 import { AGE_RANGES } from '../constants';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface SavedProjectsPageProps {
     savedPlans: SavedLessonPlan[];
@@ -20,7 +21,7 @@ interface SavedProjectsPageProps {
 }
 
 const ENGLISH_LEVELS = [
-    "Zero Foundation (零基础)",
+    "Zero Foundation",
     "Elementary (A1)", "Pre-Intermediate (A2)",
     "Intermediate (B1)", "Upper-Intermediate (B2)",
     "Advanced (C1)", "Proficient (C2)"
@@ -37,6 +38,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     savedPlans, savedCurricula, onLoad, onDelete, onRename,
     onDeleteCurriculum, onRenameCurriculum, onLoadCurriculum,
 }) => {
+    const { t } = useLanguage();
     // --- Tab state ---
     const [activeTab, setActiveTab] = useState<'curricula' | 'kits'>('curricula');
 
@@ -288,12 +290,12 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                     <option value="all">All Ages</option>
                                     {AGE_RANGES.map(age => {
                                         const short = age.split(' ')[0]; // "6-9"
-                                        return <option key={age} value={short}>{age}</option>;
+                                        return <option key={age} value={short}>{t(`age.${age}` as any)}</option>;
                                     })}
                                 </FilterSelect>
                                 <FilterSelect value={cLevel} onChange={setCLevel} icon={GraduationCap}>
                                     <option value="all">All Levels</option>
-                                    {ENGLISH_LEVELS.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+                                    {ENGLISH_LEVELS.map(lv => <option key={lv} value={lv}>{t(`level.${lv}` as any)}</option>)}
                                 </FilterSelect>
                                 <FilterSelect value={cCount} onChange={setCCount} icon={BookOpen}>
                                     <option value="all">Any Lesson Count</option>

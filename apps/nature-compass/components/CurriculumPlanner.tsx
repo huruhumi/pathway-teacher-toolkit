@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Save, Check as CheckIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Sparkles, MapPin, CloudRain, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2, Compass,
-    Wind, Trees, Search, FileText, Edit3
+    Wind, Trees, Search, FileText, Edit3, Upload, X
 } from 'lucide-react';
 import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/geminiService';
 import { Curriculum, CurriculumLesson, CurriculumParams } from '../types';
@@ -13,7 +13,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
 
 const ENGLISH_LEVELS = [
-    "Zero Foundation (零基础)",
+    "Zero Foundation",
     "Elementary (A1)",
     "Pre-Intermediate (A2)",
     "Intermediate (B1)",
@@ -58,6 +58,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [loadingLocations, setLoadingLocations] = useState(false);
     const [customTheme, setCustomTheme] = useState("");
 
+    // PDF state
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfText, setPdfText] = useState('');
+    const [pdfPageCount, setPdfPageCount] = useState(0);
+    const [extracting, setExtracting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // Result state
     const [loading, setLoading] = useState(false);
     const [curriculumEN, setCurriculumEN] = useState<Curriculum | null>(null);
@@ -70,7 +77,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [isSavedEN, setIsSavedEN] = useState(false);
     const [isSavedCN, setIsSavedCN] = useState(false);
 
-    const effectiveCity = city.trim() || "武汉";
+    const effectiveCity = city.trim() || "Wuhan";
     const curriculum = activeLanguage === 'zh' ? curriculumCN : curriculumEN;
     const isSaved = activeLanguage === 'zh' ? isSavedCN : isSavedEN;
     const setIsSaved = activeLanguage === 'zh' ? setIsSavedCN : setIsSavedEN;
@@ -141,6 +148,51 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         }
     };
 
+    // PDF text extraction using pdf.js
+    const extractPdfText = async (file: File) => {
+        setExtracting(true);
+        try {
+            // @ts-ignore - loaded from CDN
+            const pdfjsLib = await import(/* @vite-ignore */ 'https://esm.sh/pdfjs-dist@4.10.38');
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            setPdfPageCount(pdf.numPages);
+
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageText = content.items.map((item: any) => item.str).join(' ');
+                fullText += `\n--- Page ${i} ---\n${pageText}`;
+            }
+            setPdfText(fullText.trim());
+        } catch (err: any) {
+            console.error('PDF extraction failed:', err);
+            setErrorMsg(`PDF parsing failed: ${err.message || 'Unknown error'}`);
+        } finally {
+            setExtracting(false);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.type === 'application/pdf') {
+            setPdfFile(file);
+            setPdfText('');
+            setPdfPageCount(0);
+            extractPdfText(file);
+        }
+    };
+
+    const removePdf = () => {
+        setPdfFile(null);
+        setPdfText('');
+        setPdfPageCount(0);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
     const handleGenerate = async () => {
         setLoading(true);
         setErrorMsg(null);
@@ -151,11 +203,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
         const params = getCurrentParams();
         setSavedParams(params);
+        const textForAI = pdfText || undefined;
 
         try {
             const [enResult, cnResult] = await Promise.allSettled([
-                generateCurriculum(params.ageGroup, params.englishLevel, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city),
-                generateCurriculumCN(params.ageGroup, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city),
+                generateCurriculum(params.ageGroup, params.englishLevel, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI),
+                generateCurriculumCN(params.ageGroup, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI),
             ]);
 
             if (enResult.status === 'fulfilled') setCurriculumEN(enResult.value);
@@ -200,10 +253,57 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     <div className="card md:p-8">
                         <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                             <Compass size={22} className="text-teal-600" />
-                            Curriculum Planner
+                            {t('cp.title')}
                         </h2>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* PDF Upload */}
+                        <div className="mb-6">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500 mb-2">
+                                <FileText size={16} /> {t('cp.uploadPdf')}
+                            </label>
+                            {!pdfFile ? (
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-all group"
+                                >
+                                    <Upload className="w-10 h-10 text-slate-400 group-hover:text-teal-500 mx-auto mb-3" />
+                                    <p className="text-sm text-slate-500">
+                                        <span className="font-semibold text-teal-600">{t('cp.clickUpload')}</span> {t('cp.pdfFile')}<br />
+                                        <span className="text-xs text-slate-400">{t('cp.pdfSupport')}</span>
+                                    </p>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        accept=".pdf"
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <FileText size={20} className="text-teal-600" />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-700">{pdfFile.name}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {extracting ? (
+                                                    <span className="flex items-center gap-1 text-teal-600">
+                                                        <Loader2 size={12} className="animate-spin" /> {t('cp.extracting')}
+                                                    </span>
+                                                ) : (
+                                                    <>{pdfPageCount} {t('cp.pagesExtracted')} · {(pdfText.length / 1000).toFixed(1)}K chars</>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button onClick={removePdf} className="p-1.5 hover:bg-teal-100 rounded-lg transition-colors">
+                                        <X size={16} className="text-slate-400" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Age Group */}
                             <div className="space-y-2">
                                 <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
@@ -214,7 +314,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     onChange={(e) => setAgeGroup(e.target.value)}
                                     className="input-field py-3"
                                 >
-                                    {AGE_RANGES.map(age => <option key={age} value={age}>{age}</option>)}
+                                    {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}` as any)}</option>)}
                                 </select>
                             </div>
 
@@ -228,7 +328,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     onChange={(e) => setEnglishLevel(e.target.value)}
                                     className="input-field py-3"
                                 >
-                                    {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
+                                    {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{t(`level.${lvl}` as any)}</option>)}
                                 </select>
                             </div>
 
@@ -254,7 +354,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g., 180 minutes"
+                                    placeholder={t('cp.durationPlaceholder')}
                                     value={duration}
                                     onChange={(e) => setDuration(e.target.value)}
                                     className="input-field py-3"
@@ -269,7 +369,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 <div className="flex gap-3">
                                     <input
                                         type="text"
-                                        placeholder="e.g., 上海, 北京, 成都..."
+                                        placeholder={t('cp.cityPlaceholder')}
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
                                         className="input-field flex-1 py-3"
@@ -292,14 +392,14 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {suggestedLocations.length > 0 && (
                                 <div className="space-y-2 md:col-span-2">
                                     <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                                        <Compass size={16} /> 推荐地点 ({effectiveCity})
+                                        <Compass size={16} /> {t('cp.suggestedLocations')} ({effectiveCity})
                                     </label>
                                     <select
                                         value={selectedLocation}
                                         onChange={(e) => setSelectedLocation(e.target.value)}
                                         className="input-field py-3"
                                     >
-                                        <option value="">-- 不选择推荐地点 --</option>
+                                        <option value="">{t('cp.noPreference')}</option>
                                         {suggestedLocations.map((loc, i) => (
                                             <option key={i} value={loc}>{loc}</option>
                                         ))}
@@ -314,7 +414,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="输入自定义地点名称"
+                                    placeholder={t('cp.locationPlaceholder')}
                                     value={customLocation}
                                     onChange={(e) => setCustomLocation(e.target.value)}
                                     className="input-field py-3"
@@ -328,7 +428,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g., Marine Biology, Urban Ecology..."
+                                    placeholder={t('cp.themePlaceholder')}
                                     value={customTheme}
                                     onChange={(e) => setCustomTheme(e.target.value)}
                                     className="input-field py-3"
@@ -345,7 +445,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     {loading ? (
                                         <Loader2 className="animate-spin" size={22} />
                                     ) : (
-                                        <>{t('cp.generate')} <ArrowRight size={20} /></>
+                                        <>{pdfText ? t('cp.generateFromPdf') : t('cp.generate')} <ArrowRight size={20} /></>
                                     )}
                                 </button>
                             </div>

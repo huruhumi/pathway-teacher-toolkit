@@ -9,6 +9,7 @@ import {
 import { CEFRLevel, ESLCurriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { generateESLCurriculum } from '../services/geminiService';
 import { safeStorage } from '@shared/safeStorage';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface CurriculumPlannerProps {
     onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams) => void;
@@ -31,6 +32,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     batchRunning = false, batchProgress = { done: 0, total: 0, errors: 0 }, onOpenKit
 }) => {
     // PDF state
+    const { t } = useLanguage();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfText, setPdfText] = useState('');
     const [pdfPageCount, setPdfPageCount] = useState(0);
@@ -119,7 +121,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setPdfText(fullText.trim());
         } catch (err: any) {
             console.error('PDF extraction failed:', err);
-            setErrorMsg(`PDF解析失败: ${err.message || 'Unknown error'}`);
+            setErrorMsg(`PDF parsing failed: ${err.message || 'Unknown error'}`);
         } finally {
             setExtracting(false);
         }
@@ -153,7 +155,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
     const handleGenerate = async () => {
         if (!pdfText) {
-            setErrorMsg('请先上传并解析PDF教材');
+            setErrorMsg(t('cp.uploadFirst'));
             return;
         }
         setLoading(true);
@@ -165,7 +167,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setCurriculum(result);
             setSavedParams(params);
         } catch (error: any) {
-            setErrorMsg(error.message || '课程大纲生成失败');
+            setErrorMsg(error.message || t('cp.generateFailed'));
         } finally {
             setLoading(false);
         }
@@ -196,13 +198,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
                         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                             <BookOpen size={22} className="text-violet-600" />
-                            Curriculum Designer
+                            {t('cp.title')}
                         </h2>
 
                         {/* PDF Upload */}
                         <div className="mb-6">
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                <FileText size={16} /> 上传PDF教材
+                                <FileText size={16} /> {t('cp.uploadPdf')}
                             </label>
                             {!pdfFile ? (
                                 <div
@@ -211,8 +213,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 >
                                     <Upload className="w-10 h-10 text-gray-400 group-hover:text-violet-500 mb-3" />
                                     <p className="text-sm text-gray-500 text-center">
-                                        <span className="font-semibold text-violet-600">点击上传</span> PDF教材文件<br />
-                                        <span className="text-xs text-gray-400">支持任意大小的PDF文件，在本地解析</span>
+                                        <span className="font-semibold text-violet-600">{t('cp.clickUpload')}</span> {t('cp.pdfFile')}<br />
+                                        <span className="text-xs text-gray-400">{t('cp.pdfSupport')}</span>
                                     </p>
                                     <input
                                         type="file"
@@ -233,10 +235,10 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             <p className="text-xs text-gray-500">
                                                 {extracting ? (
                                                     <span className="flex items-center gap-1 text-violet-600">
-                                                        <Loader2 size={12} className="animate-spin" /> 正在解析...
+                                                        <Loader2 size={12} className="animate-spin" /> {t('cp.extracting')}
                                                     </span>
                                                 ) : (
-                                                    <>{pdfPageCount} 页 · {(pdfText.length / 1000).toFixed(1)}K 字符已提取</>
+                                                    <>{pdfPageCount} {t('cp.pdfPages')} · {(pdfText.length / 1000).toFixed(1)}K {t('cp.pdfChars')}</>
                                                 )}
                                             </p>
                                         </div>
@@ -256,7 +258,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Lesson Count */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <Hash size={16} /> 课时数
+                                    <Hash size={16} /> {t('cp.numLessons')}
                                 </label>
                                 <input
                                     type="number"
@@ -271,7 +273,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Target Level */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <GraduationCap size={16} /> Target Level
+                                    <GraduationCap size={16} /> {t('cp.targetLevel')}
                                 </label>
                                 <select
                                     value={level}
@@ -279,7 +281,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 >
                                     {Object.values(CEFRLevel).map(lvl => (
-                                        <option key={lvl} value={lvl}>{lvl}</option>
+                                        <option key={lvl} value={lvl}>{t(`cefr.${lvl}` as any)}</option>
                                     ))}
                                 </select>
                             </div>
@@ -287,7 +289,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Duration */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <Clock size={16} /> 课时时长 (分钟)
+                                    <Clock size={16} /> {t('cp.duration')}
                                 </label>
                                 <input
                                     type="text"
@@ -301,7 +303,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Student Count */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <Users size={16} /> 学生人数
+                                    <Users size={16} /> {t('cp.students')}
                                 </label>
                                 <input
                                     type="number"
@@ -315,7 +317,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Slides Per Lesson */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <Sparkles size={16} /> Slides / 课
+                                    <Sparkles size={16} /> {t('cp.slidesPerLesson')}
                                 </label>
                                 <select
                                     value={slideCount}
@@ -323,7 +325,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 >
                                     {[5, 8, 10, 12, 15, 20, 25, 30].map(n => (
-                                        <option key={n} value={n}>{n} Slides</option>
+                                        <option key={n} value={n}>{n} {t('input.slidesUnit')}</option>
                                     ))}
                                 </select>
                             </div>
@@ -331,10 +333,10 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Custom Instructions */}
                             <div className="space-y-2 md:col-span-2 lg:col-span-3">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    <MessageSquare size={16} /> 自定义指令 (可选)
+                                    <MessageSquare size={16} /> {t('cp.customInstructions')}
                                 </label>
                                 <textarea
-                                    placeholder="e.g., Focus on speaking skills, include role-play activities, avoid grammar-heavy content..."
+                                    placeholder={t('cp.customPlaceholder')}
                                     value={customInstructions}
                                     onChange={(e) => setCustomInstructions(e.target.value)}
                                     rows={2}
@@ -354,9 +356,9 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         }`}
                                 >
                                     {loading ? (
-                                        <><Loader2 className="animate-spin" size={22} /> 正在分析教材并生成大纲...</>
+                                        <><Loader2 className="animate-spin" size={22} /> {t('cp.analyzing')}</>
                                     ) : (
-                                        <>生成课程大纲 <ArrowRight size={20} /></>
+                                        <>{t('cp.generate')} <ArrowRight size={20} /></>
                                     )}
                                 </button>
                             </div>
@@ -391,7 +393,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all shadow-sm"
                                     >
                                         <Square size={16} />
-                                        终止生成
+                                        {t('cp.cancel')}
                                     </button>
                                 ) : (
                                     <button
@@ -399,7 +401,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-semibold hover:from-violet-700 hover:to-purple-700 transition-all shadow-sm"
                                     >
                                         <Rocket size={16} />
-                                        一键生成所有课件
+                                        {t('cp.generateAll')}
                                     </button>
                                 )
                             )}
@@ -415,7 +417,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                         }`}
                                 >
                                     <Save size={16} />
-                                    {isSaved ? '✓ 已保存' : '保存课程'}
+                                    {isSaved ? t('cp.savedCheck') : t('cp.saveCurriculum')}
                                 </button>
                             )}
                             <button
@@ -423,7 +425,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
                             >
                                 <Edit3 size={16} />
-                                新建课程
+                                {t('cp.newCurriculum')}
                             </button>
                         </div>
                     </div>
@@ -433,12 +435,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">{curriculum.textbookTitle}</h2>
                         <p className="text-gray-600 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-500">
-                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} 课时</span>
+                            <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} {t('cp.lessonsUnit')}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><GraduationCap size={14} /> {curriculum.targetLevel}</span>
                             {savedParams && (
                                 <>
                                     <span className="px-3 py-1 bg-gray-100 rounded-lg flex items-center gap-1.5"><Clock size={14} /> {savedParams.duration} min</span>
-                                    <span className="px-3 py-1 bg-gray-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams.studentCount} students</span>
+                                    <span className="px-3 py-1 bg-gray-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams.studentCount} {t('cp.studentsUnit')}</span>
                                 </>
                             )}
                         </div>
@@ -490,7 +492,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             {/* Objectives */}
                                             <div>
                                                 <span className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
-                                                    <Target size={12} /> Learning Objectives
+                                                    <Target size={12} /> {t('cp.learningObjectives')}
                                                 </span>
                                                 <ul className="mt-1 space-y-1 text-gray-700">
                                                     {lesson.objectives.map((obj, i) => (
@@ -505,12 +507,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             {/* Grammar Focus */}
                                             <div>
                                                 <span className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1">
-                                                    <GraduationCap size={12} /> Grammar Focus
+                                                    <GraduationCap size={12} /> {t('cp.grammarFocus')}
                                                 </span>
                                                 <p className="font-medium text-gray-700 mt-1">{lesson.grammarFocus}</p>
 
                                                 <span className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1 mt-3">
-                                                    <Sparkles size={12} /> Suggested Activities
+                                                    <Sparkles size={12} /> {t('cp.suggestedActivities')}
                                                 </span>
                                                 <ul className="mt-1 space-y-1 text-gray-700">
                                                     {lesson.suggestedActivities.map((act, i) => (
@@ -543,7 +545,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             if (status === 'generating') {
                                                 return (
                                                     <div className="w-full mt-2 bg-violet-50 border border-violet-200 text-violet-600 rounded-xl py-3 font-semibold flex items-center justify-center gap-2">
-                                                        <Loader2 size={18} className="animate-spin" /> 正在生成...
+                                                        <Loader2 size={18} className="animate-spin" /> {t('cp.generating')}
                                                     </div>
                                                 );
                                             }
@@ -553,7 +555,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                         onClick={(e) => { e.stopPropagation(); onOpenKit?.(kitId); }}
                                                         className="w-full mt-2 bg-green-50 border border-green-200 text-green-700 rounded-xl py-3 font-semibold hover:bg-green-100 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <CheckCircle2 size={18} /> 打开课件
+                                                        <CheckCircle2 size={18} /> {t('cp.openKit')}
                                                         <ExternalLink size={14} />
                                                     </button>
                                                 );
@@ -567,7 +569,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                         }}
                                                         className="w-full mt-2 bg-red-50 border border-red-200 text-red-600 rounded-xl py-3 font-semibold hover:bg-red-100 transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        <AlertCircle size={18} /> 生成失败 — 点击重试
+                                                        <AlertCircle size={18} /> {t('cp.failedRetry')}
                                                     </button>
                                                 );
                                             }
@@ -581,7 +583,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                     className="w-full mt-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 text-violet-700 rounded-xl py-3 font-semibold hover:from-violet-100 hover:to-purple-100 transition-all flex items-center justify-center gap-2"
                                                 >
                                                     <FileText size={18} />
-                                                    生成课件 (Generate Lesson Kit)
+                                                    {t('cp.generateKit')}
                                                     <ArrowRight size={16} />
                                                 </button>
                                             );
@@ -599,11 +601,11 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                 <div className="mt-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                     <div className="flex items-center justify-between text-sm mb-2">
                         <span className="font-semibold text-slate-700">
-                            {batchRunning ? '⏳ 批量生成中...' : '⏸️ 已暂停'}
+                            {batchRunning ? t('cp.batchGenerating') : t('cp.batchPaused')}
                         </span>
                         <span className="text-slate-500">
-                            {batchProgress.done}/{batchProgress.total} 已完成
-                            {batchProgress.errors > 0 && <span className="text-red-500 ml-2">· {batchProgress.errors} 失败</span>}
+                            {batchProgress.done}/{batchProgress.total} {t('cp.completed')}
+                            {batchProgress.errors > 0 && <span className="text-red-500 ml-2">· {batchProgress.errors} {t('cp.failed')}</span>}
                         </span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">

@@ -4,7 +4,7 @@ import { ACTIVITY_FOCUS_OPTIONS, CEFR_LEVELS, AGE_RANGES } from '../constants';
 /** Map STEAM Designer english levels to CEFR levels */
 function mapEnglishLevel(steamLevel: string): string {
     const mapping: Record<string, string> = {
-        'Zero Foundation (零基础)': 'Pre-A1 (Absolute Beginner)',
+        'Zero Foundation': 'Pre-A1 (Absolute Beginner)',
         'Elementary (A1)': 'A1 (Beginner)',
         'Pre-Intermediate (A2)': 'A2 (Elementary)',
         'Intermediate (B1)': 'B1 (Intermediate)',

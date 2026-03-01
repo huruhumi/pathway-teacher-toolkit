@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowA
 
   return (
     <AppHeader
-      appName="Nature Compass"
+      appName={t('app.name' as any)}
       logoIcon={<Compass size={20} />}
       brand={{
         logoBg: 'bg-gradient-to-tr from-emerald-500 to-teal-400',

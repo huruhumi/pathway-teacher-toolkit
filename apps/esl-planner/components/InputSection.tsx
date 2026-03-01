@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CEFRLevel } from '../types';
 import { Upload, FileText, Image as ImageIcon, X, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface InputSectionProps {
   onGenerate: (
@@ -27,6 +28,7 @@ interface InputSectionProps {
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues }) => {
+  const { t } = useLanguage();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [level, setLevel] = useState<CEFRLevel>(CEFRLevel.Beginner);
@@ -71,20 +73,20 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 md:p-8 mb-8 border border-gray-100">
       <div className="mb-6">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Create Lesson Materials</h2>
-        <p className="text-sm md:text-base text-gray-500">Upload materials or describe your topic to generate a full lesson kit.</p>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">{t('input.title')}</h2>
+        <p className="text-sm md:text-base text-gray-500">{t('input.desc')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Lesson Title Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Lesson Title (Required for naming)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.lessonTitle')}</label>
           <input
             type="text"
             required
             value={lessonTitle}
             onChange={(e) => setLessonTitle(e.target.value)}
-            placeholder="e.g., My Awesome English Class"
+            placeholder={t('input.lessonTitlePlaceholder')}
             className="w-full rounded-lg border-gray-300 border p-4 text-base font-bold focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
           />
         </div>
@@ -92,19 +94,19 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
         {/* Class Context Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Level (CEFR)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.targetLevel')}</label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value as CEFRLevel)}
               className="w-full rounded-lg border-gray-300 border p-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
             >
               {Object.values(CEFRLevel).map((lvl) => (
-                <option key={lvl} value={lvl}>{lvl}</option>
+                <option key={lvl} value={lvl}>{t(`cefr.${lvl}` as any)}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Class Duration (Mins)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.classDuration')}</label>
             <input
               type="number"
               value={duration}
@@ -114,7 +116,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Student Count</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.studentCount')}</label>
             <input
               type="number"
               value={studentCount}
@@ -124,24 +126,24 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Specific Topic (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.specificTopic')}</label>
             <input
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g., Spring Festival"
+              placeholder={t('input.specificTopicPlaceholder')}
               className="w-full rounded-lg border-gray-300 border p-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Slides (NotebookLM)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.slides')}</label>
             <select
               value={slideCount}
               onChange={(e) => setSlideCount(Number(e.target.value))}
               className="w-full rounded-lg border-gray-300 border p-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
             >
               {[5, 8, 10, 12, 15, 20, 25, 30].map((num) => (
-                <option key={num} value={num}>{num} Slides</option>
+                <option key={num} value={num}>{num} {t('input.slidesUnit')}</option>
               ))}
             </select>
           </div>
@@ -149,26 +151,26 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
 
         {/* Text Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Text Content or Context</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.textContent')}</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Paste text from a textbook, story, or describe the lesson objectives..."
+            placeholder={t('input.textPlaceholder')}
             className="w-full h-32 rounded-lg border-gray-300 border p-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
           />
         </div>
 
         {/* File Upload */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Upload Materials (Images/PDF Pages)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('input.uploadMaterials')}</label>
           <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-gray-50 transition-all group"
           >
             <Upload className="w-8 h-8 md:w-10 md:h-10 text-gray-400 group-hover:text-primary mb-3" />
             <p className="text-xs md:text-sm text-gray-500 text-center">
-              <span className="font-semibold text-primary">Click to upload</span> or drag and drop<br />
-              PNG, JPG, WEBP, PDF (Max 5 files)
+              <span className="font-semibold text-primary">{t('input.clickToUpload')}</span> {t('input.dragAndDrop')}<br />
+              {t('input.fileFormats')}
             </p>
             <input
               type="file"
@@ -217,11 +219,11 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
-                Generating Whole Kit...
+                {t('input.generatingKit')}
               </>
             ) : (
               <>
-                Generate Lesson Kit
+                {t('input.generateKit')}
                 <ArrowRight className="w-5 h-5" />
               </>
             )}

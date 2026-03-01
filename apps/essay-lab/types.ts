@@ -13,18 +13,18 @@ export enum Grade {
 }
 
 export enum StudentGrade {
-  G1 = '一年级 (Grade 1)',
-  G2 = '二年级 (Grade 2)',
-  G3 = '三年级 (Grade 3)',
-  G4 = '四年级 (Grade 4)',
-  G5 = '五年级 (Grade 5)',
-  G6 = '六年级 (Grade 6)',
-  G7 = '七年级 (Grade 7)',
-  G8 = '八年级 (Grade 8)',
-  G9 = '九年级 (Grade 9)',
-  G10 = '高一 (Grade 10)',
-  G11 = '高二 (Grade 11)',
-  G12 = '高三 (Grade 12)'
+  G1 = 'Grade 1',
+  G2 = 'Grade 2',
+  G3 = 'Grade 3',
+  G4 = 'Grade 4',
+  G5 = 'Grade 5',
+  G6 = 'Grade 6',
+  G7 = 'Grade 7',
+  G8 = 'Grade 8',
+  G9 = 'Grade 9',
+  G10 = 'Grade 10',
+  G11 = 'Grade 11',
+  G12 = 'Grade 12'
 }
 
 export enum CEFRLevel {
@@ -99,6 +99,58 @@ export interface QuizItem {
   correctAnswer: string;
   explanation: string;
 }
+
+export enum EssayGenre {
+  NARRATIVE = 'narrative',
+  ARGUMENTATIVE = 'argumentative',
+  EXPOSITORY = 'expository',
+  PRACTICAL = 'practical',
+  PICTURE = 'picture',
+}
+
+export interface GeneratedEssay {
+  id: string;
+  timestamp: number;
+  topic: string;
+  grade: StudentGrade;
+  cefr: CEFRLevel;
+  genre: EssayGenre;
+  targetWords: number;
+  title: string;
+  content: string;
+  wordCount: number;
+  highlights: string[];
+  vocabulary: WordBankItem[];
+  structure: string;
+  teacherTip: string;
+  source: 'generated';
+  favorite?: boolean;
+}
+
+export interface SavedRecord {
+  id: string;
+  timestamp: number;
+  grade: StudentGrade;
+  cefr: CEFRLevel;
+  topicText?: string;
+  essayText?: string;
+  report: CorrectionReport;
+}
+
+export interface SavedEssayFromCorrection {
+  id: string;
+  timestamp: number;
+  topic: string;
+  grade: StudentGrade;
+  cefr: CEFRLevel;
+  content: string;
+  wordCount: number;
+  source: 'correction';
+  favorite?: boolean;
+  recordId: string;
+}
+
+export type EssayItem = GeneratedEssay | SavedEssayFromCorrection;
 
 export interface CorrectionReport {
   originalText: string;
