@@ -13,9 +13,9 @@ import {
 export const handleDownloadZip = async (
     lesson: SavedLesson,
     setIsExporting: (id: string | null) => void,
-    e: React.MouseEvent
+    e?: React.MouseEvent
 ) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     setIsExporting(lesson.id);
     try {
         const zip = new JSZip();

@@ -273,16 +273,16 @@ export function useLessonHistory() {
         safeStorage.set('esl_planner_curricula', updated);
     };
 
-    const handleDeleteCurriculum = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
+    const handleDeleteCurriculum = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         const updated = savedCurricula.filter(c => c.id !== id);
         setSavedCurricula(updated);
         safeStorage.set('esl_planner_curricula', updated);
     };
 
-    const handleDeleteRecord = (id: string, e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleDeleteRecord = (id: string, e?: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         const updated = savedLessons.filter(l => l.id !== id);
         if (activeLessonId === id) setActiveLessonId(null);
         setSavedLessons(updated);
@@ -312,6 +312,18 @@ export function useLessonHistory() {
     };
 
     const cancelEditing = (e: React.MouseEvent) => { e.stopPropagation(); setEditingLessonId(null); };
+
+    const handleRenameLesson = (id: string, newName: string) => {
+        if (!newName.trim()) return;
+        const updated = savedLessons.map(l => {
+            if (l.id === id) {
+                return { ...l, topic: newName, lastModified: Date.now(), content: { ...l.content, structuredLessonPlan: { ...l.content.structuredLessonPlan, classInformation: { ...l.content.structuredLessonPlan.classInformation, topic: newName } } } };
+            }
+            return l;
+        });
+        setSavedLessons(updated);
+        safeStorage.set('esl_smart_planner_history', updated);
+    };
 
     return {
         // Data
@@ -346,5 +358,6 @@ export function useLessonHistory() {
         handleSaveCurriculum,
         handleDeleteCurriculum,
         handleDeleteRecord,
+        handleRenameLesson,
     };
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { RecordCard } from '@shared/components/RecordCard';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
     Search, Filter, ArrowUpDown, Calendar, BookOpen, Clock,
@@ -319,86 +320,32 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {filteredCurricula.map(item => (
-                                <div
+                                <RecordCard
                                     key={item.id}
-                                    className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-lg dark:hover:shadow-2xl hover:border-emerald-100 dark:hover:border-white/10 transition-all group flex flex-col overflow-hidden"
-                                >
-                                    <div className="p-4 flex-1">
-                                        <EditableTitle
-                                            id={item.id}
-                                            name={item.name}
-                                            onSaveEdit={onRenameCurriculum}
-                                        />
-                                        <p className="text-xs text-slate-500 line-clamp-2 mb-2">{item.curriculum.overview}</p>
-
-                                        <div className="flex flex-wrap gap-1.5 mb-2">
-                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
-                                                <MapPin size={11} /> {item.params.city}
-                                            </span>
-                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
-                                                <Users size={11} /> {item.params.ageGroup.split(' ')[0]}
-                                            </span>
-                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded-md flex items-center gap-1">
-                                                <GraduationCap size={11} /> {item.params.englishLevel.split(' ')[0]}
-                                            </span>
-                                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-md flex items-center gap-1">
-                                                <BookOpen size={11} /> {item.curriculum.lessons.length} lessons
-                                            </span>
-                                            <span className={`px-2 py-0.5 text-xs font-bold rounded-md ${item.language === 'zh'
-                                                ? 'bg-red-50 text-red-600'
-                                                : 'bg-blue-50 text-blue-600'
-                                                }`}>
-                                                {item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN'}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                                            <Clock size={14} />
-                                            <span>{new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <button
-                                                onClick={() => onLoadCurriculum(item)}
-                                                className="text-sm font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1.5 transition-all"
-                                            >
-                                                Open Curriculum
-                                                <ArrowRight size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
-                                                    const url = URL.createObjectURL(blob);
-                                                    const a = document.createElement('a');
-                                                    a.href = url;
-                                                    a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`;
-                                                    a.click();
-                                                }}
-                                                className="text-sm text-slate-400 hover:text-emerald-600 flex items-center gap-1.5 transition-colors"
-                                            >
-                                                <Download size={16} /> Export
-                                            </button>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); startEditing(item.id, item.name); }}
-                                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Rename"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onDeleteCurriculum(item.id); }}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                    title={item.name}
+                                    description={item.curriculum.overview}
+                                    tags={[
+                                        { icon: <MapPin size={11} />, label: item.params.city },
+                                        { icon: <Users size={11} />, label: item.params.ageGroup.split(' ')[0] },
+                                        { icon: <GraduationCap size={11} />, label: item.params.englishLevel.split(' ')[0] },
+                                        { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} lessons`, accent: true },
+                                        { icon: null, label: item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                    ]}
+                                    timestamp={item.timestamp}
+                                    openLabel="Open Curriculum"
+                                    onOpen={() => onLoadCurriculum(item)}
+                                    onDelete={() => onDeleteCurriculum(item.id)}
+                                    onExport={() => {
+                                        const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`;
+                                        a.click();
+                                    }}
+                                    onRename={(newName) => onRenameCurriculum(item.id, newName)}
+                                    accentColor="emerald"
+                                />
                             ))}
                         </div>
                     )}
