@@ -27,4 +27,16 @@ export const safeStorage = {
             localStorage.removeItem(key);
         } catch { }
     },
+
+    /**
+     * Set an array value with a max record limit.
+     * If the array exceeds maxRecords, the oldest entries (beginning of array) are trimmed.
+     * Returns the trimmed items (if any) so callers can clean up related data (e.g. IndexedDB images).
+     */
+    setWithLimit<T>(key: string, value: T[], maxRecords: number = 50): { trimmed: T[]; success: boolean } {
+        const trimmed = value.length > maxRecords ? value.slice(0, value.length - maxRecords) : [];
+        const kept = value.length > maxRecords ? value.slice(-maxRecords) : value;
+        const success = this.set(key, kept);
+        return { trimmed, success };
+    },
 };

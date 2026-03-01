@@ -1,7 +1,137 @@
 import { useState, useEffect, useMemo } from 'react';
 import { GeneratedContent, SavedLesson, SavedCurriculum, ESLCurriculum, CurriculumParams } from '../types';
 import { safeStorage } from '@shared/safeStorage';
+import { imageStore } from '@shared/imageStore';
 import { isToday, isThisWeek, isThisMonth } from '../utils/dateHelpers';
+
+/** Check if a string looks like a base64 data URI (not an IndexedDB key reference) */
+const isBase64 = (s?: string) => s?.startsWith('data:');
+
+/** Extract all base64 images from GeneratedContent, store in IndexedDB, return content with key refs */
+async function stripImages(lessonId: string, content: GeneratedContent): Promise<GeneratedContent> {
+    const entries: Array<{ key: string; data: string }> = [];
+    const stripped = { ...content };
+
+    // flashcardImages
+    if (stripped.flashcardImages) {
+        const refs: Record<number, string> = {};
+        for (const [idx, data] of Object.entries(stripped.flashcardImages)) {
+            if (isBase64(data)) {
+                const key = `esl-${lessonId}-fc-${idx}`;
+                entries.push({ key, data });
+                refs[Number(idx)] = key;
+            } else {
+                refs[Number(idx)] = data; // already a ref
+            }
+        }
+        stripped.flashcardImages = refs;
+    }
+
+    // decodableTextImages
+    if (stripped.decodableTextImages) {
+        const refs: Record<number, string> = {};
+        for (const [idx, data] of Object.entries(stripped.decodableTextImages)) {
+            if (isBase64(data)) {
+                const key = `esl-${lessonId}-dt-${idx}`;
+                entries.push({ key, data });
+                refs[Number(idx)] = key;
+            } else {
+                refs[Number(idx)] = data;
+            }
+        }
+        stripped.decodableTextImages = refs;
+    }
+
+    // grammarInfographicUrl
+    if (isBase64(stripped.grammarInfographicUrl)) {
+        const key = `esl-${lessonId}-grammar`;
+        entries.push({ key, data: stripped.grammarInfographicUrl! });
+        stripped.grammarInfographicUrl = key;
+    }
+
+    // blackboardImageUrl
+    if (isBase64(stripped.blackboardImageUrl)) {
+        const key = `esl-${lessonId}-blackboard`;
+        entries.push({ key, data: stripped.blackboardImageUrl! });
+        stripped.blackboardImageUrl = key;
+    }
+
+    // worksheet item imageUrls
+    if (stripped.worksheets) {
+        stripped.worksheets = stripped.worksheets.map((ws, wi) => ({
+            ...ws,
+            sections: ws.sections?.map((sec, si) => ({
+                ...sec,
+                items: sec.items.map((item, ii) => {
+                    if (isBase64(item.imageUrl)) {
+                        const key = `esl-${lessonId}-ws-${wi}-${si}-${ii}`;
+                        entries.push({ key, data: item.imageUrl! });
+                        return { ...item, imageUrl: key };
+                    }
+                    return item;
+                })
+            })),
+            items: ws.items?.map((item, ii) => {
+                if (isBase64(item.imageUrl)) {
+                    const key = `esl-${lessonId}-wsi-${wi}-${ii}`;
+                    entries.push({ key, data: item.imageUrl! });
+                    return { ...item, imageUrl: key };
+                }
+                return item;
+            })
+        }));
+    }
+
+    if (entries.length > 0) await imageStore.saveBatch(entries);
+    return stripped;
+}
+
+/** Hydrate IndexedDB key references back to base64 data in a SavedLesson's content */
+async function hydrateImages(lesson: SavedLesson): Promise<SavedLesson> {
+    const c = { ...lesson.content };
+    const keys: string[] = [];
+
+    // Collect all non-base64 refs
+    if (c.flashcardImages) Object.values(c.flashcardImages).forEach(v => { if (!isBase64(v)) keys.push(v); });
+    if (c.decodableTextImages) Object.values(c.decodableTextImages).forEach(v => { if (!isBase64(v)) keys.push(v); });
+    if (c.grammarInfographicUrl && !isBase64(c.grammarInfographicUrl)) keys.push(c.grammarInfographicUrl);
+    if (c.blackboardImageUrl && !isBase64(c.blackboardImageUrl)) keys.push(c.blackboardImageUrl);
+    c.worksheets?.forEach(ws => {
+        ws.sections?.forEach(sec => sec.items.forEach(item => { if (item.imageUrl && !isBase64(item.imageUrl)) keys.push(item.imageUrl); }));
+        ws.items?.forEach(item => { if (item.imageUrl && !isBase64(item.imageUrl)) keys.push(item.imageUrl); });
+    });
+
+    if (keys.length === 0) return lesson;
+
+    const images = await imageStore.getBatch(keys);
+    const resolve = (ref?: string) => (ref && images[ref]) || ref;
+
+    // Hydrate
+    if (c.flashcardImages) {
+        const h: Record<number, string> = {};
+        for (const [idx, ref] of Object.entries(c.flashcardImages)) h[Number(idx)] = resolve(ref) || ref;
+        c.flashcardImages = h;
+    }
+    if (c.decodableTextImages) {
+        const h: Record<number, string> = {};
+        for (const [idx, ref] of Object.entries(c.decodableTextImages)) h[Number(idx)] = resolve(ref) || ref;
+        c.decodableTextImages = h;
+    }
+    c.grammarInfographicUrl = resolve(c.grammarInfographicUrl);
+    c.blackboardImageUrl = resolve(c.blackboardImageUrl);
+    if (c.worksheets) {
+        c.worksheets = c.worksheets.map(ws => ({
+            ...ws,
+            sections: ws.sections?.map(sec => ({
+                ...sec,
+                items: sec.items.map(item => ({ ...item, imageUrl: resolve(item.imageUrl) }))
+            })),
+            items: ws.items?.map(item => ({ ...item, imageUrl: resolve(item.imageUrl) }))
+        }));
+    }
+
+    return { ...lesson, content: c };
+}
 
 export function useLessonHistory() {
     const [savedLessons, setSavedLessons] = useState<SavedLesson[]>([]);
@@ -28,9 +158,16 @@ export function useLessonHistory() {
     // Records sub-tab
     const [recordsTab, setRecordsTab] = useState<'curricula' | 'kits'>('curricula');
 
-    // Load saved data on mount
+    // Load saved data on mount + hydrate images from IndexedDB
     useEffect(() => {
-        setSavedLessons(safeStorage.get('esl_smart_planner_history', []));
+        const raw: SavedLesson[] = safeStorage.get('esl_smart_planner_history', []);
+        setSavedLessons(raw);
+        // Hydrate images async
+        raw.forEach(lesson => {
+            hydrateImages(lesson).then(hydrated => {
+                setSavedLessons(prev => prev.map(l => l.id === hydrated.id ? hydrated : l));
+            });
+        });
         setSavedCurricula(safeStorage.get('esl_planner_curricula', []));
     }, []);
 
@@ -88,23 +225,30 @@ export function useLessonHistory() {
 
     // --- CRUD handlers ---
 
-    const handleSaveLesson = (content: GeneratedContent) => {
+    const handleSaveLesson = async (content: GeneratedContent) => {
+        const lessonId = activeLessonId || Date.now().toString();
+        // Strip images to IndexedDB before saving to localStorage
+        const strippedContent = await stripImages(lessonId, content);
+
         let updatedHistory = [...savedLessons];
         if (activeLessonId) {
             updatedHistory = updatedHistory.map(lesson => {
                 if (lesson.id === activeLessonId) {
-                    return { ...lesson, lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || lesson.topic, level: content.structuredLessonPlan.classInformation.level, content };
+                    return { ...lesson, lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || lesson.topic, level: content.structuredLessonPlan.classInformation.level, content: strippedContent };
                 }
                 return lesson;
             });
         } else {
-            const id = Date.now().toString();
-            const newRecord: SavedLesson = { id, timestamp: Date.now(), lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || 'Untitled Lesson', level: content.structuredLessonPlan.classInformation.level, content };
+            const newRecord: SavedLesson = { id: lessonId, timestamp: Date.now(), lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || 'Untitled Lesson', level: content.structuredLessonPlan.classInformation.level, content: strippedContent };
             updatedHistory = [newRecord, ...updatedHistory];
-            setActiveLessonId(id);
+            setActiveLessonId(lessonId);
         }
-        setSavedLessons(updatedHistory);
-        safeStorage.set('esl_smart_planner_history', updatedHistory);
+        // In-memory keeps full base64 for display
+        setSavedLessons(updatedHistory.map(l =>
+            l.id === lessonId ? { ...l, content } : l
+        ));
+        // localStorage gets stripped refs
+        safeStorage.setWithLimit('esl_smart_planner_history', updatedHistory, 50);
     };
 
     const handleSaveCurriculum = (curriculum: ESLCurriculum, params: CurriculumParams) => {
@@ -143,6 +287,8 @@ export function useLessonHistory() {
         if (activeLessonId === id) setActiveLessonId(null);
         setSavedLessons(updated);
         safeStorage.set('esl_smart_planner_history', updated);
+        // Clean up IndexedDB images
+        imageStore.removeByPrefix(`esl-${id}-`);
     };
 
     const startEditing = (lesson: SavedLesson, e: React.MouseEvent) => {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
     Sparkles, MapPin, CloudRain, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2, Compass,
-    Wind, Trees, Search, FileText, Edit3, Upload, X,
+    Wind, Trees, Search, FileText, ArrowLeft, Upload, X,
     ChevronDown, ChevronUp
 } from 'lucide-react';
 import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/geminiService';
@@ -421,7 +421,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             {/* Custom Location */}
                             <div className="space-y-2 md:col-span-2">
                                 <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                                    <Edit3 size={16} /> {t('cp.customLocation')}
+                                    <MapPin size={16} /> {t('cp.customLocation')}
                                 </label>
                                 <input
                                     type="text"
@@ -553,7 +553,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 onClick={handleNewCurriculum}
                                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
                             >
-                                <Edit3 size={15} />
+                                <ArrowLeft size={15} />
                                 {t('cp.new')}
                             </button>
                         </div>

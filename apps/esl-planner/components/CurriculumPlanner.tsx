@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
     Upload, FileText, BookOpen, Users, GraduationCap,
     ArrowRight, Loader2, Sparkles, Clock, ListOrdered,
-    Edit3, Target, MessageSquare, X, ChevronDown, ChevronUp, Save,
+    Edit3, Target, MessageSquare, X, ChevronDown, ChevronUp, Save, ArrowLeft,
     Rocket, Square, CheckCircle2, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { CEFRLevel, ESLCurriculum, CurriculumLesson, CurriculumParams } from '../types';
@@ -424,7 +424,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 onClick={handleNewCurriculum}
                                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
                             >
-                                <Edit3 size={15} />
+                                <ArrowLeft size={15} />
                                 {t('cp.newCurriculum')}
                             </button>
                         </div>

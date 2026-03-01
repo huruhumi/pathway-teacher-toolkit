@@ -12,6 +12,7 @@ import { AuthModal } from './components/AuthModal';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
+import { imageStore } from '@shared/imageStore';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
@@ -98,7 +99,22 @@ export const App: React.FC = () => {
   // Load from LocalStorage on mount + init auth
   useEffect(() => {
     initAuth();
-    setSavedPlans(safeStorage.get('nature-compass-plans', []));
+    // Load plans and hydrate coverImages from IndexedDB
+    const plans: SavedLessonPlan[] = safeStorage.get('nature-compass-plans', []);
+    setSavedPlans(plans);
+    // Hydrate coverImage refs from IndexedDB
+    plans.forEach(p => {
+      if (p.coverImage && !p.coverImage.startsWith('data:')) {
+        // It's an IndexedDB key reference — hydrate
+        imageStore.get(p.coverImage).then(img => {
+          if (img) {
+            setSavedPlans(prev => prev.map(pp =>
+              pp.id === p.id ? { ...pp, coverImage: img } : pp
+            ));
+          }
+        });
+      }
+    });
     setSavedCurricula(safeStorage.get('nature-compass-curricula', []));
   }, []);
 
@@ -123,11 +139,19 @@ export const App: React.FC = () => {
     }
   }, [user]);
 
-  const handleSavePlan = (planToSave: LessonPlanResponse, coverImage?: string | null) => {
-    let updatedPlans;
+  const handleSavePlan = async (planToSave: LessonPlanResponse, coverImage?: string | null) => {
+    const planId = currentPlanId || crypto.randomUUID();
 
+    // Store coverImage in IndexedDB, save key reference in localStorage
+    let coverRef: string | undefined;
+    if (coverImage) {
+      const imgKey = `nc-${planId}-cover`;
+      await imageStore.save(imgKey, coverImage);
+      coverRef = imgKey;
+    }
+
+    let updatedPlans;
     if (currentPlanId) {
-      // Update existing record
       updatedPlans = savedPlans.map(p =>
         p.id === currentPlanId
           ? {
@@ -135,27 +159,29 @@ export const App: React.FC = () => {
             timestamp: Date.now(),
             plan: planToSave,
             name: planToSave.missionBriefing.title || p.name,
-            ...(coverImage ? { coverImage } : {})
+            ...(coverRef ? { coverImage: coverRef } : {})
           }
           : p
       );
     } else {
-      // Create new record
-      const newId = crypto.randomUUID();
       const newSavedPlan: SavedLessonPlan = {
-        id: newId,
+        id: planId,
         timestamp: Date.now(),
         name: planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
         plan: planToSave,
         language: currentKitLanguage,
-        ...(coverImage ? { coverImage } : {})
+        ...(coverRef ? { coverImage: coverRef } : {})
       };
       updatedPlans = [newSavedPlan, ...savedPlans];
-      setCurrentPlanId(newId);
+      setCurrentPlanId(planId);
     }
 
-    setSavedPlans(updatedPlans);
-    safeStorage.set('nature-compass-plans', updatedPlans);
+    // In-memory state keeps hydrated base64 for display
+    setSavedPlans(updatedPlans.map(p =>
+      p.id === planId && coverImage ? { ...p, coverImage } : p
+    ));
+    // localStorage gets key references only (no base64)
+    safeStorage.setWithLimit('nature-compass-plans', updatedPlans, 50);
 
     // Cloud sync
     if (user) {
@@ -184,6 +210,9 @@ export const App: React.FC = () => {
     const updatedPlans = savedPlans.filter(p => p.id !== id);
     setSavedPlans(updatedPlans);
     safeStorage.set('nature-compass-plans', updatedPlans);
+
+    // Clean up IndexedDB images
+    imageStore.removeByPrefix(`nc-${id}-`);
 
     // Cloud sync
     if (user) deleteCloudPlan(user.id, id);
