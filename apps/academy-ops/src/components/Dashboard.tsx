@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { BrandData } from '../data/brandData';
 import { Sparkles, Calendar, ArrowRight, Target, FileText, LayoutList } from 'lucide-react';
 import { SavedNote } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface DashboardProps {
   brandData: BrandData;
@@ -11,6 +12,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlans }: DashboardProps) {
+  const { t, lang } = useLanguage();
   const todayStr = new Date().toISOString().split('T')[0];
   const upcomingNotesCount = savedNotes.filter(n => n.date >= todayStr).length;
 
@@ -18,15 +20,15 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">欢迎回来, 运营专家</h1>
-          <p className="text-slate-500 mt-1">今天我们要为 {brandData.name} 创造什么价值？</p>
+          <h1 className="text-3xl font-bold text-slate-900">{t('dash.welcome')}</h1>
+          <p className="text-slate-500 mt-1">{lang === 'zh' ? `今天我们要为 ${brandData.name} 创造什么价值？` : `What value will we create for ${brandData.name} today?`}</p>
         </div>
         <button
           onClick={() => onNavigate('generator')}
           className="btn btn-primary shadow-lg shadow-rose-200"
         >
           <Sparkles size={18} />
-          <span>立即创作</span>
+          <span>{t('dash.createNow')}</span>
         </button>
       </div>
 
@@ -37,10 +39,10 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
             <FileText size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">已生成图文</p>
+            <p className="text-sm font-medium text-slate-500">{t('dash.postsGenerated')}</p>
             <div className="flex items-baseline gap-2">
               <h3 className="text-2xl font-bold text-slate-900">{savedNotes.length}</h3>
-              <span className="text-xs text-slate-400">篇</span>
+              <span className="text-xs text-slate-400">{t('dash.unit.posts')}</span>
             </div>
           </div>
         </div>
@@ -50,10 +52,10 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
             <Calendar size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">待发布排期</p>
+            <p className="text-sm font-medium text-slate-500">{t('dash.scheduledPosts')}</p>
             <div className="flex items-baseline gap-2">
               <h3 className="text-2xl font-bold text-slate-900">{upcomingNotesCount}</h3>
-              <span className="text-xs text-slate-400">篇 (今天及以后)</span>
+              <span className="text-xs text-slate-400">{t('dash.unit.upcoming')}</span>
             </div>
           </div>
         </div>
@@ -63,10 +65,10 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
             <LayoutList size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">归档运营方案</p>
+            <p className="text-sm font-medium text-slate-500">{t('dash.archivedPlans')}</p>
             <div className="flex items-baseline gap-2">
               <h3 className="text-2xl font-bold text-slate-900">{savedPlans.length}</h3>
-              <span className="text-xs text-slate-400">份</span>
+              <span className="text-xs text-slate-400">{t('dash.unit.plans')}</span>
             </div>
           </div>
         </div>
@@ -79,12 +81,12 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           className="group cursor-pointer bg-gradient-to-br from-indigo-500 to-violet-600 p-8 rounded-3xl text-white relative overflow-hidden"
         >
           <div className="relative z-10">
-            <h3 className="text-2xl font-bold mb-2">制定运营计划</h3>
+            <h3 className="text-2xl font-bold mb-2">{t('dash.makePlan')}</h3>
             <p className="text-indigo-100 mb-6 max-w-xs">
-              基于账号现状，智能生成未来几周的内容排期与策略。
+              {t('dash.makePlanDesc')}
             </p>
             <div className="flex items-center gap-2 font-medium group-hover:gap-3 transition-all">
-              <span>开始规划</span>
+              <span>{t('dash.startPlanning')}</span>
               <ArrowRight size={18} />
             </div>
           </div>
@@ -98,12 +100,12 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           className="group cursor-pointer bg-white border border-slate-200 p-8 rounded-3xl relative overflow-hidden hover:border-rose-200 transition-colors"
         >
           <div className="relative z-10">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">生成爆款图文</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('dash.generatePost')}</h3>
             <p className="text-slate-500 mb-6 max-w-xs">
-              输入主题，一键生成小红书风格的标题、正文和配图建议。
+              {t('dash.generatePostDesc')}
             </p>
             <div className="flex items-center gap-2 font-medium text-rose-500 group-hover:gap-3 transition-all">
-              <span>去创作</span>
+              <span>{t('dash.goCreate')}</span>
               <ArrowRight size={18} />
             </div>
           </div>

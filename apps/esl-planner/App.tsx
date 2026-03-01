@@ -12,12 +12,15 @@ import { handleDownloadZip } from './utils/exportUtils';
 import { useLessonHistory } from './hooks/useLessonHistory';
 import { useBatchGenerate } from './hooks/useBatchGenerate';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 const INDIGO_COLOR = '#4f46e5';
 
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+    const { t, lang, setLang } = useLanguage();
     const [state, setState] = useState<AppState>({
         isLoading: false,
         generatedContent: null,
@@ -106,16 +109,16 @@ const App: React.FC = () => {
 
 
     const NAV_TABS: { key: string; label: string; icon: React.ReactNode; badge?: number }[] = [
-        { key: 'curriculum', label: 'Curriculum', icon: <BookOpen className="w-4 h-4" /> },
-        { key: 'create', label: 'Planner', icon: <Sparkles className="w-4 h-4" /> },
-        { key: 'history', label: 'Records', icon: <History className="w-4 h-4" />, badge: savedLessons.length + savedCurricula.length },
+        { key: 'curriculum', label: t('nav.curriculum'), icon: <BookOpen className="w-4 h-4" /> },
+        { key: 'create', label: t('nav.planner'), icon: <Sparkles className="w-4 h-4" /> },
+        { key: 'history', label: t('nav.records'), icon: <History className="w-4 h-4" />, badge: savedLessons.length + savedCurricula.length },
     ];
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
             <AppHeader
                 appName="ESL Smart Planner"
-                subtitle="AI-Powered Curriculum Assistant"
+                subtitle={t('app.subtitle')}
                 logoIcon={<Brain className="w-5 h-5" />}
                 brand={{
                     logoBg: 'bg-gradient-to-br from-violet-600 to-purple-600',
@@ -129,6 +132,7 @@ const App: React.FC = () => {
                 activeTab={viewMode}
                 onTabChange={(key) => setViewMode(key as typeof viewMode)}
                 onLogoClick={() => { setViewMode('curriculum'); setState(p => ({ ...p, generatedContent: null })); setActiveLessonId(null); setPrefilledValues(null); setLoadedCurriculum(null); }}
+                rightContent={<HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />}
             />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
@@ -409,5 +413,11 @@ const App: React.FC = () => {
         </div>
     );
 };
+
+const App: React.FC = () => (
+    <LanguageProvider>
+        <AppContent />
+    </LanguageProvider>
+);
 
 export default App;

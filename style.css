@@ -117,6 +117,36 @@ header {
     letter-spacing: 0.05em;
 }
 
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lang-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brand-navy);
+    background: rgba(11, 37, 78, 0.08);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(11, 37, 78, 0.1);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'Outfit', sans-serif;
+}
+
+.lang-toggle:hover {
+    background: rgba(26, 115, 232, 0.12);
+    color: var(--brand-blue);
+    border-color: rgba(26, 115, 232, 0.25);
+    transform: translateY(-1px);
+}
+
 .status-dot {
     width: 8px;
     height: 8px;

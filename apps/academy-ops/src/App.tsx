@@ -11,10 +11,13 @@ import { INITIAL_BRAND_DATA } from './data/brandData';
 import { SavedNote } from './types';
 import { safeStorage } from '@shared/safeStorage';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 
 
-export default function App() {
+function AppContent() {
+  const { t, lang, setLang } = useLanguage();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'planner' | 'generator' | 'settings' | 'calendar'>('dashboard');
 
   const [isDarkMode, setIsDarkMode] = useState(() => safeStorage.get('pathway_darkMode', false));
@@ -118,21 +121,20 @@ export default function App() {
   };
 
   const NAV_TABS = [
-    { key: 'dashboard', label: '运营概览', icon: <LayoutDashboard size={16} /> },
-    { key: 'planner', label: '运营计划', icon: <CalendarIcon size={16} /> },
-    { key: 'generator', label: '内容创作', icon: <PenTool size={16} /> },
-    { key: 'calendar', label: '运营日历', icon: <CalendarDays size={16} /> },
-    { key: 'settings', label: '品牌设置', icon: <Settings size={16} /> },
+    { key: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard size={16} /> },
+    { key: 'planner', label: t('nav.planner'), icon: <CalendarIcon size={16} /> },
+    { key: 'generator', label: t('nav.generator'), icon: <PenTool size={16} /> },
+    { key: 'calendar', label: t('nav.calendar'), icon: <CalendarDays size={16} /> },
+    { key: 'settings', label: t('nav.settings'), icon: <Settings size={16} /> },
   ];
 
-  const darkModeToggle = (
-    <button
-      onClick={() => setIsDarkMode(!isDarkMode)}
-      className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-      title="深色模式"
-    >
-      {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
+  const headerToggles = (
+    <HeaderToggles
+      lang={lang}
+      onLangChange={setLang}
+      isDark={isDarkMode}
+      onDarkChange={setIsDarkMode}
+    />
   );
 
   return (
@@ -151,7 +153,7 @@ export default function App() {
         activeTab={activeTab}
         onTabChange={(key) => setActiveTab(key as typeof activeTab)}
         onLogoClick={() => setActiveTab('dashboard')}
-        rightContent={darkModeToggle}
+        rightContent={headerToggles}
       />
 
       <main className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -165,5 +167,13 @@ export default function App() {
         </motion.div>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

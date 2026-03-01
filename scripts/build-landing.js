@@ -31,7 +31,7 @@ if (fs.existsSync(DIST)) {
 fs.mkdirSync(DIST, { recursive: true });
 
 // Copy landing page files
-for (const file of ['index.html', 'style.css', 'logo.png']) {
+for (const file of ['index.html', 'style.css', 'logo.png', 'i18n.js']) {
     const src = path.join(ROOT, file);
     if (fs.existsSync(src)) {
         fs.copyFileSync(src, path.join(DIST, file));

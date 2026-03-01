@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { CorrectionReport, Grade, GradeItem, GrammarError, IdiomSuggestion, VocabularyUpgrade, WordBankItem, TopicExtension } from '../types';
 import GradeBadge from './GradeBadge';
 import { generateAdditionalItem } from '../services/geminiService';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Printer, GraduationCap, FileText, Eye, EyeOff, RotateCcw, Sparkles, Quote, Check, ArrowDown, Info, Tag, CheckCircle2, BarChart3, PieChart, Lightbulb, Stethoscope, PenLine, ArrowRight, TrendingUp, BookMarked, MessageSquare, Pencil, Heart, Pen, ChevronLeft, FileCheck, CheckCheck, Loader2, Plus, X } from 'lucide-react';
 
 interface ReportDisplayProps {
@@ -31,6 +32,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
   readOnly = false,
   onTogglePreview
 }) => {
+  const { t, lang } = useLanguage();
   const [editableReport, setEditableReport] = useState<CorrectionReport>(initialReport);
   const [generating, setGenerating] = useState<string | null>(null);
   const [showGolden, setShowGolden] = useState(false);
@@ -83,7 +85,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
       addArrayItem(type, newItem);
     } catch (e) {
       console.error(e);
-      alert("AI 生成条目失败，请重试");
+      alert(t('report.aiFailed'));
     } finally {
       setGenerating(null);
     }
@@ -115,7 +117,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
     if (readOnly) {
       document.title = `ESL_Master_Report_${new Date().toLocaleDateString()}`;
     } else {
-      document.title = "ESL Master - 英语作文批改实验室";
+      document.title = t('report.docTitle');
     }
   }, [readOnly]);
 
@@ -286,9 +288,9 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center print:hidden shadow-sm shadow-indigo-200">
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight">批改报告 <span className="text-indigo-600">Report</span></h2>
+              <h2 className="text-3xl font-black text-slate-800 tracking-tight">{t('report.title')} <span className="text-indigo-600">{t('report.titleAccent')}</span></h2>
             </div>
-            <p className="text-slate-500 font-medium">ESL Master 深度评估 & 智能启发式编辑</p>
+            <p className="text-slate-500 font-medium">{t('report.subtitle')}</p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
@@ -353,7 +355,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               <FileText className="w-4 h-4" />
             </span>
             <span className="print:text-lg">
-              {showGolden ? '高分范文 (Golden Version)' : '原文转录 (Original Text)'}
+              {showGolden ? t('report.goldenVersion') : t('report.originalText')}
             </span>
           </h3>
           <div className="flex items-center gap-2 print:hidden">
@@ -363,7 +365,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
                 className={`text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${showHighlights ? 'bg-rose-100 text-rose-600' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
               >
                 {showHighlights ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                {showHighlights ? '已高亮错误' : '显示纠错'}
+                {showHighlights ? t('report.highlightsOn') : t('report.highlightsOff')}
               </button>
             )}
             <button
@@ -371,7 +373,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-colors flex items-center gap-2"
             >
               {showGolden ? <RotateCcw className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
-              {showGolden ? '查看原文' : '查看范文'}
+              {showGolden ? t('report.viewOriginal') : t('report.viewGolden')}
             </button>
           </div>
         </div>
@@ -488,16 +490,16 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm print:hidden">
               <BarChart3 className="w-4 h-4" />
             </span>
-            <span className="print:text-lg">成绩单 (Grade Report)</span>
+            <span className="print:text-lg">{t('report.gradeReport')}</span>
           </h3>
 
           <div className="overflow-hidden rounded-xl border border-slate-100 print:border-slate-200">
             <table className="w-full text-left">
               <thead className="bg-slate-50 print:bg-slate-100">
                 <tr>
-                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">评估维度</th>
-                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide w-24 text-center">等级</th>
-                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">关键评语</th>
+                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">{t('report.dimension')}</th>
+                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide w-24 text-center">{t('report.grade')}</th>
+                  <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">{t('report.comment')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -553,12 +555,12 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
         <section className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 print:shadow-none print:p-0 print:break-inside-avoid">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <PieChart className="w-4 h-4 text-indigo-500 print:hidden" />
-            句式多样性分析
+            {t('report.sentenceVariety')}
           </h3>
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-bold text-slate-600">
-                <span>简单句 (Simple)</span>
+                <span>{t('report.simple')}</span>
                 <span>{editableReport.sentenceVariety?.simple || 0}%</span>
               </div>
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -567,7 +569,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-bold text-slate-600">
-                <span>并列句 (Compound)</span>
+                <span>{t('report.compound')}</span>
                 <span>{editableReport.sentenceVariety?.compound || 0}%</span>
               </div>
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -576,7 +578,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-bold text-slate-600">
-                <span>复合句 (Complex)</span>
+                <span>{t('report.complex')}</span>
                 <span>{editableReport.sentenceVariety?.complex || 0}%</span>
               </div>
               <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -586,7 +588,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
 
             <div className="mt-4 p-3 bg-indigo-50 rounded-xl text-xs text-indigo-800 leading-relaxed">
               <Lightbulb className="w-3.5 h-3.5 mr-1 text-indigo-500 inline-block" />
-              {editableReport.sentenceVariety?.advice || "建议增加定语从句和分词状语的使用。"}
+              {editableReport.sentenceVariety?.advice || t('report.defaultAdvice')}
             </div>
           </div>
         </section>
@@ -598,7 +600,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           <span className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm print:hidden">
             <Stethoscope className="w-4 h-4" />
           </span>
-          <span className="print:text-lg">细节诊断 (Detailed Analysis)</span>
+          <span className="print:text-lg">{t('report.detailedAnalysis')}</span>
         </h3>
 
         <div className="space-y-8">
@@ -606,7 +608,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           <div className="bg-slate-50/50 rounded-2xl p-6 border-l-4 border-blue-400 print:bg-white print:border-l-2 print:border-slate-300 print:p-0 print:pl-4">
             <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
               <PenLine className="w-3.5 h-3.5 text-blue-400 print:hidden" />
-              规范专栏
+              {t('report.mechanics')}
             </h4>
             {readOnly ? (
               <div className="text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">{editableReport.mechanicsAnalysis}</div>
@@ -623,7 +625,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           {editableReport.collocationErrors && editableReport.collocationErrors.length > 0 && (
             <div className="space-y-4">
               <h4 className="font-bold text-slate-800 flex items-center gap-2 border-l-4 border-purple-400 pl-4 py-1 print:border-slate-300 print:border-l-2">
-                搭配禁忌 (Collocation)
+                {t('report.collocation')}
               </h4>
               <div className="grid md:grid-cols-2 gap-4">
                 {editableReport.collocationErrors.map((item, idx) => (
@@ -645,10 +647,12 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-amber-800 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                语法诊断汇总
+                {t('report.grammarSummary')}
               </h4>
               <div className="text-xs text-amber-600">
-                共发现 <strong>{orderedMatches.length}</strong> 处可优化点，详见上方原文侧边栏。
+                {lang === 'zh'
+                  ? <>共发现 <strong>{orderedMatches.length}</strong> 处可优化点，详见上方原文侧边栏。</>
+                  : <>Found <strong>{orderedMatches.length}</strong> optimizable point(s). See original text sidebar above.</>}
               </div>
             </div>
           </div>
@@ -703,7 +707,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               <span className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm print:hidden">
                 <TrendingUp className="w-4 h-4" />
               </span>
-              <span className="print:text-lg">语言升级计划 (Language Enhancement)</span>
+              <span className="print:text-lg">{t('report.enhancement')}</span>
             </h3>
             {!readOnly && (
               <button
@@ -792,7 +796,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               <span className="w-8 h-8 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-sm print:hidden">
                 <BookMarked className="w-4 h-4" />
               </span>
-              <span>主题词库 (Word Bank)</span>
+              <span>{t('report.wordBank')}</span>
             </h3>
             {!readOnly && (
               <button
@@ -856,7 +860,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm print:hidden">
                 <MessageSquare className="w-4 h-4" />
               </span>
-              <span>地道表达 (Expressions)</span>
+              <span>{t('report.expressions')}</span>
             </h3>
             {!readOnly && (
               <button
@@ -923,7 +927,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             <span className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-sm print:hidden">
               <Pencil className="w-4 h-4" />
             </span>
-            <span className="print:text-lg">举一反三·即刻练习 (Practice)</span>
+            <span className="print:text-lg">{t('report.practice')}</span>
           </h3>
           <div className="space-y-6">
             {editableReport.errorQuiz.map((item, idx) => (
@@ -964,7 +968,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
                 </div>
                 {quizState[idx] && (
                   <div className="ml-9 mt-4 text-xs text-slate-600 bg-white p-3 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2">
-                    <span className="font-bold text-teal-700">解析：</span> {item.explanation}
+                    <span className="font-bold text-teal-700">{t('report.explanation')}</span> {item.explanation}
                   </div>
                 )}
               </div>
@@ -979,7 +983,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           <span className="w-8 h-8 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-sm print:hidden">
             <Heart className="w-4 h-4" />
           </span>
-          <span className="print:text-lg">教师寄语 (Teacher's Note)</span>
+          <span className="print:text-lg">{t('report.teacherNote')}</span>
         </h3>
 
         <div className="grid gap-6">
@@ -1005,7 +1009,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           <div className="relative">
             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-full opacity-20"></div>
             <div className="pl-6 py-2">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2 block">中文点评</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2 block">{t('report.chineseComment')}</span>
               {readOnly ? (
                 <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                   {editableReport.teacherNote.zh}
@@ -1033,7 +1037,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               className="px-8 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
             >
               <Pen className="w-4 h-4" />
-              返回编辑
+              {t('report.backToEdit')}
             </button>
           </>
         ) : (
@@ -1044,7 +1048,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               className="px-8 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
-              重新开始
+              {t('report.startOver')}
             </button>
             <button
               type="button"
@@ -1052,18 +1056,18 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
               className="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
               <FileCheck className="w-4 h-4" />
-              报告视图
+              {t('report.reportView')}
             </button>
             <button
               type="button"
               onClick={() => {
                 console.log("Finalized Report:", editableReport);
-                alert("修改已保存！\n该报告已同步至本地分析日志。");
+                alert(t('report.saveConfirm'));
               }}
               className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"
             >
               <CheckCheck className="w-4 h-4" />
-              确认并结项
+              {t('report.finalize')}
             </button>
           </>
         )}

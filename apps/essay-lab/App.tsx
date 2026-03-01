@@ -5,6 +5,8 @@ import { CorrectionReport, StudentGrade, CEFRLevel } from './types';
 import ReportDisplay from './components/ReportDisplay';
 import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather } from 'lucide-react';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 interface FileData {
   base64: string;
@@ -12,7 +14,8 @@ interface FileData {
   name: string;
 }
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { t, lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<CorrectionReport | null>(null);
@@ -30,18 +33,18 @@ const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<StudentGrade>(StudentGrade.G7);
   const [selectedCEFR, setSelectedCEFR] = useState<CEFRLevel>(CEFRLevel.B1);
 
-  const [loadingMessage, setLoadingMessage] = useState('正在启动分析引擎...');
+  const [loadingMessage, setLoadingMessage] = useState(t('loading.1'));
 
   const essayFileRef = useRef<HTMLInputElement>(null);
   const topicFileRef = useRef<HTMLInputElement>(null);
 
   const messages = [
-    '正在扫描文档结构...',
-    '对比命题与作文内容...',
-    '正在评估切题程度...',
-    '生成主题词库与表达扩展...',
-    '查找中式英语痕迹...',
-    '排版生成精美报告...'
+    t('loading.2'),
+    t('loading.3'),
+    t('loading.4'),
+    t('loading.5'),
+    t('loading.6'),
+    t('loading.7'),
   ];
 
   const triggerLoadingMessages = useCallback(() => {
@@ -87,7 +90,7 @@ const App: React.FC = () => {
     const topic = topicImage ? { base64: topicImage.base64, mimeType: topicImage.mimeType } : topicText;
 
     if (!essay) {
-      setError("请先上传或输入作文内容");
+      setError(t('input.noContent'));
       return;
     }
 
@@ -99,7 +102,7 @@ const App: React.FC = () => {
       const result = await analyzeEssay(essay, selectedGrade, selectedCEFR, topic);
       setReport(result);
     } catch (err: any) {
-      setError(err.message || '分析失败，请检查网络或重新上传。');
+      setError(err.message || t('input.error'));
     } finally {
       setLoading(false);
       clearInterval(interval);
@@ -135,13 +138,14 @@ const App: React.FC = () => {
             activeText: 'text-indigo-700',
           }}
           tabs={[
-            { key: 'home', label: '批改首页', icon: <Feather className="w-4 h-4" /> },
-            { key: 'about', label: '关于实验室', icon: <Sparkles className="w-4 h-4" /> },
-            { key: 'resources', label: 'K12 资源', icon: <GraduationCap className="w-4 h-4" /> },
+            { key: 'home', label: t('nav.home'), icon: <Feather className="w-4 h-4" /> },
+            { key: 'about', label: t('nav.about'), icon: <Sparkles className="w-4 h-4" /> },
+            { key: 'resources', label: t('nav.resources'), icon: <GraduationCap className="w-4 h-4" /> },
           ]}
           activeTab="home"
           onTabChange={(key) => { if (key === 'home') window.location.reload(); }}
           onLogoClick={() => window.location.reload()}
+          rightContent={<HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />}
         />
       )}
 
@@ -150,10 +154,10 @@ const App: React.FC = () => {
           <div className="max-w-5xl mx-auto space-y-8">
             <div className="text-center space-y-4">
               <h2 className="text-3xl md:text-4xl font-black text-slate-800">
-                提升写作，从一份<span className="text-indigo-600">精细批改</span>开始
+                {t('hero.title')}<span className="text-indigo-600">{t('hero.titleHighlight')}</span>{t('hero.titleEnd')}
               </h2>
               <p className="text-slate-500 max-w-lg mx-auto leading-relaxed">
-                上传你的手写作文照片或粘贴原文，ESL 专家将提供针对性的深度评估。
+                {t('hero.desc')}
               </p>
             </div>
 
@@ -161,7 +165,7 @@ const App: React.FC = () => {
               <div className="flex-1 space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <School className="w-4 h-4 text-indigo-500" />
-                  学生年级 (K-12)
+                  {t('input.grade')}
                 </label>
                 <select
                   value={selectedGrade}
@@ -176,7 +180,7 @@ const App: React.FC = () => {
               <div className="flex-1 space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Gauge className="w-4 h-4 text-indigo-500" />
-                  目标 CEFR 等级
+                  {t('input.cefr')}
                 </label>
                 <select
                   value={selectedCEFR}
@@ -196,14 +200,14 @@ const App: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                       <Target className="w-4 h-4 text-indigo-500" />
-                      作文命题 (Prompt)
+                      {t('input.prompt')}
                     </label>
                     <button
                       onClick={() => topicFileRef.current?.click()}
                       className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                     >
                       <CloudUpload className="w-4 h-4" />
-                      {topicImage ? '更改图片' : '上传图片'}
+                      {topicImage ? t('input.changeImage') : t('input.uploadImage')}
                     </button>
                   </div>
 
@@ -222,7 +226,7 @@ const App: React.FC = () => {
                   <textarea
                     value={topicText}
                     onChange={(e) => setTopicText(e.target.value)}
-                    placeholder="输入命题内容或粘贴题目..."
+                    placeholder={t('input.promptPlaceholder')}
                     className="input-field h-32 text-sm resize-none"
                   />
                   <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
@@ -234,14 +238,14 @@ const App: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
                       <PenTool className="w-4 h-4 text-indigo-500" />
-                      学生作文 (Essay)
+                      {t('input.essay')}
                     </label>
                     <button
                       onClick={() => essayFileRef.current?.click()}
                       className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
                     >
                       <Camera className="w-4 h-4" />
-                      {essayImage ? '更改手写图片' : '拍照上传'}
+                      {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
                     </button>
                   </div>
 
@@ -260,7 +264,7 @@ const App: React.FC = () => {
                   <textarea
                     value={essayText}
                     onChange={(e) => setEssayText(e.target.value)}
-                    placeholder="在此粘贴作文文本..."
+                    placeholder={t('input.essayPlaceholder')}
                     className="input-field h-64 text-sm resize-none font-sans"
                   />
                   <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
@@ -271,7 +275,7 @@ const App: React.FC = () => {
                   className="btn btn-primary w-full py-4 text-lg shadow-lg shadow-indigo-200"
                 >
                   <Sparkles className="w-4 h-4" />
-                  开始专家级批改
+                  {t('input.submit')}
                 </button>
               </div>
             </div>
@@ -294,7 +298,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-slate-800">AI 专家正在深度审阅</h3>
+              <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
               <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
             </div>
           </div>
@@ -319,12 +323,18 @@ const App: React.FC = () => {
               </div>
               <span className="font-bold">ESL Master</span>
             </div>
-            <p>© 2024 English Essay Lab. 专业、深度、懂中国学生。</p>
+            <p>{t('footer')}</p>
           </div>
         </footer>
       )}
     </div >
   );
 };
+
+const App: React.FC = () => (
+  <LanguageProvider>
+    <AppContent />
+  </LanguageProvider>
+);
 
 export default App;

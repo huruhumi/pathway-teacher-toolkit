@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/useAuthStore';
 import { isSupabaseEnabled } from '../services/supabaseClient';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AppHeader } from '@shared/components/AppHeader';
+import { HeaderToggles } from '@shared/components/HeaderToggles';
 
 interface HeaderProps {
   currentView: 'curriculum' | 'lesson' | 'saved';
@@ -14,7 +15,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowAuth }) => {
   const { user, signOut } = useAuthStore();
   const cloudEnabled = isSupabaseEnabled();
-  const { t } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
 
   const tabs = [
     { key: 'curriculum', label: t('nav.curriculum'), icon: <Map size={16} /> },
@@ -61,7 +62,12 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowA
       activeTab={currentView}
       onTabChange={(key) => onNavigate(key as 'curriculum' | 'lesson' | 'saved')}
       onLogoClick={() => onNavigate('curriculum')}
-      rightContent={authContent}
+      rightContent={
+        <div className="flex items-center gap-2">
+          <HeaderToggles lang={lang} onLangChange={setLang} hideDarkMode />
+          {authContent}
+        </div>
+      }
     />
   );
 };

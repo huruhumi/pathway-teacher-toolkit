@@ -1,16 +1,14 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { translations, TranslationKey } from './translations';
-export type { TranslationKey };
 
 const STORAGE_KEY = 'pathway_uiLang';
+type Lang = 'en' | 'zh';
 
 interface LanguageContextType {
-    lang: 'en' | 'zh';
-    setLang: (l: 'en' | 'zh') => void;
-    t: (key: TranslationKey) => string;
+    lang: Lang;
+    setLang: (l: Lang) => void;
 }
 
-function getStoredLang(): 'en' | 'zh' {
+function getStoredLang(): Lang {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored === 'zh') return 'zh';
@@ -21,23 +19,17 @@ function getStoredLang(): 'en' | 'zh' {
 const LanguageContext = createContext<LanguageContextType>({
     lang: 'en',
     setLang: () => { },
-    t: (key) => key,
 });
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [lang, setLangState] = useState<'en' | 'zh'>(getStoredLang);
+export const SharedLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [lang, setLangState] = useState<Lang>(getStoredLang);
 
-    const setLang = useCallback((l: 'en' | 'zh') => {
+    const setLang = useCallback((l: Lang) => {
         setLangState(l);
         try {
             localStorage.setItem(STORAGE_KEY, l);
         } catch { /* ignore */ }
     }, []);
-
-    const t = useCallback(
-        (key: TranslationKey): string => translations[key]?.[lang] ?? key,
-        [lang]
-    );
 
     // Sync if another tab/window changes the value
     useEffect(() => {
@@ -51,11 +43,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, []);
 
     return (
-        <LanguageContext.Provider value={{ lang, setLang, t }}>
+        <LanguageContext.Provider value={{ lang, setLang }}>
             {children}
         </LanguageContext.Provider>
     );
 };
 
-export const useLanguage = () => useContext(LanguageContext);
-
+export const useSharedLanguage = () => useContext(LanguageContext);
+export type { Lang };

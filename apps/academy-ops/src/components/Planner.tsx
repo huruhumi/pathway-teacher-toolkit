@@ -4,6 +4,7 @@ import { BrandData } from '../data/brandData';
 import { generateContent, Type } from '../services/ai';
 import { Loader2, Calendar as CalendarIcon, CheckCircle2, ArrowRight, Copy, Check, Sparkles, Save, X } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface PlannerProps {
   brandData: BrandData;
@@ -16,6 +17,7 @@ interface PlannerProps {
 }
 
 export default function Planner({ brandData, onPlanGenerated, onNavigate, onSelectTopic, onSavePlan, onDeletePlan, savedPlans }: PlannerProps) {
+  const { t, lang } = useLanguage();
   const [days, setDays] = useState(7);
   const [month, setMonth] = useState(() => {
     const now = new Date();
@@ -36,7 +38,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
     d.setMonth(d.getMonth() + i);
     return {
       value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: `${d.getFullYear()}年 ${d.getMonth() + 1}月`
+      label: lang === 'zh' ? `${d.getFullYear()}年 ${d.getMonth() + 1}月` : `${d.toLocaleString('en', { month: 'long' })} ${d.getFullYear()}`
     };
   });
 
@@ -75,11 +77,11 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
 
   const handleGeneratePlan = async () => {
     if (!focus) {
-      toast.error("请输入当前运营重点/目标后再点击生成。");
+      toast.error(t('plan.noFocus'));
       return;
     }
     if (!brandData.name) {
-      toast.error("请先在设置中完善品牌名称。");
+      toast.error(t('plan.noBrand'));
       onNavigate('settings');
       return;
     }
@@ -143,19 +145,19 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
           plan = JSON.parse(cleanResult);
         } catch (fallbackError) {
           console.error("JSON Parse and Clean Failed! Raw text was:", result);
-          throw new Error("AI 返回的数据格式严重错误，无法解析为计划");
+          throw new Error(t('plan.parseError'));
         }
       }
 
       if (!Array.isArray(plan)) {
-        throw new Error("返回的数据不是数组格式。");
+        throw new Error(t('plan.notArray'));
       }
 
       setGeneratedPlan(plan);
       onPlanGenerated(plan);
     } catch (error: any) {
       console.error("Failed to generate plan", error);
-      toast.error(`生成计划失败: ${error.message || "未知错误"}`);
+      toast.error(`${t('plan.generateFailed')}: ${error.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -164,14 +166,14 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">运营计划生成器</h2>
-        <p className="text-slate-500 mt-1">基于您的当前目标，为您规划接下来的内容节奏。</p>
+        <h2 className="text-2xl font-bold text-slate-900">{t('plan.title')}</h2>
+        <p className="text-slate-500 mt-1">{t('plan.desc')}</p>
       </div>
 
       <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">规划月份</label>
+            <label className="text-sm font-medium text-slate-700">{t('plan.month')}</label>
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
@@ -184,40 +186,40 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">规划天数</label>
+            <label className="text-sm font-medium text-slate-700">{t('plan.days')}</label>
             <select
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
               className="input-field"
             >
-              <option value={3}>3 天 (短期冲刺)</option>
-              <option value={7}>7 天 (周计划)</option>
-              <option value={14}>14 天 (双周计划)</option>
-              <option value={30}>30 天 (月度规划)</option>
+              <option value={3}>{t('plan.days3')}</option>
+              <option value={7}>{t('plan.days7')}</option>
+              <option value={14}>{t('plan.days14')}</option>
+              <option value={30}>{t('plan.days30')}</option>
             </select>
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">当前运营重点 / 目标</label>
+            <label className="text-sm font-medium text-slate-700">{t('plan.focus')}</label>
             <input
               type="text"
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder="例如：夏令营招募、提升品牌知名度..."
+              placeholder={t('plan.focusPlaceholder')}
               className="input-field"
             />
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">核心推广课程/活动 (选填)</label>
+            <label className="text-sm font-medium text-slate-700">{t('plan.promotion')}</label>
             <input
               type="text"
               value={promotionProduct}
               onChange={(e) => setPromotionProduct(e.target.value)}
-              placeholder="例如：STEAM周末班、哲学思辨课、春季插班生..."
+              placeholder={t('plan.promotionPlaceholder')}
               className="input-field"
             />
-            <p className="text-xs text-slate-400">AI 将在生成的计划中优先围绕此主题展开。</p>
+            <p className="text-xs text-slate-400">{t('plan.promotionHint')}</p>
           </div>
         </div>
 
@@ -230,12 +232,12 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
             {isGenerating ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>规划中...</span>
+                <span>{t('plan.generating')}</span>
               </>
             ) : (
               <>
                 <CalendarIcon size={18} />
-                <span>生成计划</span>
+                <span>{t('plan.generate')}</span>
               </>
             )}
           </button>
@@ -249,12 +251,12 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
           className="space-y-6"
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-slate-900">生成的运营计划</h3>
+            <h3 className="text-xl font-bold text-slate-900">{t('plan.generatedTitle')}</h3>
             <button
               onClick={() => onNavigate('generator')}
               className="text-rose-500 font-medium text-sm flex items-center gap-1 hover:underline"
             >
-              去创作内容 <ArrowRight size={16} />
+              {t('plan.goCreate')} <ArrowRight size={16} />
             </button>
           </div>
 
@@ -274,14 +276,14 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                       <button
                         onClick={() => handleCopy(`${item.topic}\n${item.angle}`, index)}
                         className="text-slate-300 hover:text-rose-500 transition-colors p-1"
-                        title="复制主题"
+                        title={t('plan.copyTopic')}
                       >
                         {copiedIndex === index ? <Check size={16} /> : <Copy size={16} />}
                       </button>
                       <button
                         onClick={() => handleSaveClick(index)}
                         className="text-slate-300 hover:text-emerald-500 transition-colors p-1"
-                        title="保存到计划"
+                        title={t('plan.saveToPlan')}
                       >
                         <Save size={16} />
                       </button>
@@ -290,7 +292,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                         className="text-xs bg-rose-50 text-rose-600 px-2 py-1 rounded-md hover:bg-rose-100 transition-colors flex items-center gap-1 font-medium"
                       >
                         <Sparkles size={12} />
-                        去生成
+                        {t('plan.goGenerate')}
                       </button>
                     </div>
                   </div>
@@ -298,7 +300,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                   <p className="text-slate-500 text-sm mt-1">{item.angle}</p>
                 </div>
                 <div className="flex-shrink-0 md:text-right">
-                  <p className="text-xs text-slate-400 mb-2">目标受众</p>
+                  <p className="text-xs text-slate-400 mb-2">{t('plan.targetAudience')}</p>
                   <p className="text-sm font-medium text-slate-700">{item.target_audience}</p>
                 </div>
 
@@ -306,7 +308,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                 {showDatePicker === index && (
                   <div className="absolute right-0 top-12 z-10 bg-white p-4 rounded-xl shadow-xl border border-slate-200 w-64 animate-in fade-in zoom-in duration-200">
                     <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-bold text-sm">选择发布日期</h4>
+                      <h4 className="font-bold text-sm">{t('plan.selectDate')}</h4>
                       <button onClick={() => setShowDatePicker(null)} className="text-slate-400 hover:text-slate-600">
                         <X size={16} />
                       </button>
@@ -334,7 +336,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
             <div className="mt-12 pt-8 border-t border-slate-200">
               <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                 <CalendarIcon className="text-emerald-500" />
-                已保存的排期 ({savedPlans.length})
+                {t('plan.savedSchedule')} ({savedPlans.length})
               </h3>
               <div className="space-y-4">
                 {savedPlans.map((plan, idx) => (

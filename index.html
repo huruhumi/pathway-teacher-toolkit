@@ -26,9 +26,14 @@
                     PATHWAY <span class="highlight">ACADEMY</span>
                 </div>
             </div>
-            <div class="toolkit-status">
-                <span class="status-dot"></span>
-                <span>TOOLKIT ACTIVE</span>
+            <div class="nav-right">
+                <div class="toolkit-status">
+                    <span class="status-dot"></span>
+                    <span data-i18n="status">TOOLKIT ACTIVE</span>
+                </div>
+                <button id="lang-toggle" class="lang-toggle" onclick="pathwayI18n.toggle()" data-current-lang="en">
+                    中文
+                </button>
             </div>
         </div>
     </header>
@@ -36,13 +41,15 @@
     <main class="container">
         <section class="hero">
             <div class="hero-content">
-                <div class="badge">✨ Global Learning, Elevated</div>
-                <h1>Empowering Educators with <br /><span class="gradient-text">AI-Driven Precision</span></h1>
-                <p>Welcome to the Teacher Toolkit. Explore our holistic suite of pedagogical tools designed for modern,
+                <div class="badge" data-i18n="badge">✨ Global Learning, Elevated</div>
+                <h1><span data-i18n="hero.title.before">Empowering Educators with</span> <br /><span
+                        class="gradient-text" data-i18n="hero.highlight">AI-Driven Precision</span></h1>
+                <p data-i18n="hero.desc">Welcome to the Teacher Toolkit. Explore our holistic suite of pedagogical
+                    tools designed for modern,
                     immersive learning experiences.</p>
                 <div class="hero-actions">
-                    <a href="#tools-container" class="btn btn-primary btn-lg">Explore Tools <span
-                            class="arrow">↓</span></a>
+                    <a href="#tools-container" class="btn btn-primary btn-lg"><span data-i18n="hero.cta">Explore
+                            Tools</span> <span class="arrow">↓</span></a>
                 </div>
             </div>
         </section>
@@ -52,10 +59,12 @@
                 <div class="tool-icon-wrapper">
                     <div class="tool-icon planner-icon">📝</div>
                 </div>
-                <h3>ESL Smart Planner</h3>
-                <p>Holistic lesson planning suite designed specifically for English language educators.</p>
+                <h3 data-i18n="tool.esl.title">ESL Smart Planner</h3>
+                <p data-i18n="tool.esl.desc">Holistic lesson planning suite designed specifically for English language
+                    educators.</p>
                 <div class="card-footer">
-                    <a href="/planner/" target="_blank" class="btn btn-outline">Launch Planner</a>
+                    <a href="/planner/" target="_blank" class="btn btn-outline" data-i18n="tool.esl.btn">Launch
+                        Planner</a>
                 </div>
             </div>
 
@@ -63,10 +72,12 @@
                 <div class="tool-icon-wrapper">
                     <div class="tool-icon lab-icon">✍️</div>
                 </div>
-                <h3>Essay Correction Lab</h3>
-                <p>Advanced AI grading and feedback system for professional English essay assessment.</p>
+                <h3 data-i18n="tool.essay.title">Essay Correction Lab</h3>
+                <p data-i18n="tool.essay.desc">Advanced AI grading and feedback system for professional English essay
+                    assessment.</p>
                 <div class="card-footer">
-                    <a href="/essay-lab/" target="_blank" class="btn btn-outline">Open Lab</a>
+                    <a href="/essay-lab/" target="_blank" class="btn btn-outline" data-i18n="tool.essay.btn">Open
+                        Lab</a>
                 </div>
             </div>
 
@@ -74,24 +85,26 @@
                 <div class="tool-icon-wrapper">
                     <div class="tool-icon nature-icon">🌿</div>
                 </div>
-                <h3>Nature Compass</h3>
-                <p>STEAM curriculum planner & lesson kit generator for immersive outdoor learning experiences.</p>
+                <h3 data-i18n="tool.nature.title">Nature Compass</h3>
+                <p data-i18n="tool.nature.desc">STEAM curriculum planner & lesson kit generator for immersive outdoor
+                    learning experiences.</p>
                 <div class="card-footer">
-                    <a href="/nature-compass/" target="_blank" class="btn btn-outline">Design
+                    <a href="/nature-compass/" target="_blank" class="btn btn-outline"
+                        data-i18n="tool.nature.btn">Design
                         Lessons</a>
                 </div>
             </div>
-
-
 
             <div class="tool-card">
                 <div class="tool-icon-wrapper">
                     <div class="tool-icon ops-icon">📱</div>
                 </div>
-                <h3>Academy Ops</h3>
-                <p>Internal tools for social media operations and academy growth management.</p>
+                <h3 data-i18n="tool.ops.title">Academy Ops</h3>
+                <p data-i18n="tool.ops.desc">Internal tools for social media operations and academy growth management.
+                </p>
                 <div class="card-footer">
-                    <a href="/academy-ops/" target="_blank" class="btn btn-outline">Manage Ops</a>
+                    <a href="/academy-ops/" target="_blank" class="btn btn-outline" data-i18n="tool.ops.btn">Manage
+                        Ops</a>
                 </div>
             </div>
         </section>
@@ -100,9 +113,11 @@
     <footer>
         <div class="container footer-content">
             <img src="logo.png" alt="Pathway Academy Logo" class="footer-logo">
-            <p>&copy; 2026 Pathway Academy. Global Learning, Elevated.</p>
+            <p data-i18n="footer">&copy; 2026 Pathway Academy. Global Learning, Elevated.</p>
         </div>
     </footer>
+
+    <script src="i18n.js"></script>
 </body>
 
 </html>

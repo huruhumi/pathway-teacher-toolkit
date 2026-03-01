@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrandData } from '../data/brandData';
 import { Save, Upload, X, Check } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface BrandSettingsProps {
   brandData: BrandData;
@@ -10,6 +11,7 @@ interface BrandSettingsProps {
 export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProps) {
   const [formData, setFormData] = useState(brandData);
   const [isSaved, setIsSaved] = useState(false);
+  const { t } = useLanguage();
 
   const handleChange = (field: keyof BrandData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -25,8 +27,8 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">品牌设置</h2>
-          <p className="text-slate-500 mt-1">管理 AI 的"大脑"，确保生成内容符合品牌调性。</p>
+          <h2 className="text-2xl font-bold text-slate-900">{t('settings.title')}</h2>
+          <p className="text-slate-500 mt-1">{t('settings.desc')}</p>
         </div>
         <button
           onClick={handleSave}
@@ -37,14 +39,14 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
             }`}
         >
           {isSaved ? <Check size={18} /> : <Save size={18} />}
-          <span>{isSaved ? '已保存' : '保存更改'}</span>
+          <span>{isSaved ? t('settings.saved') : t('settings.saveChanges')}</span>
         </button>
       </div>
 
       <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">品牌名称</label>
+            <label className="text-sm font-medium text-slate-700">{t('settings.brandName')}</label>
             <input
               type="text"
               value={formData.name}
@@ -53,7 +55,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Slogan / 标语</label>
+            <label className="text-sm font-medium text-slate-700">{t('settings.slogan')}</label>
             <input
               type="text"
               value={formData.slogan}
@@ -61,7 +63,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
             />
           </div>
           <div className="space-y-2 col-span-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">品牌 Logo</label>
+            <label className="text-sm font-medium text-slate-700">{t('settings.logo')}</label>
             <div className="flex items-center gap-4">
               {formData.logoUrl && (
                 <div className="relative w-24 h-24 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
@@ -76,7 +78,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
               )}
               <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 hover:border-slate-400 cursor-pointer transition-colors">
                 <Upload size={20} className="text-slate-400 mb-1" />
-                <span className="text-xs text-slate-500">上传 Logo</span>
+                <span className="text-xs text-slate-500">{t('settings.uploadLogo')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -97,12 +99,12 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
                 />
               </label>
             </div>
-            <p className="text-xs text-slate-400 mt-1">上传具有透明背景的 PNG 格式 Logo 以获得最佳图片水印效果。</p>
+            <p className="text-xs text-slate-400 mt-1">{t('settings.logoHint')}</p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">品牌简介</label>
+          <label className="text-sm font-medium text-slate-700">{t('settings.description')}</label>
           <textarea
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
@@ -111,7 +113,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">品牌调性 (Tone of Voice)</label>
+          <label className="text-sm font-medium text-slate-700">{t('settings.tone')}</label>
           <input
             type="text"
             value={formData.tone}
@@ -121,7 +123,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">核心价值 (Core Values)</label>
+          <label className="text-sm font-medium text-slate-700">{t('settings.coreValues')}</label>
           <div className="space-y-2">
             {formData.coreValues.map((val, idx) => (
               <input

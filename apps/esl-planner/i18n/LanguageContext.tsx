@@ -39,7 +39,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         [lang]
     );
 
-    // Sync if another tab/window changes the value
     useEffect(() => {
         const handler = (e: StorageEvent) => {
             if (e.key === STORAGE_KEY && (e.newValue === 'en' || e.newValue === 'zh')) {
@@ -58,4 +57,3 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 };
 
 export const useLanguage = () => useContext(LanguageContext);
-
