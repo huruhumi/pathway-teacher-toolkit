@@ -152,6 +152,7 @@ export interface SavedLesson {
   lastModified: number;
   topic: string;
   level: string;
+  description?: string;
   content: GeneratedContent;
 }
 
@@ -199,6 +200,7 @@ export interface SavedCurriculum {
   textbookTitle: string;
   targetLevel: string;
   totalLessons: number;
+  description?: string;
   curriculum: ESLCurriculum;
   params: CurriculumParams;
 }

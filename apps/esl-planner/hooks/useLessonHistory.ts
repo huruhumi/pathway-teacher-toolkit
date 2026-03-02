@@ -133,6 +133,26 @@ async function hydrateImages(lesson: SavedLesson): Promise<SavedLesson> {
     return { ...lesson, content: c };
 }
 
+/** Generate a short description for a saved lesson kit */
+function generateLessonDescription(content: GeneratedContent): string {
+    const plan = content.structuredLessonPlan;
+    const parts: string[] = [];
+    parts.push(`A ${plan.classInformation.level} lesson on "${plan.classInformation.topic}"`);
+    const counts: string[] = [];
+    if (content.slides?.length) counts.push(`${content.slides.length} slides`);
+    if (content.games?.length) counts.push(`${content.games.length} activities`);
+    if (content.flashcards?.length) counts.push(`${content.flashcards.length} flashcards`);
+    if (content.worksheets?.length) counts.push(`${content.worksheets.length} worksheets`);
+    if (content.readingCompanion?.days?.length) counts.push(`${content.readingCompanion.days.length}-day review plan`);
+    if (counts.length) parts.push(`with ${counts.join(', ')}`);
+    return parts.join(' ') + '.';
+}
+
+/** Generate a short description for a saved curriculum */
+function generateCurriculumDescription(curriculum: ESLCurriculum): string {
+    return curriculum.overview || `A ${curriculum.targetLevel} curriculum with ${curriculum.totalLessons} lessons covering "${curriculum.textbookTitle}".`;
+}
+
 export function useLessonHistory() {
     const [savedLessons, setSavedLessons] = useState<SavedLesson[]>([]);
     const [savedCurricula, setSavedCurricula] = useState<SavedCurriculum[]>([]);
@@ -234,12 +254,13 @@ export function useLessonHistory() {
         if (activeLessonId) {
             updatedHistory = updatedHistory.map(lesson => {
                 if (lesson.id === activeLessonId) {
-                    return { ...lesson, lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || lesson.topic, level: content.structuredLessonPlan.classInformation.level, content: strippedContent };
+                    return { ...lesson, lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || lesson.topic, level: content.structuredLessonPlan.classInformation.level, content: strippedContent, description: lesson.description || generateLessonDescription(content) };
                 }
                 return lesson;
             });
         } else {
-            const newRecord: SavedLesson = { id: lessonId, timestamp: Date.now(), lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || 'Untitled Lesson', level: content.structuredLessonPlan.classInformation.level, content: strippedContent };
+            const desc = generateLessonDescription(content);
+            const newRecord: SavedLesson = { id: lessonId, timestamp: Date.now(), lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || 'Untitled Lesson', level: content.structuredLessonPlan.classInformation.level, description: desc, content: strippedContent };
             updatedHistory = [newRecord, ...updatedHistory];
             setActiveLessonId(lessonId);
         }
@@ -253,9 +274,10 @@ export function useLessonHistory() {
 
     const handleSaveCurriculum = (curriculum: ESLCurriculum, params: CurriculumParams) => {
         const exists = savedCurricula.find(c => c.textbookTitle === curriculum.textbookTitle && c.totalLessons === curriculum.totalLessons);
+        const desc = generateCurriculumDescription(curriculum);
         let updated: SavedCurriculum[];
         if (exists) {
-            updated = savedCurricula.map(c => c.id === exists.id ? { ...c, lastModified: Date.now(), curriculum, params } : c);
+            updated = savedCurricula.map(c => c.id === exists.id ? { ...c, lastModified: Date.now(), description: c.description || desc, curriculum, params } : c);
         } else {
             const newRecord: SavedCurriculum = {
                 id: Date.now().toString(),
@@ -264,6 +286,7 @@ export function useLessonHistory() {
                 textbookTitle: curriculum.textbookTitle,
                 targetLevel: curriculum.targetLevel,
                 totalLessons: curriculum.totalLessons,
+                description: desc,
                 curriculum,
                 params,
             };

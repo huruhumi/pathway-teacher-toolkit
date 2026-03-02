@@ -21,6 +21,22 @@ import { Compass } from 'lucide-react';
 import { useBatchGenerate } from './hooks/useBatchGenerate';
 import { useLanguage } from './i18n/LanguageContext';
 
+/** Generate a short description for a saved NC lesson kit */
+function generateNCKitDescription(plan: LessonPlanResponse): string {
+  const parts: string[] = [];
+  const bi = plan.basicInfo;
+  if (bi?.activityType) parts.push(`This ${bi.activityType} lesson`);
+  else parts.push('This lesson');
+  if (bi?.theme) parts.push(`explores "${bi.theme}"`);
+  if (bi?.targetAudience) parts.push(`for ${bi.targetAudience}`);
+  const counts: string[] = [];
+  if (plan.roadmap?.length) counts.push(`${plan.roadmap.length} activities`);
+  if (plan.vocabulary?.keywords?.length) counts.push(`${plan.vocabulary.keywords.length} vocabulary items`);
+  if (plan.visualReferences?.length) counts.push(`${plan.visualReferences.length} visual references`);
+  if (counts.length) parts.push(`with ${counts.join(', ')}`);
+  return parts.join(' ') + '.';
+}
+
 const NatureHeroBanner = () => {
   const { lang } = useLanguage();
   return (
@@ -163,6 +179,7 @@ export const App: React.FC = () => {
             timestamp: Date.now(),
             plan: planToSave,
             name: planToSave.missionBriefing.title || p.name,
+            description: p.description || generateNCKitDescription(planToSave),
             ...(coverRef ? { coverImage: coverRef } : {})
           }
           : p
@@ -172,6 +189,7 @@ export const App: React.FC = () => {
         id: planId,
         timestamp: Date.now(),
         name: planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
+        description: generateNCKitDescription(planToSave),
         plan: planToSave,
         language: currentKitLanguage,
         ...(coverRef ? { coverImage: coverRef } : {})
@@ -236,13 +254,14 @@ export const App: React.FC = () => {
     let updated: SavedCurriculum[];
     if (existingIdx !== -1) {
       updated = savedCurricula.map((c, i) =>
-        i === existingIdx ? { ...c, curriculum, params, name, timestamp: Date.now() } : c
+        i === existingIdx ? { ...c, curriculum, params, name, description: c.description || curriculum.overview, timestamp: Date.now() } : c
       );
     } else {
       const newSaved: SavedCurriculum = {
         id: crypto.randomUUID(),
         timestamp: Date.now(),
         name,
+        description: curriculum.overview,
         curriculum,
         params,
         language,

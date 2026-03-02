@@ -87,6 +87,7 @@ export interface SavedLessonPlan {
   id: string;
   timestamp: number;
   name: string;
+  description?: string;
   plan: LessonPlanResponse;
   coverImage?: string; // Optional badge image for projects
   language?: 'en' | 'zh';
@@ -125,6 +126,7 @@ export interface SavedCurriculum {
   id: string;
   timestamp: number;
   name: string;
+  description?: string;
   curriculum: Curriculum;
   params: CurriculumParams;
   language: 'en' | 'zh';

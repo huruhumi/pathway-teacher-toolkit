@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import JSZip from 'jszip';
 import { RecordCard } from '@shared/components/RecordCard';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
@@ -65,6 +66,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
 
     // Language toggle per card
     const [cardLanguages, setCardLanguages] = useState<Record<string, 'en' | 'zh'>>({});
+    const [exportingId, setExportingId] = useState<string | null>(null);
     const toggleLanguage = (id: string) => {
         setCardLanguages(prev => ({ ...prev, [id]: prev[id] === 'zh' ? 'en' : 'zh' }));
     };

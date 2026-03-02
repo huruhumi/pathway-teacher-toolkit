@@ -10,6 +10,7 @@ import { RecordCard } from '@shared/components/RecordCard';
 import { FilterBar } from './components/FilterBar';
 import { ErrorModal } from './components/ErrorModal';
 import { handleDownloadZip } from './utils/exportUtils';
+import JSZip from 'jszip';
 import { useLessonHistory } from './hooks/useLessonHistory';
 import { useBatchGenerate } from './hooks/useBatchGenerate';
 import { AppHeader } from '@shared/components/AppHeader';
@@ -33,6 +34,7 @@ const AppContent: React.FC = () => {
 
     const [viewMode, setViewMode] = useState<'curriculum' | 'create' | 'history'>('curriculum');
     const [isExporting, setIsExporting] = useState<string | null>(null);
+    const [isExportingCur, setIsExportingCur] = useState<string | null>(null);
     const [prefilledValues, setPrefilledValues] = useState<MappedESLInput | null>(null);
     const [loadedCurriculum, setLoadedCurriculum] = useState<{ curriculum: ESLCurriculum; params: CurriculumParams } | null>(null);
 
@@ -255,6 +257,7 @@ const AppContent: React.FC = () => {
                                                 <RecordCard
                                                     key={cur.id}
                                                     title={cur.textbookTitle}
+                                                    description={cur.description || cur.curriculum.overview}
                                                     tags={[
                                                         { icon: <GraduationCap size={11} />, label: cur.targetLevel },
                                                         { icon: <Clock size={11} />, label: `${cur.params.duration} min` },
@@ -264,6 +267,27 @@ const AppContent: React.FC = () => {
                                                     openLabel={t('rec.openCurriculum')}
                                                     onOpen={() => handleLoadCurriculum(cur)}
                                                     onDelete={() => handleDeleteCurriculum(cur.id)}
+                                                    onExport={async () => {
+                                                        setIsExportingCur(cur.id);
+                                                        try {
+                                                            const zip = new JSZip();
+                                                            let md = `# ${cur.textbookTitle}\n\n**Level:** ${cur.targetLevel}\n**Total Lessons:** ${cur.totalLessons}\n\n## Overview\n\n${cur.curriculum.overview}\n\n`;
+                                                            cur.curriculum.lessons.forEach((l, i) => {
+                                                                md += `## Lesson ${i + 1}: ${l.title}\n\n- **Topic:** ${l.topic}\n- **Description:** ${l.description}\n- **Grammar Focus:** ${l.grammarFocus}\n- **Objectives:** ${l.objectives.join('; ')}\n- **Vocabulary:** ${l.suggestedVocabulary.join(', ')}\n- **Activities:** ${l.suggestedActivities.join('; ')}\n\n`;
+                                                            });
+                                                            zip.file('Curriculum_Overview.md', md);
+                                                            zip.file('curriculum_data.json', JSON.stringify({ curriculum: cur.curriculum, params: cur.params }, null, 2));
+                                                            const blob = await zip.generateAsync({ type: 'blob' });
+                                                            const url = URL.createObjectURL(blob);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = `ESL_Curriculum_${cur.textbookTitle.replace(/[^a-z0-9]/gi, '_')}.zip`;
+                                                            a.click();
+                                                            URL.revokeObjectURL(url);
+                                                        } catch (err) { console.error('Export failed', err); }
+                                                        finally { setIsExportingCur(null); }
+                                                    }}
+                                                    exporting={isExportingCur === cur.id}
                                                     accentColor="violet"
                                                 />
                                             ))}
@@ -304,6 +328,7 @@ const AppContent: React.FC = () => {
                                                 <RecordCard
                                                     key={lesson.id}
                                                     title={lesson.topic}
+                                                    description={lesson.description}
                                                     tags={[
                                                         { icon: <GraduationCap size={11} />, label: lesson.level },
                                                         { icon: <BookOpen size={11} />, label: `${lesson.content.slides?.length || 0} Slides` },
