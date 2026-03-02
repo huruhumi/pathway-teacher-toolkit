@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Slide } from '../../types';
-import { Sparkles, Check, Copy, Trash2, ExternalLink, Download, Presentation } from 'lucide-react';
+import { Sparkles, Check, Copy, Trash2, ExternalLink } from 'lucide-react';
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
@@ -30,8 +30,6 @@ interface SlidesTabProps {
     setEditableSlides: (slides: Slide[]) => void;
     notebookLMPrompt: string;
     openViewer: (tabId: string, subTabId?: string) => void;
-    handleDownloadSlidesMd: () => void;
-    handleDownloadPptx?: () => void;
 }
 
 export const SlidesTab: React.FC<SlidesTabProps> = ({
@@ -39,8 +37,6 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
     setEditableSlides,
     notebookLMPrompt,
     openViewer,
-    handleDownloadSlidesMd,
-    handleDownloadPptx
 }) => {
     const [copiedPrompt, setCopiedPrompt] = useState(false);
 
@@ -77,22 +73,6 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
                         <ExternalLink className="w-4 h-4" />
                         Open in Viewer
                     </button>
-                    <button
-                        onClick={handleDownloadSlidesMd}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-semibold"
-                    >
-                        <Download className="w-4 h-4" />
-                        Download MD
-                    </button>
-                    {handleDownloadPptx && (
-                        <button
-                            onClick={handleDownloadPptx}
-                            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-sm text-sm font-semibold"
-                        >
-                            <Presentation className="w-4 h-4" />
-                            Download .pptx
-                        </button>
-                    )}
                 </div>
             </div>
 

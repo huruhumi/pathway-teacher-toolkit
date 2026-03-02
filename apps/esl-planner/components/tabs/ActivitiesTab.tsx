@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Game, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateSingleGame } from '../../services/geminiService';
-import { Sparkles, Loader2, Bot, CheckSquare, Gamepad2, Trash2, Plus, X, ExternalLink, Download } from 'lucide-react';
+import { Sparkles, Loader2, Bot, CheckSquare, Gamepad2, Trash2, Plus, X, ExternalLink } from 'lucide-react';
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
@@ -34,7 +34,6 @@ interface ActivitiesTabProps {
     setEditableGames: (games: Game[]) => void;
     editablePlan: StructuredLessonPlan | null;
     openViewer: (tabId: string, subTabId?: string) => void;
-    handleDownloadGamesMd: () => void;
 }
 
 export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
@@ -42,7 +41,6 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
     setEditableGames,
     editablePlan,
     openViewer,
-    handleDownloadGamesMd
 }) => {
     const [isGeneratingGame, setIsGeneratingGame] = useState(false);
     const [gameFilterSkill, setGameFilterSkill] = useState('Random');
@@ -100,9 +98,6 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                 <div className="flex gap-2 no-print">
                     <button onClick={() => openViewer('games')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold shadow-sm">
                         <ExternalLink className="w-4 h-4" /> Print View
-                    </button>
-                    <button onClick={handleDownloadGamesMd} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold shadow-sm">
-                        <Download className="w-4 h-4" /> Download MD
                     </button>
                 </div>
             </div>

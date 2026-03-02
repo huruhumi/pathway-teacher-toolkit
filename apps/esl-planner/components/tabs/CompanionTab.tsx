@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/geminiService';
-import { Check, Trash2, Plus, X, ExternalLink, Download, Loader2, Globe, Lightbulb, RefreshCw } from 'lucide-react';
+import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw } from 'lucide-react';
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
@@ -22,7 +22,6 @@ interface CompanionTabProps {
     setEditableReadingCompanion: (companion: ReadingCompanionContent) => void;
     editablePlan: StructuredLessonPlan | null;
     openViewer: (tabId: string, subTabId?: string) => void;
-    handleDownloadCompanionMd: () => void;
 }
 
 export const CompanionTab: React.FC<CompanionTabProps> = ({
@@ -30,7 +29,6 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
     setEditableReadingCompanion,
     editablePlan,
     openViewer,
-    handleDownloadCompanionMd
 }) => {
     const [isAddingDay, setIsAddingDay] = useState(false);
     const [addingTaskIndex, setAddingTaskIndex] = useState<number | null>(null);
@@ -179,9 +177,6 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 <div className="flex gap-2 no-print">
                     <button onClick={() => openViewer('companion')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold shadow-sm">
                         <ExternalLink className="w-4 h-4" /> Interactive View
-                    </button>
-                    <button onClick={handleDownloadCompanionMd} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold shadow-sm">
-                        <Download className="w-4 h-4" /> Download MD
                     </button>
                 </div>
             </div>

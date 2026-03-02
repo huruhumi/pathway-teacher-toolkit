@@ -1141,8 +1141,8 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
     return (
         <div className="w-full">
-            <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6 py-1.5 flex flex-col sm:flex-row justify-between items-center gap-2">
-                <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
+            <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6 py-1 flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap gap-1 items-center">
                     {[
                         { id: 'roadmap', label: t('tab.roadmap'), icon: Compass },
                         { id: 'supplies', label: t('tab.supplies'), icon: Box },
@@ -1156,45 +1156,45 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as Tab)}
-                                className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === tab.id
+                                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === tab.id
                                     ? 'bg-emerald-600 text-white shadow-md'
                                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                                     }`}
                             >
-                                <Icon size={14} />
+                                <Icon size={12} />
                                 {tab.label}
                             </button>
                         );
                     })}
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 ml-auto">
                     <button
                         onClick={handleLanguageToggle}
-                        className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg font-semibold text-xs transition-colors whitespace-nowrap border ${displayLanguage === 'zh'
+                        className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] transition-colors whitespace-nowrap border ${displayLanguage === 'zh'
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                             }`}
                         title={lang === 'zh' ? '切换到英文' : 'Translate to Chinese'}
                     >
-                        <Languages size={14} className={displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'} />
+                        <Languages size={12} className={displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'} />
                         <span className="hidden md:inline">{displayLanguage === 'zh' ? t('lp.langToggle') : 'EN / 中'}</span>
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-lg font-semibold text-xs hover:bg-slate-200 transition-colors whitespace-nowrap"
+                        className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[11px] hover:bg-slate-200 transition-colors whitespace-nowrap"
                     >
-                        <Printer size={14} />
+                        <Printer size={12} />
                         <span className="hidden md:inline">{t('lp.print')}</span>
                     </button>
                     {onSave && (
                         <button
                             onClick={handleSaveClick}
                             disabled={isSaved}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-white rounded-lg font-semibold text-xs shadow-md transition-all whitespace-nowrap ${isSaved ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
+                            className={`flex items-center gap-1 px-2 py-1 text-white rounded-md font-semibold text-[11px] shadow-md transition-all whitespace-nowrap ${isSaved ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
                                 }`}
                         >
-                            {isSaved ? <Check size={14} /> : <Save size={14} />}
+                            {isSaved ? <Check size={12} /> : <Save size={12} />}
                             <span className="hidden md:inline">{isSaved ? t('lp.saved') : t('lp.save')}</span>
                         </button>
                     )}

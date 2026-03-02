@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
-import { Loader2, Plus, ChevronUp, ChevronDown, Trash2, ExternalLink, Download, FileText } from 'lucide-react';
+import { Loader2, Plus, ChevronUp, ChevronDown, Trash2, ExternalLink } from 'lucide-react';
 import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint } from '../../services/geminiService';
 
 // We need a shared AutoResizeTextarea to avoid duplicating it everywhere.
@@ -33,16 +33,12 @@ interface LessonPlanTabProps {
     editablePlan: StructuredLessonPlan;
     setEditablePlan: (plan: StructuredLessonPlan) => void;
     openViewer: (tabId: string, subTabId?: string) => void;
-    handleDownloadPlanMd: () => void;
-    handleDownloadDocx?: () => void;
 }
 
 export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
     editablePlan,
     setEditablePlan,
     openViewer,
-    handleDownloadPlanMd,
-    handleDownloadDocx
 }) => {
     // Local loading states
     const [isGeneratingObjective, setIsGeneratingObjective] = useState(false);
@@ -297,22 +293,6 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         <ExternalLink className="w-4 h-4" />
                         Open in Viewer
                     </button>
-                    <button
-                        onClick={handleDownloadPlanMd}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-semibold"
-                    >
-                        <Download className="w-4 h-4" />
-                        Download MD
-                    </button>
-                    {handleDownloadDocx && (
-                        <button
-                            onClick={handleDownloadDocx}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-sm font-semibold"
-                        >
-                            <FileText className="w-4 h-4" />
-                            Download .docx
-                        </button>
-                    )}
                 </div>
             </div>
 

@@ -83,8 +83,6 @@ import JSZip from "jszip";
 import { jsPDF } from "jspdf";
 import { useExportUtils } from "../hooks/useExportUtils";
 import { useAutoSave } from "@shared/hooks/useAutoSave";
-import { useDocxExport } from "../hooks/useDocxExport";
-import { usePptxExport } from "../hooks/usePptxExport";
 import { LessonPlanTab } from "./tabs/LessonPlanTab";
 import { SlidesTab } from "./tabs/SlidesTab";
 import { ActivitiesTab } from "./tabs/ActivitiesTab";
@@ -269,11 +267,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const {
     openViewer,
     triggerDownloadMd,
-    handleDownloadPlanMd,
-    handleDownloadSlidesMd,
-    handleDownloadWorksheetsMd,
-    handleDownloadCompanionMd,
-    handleDownloadGamesMd,
   } = useExportUtils({
     editablePlan,
     editableSlides,
@@ -308,20 +301,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     onSave,
     editablePlan,
   });
-
-  const { exportLessonPlanDocx } = useDocxExport();
-  const { exportSlidesPptx } = usePptxExport();
-
-  const handleDownloadDocx = () => {
-    if (editablePlan) exportLessonPlanDocx(getCurrentContentObject());
-  };
-
-  const handleDownloadPptx = () => {
-    exportSlidesPptx(
-      editableSlides,
-      editablePlan?.classInformation.topic || "slides",
-    );
-  };
 
   const handlePlanInfoChange = (
     section: keyof StructuredLessonPlan,
@@ -806,22 +785,22 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
   return (
     <div className="overflow-hidden flex flex-col">
-      <div className="flex flex-col md:flex-row border-b border-slate-100 justify-between items-stretch md:items-center no-print">
-        <div className="flex overflow-x-auto scrollbar-hide">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-100 px-2 py-1 no-print">
+        <div className="flex flex-wrap gap-1 items-center">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium text-xs md:text-sm transition-colors whitespace-nowrap
-                ${activeTab === tab.id ? "text-primary border-b-2 border-primary bg-indigo-50/50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap
+                ${activeTab === tab.id ? "bg-brand text-white shadow-md" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3 h-3" />
               {tab.label}
             </button>
           ))}
         </div>
-        <div className="p-2 md:p-0 pr-4 no-print flex items-center gap-2">
-          <div className="flex items-center gap-3">
+        <div className="no-print flex items-center gap-1.5 ml-auto">
+          <div className="flex items-center gap-1.5">
             <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
               <span
                 className={`w-2 h-2 rounded-full ${saveStatus === "saved" ? "bg-green-400" : saveStatus === "saving" ? "bg-yellow-400 animate-pulse" : "bg-orange-400 animate-pulse"}`}
@@ -839,12 +818,12 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             <button
               onClick={saveNow}
               disabled={saveStatus === "saving"}
-              className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm disabled:opacity-70 text-sm font-semibold"
+              className="flex items-center justify-center gap-1 px-2 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors shadow-sm disabled:opacity-70 text-[11px] font-bold"
             >
               {saveStatus === "saving" ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                <Save className="w-4 h-4" />
+                <Save className="w-3 h-3" />
               )}
               {saveStatus === "saving" ? "Saving..." : "Save Now"}
             </button>
@@ -858,8 +837,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             editablePlan={editablePlan}
             setEditablePlan={setEditablePlan as any}
             openViewer={openViewer}
-            handleDownloadPlanMd={handleDownloadPlanMd}
-            handleDownloadDocx={handleDownloadDocx}
           />
         )}
 
@@ -869,8 +846,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             setEditableSlides={setEditableSlides as any}
             notebookLMPrompt={content.notebookLMPrompt}
             openViewer={openViewer}
-            handleDownloadSlidesMd={handleDownloadSlidesMd}
-            handleDownloadPptx={handleDownloadPptx}
           />
         )}
 
@@ -921,7 +896,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
                 setWorksheets={setWorksheets}
                 editablePlan={editablePlan}
                 openViewer={openViewer}
-                handleDownloadWorksheetsMd={handleDownloadWorksheetsMd}
               />
             )}
 
@@ -982,7 +956,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             setEditableGames={setEditableGames as any}
             editablePlan={editablePlan}
             openViewer={openViewer}
-            handleDownloadGamesMd={handleDownloadGamesMd}
           />
         )}
 
@@ -992,7 +965,6 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             setEditableReadingCompanion={setEditableReadingCompanion as any}
             editablePlan={editablePlan}
             openViewer={openViewer}
-            handleDownloadCompanionMd={handleDownloadCompanionMd}
           />
         )}
       </div>

@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from "react";
+﻿import React, { useState, useMemo } from "react";
 import {
-  Download,
   ExternalLink,
   Sparkles,
   Loader2,
@@ -48,7 +47,6 @@ export interface WorksheetsTabProps {
   setWorksheets: (ws: Worksheet[]) => void;
   editablePlan: StructuredLessonPlan | null;
   openViewer: (tab: string, subTab: string) => void;
-  handleDownloadWorksheetsMd: () => void;
 }
 
 const INDIGO_COLOR = "#4f46e5";
@@ -58,7 +56,7 @@ const CorrectionLegend = () => (
   <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border-2 border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 shadow-sm viewer-correction-legend">
     <h5 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-3 flex items-center gap-2">
       <Info className="w-3 h-3 text-indigo-500" />
-      Proofreading Marks Reference / 修改符号参�?    </h5>
+      Proofreading Marks Reference / 修改符号参�?    </h5>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="flex items-center gap-2">
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
@@ -78,7 +76,7 @@ const CorrectionLegend = () => (
       </div>
       <div className="flex items-center gap-2">
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
-          �?        </span>
+          �?        </span>
         <span className="text-[10px] font-medium text-slate-600">
           Replace / 替换
         </span>
@@ -100,7 +98,6 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
   setWorksheets,
   editablePlan,
   openViewer,
-  handleDownloadWorksheetsMd,
 }) => {
   const { t } = useLanguage();
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<
@@ -1074,14 +1071,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold"
           >
             <ExternalLink className="w-4 h-4" /> Print Mode
-          </button>
-          <button
-            onClick={handleDownloadWorksheetsMd}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold"
-          >
-            <Download className="w-4 h-4" /> Download MD
-          </button>
-        </div>
+          </button>        </div>
       </div>
 
       <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 no-print">
