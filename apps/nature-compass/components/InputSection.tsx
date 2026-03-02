@@ -334,10 +334,10 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       {/* Sticky CTA */}
       <div className="sticky bottom-4 z-10 pt-2">
         <button
-          onClick={isLoading ? onStop : onSubmit}
-          disabled={!isLoading && (!input.theme && input.uploadedFiles.length === 0)}
+          onClick={isLoading ? () => { } : onSubmit}
+          disabled={isLoading || (!input.theme && input.uploadedFiles.length === 0)}
           className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
-            ? 'bg-red-500 hover:bg-red-600'
+            ? 'bg-slate-400 cursor-wait'
             : (!input.theme && input.uploadedFiles.length === 0)
               ? 'bg-slate-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-emerald-600 to-teal-600'
@@ -345,8 +345,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         >
           {isLoading ? (
             <>
-              <Square fill="currentColor" size={16} />
-              {t('input.stopGeneration')}
+              <Loader2 className="animate-spin" size={20} />
+              {t('input.generatingKit' as TranslationKey) || 'Generating...'}
             </>
           ) : (
             t('input.generateKit')

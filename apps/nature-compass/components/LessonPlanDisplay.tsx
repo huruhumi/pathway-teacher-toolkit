@@ -789,9 +789,9 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
         // Common Header
         const headerHtml = `
-      <div class="mb-8 p-6 bg-slate-50 rounded-xl border border-slate-100">
-        <h1 class="text-3xl font-bold text-slate-900 mb-2">${missionBriefing.title}</h1>
-        <p class="text-lg text-slate-600 italic">${missionBriefing.narrative}</p>
+      <div class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-100">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">${missionBriefing.title}</h1>
+        <p class="text-base text-slate-600 italic">${missionBriefing.narrative}</p>
       </div>
     `;
 
@@ -837,7 +837,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                     <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-white"></div>
                     <div class="flex items-baseline gap-4 mb-2">
                         <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded">${item.timeRange}</span>
-                        <h3 class="text-xl font-bold text-slate-800">${item.phase} <span class="text-slate-300 font-light mx-2">/</span> ${item.activity}</h3>
+                        <h3 class="text-lg font-bold text-slate-800">${item.phase} <span class="text-slate-300 font-light mx-2">/</span> ${item.activity}</h3>
                     </div>
                      <div class="flex gap-4 mb-3 text-sm">
                         <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded border border-blue-100 font-semibold">${item.activityType || 'Activity'}</span>
@@ -857,7 +857,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
             bodyContent = `
             <div class="mb-8">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">${t('print.workshopOverview')}</h2>
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">${t('print.workshopOverview')}</h2>
                 <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
                     <div class="p-3 border rounded">
                         <div class="text-slate-400 text-xs uppercase font-bold">${t('print.theme')}</div>
@@ -886,7 +886,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 </div>
             </div>
             <div class="mt-8">
-                 <h2 class="text-xl font-bold text-slate-800 mb-6 pb-2 border-b">Agenda & Steps</h2>
+                 <h2 class="text-lg font-bold text-slate-800 mb-6 pb-2 border-b">Agenda & Steps</h2>
                  ${roadmapHtml}
             </div>
         `;
@@ -897,8 +897,8 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
             bodyContent = `
             <div class="grid grid-cols-1 gap-8">
-               <div class="p-6 border rounded-xl">
-                   <h2 class="text-xl font-bold text-slate-800 mb-4">Supply List</h2>
+               <div class="p-5 border rounded-xl">
+                   <h2 class="text-lg font-bold text-slate-800 mb-4">Supply List</h2>
                    <div class="mb-4">
                        <h3 class="font-bold text-slate-500 text-sm uppercase mb-2">Permanent Tools</h3>
                        <ul class="list-disc list-inside text-slate-700 space-y-1">${permanentHtml}</ul>
@@ -908,8 +908,8 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                        <ul class="list-disc list-inside text-slate-700 space-y-1">${consumablesHtml}</ul>
                    </div>
                </div>
-               <div class="p-6 border rounded-xl bg-amber-50 border-amber-100">
-                   <h2 class="text-xl font-bold text-amber-900 mb-4">Safety Protocol</h2>
+               <div class="p-5 border rounded-xl bg-amber-50 border-amber-100">
+                   <h2 class="text-lg font-bold text-amber-900 mb-4">Safety Protocol</h2>
                    <ol class="list-decimal list-inside text-amber-800 space-y-2">${safetyHtml}</ol>
                </div>
             </div>
@@ -918,15 +918,15 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const cardsHtml = vocabList.map((v, idx) =>
                 `<div class="border rounded p-4 text-center break-inside-avoid">
                 ${generatedImages[idx] ? `<img src="${generatedImages[idx]}" style="max-width:100%; height:auto; margin-bottom: 1rem; border-radius: 0.5rem;" />` : ''}
-                <h3 class="text-xl font-bold mb-2">${v.word}</h3>
+                <h3 class="text-lg font-bold mb-2">${v.word}</h3>
                 <p class="text-sm italic text-slate-600">${v.definition}</p>
              </div>`
             ).join('');
 
             bodyContent = `
             <div class="space-y-8">
-                <div class="p-6 border rounded-xl">
-                     <h2 class="text-xl font-bold text-slate-800 mb-4">Teaching Flashcards</h2>
+                <div class="p-5 border rounded-xl">
+                     <h2 class="text-lg font-bold text-slate-800 mb-4">Teaching Flashcards</h2>
                      <div class="grid grid-cols-3 gap-4">
                         ${cardsHtml}
                      </div>
@@ -937,7 +937,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const visualsHtml = visualRefs.map((v, idx) =>
                 `<div class="border rounded p-4 text-center break-inside-avoid">
                ${generatedVisuals[idx] ? `<img src="${generatedVisuals[idx]}" style="max-width:100%; height:auto; margin-bottom: 1rem; border-radius: 0.5rem;" />` : ''}
-               <h3 class="text-xl font-bold mb-1">${v.label}</h3>
+               <h3 class="text-lg font-bold mb-1">${v.label}</h3>
                <div class="text-xs uppercase font-bold text-slate-400 mb-2">${v.type}</div>
                <p class="text-sm text-slate-600">${v.description}</p>
             </div>`
@@ -945,9 +945,9 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
             bodyContent = `
            <div class="space-y-8">
-               <div class="p-6 border rounded-xl">
-                    <h2 class="text-xl font-bold text-slate-800 mb-4">Visual References</h2>
-                    <div class="grid grid-cols-2 gap-6">
+               <div class="p-5 border rounded-xl">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4">Visual References</h2>
+                    <div class="grid grid-cols-2 gap-4">
                        ${visualsHtml}
                     </div>
                </div>
@@ -955,8 +955,8 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         `;
         } else if (activeTab === 'handbook') {
             bodyContent = `
-            <div class="p-6 border rounded-xl bg-indigo-50 border-indigo-100">
-                <h2 class="text-xl font-bold text-indigo-900 mb-4">Handbook Design Plan</h2>
+            <div class="p-5 border rounded-xl bg-indigo-50 border-indigo-100">
+                <h2 class="text-lg font-bold text-indigo-900 mb-4">Handbook Design Plan</h2>
                 <p class="text-indigo-700 text-sm mb-4">Detailed breakdown of the student handbook.</p>
                 <div class="space-y-6">
                   ${handbookPages.map(page => `
@@ -979,12 +979,12 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         `;
         } else if (activeTab === 'badge') {
             bodyContent = `
-            <div class="p-6 border rounded-xl flex flex-col items-center justify-center text-center">
-                <h2 class="text-2xl font-bold text-slate-800 mb-4">Achievement Badge</h2>
+            <div class="p-5 border rounded-xl flex flex-col items-center justify-center text-center">
+                <h2 class="text-xl font-bold text-slate-800 mb-4">Achievement Badge</h2>
                 <div class="mb-6">
                     ${badgeImage ? `<img src="${badgeImage}" style="width: 200px; height: 200px; border-radius: 50%; border: 4px solid #f1f5f9;" />` : '<div style="width: 200px; height: 200px; border-radius: 50%; background: #f8fafc; border: 4px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; color: #94a3b8;">No Badge</div>'}
                 </div>
-                <h3 class="text-xl font-bold text-slate-700">${basicInfo.theme}</h3>
+                <h3 class="text-lg font-bold text-slate-700">${basicInfo.theme}</h3>
                 <p class="text-slate-500">Official Workshop Badge</p>
             </div>
         `;
@@ -1007,7 +1007,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
           }
         </style>
       </head>
-      <body class="bg-white p-8 md:p-12 max-w-5xl mx-auto">
+      <body class="bg-white p-6 md:p-8 max-w-5xl mx-auto">
         <div class="flex justify-between items-center mb-8 no-print">
             <div class="text-sm text-slate-500">Preview Mode</div>
             <button onclick="window.print()" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold hover:bg-slate-800 transition-colors flex items-center gap-2">
@@ -1141,8 +1141,10 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
     return (
         <div className="w-full">
-            <div className="sticky top-20 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm mb-6 -mx-4 sm:-mx-6 px-4 sm:px-6 py-1 flex flex-wrap items-center gap-1.5">
-                <div className="flex flex-wrap gap-1 items-center">
+            {/* Unified Sticky Header - Always Stacked */}
+            <div className="flex flex-col gap-3 sticky top-6 z-40 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-sm mx-4 mt-4 no-print mb-6">
+                {/* Tabs Group */}
+                <div className="flex flex-nowrap overflow-x-auto pb-1 gap-2 items-center hide-scrollbar w-full">
                     {[
                         { id: 'roadmap', label: t('tab.roadmap'), icon: Compass },
                         { id: 'supplies', label: t('tab.supplies'), icon: Box },
@@ -1156,45 +1158,48 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as Tab)}
-                                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold transition-all whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-emerald-600 text-white shadow-md'
-                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id
+                                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 translate-y-[-1px]'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                             >
-                                <Icon size={12} />
+                                <Icon className="w-3.5 h-3.5" />
                                 {tab.label}
                             </button>
                         );
                     })}
                 </div>
 
-                <div className="flex items-center gap-1 ml-auto">
+                {/* Actions Group */}
+                <div className="no-print flex items-center justify-between md:justify-end gap-3 w-full pt-2 border-t border-slate-100">
                     <button
                         onClick={handleLanguageToggle}
-                        className={`flex items-center justify-center gap-1 px-2 py-1 rounded-md font-semibold text-[11px] transition-colors whitespace-nowrap border ${displayLanguage === 'zh'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap border ${displayLanguage === 'zh'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                             }`}
                         title={lang === 'zh' ? '切换到英文' : 'Translate to Chinese'}
                     >
-                        <Languages size={12} className={displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'} />
+                        <Languages className={`w-4 h-4 ${displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'}`} />
                         <span className="hidden md:inline">{displayLanguage === 'zh' ? t('lp.langToggle') : 'EN / 中'}</span>
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 rounded-md font-semibold text-[11px] hover:bg-slate-200 transition-colors whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-5 py-2 bg-slate-100 text-slate-700 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap text-sm font-bold"
                     >
-                        <Printer size={12} />
-                        <span className="hidden md:inline">{t('lp.print')}</span>
+                        <Printer className="w-4 h-4" />
+                        <span className="hidden md:inline">Print View</span>
                     </button>
                     {onSave && (
                         <button
                             onClick={handleSaveClick}
                             disabled={isSaved}
-                            className={`flex items-center gap-1 px-2 py-1 text-white rounded-md font-semibold text-[11px] shadow-md transition-all whitespace-nowrap ${isSaved ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
+                            className={`flex items-center justify-center gap-2 px-5 py-2 text-white rounded-full font-bold text-sm shadow-md transition-all whitespace-nowrap ${isSaved
+                                ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default disabled:opacity-100'
+                                : 'bg-slate-900 hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0'
                                 }`}
                         >
-                            {isSaved ? <Check size={12} /> : <Save size={12} />}
+                            {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                             <span className="hidden md:inline">{isSaved ? t('lp.saved') : t('lp.save')}</span>
                         </button>
                     )}

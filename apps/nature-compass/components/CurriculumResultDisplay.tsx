@@ -60,13 +60,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
 
     return (
         <div className="space-y-6 animate-fade-in-up">
-            {/* Back button */}
-            <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors text-sm md:text-base"
-            >
-                <ArrowLeft className="w-4 h-4" /> {t('cp.backToConfig')}
-            </button>
+
 
             {/* Action buttons — unified row */}
             <div className="flex items-center justify-between flex-wrap gap-3">

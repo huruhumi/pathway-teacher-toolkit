@@ -46,7 +46,6 @@ export interface WorksheetsTabProps {
   worksheets: Worksheet[];
   setWorksheets: (ws: Worksheet[]) => void;
   editablePlan: StructuredLessonPlan | null;
-  openViewer: (tab: string, subTab: string) => void;
 }
 
 const INDIGO_COLOR = "#4f46e5";
@@ -97,7 +96,6 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
   worksheets,
   setWorksheets,
   editablePlan,
-  openViewer,
 }) => {
   const { t } = useLanguage();
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<
@@ -482,8 +480,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
               >
                 {/* Column A Card (Terms/Questions) */}
                 <div className="flex-1 flex items-center group relative z-10">
-                  <div className="flex-1 flex gap-4 items-center bg-white dark:bg-slate-900/60 border-2 border-indigo-100 dark:border-indigo-900/30 p-6 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[120px]">
-                    <span className="text-xl font-black text-indigo-200 w-8">
+                  <div className="flex-1 flex gap-4 items-center bg-white dark:bg-slate-900/60 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[100px]">
+                    <span className="text-lg font-black text-indigo-200 w-8">
                       {idx + 1}.
                     </span>
                     <AutoResizeTextarea
@@ -497,7 +495,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                           e.target.value,
                         )
                       }
-                      className="flex-1 text-lg font-bold text-indigo-900 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
+                      className="flex-1 text-base font-bold text-indigo-900 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
                       placeholder="Term or phrase..."
                     />
                   </div>
@@ -507,8 +505,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   </div>
                 </div>
 
-                {/* Visual Connection Space (Visible on Print) - Increased to w-48 */}
-                <div className="hidden md:block w-48 shrink-0"></div>
+                {/* Visual Connection Space (Visible on Print) */}
+                <div className="hidden md:block w-16 shrink-0"></div>
 
                 {/* Column B Card (Images/Definitions) - Shuffled View */}
                 <div className="flex-1 flex items-center group relative z-10">
@@ -516,8 +514,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   <div className="hidden md:flex w-16 h-px bg-indigo-100 items-center justify-start">
                     <div className="w-4 h-4 rounded-full border-2 border-indigo-400 bg-white shadow-xs"></div>
                   </div>
-                  <div className="flex-1 flex gap-4 items-center bg-white border-2 border-slate-100 p-5 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[120px] relative">
-                    <span className="text-xl font-black text-slate-200 w-8">
+                  <div className="flex-1 flex gap-4 items-center bg-white border-2 border-slate-100 p-4 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[100px] relative">
+                    <span className="text-lg font-black text-slate-200 w-8">
                       {String.fromCharCode(65 + idx)}.
                     </span>
 
@@ -564,7 +562,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                             e.target.value,
                           )
                         }
-                        className="flex-1 text-base font-semibold text-slate-700 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
+                        className="flex-1 text-sm font-semibold text-slate-700 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
                         placeholder="Match description..."
                       />
                     </div>
@@ -609,9 +607,9 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
       {section.items.map((item, itemIdx) => (
         <div
           key={itemIdx}
-          className="bg-white/40 border border-slate-100 rounded-[2rem] p-6 shadow-sm group/mc relative"
+          className="bg-white/40 border border-slate-100 rounded-[2rem] p-5 shadow-sm group/mc relative"
         >
-          <div className="flex justify-between items-start gap-4 mb-6">
+          <div className="flex justify-between items-start gap-4 mb-5">
             <div className="flex-1 flex gap-4">
               <div className="flex gap-3 flex-1">
                 <span className="font-black text-indigo-300 mt-1">
@@ -628,7 +626,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                       e.target.value,
                     )
                   }
-                  className="flex-1 text-lg font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
+                  className="flex-1 text-base font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
                   placeholder="Multiple choice question..."
                 />
               </div>
@@ -697,7 +695,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                 onClick={() =>
                   handleWorksheetItemChange(wsIdx, sIdx, itemIdx, "answer", opt)
                 }
-                className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-200" : "bg-slate-50/50 border-transparent hover:border-slate-200"}`}
+                className={`flex items-center gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-200" : "bg-slate-50/50 border-transparent hover:border-slate-200"}`}
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white text-slate-400 border-slate-100"}`}
@@ -746,7 +744,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
     sIdx: number;
   }) => (
     <div className="space-y-10">
-      <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border-2 border-indigo-50 dark:border-white/5 rounded-[2.5rem] p-8 shadow-sm">
+      <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border-2 border-indigo-50 dark:border-white/5 rounded-[2.5rem] p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
             Correction Passage Content / 短文改错内容
@@ -775,7 +773,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
             setWorksheets(newWs);
           }}
           placeholder="Passage Title..."
-          className="text-2xl font-black text-indigo-900 bg-transparent border-none outline-none w-full mb-6 text-center"
+          className="text-xl font-black text-indigo-900 bg-transparent border-none outline-none w-full mb-6 text-center"
         />
         <AutoResizeTextarea
           value={section.passage || ""}
@@ -792,7 +790,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
             setWorksheets(newWs);
           }}
           placeholder="Enter passage text with errors..."
-          className="w-full text-xl font-medium text-slate-800 leading-[3.5] bg-transparent border-none outline-none italic whitespace-pre-wrap"
+          className="w-full text-lg font-medium text-slate-800 leading-[2.5] bg-transparent border-none outline-none italic whitespace-pre-wrap"
           minRows={5}
         />
         <div className="mt-8 pt-8 border-t border-indigo-50">
@@ -885,7 +883,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
         return (
           <div
             key={idx}
-            className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-xs group/essay relative flex flex-col gap-6"
+            className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-6 shadow-xs group/essay relative flex flex-col gap-6"
           >
             <div className="flex justify-between items-start gap-4 no-print">
               <div className="flex gap-3 flex-1">
@@ -903,7 +901,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                       e.target.value,
                     )
                   }
-                  className="flex-1 text-lg font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
+                  className="flex-1 text-base font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
                   placeholder="Writing prompt or essay question..."
                 />
               </div>
@@ -1064,17 +1062,12 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-        <h3 className="text-xl font-bold text-slate-800">Custom Worksheets</h3>
+        <h3 className="text-lg font-bold text-slate-800">Custom Worksheets</h3>
         <div className="flex gap-2">
-          <button
-            onClick={() => openViewer("materials", "worksheets")}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold"
-          >
-            <ExternalLink className="w-4 h-4" /> Print Mode
-          </button>        </div>
+        </div>
       </div>
 
-      <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 no-print">
+      <div className="bg-indigo-50/50 p-5 rounded-3xl border border-indigo-100 no-print">
         <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-indigo-500" />
           Quick Generate Section
@@ -1227,7 +1220,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   newWs[wsIdx].title = e.target.value;
                   setWorksheets(newWs);
                 }}
-                className="text-3xl font-black text-indigo-900 text-center bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 w-full"
+                className="text-2xl font-black text-indigo-900 text-center bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 w-full"
                 minRows={1}
               />
               <AutoResizeTextarea
@@ -1260,7 +1253,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                 e.target.value;
                             setWorksheets(newWs);
                           }}
-                          className="flex-1 text-xl font-black text-indigo-800 bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-100 rounded-lg px-2"
+                          className="flex-1 text-lg font-black text-indigo-800 bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-100 rounded-lg px-2"
                           minRows={1}
                         />
                       </div>
@@ -1323,7 +1316,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   <div className="pl-11 space-y-8">
                     {(sec.passage !== undefined || sec.passageTitle) &&
                       sec.layout !== "error-correction" && (
-                        <div className="bg-indigo-50/30 border-l-4 border-indigo-400 p-6 rounded-r-2xl shadow-sm space-y-4 mb-8 relative group/passage">
+                        <div className="bg-indigo-50/30 border-l-4 border-indigo-400 p-5 rounded-r-2xl shadow-sm space-y-4 mb-8 relative group/passage">
                           <div className="space-y-3">
                             <AutoResizeTextarea
                               value={sec.passageTitle || ""}
@@ -1335,7 +1328,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                 setWorksheets(newWs);
                               }}
                               placeholder="Passage Title (e.g. 'Tom and Anna Meet')..."
-                              className="text-2xl font-black text-indigo-900 bg-transparent border-none outline-none w-full"
+                              className="text-xl font-black text-indigo-900 bg-transparent border-none outline-none w-full"
                               minRows={1}
                             />
                             <AutoResizeTextarea
@@ -1349,7 +1342,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                 setWorksheets(newWs);
                               }}
                               placeholder="Enter reading passage content..."
-                              className="w-full text-lg text-slate-700 leading-[1.8] bg-transparent border-none outline-none italic whitespace-pre-wrap"
+                              className="w-full text-base text-slate-700 leading-[1.6] bg-transparent border-none outline-none italic whitespace-pre-wrap"
                               minRows={3}
                             />
                           </div>
@@ -1409,7 +1402,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                         {sec.items.map((item, itemIdx) => (
                           <div
                             key={itemIdx}
-                            className="bg-white border border-slate-100 rounded-2xl p-6 shadow-xs relative group/item"
+                            className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs relative group/item"
                           >
                             <div className="flex gap-4">
                               <div className="flex-1 space-y-4">

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useHashTab } from '@shared/hooks/useHashTab';
+import { useSessionStorage } from '@shared/hooks/useSessionStorage';
 import { CEFRLevel, AppState, SavedLesson, CurriculumLesson, CurriculumParams, ESLCurriculum, SavedCurriculum } from './types';
 import { generateLessonPlan } from './services/geminiService';
 import { InputSection } from './components/InputSection';
@@ -26,19 +28,29 @@ const INDIGO_COLOR = '#4f46e5';
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
-    const [state, setState] = useState<AppState>({
+    const [state, setState] = useSessionStorage<AppState>('esl-planner-state', {
         isLoading: false,
         generatedContent: null,
         error: null,
     });
 
-    const [viewMode, setViewMode] = useState<'curriculum' | 'create' | 'history'>('curriculum');
+    const [viewMode, setViewMode] = useHashTab<'curriculum' | 'create' | 'history'>('curriculum', ['curriculum', 'create', 'history']);
     const [isExporting, setIsExporting] = useState<string | null>(null);
     const [isExportingCur, setIsExportingCur] = useState<string | null>(null);
     const [prefilledValues, setPrefilledValues] = useState<MappedESLInput | null>(null);
-    const [loadedCurriculum, setLoadedCurriculum] = useState<{ curriculum: ESLCurriculum; params: CurriculumParams } | null>(null);
+    const [loadedCurriculum, setLoadedCurriculum] = useSessionStorage<{ curriculum: ESLCurriculum; params: CurriculumParams } | null>('esl-loaded-curriculum', null);
 
-    // --- Extracted hooks ---
+    // Clear session storage if entering from the landing page (no hash or exactly #curriculum)
+    // but ONLY on initial mount. We use sessionStorage directly to avoid triggering React setter loops.
+    useEffect(() => {
+        if (!window.location.hash || window.location.hash === '#curriculum') {
+            sessionStorage.removeItem('esl-planner-state');
+            sessionStorage.removeItem('esl-loaded-curriculum');
+            // We also need to reset the React state to match the cleared session
+            setState({ isLoading: false, generatedContent: null, error: null });
+            setLoadedCurriculum(null);
+        }
+    }, []);    // --- Extracted hooks ---
     const history = useLessonHistory();
     const {
         activeLessonId, setActiveLessonId, savedLessons, setSavedLessons,
@@ -57,6 +69,15 @@ const AppContent: React.FC = () => {
     const { batchStatus, batchLessonMap, batchRunning, batchProgress, handleBatchGenerate, handleCancelBatch } = useBatchGenerate(savedLessonsRef, setSavedLessons);
 
     // --- Top-level handlers (touch App state) ---
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const handleStopGeneration = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setState(prev => ({ ...prev, isLoading: false, error: "Generation cancelled by user." }));
+    };
 
     const handleGenerate = async (
         text: string, files: File[], level: CEFRLevel, topic: string,
@@ -64,11 +85,17 @@ const AppContent: React.FC = () => {
     ) => {
         setState(prev => ({ ...prev, isLoading: true, error: null, generatedContent: null }));
         setActiveLessonId(null);
+        abortControllerRef.current = new AbortController();
         try {
-            const lessonContent = await generateLessonPlan(text, files, level, topic, slideCount, duration, studentCount, lessonTitle);
+            const lessonContent = await generateLessonPlan(
+                text, files, level, topic, slideCount, duration, studentCount, lessonTitle, abortControllerRef.current.signal
+            );
             setState({ isLoading: false, generatedContent: lessonContent, error: null });
             setViewMode('create');
         } catch (error: any) {
+            if (error.name === 'AbortError' || error.message === 'Operation aborted') {
+                return; // Handled by handleStopGeneration
+            }
             console.error(error);
             let errorMessage = "Failed to generate lesson plan.";
             if (error.message) {
@@ -78,6 +105,8 @@ const AppContent: React.FC = () => {
                 else errorMessage = error.message;
             }
             setState({ isLoading: false, generatedContent: null, error: errorMessage });
+        } finally {
+            abortControllerRef.current = null;
         }
     };
 
@@ -174,7 +203,12 @@ const AppContent: React.FC = () => {
                     {viewMode === 'create' && (
                         <>
                             {!state.generatedContent && (
-                                <InputSection onGenerate={handleGenerate} isLoading={state.isLoading} initialValues={prefilledValues} />
+                                <InputSection
+                                    onGenerate={handleGenerate}
+                                    isLoading={state.isLoading}
+                                    initialValues={prefilledValues}
+                                    onStop={handleStopGeneration}
+                                />
                             )}
                             {state.error && <ErrorModal message={state.error} onClose={() => setState(prev => ({ ...prev, error: null }))} />}
                             {state.generatedContent && (
@@ -267,27 +301,36 @@ const AppContent: React.FC = () => {
                                                     openLabel={t('rec.openCurriculum')}
                                                     onOpen={() => handleLoadCurriculum(cur)}
                                                     onDelete={() => handleDeleteCurriculum(cur.id)}
-                                                    onExport={async () => {
-                                                        setIsExportingCur(cur.id);
-                                                        try {
-                                                            const zip = new JSZip();
-                                                            let md = `# ${cur.textbookTitle}\n\n**Level:** ${cur.targetLevel}\n**Total Lessons:** ${cur.totalLessons}\n\n## Overview\n\n${cur.curriculum.overview}\n\n`;
-                                                            cur.curriculum.lessons.forEach((l, i) => {
-                                                                md += `## Lesson ${i + 1}: ${l.title}\n\n- **Topic:** ${l.topic}\n- **Description:** ${l.description}\n- **Grammar Focus:** ${l.grammarFocus}\n- **Objectives:** ${l.objectives.join('; ')}\n- **Vocabulary:** ${l.suggestedVocabulary.join(', ')}\n- **Activities:** ${l.suggestedActivities.join('; ')}\n\n`;
-                                                            });
-                                                            zip.file('Curriculum_Overview.md', md);
-                                                            zip.file('curriculum_data.json', JSON.stringify({ curriculum: cur.curriculum, params: cur.params }, null, 2));
-                                                            const blob = await zip.generateAsync({ type: 'blob' });
-                                                            const url = URL.createObjectURL(blob);
-                                                            const a = document.createElement('a');
-                                                            a.href = url;
-                                                            a.download = `ESL_Curriculum_${cur.textbookTitle.replace(/[^a-z0-9]/gi, '_')}.zip`;
-                                                            a.click();
-                                                            URL.revokeObjectURL(url);
-                                                        } catch (err) { console.error('Export failed', err); }
-                                                        finally { setIsExportingCur(null); }
-                                                    }}
-                                                    exporting={isExportingCur === cur.id}
+                                                    customActions={(
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                setIsExportingCur(cur.id);
+                                                                try {
+                                                                    const zip = new JSZip();
+                                                                    let md = `# ${cur.textbookTitle}\n\n**Level:** ${cur.targetLevel}\n**Total Lessons:** ${cur.totalLessons}\n\n## Overview\n\n${cur.curriculum.overview}\n\n`;
+                                                                    cur.curriculum.lessons.forEach((l, i) => {
+                                                                        md += `## Lesson ${i + 1}: ${l.title}\n\n- **Topic:** ${l.topic}\n- **Description:** ${l.description}\n- **Grammar Focus:** ${l.grammarFocus}\n- **Objectives:** ${l.objectives.join('; ')}\n- **Vocabulary:** ${l.suggestedVocabulary.join(', ')}\n- **Activities:** ${l.suggestedActivities.join('; ')}\n\n`;
+                                                                    });
+                                                                    zip.file('Curriculum_Overview.md', md);
+                                                                    zip.file('curriculum_data.json', JSON.stringify({ curriculum: cur.curriculum, params: cur.params }, null, 2));
+                                                                    const blob = await zip.generateAsync({ type: 'blob' });
+                                                                    const url = URL.createObjectURL(blob);
+                                                                    const a = document.createElement('a');
+                                                                    a.href = url;
+                                                                    a.download = `ESL_Curriculum_${cur.textbookTitle.replace(/[^a-z0-9]/gi, '_')}.zip`;
+                                                                    a.click();
+                                                                    URL.revokeObjectURL(url);
+                                                                } catch (err) { console.error('Export failed', err); }
+                                                                finally { setIsExportingCur(null); }
+                                                            }}
+                                                            disabled={isExportingCur === cur.id}
+                                                            className={`p-2 rounded-lg transition-colors ${isExportingCur === cur.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
+                                                            title="Download/Export"
+                                                        >
+                                                            <Download size={16} className={isExportingCur === cur.id ? "animate-pulse" : ""} />
+                                                        </button>
+                                                    )}
                                                     accentColor="violet"
                                                 />
                                             ))}
@@ -338,8 +381,19 @@ const AppContent: React.FC = () => {
                                                     openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
                                                     onOpen={() => handleLoadRecord(lesson)}
                                                     onDelete={() => handleDeleteRecord(lesson.id)}
-                                                    onExport={() => handleDownloadZip(lesson, setIsExporting)}
-                                                    exporting={isExporting === lesson.id}
+                                                    customActions={(
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDownloadZip(lesson, setIsExporting);
+                                                            }}
+                                                            disabled={isExporting === lesson.id}
+                                                            className={`p-2 rounded-lg transition-colors ${isExporting === lesson.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
+                                                            title="Download/Export"
+                                                        >
+                                                            <Download size={16} className={isExporting === lesson.id ? "animate-pulse" : ""} />
+                                                        </button>
+                                                    )}
                                                     onRename={(newName) => handleRenameLesson(lesson.id, newName)}
                                                     accentColor="violet"
                                                     active={activeLessonId === lesson.id}

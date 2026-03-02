@@ -5,6 +5,8 @@
         "apps/*"
     ],
     "scripts": {
+        "dev": "concurrently -n planner,essay,nature,ops,proxy -c cyan,green,yellow,magenta,white \"npm run dev:planner\" \"npm run dev:essay\" \"npm run dev:nature\" \"npm run dev:ops\" \"npm run dev:proxy\"",
+        "dev:proxy": "vite --config dev-proxy.config.ts",
         "dev:planner": "npm -w apps/esl-planner run dev",
         "dev:essay": "npm -w apps/essay-lab run dev",
         "dev:nature": "npm -w apps/nature-compass run dev",
@@ -15,5 +17,19 @@
         "build:ops": "npm -w apps/academy-ops run build",
         "build:apps": "npm run build:planner && npm run build:essay && npm run build:nature && npm run build:ops",
         "build": "npm run build:apps && node scripts/build-landing.js"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.2.1",
+        "@types/node": "^22.14.0",
+        "@vitejs/plugin-react": "^5.0.4",
+        "concurrently": "^9.2.1",
+        "tailwindcss": "^4.2.1",
+        "typescript": "~5.8.2",
+        "vite": "^6.2.0"
+    },
+    "dependencies": {
+        "lucide-react": "^0.563.0",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4"
     }
 }

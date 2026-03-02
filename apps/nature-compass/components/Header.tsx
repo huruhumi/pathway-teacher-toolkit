@@ -9,10 +9,11 @@ import { HeaderToggles } from '@shared/components/HeaderToggles';
 interface HeaderProps {
   currentView: 'curriculum' | 'lesson' | 'saved';
   onNavigate: (view: 'curriculum' | 'lesson' | 'saved') => void;
+  onLogoClick: () => void;
   onShowAuth?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowAuth }) => {
+export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoClick, onShowAuth }) => {
   const { user, signOut } = useAuthStore();
   const cloudEnabled = isSupabaseEnabled();
   const { t, lang, setLang } = useLanguage();
@@ -61,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onShowA
       tabs={tabs}
       activeTab={currentView}
       onTabChange={(key) => onNavigate(key as 'curriculum' | 'lesson' | 'saved')}
-      onLogoClick={() => onNavigate('curriculum')}
+      onLogoClick={onLogoClick}
       rightContent={
         <div className="flex items-center gap-2">
           <HeaderToggles lang={lang} onLangChange={setLang} />

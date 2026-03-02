@@ -35,9 +35,9 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                 </h3>
                 <button
                     onClick={handleCopyAllPrompts}
-                    className="text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+                    className="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
                 >
-                    <Clipboard size={16} /> Copy All Prompts
+                    <Clipboard size={14} /> Copy All Prompts
                 </button>
             </div>
 
@@ -55,7 +55,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                             }}
                             className={`text-xs font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${copiedStylePrompt
                                 ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
+                                : 'bg-white text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
                                 }`}
                         >
                             {copiedStylePrompt ? <Check size={14} /> : <Clipboard size={14} />}
@@ -65,7 +65,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                     <p className="text-sm text-slate-600 font-mono italic leading-relaxed">
                         {plan.handbookStylePrompt}
                     </p>
-                    <div className="mt-2 text-xs text-indigo-500 font-medium">
+                    <div className="mt-2 text-xs text-emerald-500 font-medium">
                         <Info size={12} className="inline ml-1 mb-0.5" />
                         Paste this into NotebookLM as a global instruction to ensure all generated handbook pages share the same aesthetic.
                     </div>
@@ -74,7 +74,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
 
             <div className="space-y-4">
                 {handbookPages.map((page, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm group relative">
                         <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100">
                             <div>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Page {page.pageNumber}</span>
@@ -93,7 +93,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
                                     <ImageIcon size={12} /> Visual Prompt
                                 </label>
@@ -106,12 +106,12 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                                 />
                                 <button
                                     onClick={() => copyToClipboard(page.visualPrompt, 'image', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
                                 >
                                     {copiedImagePrompt === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
                                     <FileText size={12} /> Content Prompt
                                 </label>
@@ -124,7 +124,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                                 />
                                 <button
                                     onClick={() => copyToClipboard(page.contentPrompt, 'content', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-all"
+                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
                                 >
                                     {copiedContentPrompt === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>

@@ -67,7 +67,7 @@ export const generateCurriculum = async (
     1. ${truncatedPdf ? 'The curriculum MUST be based on the uploaded reference document above.' : `The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".`}
     2. It should have exactly ${lessonCount} progressive lessons.
     3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
-    4. Each lesson must include a STEAM focus (Science, Technology, Engineering, Arts, Math).
+    4. Each lesson must include a specific interdisciplinary focus (e.g., Biology & Ecology, Physics & Forces, Chemistry & Matter, Engineering & Design, Earth & Space, Math & Logic, Visual Arts, Theater & Drama, Music & Sound, Social Science, Economy & Trade, History & Culture, etc. Do not limit to just traditional STEAM).
     5. Each lesson must include a specific, explicit, and actionable ESL focus.
     6. Each lesson must have a specific "Rainy Day" indoor alternative activity.
     7. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot.
@@ -148,7 +148,7 @@ export const generateCurriculumCN = async (
     1. ${truncatedPdf ? '课程必须基于上述参考文档内容设计。' : `课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。`}
     2. 必须包含恰好${lessonCount}节循序渐进的课。
     3. 地点必须是${city}具体的、知名的、方便到达的户外地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
-    4. 每节课必须包含STEAM要素（科学、技术、工程、艺术、数学）。
+    4. 每节课必须包含具体的跨学科焦点元素（例如：生物与生态、物理与力学、化学与物质、工程与设计、地球与空间、数学与逻辑、视觉艺术、戏剧与表演、音乐与声音、社会科学、经济与经贸、历史与文化等，不要仅局限于传统的STEAM五项）。
     5. 每节课必须有具体的、可执行的"雨天室内替代活动"。
     6. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。
     7. 语气应专业、教育性强、鼓舞人心。

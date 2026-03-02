@@ -60,6 +60,7 @@ export const translations = {
     'input.fileTypes': { en: 'PDFs, Images, or Text files (Max 5 files)', zh: 'PDF、图片或文本文件（最多5个）' },
     'input.stopGeneration': { en: 'Stop Generation', zh: '停止生成' },
     'input.generateKit': { en: 'Generate Lesson Kit', zh: '生成课件' },
+    'input.generatingKit': { en: 'Generating Whole Kit...', zh: '正在生成完整资料包...' },
 
     // Dropdown display text (value stays English for AI)
     'age.6-9 Years (Primary Lower)': { en: '6-9 Years (Primary Lower)', zh: '6-9岁（小学低段）' },

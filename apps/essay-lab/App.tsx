@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
+import { useHashTab } from '@shared/hooks/useHashTab';
 import { analyzeEssay } from './services/geminiService';
 import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord } from './types';
 import ReportDisplay from './components/ReportDisplay';
@@ -25,7 +26,7 @@ const AppContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<CorrectionReport | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
-  const [viewMode, setViewMode] = useState<'correction' | 'essays' | 'records'>('correction');
+  const [viewMode, setViewMode] = useHashTab<'correction' | 'essays' | 'records'>('correction', ['correction', 'essays', 'records']);
 
   // Essay Inputs
   const [essayText, setEssayText] = useState('');

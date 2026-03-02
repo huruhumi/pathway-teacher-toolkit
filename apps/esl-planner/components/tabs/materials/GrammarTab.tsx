@@ -12,7 +12,6 @@ export interface GrammarTabProps {
 
     setCustomGrammarPrompt: (val: string) => void;
     handleDownloadGrammarInfographic: () => void;
-    openViewer: (tab: string, subTab: string) => void;
     handleGenerateGrammarInfographic: () => void;
     handleGenerateSingleGrammar: () => void;
     handleArrayChange: (field: 'objectives' | 'materials' | 'grammarSentences', index: number, value: string) => void;
@@ -28,7 +27,6 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
 
     setCustomGrammarPrompt,
     handleDownloadGrammarInfographic,
-    openViewer,
     handleGenerateGrammarInfographic,
     handleGenerateSingleGrammar,
     handleArrayChange,
@@ -37,20 +35,17 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
     return (
         <div className="max-w-4xl mx-auto space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-xl font-bold text-slate-800">Lesson Infographic Generator</h3>
+                <h3 className="text-lg font-bold text-slate-800">Lesson Infographic Generator</h3>
                 <div className="flex gap-2">
                     {grammarInfographicUrl && (
                         <button onClick={handleDownloadGrammarInfographic} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold">
                             <Download className="w-4 h-4" /> Download Handout
                         </button>
                     )}
-                    <button onClick={() => openViewer('materials', 'grammar')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold">
-                        <ExternalLink className="w-4 h-4" /> Print View
-                    </button>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm space-y-8 no-print">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm space-y-6 no-print">
                 <div className="space-y-4">
                     <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
                         <Bot className="w-5 h-5 text-indigo-500" />
@@ -75,7 +70,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                     <p className="text-[10px] text-slate-400 italic">This will integrate both Grammar Points and Target Vocabulary into a single visual handout.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Grammar Points Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">

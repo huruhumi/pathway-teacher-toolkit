@@ -33,14 +33,12 @@ interface ActivitiesTabProps {
     editableGames: Game[];
     setEditableGames: (games: Game[]) => void;
     editablePlan: StructuredLessonPlan | null;
-    openViewer: (tabId: string, subTabId?: string) => void;
 }
 
 export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
     editableGames,
     setEditableGames,
     editablePlan,
-    openViewer,
 }) => {
     const [isGeneratingGame, setIsGeneratingGame] = useState(false);
     const [gameFilterSkill, setGameFilterSkill] = useState('Random');
@@ -96,16 +94,13 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h3 className="text-xl font-bold text-slate-800">Classroom Games & Activities</h3>
                 <div className="flex gap-2 no-print">
-                    <button onClick={() => openViewer('games')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold shadow-sm">
-                        <ExternalLink className="w-4 h-4" /> Print View
-                    </button>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-indigo-100 shadow-sm no-print">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm no-print mb-8">
                 <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-500" />
-                    Generate New Activity
+                    Generate New Game / Activity
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-1">
@@ -113,7 +108,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                         <select
                             value={gameFilterSkill}
                             onChange={(e) => setGameFilterSkill(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
                         >
                             {skills.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -123,7 +118,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                         <select
                             value={gameFilterType}
                             onChange={(e) => setGameFilterType(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
                         >
                             {gameTypes.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
@@ -132,10 +127,10 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                         <button
                             onClick={handleGenerateNewGame}
                             disabled={isGeneratingGame}
-                            className="w-full h-[46px] bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50"
+                            className="w-full h-[46px] bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-sm hover:shadow-md disabled:bg-indigo-400 disabled:shadow-none"
                         >
                             {isGeneratingGame ? <Loader2 className="w-5 h-5 animate-spin" /> : <Bot className="w-5 h-5" />}
-                            Generate Smart Activity
+                            Generate AI Activity
                         </button>
                     </div>
                 </div>
@@ -143,47 +138,47 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {editableGames.map((game, idx) => (
-                    <div key={idx} className={`bg-white border-2 rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-all flex flex-col h-full group relative ${game.isCompleted ? 'border-green-200 opacity-70' : 'border-indigo-50 hover:border-indigo-200'}`}>
-                        <button onClick={() => removeGame(idx)} className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-300 hover:text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all no-print">
-                            <Trash2 className="w-4 h-4" />
+                    <div key={idx} className={`bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full group relative ${game.isCompleted ? 'border-emerald-200 opacity-75' : 'border-slate-200 hover:border-indigo-300'}`}>
+                        <button onClick={() => removeGame(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                            <Trash2 className="w-5 h-5" />
                         </button>
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex-1 mr-4">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">{game.type}</span>
+                                    <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">{game.type}</span>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{game.interactionType}</span>
                                 </div>
                                 <input
                                     value={game.name}
                                     onChange={(e) => handleGameChange(idx, 'name', e.target.value)}
-                                    className="text-2xl font-black text-slate-800 bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-100 rounded w-full"
+                                    className="text-xl font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-[90%] transition-colors pb-1"
                                 />
                             </div>
                             <button
                                 onClick={() => toggleGameCompletion(idx)}
-                                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm shrink-0 no-print ${game.isCompleted ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-400 hover:bg-indigo-500 hover:text-white'}`}
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm shrink-0 no-print border ${game.isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'}`}
                                 title={game.isCompleted ? "Mark as Incomplete" : "Mark as Planned"}
                             >
-                                {game.isCompleted ? <CheckSquare className="w-6 h-6" /> : <Gamepad2 className="w-6 h-6" />}
+                                {game.isCompleted ? <CheckSquare className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
                             </button>
                         </div>
 
                         <div className="flex-1 space-y-6">
                             <div>
-                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Implementation Steps</h5>
+                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Instructions</h5>
                                 <AutoResizeTextarea
                                     value={game.instructions}
                                     onChange={(e) => handleGameChange(idx, 'instructions', e.target.value)}
-                                    className="w-full text-sm text-slate-700 leading-relaxed bg-slate-50/30 border-none rounded-xl p-4 outline-none focus:bg-white focus:ring-1 focus:ring-indigo-100 transition-all"
+                                    className="w-full text-sm text-slate-700 leading-relaxed bg-slate-50/50 border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded-xl p-3 outline-none transition-all"
                                     minRows={4}
                                 />
                             </div>
 
                             <div>
-                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Required Materials</h5>
+                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><CheckSquare className="w-3 h-3" /> Materials</h5>
                                 <div className="flex flex-wrap gap-2">
                                     {game.materials.map((m, i) => (
-                                        <div key={i} className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl group/mat">
+                                        <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-lg group/mat shadow-sm">
                                             <input
                                                 value={m}
                                                 onChange={(e) => {
@@ -191,7 +186,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                                                     newMats[i] = e.target.value;
                                                     handleGameChange(idx, 'materials', newMats);
                                                 }}
-                                                className="text-[10px] font-bold text-slate-600 bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-100 min-w-[50px] w-fit"
+                                                className="text-[11px] font-semibold text-slate-700 bg-transparent border-none outline-none focus:text-indigo-600 min-w-[50px] w-fit"
                                             />
                                             <button
                                                 onClick={() => {
@@ -206,9 +201,9 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
                                     ))}
                                     <button
                                         onClick={() => handleGameChange(idx, 'materials', [...game.materials, "New Material"])}
-                                        className="p-1.5 border border-dashed border-indigo-200 rounded-xl text-indigo-400 hover:bg-indigo-50 transition-all no-print"
+                                        className="p-1.5 border border-dashed border-slate-300 rounded-lg text-slate-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50 transition-all no-print flex items-center justify-center gap-1"
                                     >
-                                        <Plus className="w-4 h-4" />
+                                        <Plus className="w-3 h-3" /><span className="text-[10px] font-bold pr-1">Add</span>
                                     </button>
                                 </div>
                             </div>

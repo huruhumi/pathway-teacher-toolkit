@@ -11,7 +11,6 @@ export interface PhonicsTabProps {
     decodableTextImages: Record<number, string>;
     generatingDtImageIndex: number | null;
 
-    openViewer: (tab: string, subTab: string) => void;
     handleAddPhonicsPoint: () => void;
     handleAddDecodableText: () => void;
     handleGenerateDtImage: (index: number) => void;
@@ -26,7 +25,6 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = ({
     decodableTextImages,
     generatingDtImageIndex,
 
-    openViewer,
     handleAddPhonicsPoint,
     handleAddDecodableText,
     handleGenerateDtImage
@@ -34,10 +32,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = ({
     return (
         <div className="space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-xl font-bold text-slate-800">Phonics & Decodable Practice</h3>
-                <button onClick={() => openViewer('materials', 'phonics')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold">
-                    <ExternalLink className="w-4 h-4" /> Print Preview
-                </button>
+                <h3 className="text-lg font-bold text-slate-800">Phonics & Decodable Practice</h3>
             </div>
 
             <div className="flex flex-col space-y-12">
@@ -112,7 +107,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = ({
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                     <div
-                                        className="flex-1 w-full text-2xl font-medium text-slate-800 leading-[2.5] italic whitespace-pre-wrap outline-none"
+                                        className="flex-1 w-full text-xl font-medium text-slate-800 leading-[2] italic whitespace-pre-wrap outline-none"
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => {
@@ -129,7 +124,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = ({
                                     </div>
                                 </div>
 
-                                <div className="w-full shrink-0 h-[500px] lg:h-auto">
+                                <div className="w-full shrink-0 h-[300px] lg:h-auto">
                                     {decodableTextImages[idx] ? (
                                         <div className="h-full rounded-[2.5rem] overflow-hidden shadow-xl border-8 border-white animate-fade-in group w-full flex items-center justify-center bg-slate-50">
                                             <img src={decodableTextImages[idx]} className="max-h-full max-w-full object-contain" alt="story illustration" />

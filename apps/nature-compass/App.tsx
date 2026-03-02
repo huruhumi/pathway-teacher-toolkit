@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useHashTab } from '@shared/hooks/useHashTab';
+import { useSessionStorage } from '@shared/hooks/useSessionStorage';
 import { Header } from './components/Header';
 import { InputSection } from './components/InputSection';
 import { LessonPlanDisplay } from './components/LessonPlanDisplay';
@@ -17,7 +19,7 @@ import { imageStore } from '@shared/imageStore';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
-import { Compass } from 'lucide-react';
+import { Compass, ArrowLeft } from 'lucide-react';
 import { useBatchGenerate } from './hooks/useBatchGenerate';
 import { useLanguage } from './i18n/LanguageContext';
 
@@ -70,7 +72,7 @@ export const App: React.FC = () => {
     uploadedFiles: [],
   });
 
-  const [lessonPlan, setLessonPlan] = useState<LessonPlanResponse | null>(null);
+  const [lessonPlan, setLessonPlan] = useSessionStorage<LessonPlanResponse | null>('nc-lesson-plan', null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,23 +84,36 @@ export const App: React.FC = () => {
   const savedPlansRef = useRef<SavedLessonPlan[]>(savedPlans);
   useEffect(() => { savedPlansRef.current = savedPlans; }, [savedPlans]);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
-  const [view, setView] = useState<'curriculum' | 'lesson' | 'saved'>('curriculum');
+  const [view, setView] = useHashTab<'curriculum' | 'lesson' | 'saved'>('curriculum', ['curriculum', 'lesson', 'saved']);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Saved Curricula State
   const [savedCurricula, setSavedCurricula] = useState<SavedCurriculum[]>([]);
-  const [externalCurriculum, setExternalCurriculum] = useState<{ curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh' } | null>(null);
+  const [externalCurriculum, setExternalCurriculum] = useSessionStorage<{ curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh' } | null>('nc-ext-curriculum', null);
 
   // Track current language for lesson kit generation
   const [currentKitLanguage, setCurrentKitLanguage] = useState<'en' | 'zh'>('en');
 
   // Curriculum result state — for separate result page
-  const [curriculumResult, setCurriculumResult] = useState<{
+  const [curriculumResult, setCurriculumResult] = useSessionStorage<{
     curriculumEN: Curriculum | null;
     curriculumCN: Curriculum | null;
     params: CurriculumParams;
     activeLanguage: 'en' | 'zh';
-  } | null>(null);
+  } | null>('nc-cur-res', null);
+
+  // Clear session storage if entering from the landing page (no hash or exactly #curriculum)
+  // but ONLY on initial mount.
+  useEffect(() => {
+    if (!window.location.hash || window.location.hash === '#curriculum') {
+      sessionStorage.removeItem('nc-lesson-plan');
+      sessionStorage.removeItem('nc-cur-res');
+      sessionStorage.removeItem('nc-ext-curriculum');
+      setLessonPlan(null);
+      setCurriculumResult(null);
+      setExternalCurriculum(null);
+    }
+  }, []);
 
   // Batch Generate
   const {
@@ -108,6 +123,7 @@ export const App: React.FC = () => {
 
   // Auth
   const { user, initialize: initAuth } = useAuthStore();
+  const { lang, t } = useLanguage();
 
   // Stepped Loading State
   const [loadingStep, setLoadingStep] = useState(0);
@@ -417,7 +433,25 @@ export const App: React.FC = () => {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
         <Header
           currentView={view}
-          onNavigate={setView}
+          onNavigate={(v) => {
+            setView(v);
+            if (v === 'curriculum') {
+              setLessonPlan(null);
+              setCurriculumResult(null);
+              setExternalCurriculum(null);
+              setCurrentPlanId(null);
+            }
+          }}
+          onLogoClick={() => {
+            setView('curriculum');
+            setLessonPlan(null);
+            setCurriculumResult(null);
+            setExternalCurriculum(null);
+            setCurrentPlanId(null);
+            sessionStorage.removeItem('nc-lesson-plan');
+            sessionStorage.removeItem('nc-cur-res');
+            sessionStorage.removeItem('nc-ext-curriculum');
+          }}
           onShowAuth={() => setShowAuthModal(true)}
         />
 
@@ -460,67 +494,38 @@ export const App: React.FC = () => {
           {/* Lesson Kit view — always mounted, hidden when not active */}
           <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
             <BodyContainer className="flex flex-col gap-8">
-              {/* Input Form */}
-              <div className="w-full max-w-3xl mx-auto">
-                <InputSection
-                  input={input}
-                  setInput={setInput}
-                  onSubmit={handleSubmit}
-                  onStop={handleStop}
-                  isLoading={isLoading}
-                />
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center">
-                  {error}
+              {!lessonPlan ? (
+                <div className="w-full max-w-3xl mx-auto">
+                  <InputSection
+                    input={input}
+                    setInput={setInput}
+                    onSubmit={handleSubmit}
+                    onStop={handleStop}
+                    isLoading={isLoading}
+                  />
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center mt-6">
+                      {error}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div id="results-section" className="w-full pb-20 mt-4 animate-fade-in-up">
+                  <div className="mb-4">
+                    <button
+                      onClick={() => { setLessonPlan(null); setCurrentPlanId(null); }}
+                      className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-4 text-sm md:text-base"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> {lang === 'zh' ? '返回生成器' : 'Back to Generator'}
+                    </button>
+                    <LessonPlanDisplay
+                      plan={lessonPlan}
+                      onSave={handleSavePlan}
+                    />
+                  </div>
                 </div>
               )}
-
-              {/* Results Area */}
-              <div id="results-section" className="w-full pb-20">
-                {lessonPlan && (
-                  <LessonPlanDisplay
-                    plan={lessonPlan}
-                    onSave={handleSavePlan}
-                  />
-                )}
-
-                {isLoading && !lessonPlan && (
-                  <div className="w-full relative mt-8">
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center -mt-20">
-                      <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl flex flex-col items-center border border-slate-100 animate-pulse-glow">
-                        <Compass className="animate-spin text-emerald-500 mb-6" size={56} />
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">Generating Lesson Kit</h3>
-                        <p className="text-emerald-600 font-medium h-6 transition-all duration-300">
-                          {LOADING_STEPS[loadingStep]}
-                        </p>
-                        <div className="flex gap-1.5 mt-6">
-                          {LOADING_STEPS.map((_, i) => (
-                            <div
-                              key={i}
-                              className={`h-2 rounded-full transition-all duration-500 ${i === loadingStep ? 'w-6 bg-emerald-500' : 'w-2 bg-slate-200'}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="hidden md:block w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 opacity-40 select-none pointer-events-none">
-                      <div className="flex gap-2 border-b border-slate-100 pb-4 mb-6">
-                        <div className="h-10 w-28 bg-slate-200 rounded-lg animate-pulse" />
-                        <div className="h-10 w-24 bg-slate-100 rounded-lg animate-pulse" />
-                        <div className="h-10 w-24 bg-slate-100 rounded-lg animate-pulse" />
-                      </div>
-                      <div className="h-8 w-1/3 bg-slate-200 rounded animate-pulse mb-8" />
-                      <div className="space-y-6">
-                        <div className="h-40 w-full bg-slate-100 rounded-xl animate-pulse" />
-                        <div className="h-32 w-full bg-slate-100 rounded-xl animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </BodyContainer>
           </div>
 

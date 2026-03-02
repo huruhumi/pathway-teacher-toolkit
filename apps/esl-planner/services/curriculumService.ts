@@ -17,7 +17,7 @@ const CURRICULUM_SCHEMA = {
                 type: Type.OBJECT,
                 properties: {
                     lessonNumber: { type: Type.NUMBER },
-                    title: { type: Type.STRING, description: "A clear, engaging lesson title" },
+                    title: { type: Type.STRING, description: "Lesson title formatted strictly as '[Textbook Name] Unit [X] Lesson [Y] [Topic]'" },
                     topic: { type: Type.STRING, description: "The specific topic or theme of this lesson" },
                     description: { type: Type.STRING, description: "2-3 sentence description of what this lesson covers" },
                     objectives: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 specific learning objectives" },
@@ -53,7 +53,8 @@ CRITICAL INSTRUCTIONS:
 4. Extract REAL vocabulary, grammar points, and topics FROM the provided textbook content — do NOT invent content that isn't in the material.
 5. The textbookReference field should indicate which part of the content each lesson draws from.
 6. Objectives should follow the format: "Students will be able to [action] [content]".
-7. Suggested activities should be practical, level-appropriate, and varied (mix of individual, pair, and group work).`;
+7. Suggested activities should be practical, level-appropriate, and varied (mix of individual, pair, and group work).
+8. CRITICAL: For the "title" field of each lesson, you MUST strictly use the format: "[Textbook Title] Unit [X] Lesson [Y] [Specific Topic]". Example: "Trailblazer Unit 1 Lesson 1 Welcome to Trailblazer". Ensure the unit and lesson numbers align logically.`;
 
     if (params.customInstructions) {
         prompt += `\n\nAdditional Instructions from Teacher:\n${params.customInstructions}`;

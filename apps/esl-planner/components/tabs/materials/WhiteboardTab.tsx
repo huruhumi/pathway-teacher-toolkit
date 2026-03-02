@@ -8,7 +8,6 @@ export interface WhiteboardTabProps {
 
     setCustomWhiteboardPrompt: (val: string) => void;
     handleDownloadWhiteboardDesign: () => void;
-    openViewer: (tab: string, subTab: string) => void;
     handleGenerateWhiteboardDesign: () => void;
 }
 
@@ -19,26 +18,22 @@ export const WhiteboardTab: React.FC<WhiteboardTabProps> = ({
 
     setCustomWhiteboardPrompt,
     handleDownloadWhiteboardDesign,
-    openViewer,
     handleGenerateWhiteboardDesign
 }) => {
     return (
         <div className="max-w-5xl mx-auto space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-xl font-bold text-slate-800">Whiteboard Design Reference</h3>
+                <h3 className="text-lg font-bold text-slate-800">Whiteboard Design Reference</h3>
                 <div className="flex gap-2">
                     {blackboardImageUrl && (
                         <button onClick={handleDownloadWhiteboardDesign} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold">
                             <Download className="w-4 h-4" /> Download Design
                         </button>
                     )}
-                    <button onClick={() => openViewer('materials', 'whiteboard')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-bold">
-                        <ExternalLink className="w-4 h-4" /> Print View
-                    </button>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm space-y-6 no-print">
+            <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm space-y-4 no-print">
                 <div className="flex flex-col gap-4">
                     <h4 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-indigo-500" />

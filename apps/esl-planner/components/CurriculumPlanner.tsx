@@ -435,6 +435,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.textbookTitle}</h2>
                         <p className="text-slate-600 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-medium flex items-center gap-1.5"><FileText size={14} /> {curriculum.textbookTitle}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} {t('cp.lessonsUnit')}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><GraduationCap size={14} /> {curriculum.targetLevel}</span>
                             {savedParams && (
@@ -471,8 +472,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 ml-2">
-                                            <span className="hidden sm:inline text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
-                                                {lesson.textbookReference}
+                                            <span className="hidden sm:inline text-xs flex-shrink-0 text-slate-400 bg-slate-100 px-2 py-1 rounded-md max-w-[120px] truncate" title={lesson.textbookReference}>
+                                                {(() => {
+                                                    const ref = lesson.textbookReference || '';
+                                                    const match = ref.match(/page(s)?\s*\d+(-\d+)?/i);
+                                                    if (match) return match[0];
+                                                    return ref.split('(')[0].trim();
+                                                })()}
                                             </span>
                                             {isExpanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
                                         </div>

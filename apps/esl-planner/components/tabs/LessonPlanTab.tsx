@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
-import { Loader2, Plus, ChevronUp, ChevronDown, Trash2, ExternalLink } from 'lucide-react';
+import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers } from 'lucide-react';
 import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint } from '../../services/geminiService';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 // We need a shared AutoResizeTextarea to avoid duplicating it everywhere.
 // Since it's currently inside OutputDisplay, we should probably extract it too, but for now we'll put a copy here or extract it later.
@@ -32,13 +33,11 @@ const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({ minRows = 1, cl
 interface LessonPlanTabProps {
     editablePlan: StructuredLessonPlan;
     setEditablePlan: (plan: StructuredLessonPlan) => void;
-    openViewer: (tabId: string, subTabId?: string) => void;
 }
 
 export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
     editablePlan,
     setEditablePlan,
-    openViewer,
 }) => {
     // Local loading states
     const [isGeneratingObjective, setIsGeneratingObjective] = useState(false);
@@ -123,6 +122,35 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
         const newStages = [...editablePlan.stages];
         newStages[index] = { ...newStages[index], [field]: value };
         setEditablePlan({ ...editablePlan, stages: newStages });
+    };
+
+    const handleDragEnd = (result: DropResult) => {
+        if (!result.destination) return;
+
+        const { source, destination, type } = result;
+        if (source.index === destination.index) return;
+
+        if (type === 'objectives' || type === 'materials' || type === 'grammarSentences') {
+            const newArray = Array.from(editablePlan.lessonDetails[type]);
+            const [removed] = newArray.splice(source.index, 1);
+            newArray.splice(destination.index, 0, removed);
+            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, [type]: newArray } });
+        } else if (type === 'targetVocab') {
+            const newVocab = Array.from(editablePlan.lessonDetails.targetVocab);
+            const [removed] = newVocab.splice(source.index, 1);
+            newVocab.splice(destination.index, 0, removed);
+            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: newVocab } });
+        } else if (type === 'anticipatedProblems') {
+            const newProblems = Array.from(editablePlan.lessonDetails.anticipatedProblems);
+            const [removed] = newProblems.splice(source.index, 1);
+            newProblems.splice(destination.index, 0, removed);
+            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: newProblems } });
+        } else if (type === 'stages') {
+            const newStages = Array.from(editablePlan.stages);
+            const [removed] = newStages.splice(source.index, 1);
+            newStages.splice(destination.index, 0, removed);
+            setEditablePlan({ ...editablePlan, stages: newStages });
+        }
     };
 
     // --- Generation Functions ---
@@ -282,240 +310,390 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h3 className="text-xl font-bold text-slate-800">Detailed Lesson Plan</h3>
-                <div className="flex gap-2 no-print">
-                    <button
-                        onClick={() => openViewer('plan')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-semibold"
-                    >
-                        <ExternalLink className="w-4 h-4" />
-                        Open in Viewer
-                    </button>
-                </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-                <div className="bg-[#14b8a6] p-4 text-white grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {['level', 'date', 'topic', 'students'].map((f) => (
-                        <div key={f}>
-                            <label className="block text-teal-100 text-xs font-semibold mb-1 uppercase">{f}</label>
-                            <input value={editablePlan.classInformation[f as keyof typeof editablePlan.classInformation]} onChange={(e) => handlePlanInfoChange('classInformation', f, e.target.value)} className="w-full bg-white/20 border-none text-white rounded px-2 py-1 focus:ring-1 focus:ring-white outline-none" />
-                        </div>
-                    ))}
+        <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h3 className="text-xl font-bold text-slate-800">Detailed Lesson Plan</h3>
                 </div>
 
-                <div className="p-6 space-y-6">
-                    <div className="border border-indigo-200 rounded-lg overflow-hidden">
-                        <div className="bg-indigo-50 px-4 py-2 border-b border-indigo-100 flex justify-between items-center">
-                            <h4 className="font-bold text-indigo-900 text-sm">Lesson objectives:</h4>
-                            <button onClick={addObjectiveEntry} disabled={isGeneratingObjective} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold uppercase no-print">
-                                {isGeneratingObjective ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
-                            </button>
-                        </div>
-                        <div className="bg-[#dbeafe] p-4 space-y-3">
-                            {editablePlan.lessonDetails.objectives.map((obj, i) => (
-                                <div key={i} className="flex gap-2 group items-start">
-                                    <div className="flex-1">
-                                        <AutoResizeTextarea
-                                            value={obj}
-                                            onChange={(e) => handleArrayChange('objectives', i, e.target.value)}
-                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
-                                            minRows={1}
-                                            placeholder="Enter objective..."
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                        <button onClick={() => moveArrayItem('objectives', i, 'up')} className="p-1 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronUp className="w-3 h-3" /></button>
-                                        <button onClick={() => moveArrayItem('objectives', i, 'down')} className="p-1 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronDown className="w-3 h-3" /></button>
-                                        <button onClick={() => deleteArrayItem('objectives', i)} className="p-1 text-red-400 hover:text-red-600 bg-white rounded shadow-xs"><Trash2 className="w-3 h-3" /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden mb-6">
+                    <div className="bg-slate-50 p-4 border-b border-slate-100 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {['level', 'date', 'topic', 'students'].map((f) => (
+                            <div key={f}>
+                                <label className="block text-slate-400 text-[10px] font-bold mb-1 uppercase tracking-widest">{f}</label>
+                                <input
+                                    value={editablePlan.classInformation[f as keyof typeof editablePlan.classInformation]}
+                                    onChange={(e) => handlePlanInfoChange('classInformation', f, e.target.value)}
+                                    className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none pb-1 transition-colors"
+                                />
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="border border-indigo-200 rounded-lg overflow-hidden">
-                        <div className="bg-indigo-50 px-4 py-2 border-b border-indigo-100 flex justify-between items-center">
-                            <h4 className="font-bold text-indigo-900 text-sm">Materials and equipment:</h4>
-                            <button onClick={addMaterialEntry} disabled={isGeneratingMaterial} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold uppercase no-print">
-                                {isGeneratingMaterial ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
-                            </button>
-                        </div>
-                        <div className="bg-[#dbeafe] p-4 space-y-3">
-                            {editablePlan.lessonDetails.materials.map((mat, i) => (
-                                <div key={i} className="flex gap-2 group items-start">
-                                    <div className="flex-1">
-                                        <AutoResizeTextarea
-                                            value={mat}
-                                            onChange={(e) => handleArrayChange('materials', i, e.target.value)}
-                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-sm transition-all"
-                                            minRows={1}
-                                            placeholder="Enter material..."
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                        <button onClick={() => moveArrayItem('materials', i, 'up')} className="p-1 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronUp className="w-3 h-3" /></button>
-                                        <button onClick={() => moveArrayItem('materials', i, 'down')} className="p-1 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronDown className="w-3 h-3" /></button>
-                                        <button onClick={() => deleteArrayItem('materials', i)} className="p-1 text-red-400 hover:text-red-600 bg-white rounded shadow-xs"><Trash2 className="w-3 h-3" /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="border border-indigo-200 rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-[1fr_1fr_120px] bg-indigo-50 border-b border-indigo-100">
-                            <div className="px-4 py-2 border-r border-indigo-200 flex justify-between items-center">
-                                <h4 className="font-bold text-indigo-900 text-sm">Anticipated problems:</h4>
-                            </div>
-                            <div className="px-4 py-2 border-r border-indigo-200">
-                                <h4 className="font-bold text-indigo-900 text-sm">Solutions:</h4>
-                            </div>
-                            <div className="px-4 py-2 bg-indigo-100 flex items-center justify-center no-print">
-                                <button onClick={addProblemEntry} disabled={isGeneratingProblem} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider">
-                                    {isGeneratingProblem ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Pair
+                    <div className="p-6 space-y-6">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                            <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <Target className="text-emerald-500 w-4 h-4" />
+                                    Lesson Objectives
+                                </h4>
+                                <button onClick={addObjectiveEntry} disabled={isGeneratingObjective} className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1 text-xs font-bold uppercase tracking-widest no-print transition-colors">
+                                    {isGeneratingObjective ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
                                 </button>
                             </div>
+                            <Droppable droppableId="objectives-list" type="objectives">
+                                {(provided) => (
+                                    <div className="p-4 space-y-3" ref={provided.innerRef} {...provided.droppableProps}>
+                                        {editablePlan.lessonDetails.objectives.map((obj, i) => (
+                                            <Draggable key={`objective-${i}`} draggableId={`objective-${i}`} index={i}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className={`flex gap-2 group items-start ${snapshot.isDragging ? 'opacity-90 shadow-lg bg-white rounded-lg p-2 border border-emerald-200' : ''}`}
+                                                    >
+                                                        <div
+                                                            {...provided.dragHandleProps}
+                                                            className="mt-2 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing px-1 transition-colors"
+                                                        >
+                                                            <GripVertical size={16} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <AutoResizeTextarea
+                                                                value={obj}
+                                                                onChange={(e) => handleArrayChange('objectives', i, e.target.value)}
+                                                                className="w-full text-sm text-slate-700 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 transition-colors"
+                                                                minRows={1}
+                                                                placeholder="Enter objective..."
+                                                            />
+                                                        </div>
+                                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                            <button onClick={() => deleteArrayItem('objectives', i)} className="p-1.5 text-slate-400 hover:text-red-500 rounded mt-1 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
                         </div>
-                        <div className="bg-[#dbeafe] divide-y divide-indigo-200/30">
-                            {editablePlan.lessonDetails.anticipatedProblems.map((p, i) => (
-                                <div key={i} className="grid grid-cols-[1fr_1fr_120px] group">
-                                    <div className="p-4 border-r border-indigo-200">
-                                        <AutoResizeTextarea
-                                            value={p.problem}
-                                            onChange={(e) => handleProblemSolutionChange(i, 'problem', e.target.value)}
-                                            className="w-full bg-white/50 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
-                                            minRows={2}
-                                            placeholder="Problem..."
-                                        />
+
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                            <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <List className="text-emerald-500 w-4 h-4" />
+                                    Materials and Equipment
+                                </h4>
+                                <button onClick={addMaterialEntry} disabled={isGeneratingMaterial} className="text-emerald-600 hover:text-emerald-800 flex items-center gap-1 text-xs font-bold uppercase tracking-widest no-print transition-colors">
+                                    {isGeneratingMaterial ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
+                                </button>
+                            </div>
+                            <Droppable droppableId="materials-list" type="materials">
+                                {(provided) => (
+                                    <div className="p-4 space-y-3" ref={provided.innerRef} {...provided.droppableProps}>
+                                        {editablePlan.lessonDetails.materials.map((mat, i) => (
+                                            <Draggable key={`material-${i}`} draggableId={`material-${i}`} index={i}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className={`flex gap-2 group items-start ${snapshot.isDragging ? 'opacity-90 shadow-lg bg-white rounded-lg p-2 border border-emerald-200' : ''}`}
+                                                    >
+                                                        <div
+                                                            {...provided.dragHandleProps}
+                                                            className="mt-2 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing px-1 transition-colors"
+                                                        >
+                                                            <GripVertical size={16} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <AutoResizeTextarea
+                                                                value={mat}
+                                                                onChange={(e) => handleArrayChange('materials', i, e.target.value)}
+                                                                className="w-full text-sm text-slate-700 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 transition-colors"
+                                                                minRows={1}
+                                                                placeholder="Enter material..."
+                                                            />
+                                                        </div>
+                                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                            <button onClick={() => deleteArrayItem('materials', i)} className="p-1.5 text-slate-400 hover:text-red-500 rounded mt-1 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
                                     </div>
-                                    <div className="p-4 border-r border-indigo-200">
-                                        <AutoResizeTextarea
-                                            value={p.solution}
-                                            onChange={(e) => handleProblemSolutionChange(i, 'solution', e.target.value)}
-                                            className="w-full bg-white/30 border-none text-slate-800 focus:bg-white p-2 rounded outline-none shadow-xs transition-all"
-                                            minRows={2}
-                                            placeholder="Solution..."
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 p-2 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                        <button onClick={() => moveProblemItem(i, 'up')} className="p-1.5 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronUp className="w-4 h-4" /></button>
-                                        <button onClick={() => moveProblemItem(i, 'down')} className="p-1.5 text-indigo-400 hover:text-indigo-600 bg-white rounded shadow-xs"><ChevronDown className="w-4 h-4" /></button>
-                                        <button onClick={() => deleteProblemItem(i)} className="p-1.5 text-red-400 hover:text-red-600 bg-white rounded shadow-xs"><Trash2 className="w-4 h-4" /></button>
-                                    </div>
+                                )}
+                            </Droppable>
+                        </div>
+
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                            <div className="grid grid-cols-[1fr_1fr_120px] bg-slate-50 border-b border-slate-100">
+                                <div className="px-4 py-3 border-r border-slate-100 flex justify-between items-center">
+                                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <AlertCircle className="text-amber-500 w-4 h-4" />
+                                        Anticipated Problems
+                                    </h4>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        <div className="bg-teal-50/30 p-4 rounded-xl border border-teal-100">
-                            <h4 className="font-bold text-teal-800 mb-4 flex justify-between items-center">Target Vocabulary <button onClick={addVocabEntry} disabled={isGeneratingVocab} className="text-xs bg-teal-600 text-white px-2 py-1 rounded hover:bg-teal-700 flex items-center gap-1 no-print">
-                                {isGeneratingVocab ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
-                            </button></h4>
-                            <div className="grid grid-cols-1 gap-3">
-                                {editablePlan.lessonDetails.targetVocab.map((v, i) => (
-                                    <div key={i} className="bg-white p-3 rounded-lg border border-teal-100 shadow-sm relative group flex gap-2">
-                                        <div className="flex-1 space-y-2">
-                                            <input value={v.word} onChange={(e) => handleVocabChange(i, 'word', e.target.value)} placeholder="Word/Phrase" className="font-bold text-teal-700 bg-transparent w-full border-b border-teal-50 focus:border-teal-300 outline-none p-1" />
-                                            <AutoResizeTextarea value={v.definition} onChange={(e) => handleVocabChange(i, 'definition', e.target.value)} placeholder="Definition/Example" className="w-full text-xs text-slate-500 bg-transparent outline-none p-1" minRows={1} />
-                                        </div>
-                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                            <button onClick={() => moveVocabItem(i, 'up')} className="p-1 text-teal-400 hover:text-teal-600"><ChevronUp className="w-3 h-3" /></button>
-                                            <button onClick={() => moveVocabItem(i, 'down')} className="p-1 text-teal-400 hover:text-teal-600"><ChevronDown className="w-3 h-3" /></button>
-                                            <button onClick={() => deleteVocabItem(i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3" /></button>
-                                        </div>
+                                <div className="px-4 py-3 border-r border-slate-100 flex items-center">
+                                    <h4 className="font-bold text-slate-800 text-sm">Suggested Solutions</h4>
+                                </div>
+                                <div className="px-4 py-3 flex items-center justify-center no-print">
+                                    <button onClick={addProblemEntry} disabled={isGeneratingProblem} className="text-amber-600 hover:text-amber-800 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider transition-colors">
+                                        {isGeneratingProblem ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Pair
+                                    </button>
+                                </div>
+                            </div>
+                            <Droppable droppableId="problems-list" type="anticipatedProblems">
+                                {(provided) => (
+                                    <div className="divide-y divide-slate-100" ref={provided.innerRef} {...provided.droppableProps}>
+                                        {editablePlan.lessonDetails.anticipatedProblems.map((p, i) => (
+                                            <Draggable key={`problem-${i}`} draggableId={`problem-${i}`} index={i}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className={`grid grid-cols-[40px_1fr_1fr_60px] group bg-white hover:bg-slate-50/50 transition-colors ${snapshot.isDragging ? 'opacity-90 shadow-xl border border-amber-200 z-50 relative' : ''}`}
+                                                    >
+                                                        <div className="p-4 flex items-start justify-center border-r border-slate-100">
+                                                            <div
+                                                                {...provided.dragHandleProps}
+                                                                className="text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing px-1 mt-1 transition-colors"
+                                                            >
+                                                                <GripVertical size={16} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-4 border-r border-slate-100 bg-amber-50/10">
+                                                            <AutoResizeTextarea
+                                                                value={p.problem}
+                                                                onChange={(e) => handleProblemSolutionChange(i, 'problem', e.target.value)}
+                                                                className="w-full text-sm text-slate-700 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-amber-400 outline-none pb-1 transition-colors"
+                                                                minRows={2}
+                                                                placeholder="Describe the problem..."
+                                                            />
+                                                        </div>
+                                                        <div className="p-4 border-r border-slate-100">
+                                                            <AutoResizeTextarea
+                                                                value={p.solution}
+                                                                onChange={(e) => handleProblemSolutionChange(i, 'solution', e.target.value)}
+                                                                className="w-full text-sm text-slate-700 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-amber-400 outline-none pb-1 transition-colors"
+                                                                minRows={2}
+                                                                placeholder="Describe the solution..."
+                                                            />
+                                                        </div>
+                                                        <div className="flex flex-col gap-1 p-4 items-center justify-start opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                            <button onClick={() => deleteProblemItem(i)} className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors mt-1"><Trash2 className="w-4 h-4" /></button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
                                     </div>
-                                ))}
+                                )}
+                            </Droppable>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <BookOpen className="text-teal-500 w-4 h-4" />
+                                        Target Vocabulary
+                                    </h4>
+                                    <button onClick={addVocabEntry} disabled={isGeneratingVocab} className="text-teal-600 hover:text-teal-800 flex items-center gap-1 text-xs font-bold uppercase tracking-widest no-print transition-colors">
+                                        {isGeneratingVocab ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
+                                    </button>
+                                </div>
+                                <Droppable droppableId="vocab-list" type="targetVocab">
+                                    {(provided) => (
+                                        <div className="grid grid-cols-1 gap-0 divide-y divide-slate-100 flex-1" ref={provided.innerRef} {...provided.droppableProps}>
+                                            {editablePlan.lessonDetails.targetVocab.map((v, i) => (
+                                                <Draggable key={`vocab-${i}`} draggableId={`vocab-${i}`} index={i}>
+                                                    {(provided, snapshot) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            className={`bg-white p-3 relative group flex gap-2 hover:bg-slate-50/50 transition-colors ${snapshot.isDragging ? 'opacity-90 shadow-xl border border-teal-200 z-50 rounded-lg' : ''}`}
+                                                        >
+                                                            <div
+                                                                {...provided.dragHandleProps}
+                                                                className="mt-2 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing px-1 transition-colors"
+                                                            >
+                                                                <GripVertical size={16} />
+                                                            </div>
+                                                            <div className="flex-1 space-y-2">
+                                                                <input
+                                                                    value={v.word}
+                                                                    onChange={(e) => handleVocabChange(i, 'word', e.target.value)}
+                                                                    placeholder="Word/Phrase"
+                                                                    className="font-bold text-slate-800 bg-transparent w-full border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none pb-1 transition-colors"
+                                                                />
+                                                                <AutoResizeTextarea
+                                                                    value={v.definition}
+                                                                    onChange={(e) => handleVocabChange(i, 'definition', e.target.value)}
+                                                                    placeholder="Definition/Example"
+                                                                    className="w-full text-sm text-slate-500 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none pb-1 transition-colors"
+                                                                    minRows={1}
+                                                                />
+                                                            </div>
+                                                            <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                                <button onClick={() => deleteVocabItem(i)} className="p-1.5 text-slate-400 hover:text-red-500 rounded mt-1 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </div>
+
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                                    <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <Layers className="text-indigo-500 w-4 h-4" />
+                                        Grammar & Sentences
+                                    </h4>
+                                    <button onClick={addSentenceEntry} disabled={isGeneratingSingleGrammar} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold uppercase tracking-widest no-print transition-colors">
+                                        {isGeneratingSingleGrammar ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
+                                    </button>
+                                </div>
+                                <Droppable droppableId="sentences-list" type="grammarSentences">
+                                    {(provided) => (
+                                        <div className="divide-y divide-slate-100 flex-1" ref={provided.innerRef} {...provided.droppableProps}>
+                                            {editablePlan.lessonDetails.grammarSentences.map((s, i) => (
+                                                <Draggable key={`sentence-${i}`} draggableId={`sentence-${i}`} index={i}>
+                                                    {(provided, snapshot) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            className={`flex gap-2 items-start bg-white p-4 group hover:bg-slate-50/50 transition-colors ${snapshot.isDragging ? 'opacity-90 shadow-xl border border-indigo-200 z-50 rounded-lg' : ''}`}
+                                                        >
+                                                            <div
+                                                                {...provided.dragHandleProps}
+                                                                className="mt-1 text-slate-300 hover:text-slate-500 cursor-grab active:cursor-grabbing px-1 transition-colors"
+                                                            >
+                                                                <GripVertical size={16} />
+                                                            </div>
+                                                            <AutoResizeTextarea
+                                                                value={s}
+                                                                onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)}
+                                                                placeholder="Grammar point or target sentence..."
+                                                                className="w-full bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-400 outline-none text-sm text-slate-700 pb-1 transition-colors"
+                                                                minRows={1}
+                                                            />
+                                                            <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
+                                                                <button onClick={() => deleteArrayItem('grammarSentences', i)} className="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
                             </div>
                         </div>
 
-                        <div className="bg-indigo-50/30 p-4 rounded-xl border border-indigo-100">
-                            <h4 className="font-bold text-indigo-800 mb-4 flex justify-between items-center">Grammar & Sentences <button onClick={addSentenceEntry} disabled={isGeneratingSingleGrammar} className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-teal-700 flex items-center gap-1 no-print">
-                                {isGeneratingSingleGrammar ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add
-                            </button></h4>
-                            <div className="space-y-2">
-                                {editablePlan.lessonDetails.grammarSentences.map((s, i) => (
-                                    <div key={i} className="flex gap-2 items-start bg-white p-3 rounded-lg border border-indigo-50 shadow-sm group">
-                                        <span className="text-indigo-400 font-bold mt-2">•</span>
-                                        <AutoResizeTextarea value={s} onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)} placeholder="Grammar point or target sentence..." className="w-full bg-transparent outline-none text-sm text-slate-700 p-1" minRows={1} />
-                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                            <button onClick={() => moveArrayItem('grammarSentences', i, 'up')} className="p-1 text-indigo-400 hover:text-indigo-600"><ChevronUp className="w-3 h-3" /></button>
-                                            <button onClick={() => moveArrayItem('grammarSentences', i, 'down')} className="p-1 text-indigo-400 hover:text-indigo-600"><ChevronDown className="w-3 h-3" /></button>
-                                            <button onClick={() => deleteArrayItem('grammarSentences', i)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-3 h-3" /></button>
-                                        </div>
-                                    </div>
-                                ))}
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                            {/* The Phonics focus section inside Plan tab */}
+                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
+                                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                    <Layers className="w-5 h-5 text-indigo-500" />
+                                    Teaching Stages & Flow
+                                </h3>
+                                <button onClick={() => addStageEntry()} disabled={isGeneratingStage} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all no-print">
+                                    {isGeneratingStage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Add Stage
+                                </button>
                             </div>
-                        </div>
-                    </div>
+                            <Droppable droppableId="stages-list" type="stages">
+                                {(provided) => (
+                                    <div className="p-6 space-y-4" ref={provided.innerRef} {...provided.droppableProps}>
+                                        {editablePlan.stages.map((stage, i) => (
+                                            <Draggable key={`stage-${i}`} draggableId={`stage-${i}`} index={i}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className={`group relative bg-white border border-slate-200 rounded-xl p-5 transition-all ${snapshot.isDragging ? 'shadow-2xl border-indigo-400 opacity-95 scale-[1.02] z-50' : 'hover:border-slate-300 hover:shadow-md'}`}
+                                                    >
+                                                        <div className="absolute left-0 top-0 bottom-0 w-12 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-50 border-r border-slate-100 rounded-l-xl no-print">
+                                                            <div
+                                                                {...provided.dragHandleProps}
+                                                                className="p-2 text-slate-400 hover:text-indigo-600 cursor-grab active:cursor-grabbing"
+                                                            >
+                                                                <GripVertical size={20} />
+                                                            </div>
+                                                            <button
+                                                                onClick={() => addStageEntry(i)}
+                                                                className="p-2 text-slate-300 hover:text-indigo-500 mt-2"
+                                                                title="Insert Below"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => deleteStageEntry(i)}
+                                                                className="p-2 text-slate-300 hover:text-red-500 mt-2"
+                                                                title="Delete Stage"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
 
-                    <div className="border border-purple-200 rounded-lg overflow-hidden mt-6">
-                        {/* Note: I'm leaving Phonics point focus handlers in LessonPlanTab since they edit the plan's key structures (or wait, phonicsContent.keyPoints is separate). Let's review if Phonics focus should be injected. User requested Phonics tab separate. The old plan shows Phonics focus here inside the Plan tab. I will require phonicsContent to be passed in props if I keep it here, or I can extract it out.
-                        For now let's pass it via props to maintain the exact old UI layout. */}
-                        {/* The Phonics focus section inside Plan tab */}
-                        <div className="bg-purple-50 px-4 py-2 border-b border-purple-100 flex justify-between items-center">
-                            <h4 className="font-bold text-purple-900 text-sm">Teaching Stages & Flow</h4>
-                            <button onClick={() => addStageEntry()} disabled={isGeneratingStage} className="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition-colors flex items-center gap-1 shadow-sm no-print">
-                                {isGeneratingStage ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Add Stage
-                            </button>
-                        </div>
-                        <div className="overflow-x-auto rounded-xl border border-slate-200">
-                            <table className="w-full min-w-[800px] text-sm text-left border-collapse">
-                                <thead className="bg-slate-100 text-slate-600 font-bold">
-                                    <tr>
-                                        <th className="px-4 py-3 border-b border-slate-200 w-32">Stage</th>
-                                        <th className="px-4 py-3 border-b border-slate-200 w-24">Timing</th>
-                                        <th className="px-4 py-3 border-b border-slate-200 w-1/3">Teacher Activity (Script)</th>
-                                        <th className="px-4 py-3 border-b border-slate-200 w-1/3">Student Activity</th>
-                                        <th className="px-4 py-3 border-b border-slate-200 w-24 text-center no-print">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                    {editablePlan.stages.map((stage, i) => (
-                                        <tr key={i} className="align-top hover:bg-slate-50/50 transition-colors group">
-                                            <td className="p-2 border-r border-slate-200">
-                                                <input value={stage.stage} onChange={(e) => handleStageChange(i, 'stage', e.target.value)} className="w-full font-bold text-teal-700 bg-transparent outline-none p-2 focus:bg-white rounded border border-transparent focus:border-teal-200" />
-                                            </td>
-                                            <td className="p-2 border-r border-slate-200">
-                                                <input value={stage.timing} onChange={(e) => handleStageChange(i, 'timing', e.target.value)} className="w-full text-slate-500 bg-transparent outline-none p-2 focus:bg-white rounded border border-transparent focus:border-indigo-200" />
-                                            </td>
-                                            <td className="p-2 border-r border-slate-200 bg-yellow-50/10">
-                                                <AutoResizeTextarea
-                                                    value={stage.teacherActivity}
-                                                    onChange={(e) => handleStageChange(i, 'teacherActivity', e.target.value)}
-                                                    className="w-full bg-transparent text-slate-800 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
-                                                    minRows={5}
-                                                    placeholder="Teacher says..."
-                                                />
-                                            </td>
-                                            <td className="p-2 border-r border-slate-200">
-                                                <AutoResizeTextarea
-                                                    value={stage.studentActivity}
-                                                    onChange={(e) => handleStageChange(i, 'studentActivity', e.target.value)}
-                                                    className="w-full bg-transparent text-slate-600 focus:bg-white p-2 rounded border border-transparent focus:border-teal-200 outline-none transition-all"
-                                                    minRows={5}
-                                                    placeholder="Students respond..."
-                                                />
-                                            </td>
-                                            <td className="p-2 align-middle text-center no-print">
-                                                <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                                    <button onClick={() => moveStageEntry(i, 'up')} className="p-1 text-slate-400 hover:text-indigo-600" title="Move Up"><ChevronUp className="w-4 h-4" /></button>
-                                                    <button onClick={() => addStageEntry(i)} className="p-1 text-teal-400 hover:text-teal-600" title="Insert Below"><Plus className="w-4 h-4" /></button>
-                                                    <button onClick={() => moveStageEntry(i, 'down')} className="p-1 text-slate-400 hover:text-indigo-600" title="Move Down"><ChevronDown className="w-4 h-4" /></button>
-                                                    <button onClick={() => deleteStageEntry(i)} className="p-1 text-red-400 hover:text-red-600" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                        <div className="pl-10">
+                                                            <div className="flex flex-wrap gap-3 mb-4 items-center">
+                                                                <input
+                                                                    value={stage.timing}
+                                                                    onChange={(e) => handleStageChange(i, 'timing', e.target.value)}
+                                                                    className="w-20 font-black text-indigo-600 bg-indigo-50/50 border border-indigo-100 rounded-lg px-3 py-1.5 text-center focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                                                                    placeholder="e.g. 5m"
+                                                                />
+                                                                <input
+                                                                    value={stage.stage}
+                                                                    onChange={(e) => handleStageChange(i, 'stage', e.target.value)}
+                                                                    className="flex-1 min-w-[150px] font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm uppercase tracking-wider"
+                                                                    placeholder="Stage Name (e.g. WARM UP)"
+                                                                />
+                                                            </div>
+
+                                                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 block">Teacher Activity (Script)</label>
+                                                                    <AutoResizeTextarea
+                                                                        value={stage.teacherActivity}
+                                                                        onChange={(e) => handleStageChange(i, 'teacherActivity', e.target.value)}
+                                                                        className="w-full text-sm text-indigo-900 bg-indigo-50/50 border-none focus:bg-indigo-50 rounded-xl p-3 outline-none transition-colors leading-relaxed min-h-[60px]"
+                                                                        placeholder="What the teacher should say/do..."
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2 block">Student Activity</label>
+                                                                    <AutoResizeTextarea
+                                                                        value={stage.studentActivity}
+                                                                        onChange={(e) => handleStageChange(i, 'studentActivity', e.target.value)}
+                                                                        className="w-full text-sm text-emerald-900 bg-emerald-50/50 border-none focus:bg-emerald-50 rounded-xl p-3 outline-none transition-colors leading-relaxed min-h-[60px]"
+                                                                        placeholder="What the students should do..."
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </DragDropContext>
     );
 };

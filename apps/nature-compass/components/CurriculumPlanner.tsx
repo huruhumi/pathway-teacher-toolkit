@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Sparkles, MapPin, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2, Compass,
-    Wind, Search, FileText, Upload, X,
+    Wind, Search, FileText, Upload, X, Plus,
 } from 'lucide-react';
 import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/geminiService';
 import { Curriculum, CurriculumParams } from '../types';
@@ -42,7 +42,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [duration, setDuration] = useState("180");
     const [city, setCity] = useState("");
     const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
-    const [selectedLocation, setSelectedLocation] = useState("");
+    const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
     const [customLocation, setCustomLocation] = useState("");
     const [loadingLocations, setLoadingLocations] = useState(false);
     const [customTheme, setCustomTheme] = useState("");
@@ -65,11 +65,18 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     useEffect(() => {
         if (externalCurriculum) {
             const lang = externalCurriculum.language || 'en';
-            if (externalCurriculum.params.city) setCity(externalCurriculum.params.city);
-            if (externalCurriculum.params.ageGroup) setAgeGroup(externalCurriculum.params.ageGroup);
-            if (externalCurriculum.params.lessonCount) setLessonCount(externalCurriculum.params.lessonCount);
-            if (externalCurriculum.params.duration) setDuration(externalCurriculum.params.duration);
-            if (externalCurriculum.params.customTheme) setCustomTheme(externalCurriculum.params.customTheme);
+            const params = externalCurriculum.params;
+            if (params.city) setCity(params.city);
+            if (params.ageGroup) setAgeGroup(params.ageGroup);
+            if (params.lessonCount) setLessonCount(params.lessonCount);
+            if (params.duration) setDuration(params.duration);
+            if (params.customTheme) setCustomTheme(params.customTheme);
+            if (params.preferredLocation) {
+                const locations = params.preferredLocation.split(',').map(s => s.trim()).filter(Boolean);
+                setSelectedLocations(locations);
+                // Also add them to suggested so they appear as toggles if they aren't custom
+                setSuggestedLocations(Array.from(new Set([...suggestedLocations, ...locations])));
+            }
             onCurriculumGenerated({
                 curriculumEN: lang === 'en' ? externalCurriculum.curriculum : null,
                 curriculumCN: lang === 'zh' ? externalCurriculum.curriculum : null,
@@ -84,11 +91,17 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         if (externalCurriculum) return;
         const data = safeStorage.get<{ en?: Curriculum; cn?: Curriculum; lang?: 'en' | 'zh'; params?: CurriculumParams }>(STORAGE_KEY, {});
         if ((data.en || data.cn) && data.params) {
-            if (data.params.city) setCity(data.params.city);
-            if (data.params.ageGroup) setAgeGroup(data.params.ageGroup);
-            if (data.params.lessonCount) setLessonCount(data.params.lessonCount);
-            if (data.params.duration) setDuration(data.params.duration);
-            if (data.params.customTheme) setCustomTheme(data.params.customTheme);
+            const params = data.params;
+            if (params.city) setCity(params.city);
+            if (params.ageGroup) setAgeGroup(params.ageGroup);
+            if (params.lessonCount) setLessonCount(params.lessonCount);
+            if (params.duration) setDuration(params.duration);
+            if (params.customTheme) setCustomTheme(params.customTheme);
+            if (params.preferredLocation) {
+                const locations = params.preferredLocation.split(',').map(s => s.trim()).filter(Boolean);
+                setSelectedLocations(locations);
+                setSuggestedLocations(locations);
+            }
             onCurriculumGenerated({
                 curriculumEN: data.en || null,
                 curriculumCN: data.cn || null,
@@ -152,13 +165,32 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
+    const handleAddCustomLocation = () => {
+        const loc = customLocation.trim();
+        if (loc && !selectedLocations.includes(loc)) {
+            setSelectedLocations([...selectedLocations, loc]);
+            if (!suggestedLocations.includes(loc)) {
+                setSuggestedLocations([...suggestedLocations, loc]);
+            }
+        }
+        setCustomLocation("");
+    };
+
+    const toggleLocation = (loc: string) => {
+        if (selectedLocations.includes(loc)) {
+            setSelectedLocations(selectedLocations.filter(l => l !== loc));
+        } else {
+            setSelectedLocations([...selectedLocations, loc]);
+        }
+    };
+
     const getCurrentParams = (): CurriculumParams => ({
         city: effectiveCity,
         ageGroup,
         englishLevel,
         lessonCount,
         duration,
-        preferredLocation: [selectedLocation, customLocation.trim()].filter(Boolean).join(", "),
+        preferredLocation: [...selectedLocations, customLocation.trim()].filter(Boolean).join(", "),
         customTheme,
     });
 
@@ -283,21 +315,51 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         </div>
                     </div>
                     {suggestedLocations.length > 0 && (
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                        <div className="space-y-3 md:col-span-2 p-4 border border-teal-100 bg-teal-50/30 rounded-xl">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-teal-700">
                                 <Compass size={16} /> {t('cp.suggestedLocations')} ({effectiveCity})
                             </label>
-                            <select value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)} className="input-field py-3">
-                                <option value="">{t('cp.noPreference')}</option>
-                                {suggestedLocations.map((loc, i) => <option key={i} value={loc}>{loc}</option>)}
-                            </select>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {suggestedLocations.map((loc, i) => {
+                                    const isSelected = selectedLocations.includes(loc);
+                                    return (
+                                        <button
+                                            key={`sugg-${i}`}
+                                            onClick={() => toggleLocation(loc)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isSelected
+                                                ? 'bg-teal-600 text-white shadow-md shadow-teal-200'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50'
+                                                }`}
+                                        >
+                                            {loc}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
                     <div className="space-y-2 md:col-span-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <MapPin size={16} /> {t('cp.customLocation')}
                         </label>
-                        <input type="text" placeholder={t('cp.locationPlaceholder')} value={customLocation} onChange={(e) => setCustomLocation(e.target.value)} className="input-field py-3" />
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder={t('cp.locationPlaceholder')}
+                                value={customLocation}
+                                onChange={(e) => setCustomLocation(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustomLocation(); }}
+                                className="input-field flex-1 py-3"
+                            />
+                            <button
+                                onClick={handleAddCustomLocation}
+                                disabled={!customLocation.trim()}
+                                className="bg-teal-50 text-teal-600 rounded-xl px-4 hover:bg-teal-100 hover:text-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-teal-200"
+                                title="Add custom location"
+                            >
+                                <Plus size={20} />
+                            </button>
+                        </div>
                     </div>
                     <div className="space-y-2 md:col-span-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">

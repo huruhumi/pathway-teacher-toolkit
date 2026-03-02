@@ -11,13 +11,21 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3002,
       strictPort: true,
+      warmup: {
+        clientFiles: ['./**/*.tsx'],
+      },
     },
     plugins: [react(), tailwindcss()],
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, '.'),
         '@shared': path.resolve(__dirname, '../../packages/shared'),
-      }
-    }
+      },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'lucide-react'],
+    },
   };
 });
+

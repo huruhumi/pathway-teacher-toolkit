@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
     envDir: path.resolve(__dirname, '../..'),
     plugins: [react(), tailwindcss()],
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, '.'),
         '@shared': path.resolve(__dirname, '../../packages/shared'),
@@ -19,6 +20,13 @@ export default defineConfig(({ mode }) => {
       port: 3005,
       strictPort: true,
       hmr: process.env.DISABLE_HMR !== 'true',
+      warmup: {
+        clientFiles: ['./src/**/*.tsx'],
+      },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'lucide-react', 'motion', 'react-markdown'],
     },
   };
 });
+

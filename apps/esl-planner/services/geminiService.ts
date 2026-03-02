@@ -5,8 +5,8 @@ import { GeneratedContent, CEFRLevel } from '../types';
 import { retryWithBackoff } from '@shared/retryWithBackoff';
 
 // Exported for sub-modules (worksheetService, itemGenerators, curriculumService)
-export const retryApiCall = <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000): Promise<T> =>
-  retryWithBackoff(apiCall, { maxRetries: retries, baseDelay: delay });
+export const retryApiCall = <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000, signal?: AbortSignal): Promise<T> =>
+  retryWithBackoff(apiCall, { maxRetries: retries, baseDelay: delay, signal });
 
 export const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -234,7 +234,8 @@ export const generateLessonPlan = async (
   slideCount: number,
   duration: string,
   studentCount: string,
-  lessonTitle: string
+  lessonTitle: string,
+  signal?: AbortSignal
 ): Promise<GeneratedContent> => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
@@ -258,14 +259,17 @@ export const generateLessonPlan = async (
     });
   }
 
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: { parts },
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: RESPONSE_SCHEMA as any,
-    }
-  }));
+  const response: GenerateContentResponse = await retryApiCall(async () => {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    return ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: { parts },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA as any,
+      }
+    });
+  }, 5, 3000, signal);
 
   const content = JSON.parse(response.text || "{}");
 

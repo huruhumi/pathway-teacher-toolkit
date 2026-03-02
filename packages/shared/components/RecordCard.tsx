@@ -58,6 +58,9 @@ export interface RecordCardProps {
     /** Called when rename is saved. If omitted, rename button is hidden. */
     onRename?: (newName: string) => void;
 
+    /** Custom action buttons to display next to the edit/delete buttons */
+    customActions?: React.ReactNode;
+
     /** Accent color for the primary action. Defaults to emerald. */
     accentColor?: 'emerald' | 'violet' | 'indigo';
 
@@ -89,6 +92,7 @@ const COLOR_MAP = {
 export const RecordCard: React.FC<RecordCardProps> = ({
     title, description, tags, timestamp, openLabel,
     onOpen, onDelete, onExport, exporting, onRename,
+    customActions,
     accentColor = 'emerald', active = false,
 }) => {
     const colors = COLOR_MAP[accentColor];
@@ -158,69 +162,73 @@ export const RecordCard: React.FC<RecordCardProps> = ({
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{description}</p>
                 )}
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {tags.map((tag, i) => (
-                        <span
-                            key={i}
-                            className={`px-2 py-0.5 text-xs font-medium rounded-md flex items-center gap-1 ${tag.className
-                                ? tag.className
-                                : tag.accent
-                                    ? `${colors.accent} font-bold`
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                }`}
-                        >
-                            {tag.icon} {tag.label}
-                        </span>
-                    ))}
-                </div>
+                {/* Footer action bar */}
+                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                    <div className="flex flex-col mb-3">
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                            {tags.map((tag, i) => (
+                                <span
+                                    key={i}
+                                    className={`px-2 py-0.5 text-xs font-medium rounded-md flex items-center gap-1 ${tag.className
+                                        ? tag.className
+                                        : tag.accent
+                                            ? `${colors.accent} font-bold`
+                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                        }`}
+                                >
+                                    {tag.icon} {tag.label}
+                                </span>
+                            ))}
+                        </div>
 
-                {/* Timestamp */}
-                <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                    <Clock size={14} />
-                    <span>{dateStr}</span>
+                        {/* Timestamp */}
+                        <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                            <Clock size={14} />
+                            <span>{dateStr}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={onOpen}
+                            className={`text-sm font-bold ${colors.open} flex items-center gap-1.5 transition-all`}
+                        >
+                            {openLabel}
+                            <ArrowRight size={16} />
+                        </button>
+                        {/* Export is now part of custom actions along with Edit/Delete */}
+                    </div>
+                    <div className="flex gap-1 items-center">
+                        {customActions}
+                        {onExport && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onExport(); }}
+                                disabled={exporting}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                title="Download/Export"
+                            >
+                                <Download size={16} />
+                            </button>
+                        )}
+                        {onRename && (
+                            <button
+                                onClick={startEditing}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                title="Rename"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                        )}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            {/* Footer action bar */}
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={onOpen}
-                        className={`text-sm font-bold ${colors.open} flex items-center gap-1.5 transition-all`}
-                    >
-                        {openLabel}
-                        <ArrowRight size={16} />
-                    </button>
-                    {onExport && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onExport(); }}
-                            disabled={exporting}
-                            className={`text-sm text-slate-400 ${colors.exportHover} flex items-center gap-1.5 transition-colors`}
-                        >
-                            <Download size={16} /> Export
-                        </button>
-                    )}
-                </div>
-                <div className="flex gap-1">
-                    {onRename && (
-                        <button
-                            onClick={startEditing}
-                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                            title="Rename"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                    )}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                        title="Delete"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+            );
 };

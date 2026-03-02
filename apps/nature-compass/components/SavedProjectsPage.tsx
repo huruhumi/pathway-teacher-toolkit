@@ -296,8 +296,8 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                 <FilterSelect value={cSort} onChange={setCSort} icon={ArrowUpDown}>
                                     <option value="newest">Newest First</option>
                                     <option value="oldest">Oldest First</option>
-                                    <option value="lessons-desc">Lessons ↓</option>
-                                    <option value="lessons-asc">Lessons ↑</option>
+                                    <option value="lessons-desc">Lessons �?/option>
+                                    <option value="lessons-asc">Lessons �?/option>
                                 </FilterSelect>
                                 <FilterSelect value={cLang} onChange={(v) => setCLang(v as any)} icon={Languages}>
                                     <option value="all">All Languages</option>
@@ -337,107 +337,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                     openLabel="Open Curriculum"
                                     onOpen={() => onLoadCurriculum(item)}
                                     onDelete={() => onDeleteCurriculum(item.id)}
-                                    onExport={() => {
-                                        const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`;
-                                        a.click();
-                                    }}
-                                    onRename={(newName) => onRenameCurriculum(item.id, newName)}
-                                    accentColor="emerald"
-                                />
-                            ))}
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* ===== LESSON KITS TAB ===== */}
-            {activeTab === 'kits' && (
-                <>
-                    {/* Filters */}
-                    <div className="mb-8">
-                        <div className="flex flex-col gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by topic or title..."
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm transition-all focus:bg-white"
-                                    value={kSearch}
-                                    onChange={(e) => setKSearch(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                                <FilterSelect value={kLevel} onChange={setKLevel} icon={Filter}>
-                                    <option>All Levels</option>
-                                    <option>Beginner</option>
-                                    <option>Intermediate</option>
-                                    <option>Advanced</option>
-                                </FilterSelect>
-                                {uniqueActivities.length > 0 && (
-                                    <FilterSelect value={kActivity} onChange={setKActivity} icon={Compass}>
-                                        <option value="all">All Activities</option>
-                                        {uniqueActivities.map(act => <option key={act} value={act}>{act}</option>)}
-                                    </FilterSelect>
-                                )}
-                                <FilterSelect value={kSort} onChange={setKSort} icon={ArrowUpDown}>
-                                    <option>Newest First</option>
-                                    <option>Oldest First</option>
-                                </FilterSelect>
-                                <FilterSelect value={kLang} onChange={(v) => setKLang(v as any)} icon={Languages}>
-                                    <option value="all">All Languages</option>
-                                    <option value="en">🇬🇧 English</option>
-                                    <option value="zh">🇨🇳 中文</option>
-                                </FilterSelect>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Grid */}
-                    {filteredPlans.length === 0 ? (
-                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                            <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                                <BookOpen size={32} />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-700">No lesson kits found</h3>
-                            <p className="text-slate-500">
-                                {savedPlans.length > 0 ? 'Try adjusting your filters.' : 'Generate and save a lesson kit to see it here.'}
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {filteredPlans.map(item => {
-                                const stats = getStats(item.plan);
-                                const CategoryIcon = getCategoryIcon(item.plan.basicInfo?.activityType || '');
-
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-100 transition-all group flex flex-col overflow-hidden"
-                                    >
-                                        <div className="p-4 flex-1 flex gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    {getLevelBadge(item.plan.basicInfo?.targetAudience || '')}
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
-                                                                const url = URL.createObjectURL(blob);
-                                                                const a = document.createElement('a');
-                                                                a.href = url;
-                                                                a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Data.json`;
-                                                                a.click();
-                                                            }}
-                                                            className="text-slate-300 hover:text-emerald-600 transition-colors"
-                                                            title="Download JSON"
-                                                        >
-                                                            <Download size={18} />
-                                                        </button>
+                                    
                                                         {item.plan?.translatedPlan && (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); toggleLanguage(item.id); }}
@@ -445,10 +345,10 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                                                     ? 'bg-blue-50 text-blue-600 border-blue-200'
                                                                     : 'bg-white text-slate-400 border-slate-200 hover:text-blue-500 hover:border-blue-300'
                                                                     }`}
-                                                                title="Toggle Language (EN / 中)"
+                                                                title="Toggle Language (EN / �?"
                                                             >
                                                                 <Languages size={14} />
-                                                                {cardLanguages[item.id] === 'zh' ? '中' : 'EN'}
+                                                                {cardLanguages[item.id] === 'zh' ? '�? : 'EN'}
                                                             </button>
                                                         )}
                                                     </div>
@@ -492,9 +392,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                                 Open Kit
                                                 <ArrowRight size={16} />
                                             </button>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); startEditing(item.id, item.name); }}
+                                            <div className="flex gap-1"><button onClick={(e) => { e.stopPropagation(); const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").trim()} - Data.json`; a.click(); }} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Download/Export"><Download size={16} /></button><button onClick={(e) => { e.stopPropagation(); startEditing(item.id, item.name); }}
                                                     className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                                     title="Rename"
                                                 >

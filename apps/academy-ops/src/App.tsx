@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useHashTab } from '@shared/hooks/useHashTab';
 import { motion } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
 import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
@@ -21,7 +22,7 @@ import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 function AppContent() {
   const { t, lang, setLang } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'planner' | 'generator' | 'settings' | 'calendar'>('dashboard');
+  const [activeTab, setActiveTab] = useHashTab<'dashboard' | 'planner' | 'generator' | 'settings' | 'calendar'>('dashboard', ['dashboard', 'planner', 'generator', 'settings', 'calendar']);
 
   const [isDarkMode, setIsDarkMode] = useState(() => safeStorage.get('pathway_darkMode', false));
 
@@ -155,7 +156,12 @@ function AppContent() {
         tabs={NAV_TABS}
         activeTab={activeTab}
         onTabChange={(key) => setActiveTab(key as typeof activeTab)}
-        onLogoClick={() => setActiveTab('dashboard')}
+        onLogoClick={() => {
+          setActiveTab('dashboard');
+          setCurrentPlan([]);
+          setSelectedTopic('');
+          setEditingSavedNote(undefined);
+        }}
         rightContent={headerToggles}
       />
 

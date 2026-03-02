@@ -25,9 +25,10 @@ interface InputSectionProps {
     studentCount: string;
     lessonTitle: string;
   } | null;
+  onStop: () => void;
 }
 
-export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues }) => {
+export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues, onStop }) => {
   const { t } = useLanguage();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -64,19 +65,21 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    if (e.dataTransfer.files) {
+      const newFiles = Array.from(e.dataTransfer.files);
+      setFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     onGenerate(text, files, level, topic, slideCount, duration, studentCount, lessonTitle);
   };
 
-
   return (
     <div className="space-y-8">
-      <div className="mb-6">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">{t('input.title')}</h2>
-        <p className="text-sm md:text-base text-slate-500">{t('input.desc')}</p>
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Lesson Title Input */}
         <div>
@@ -165,13 +168,10 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
           <label className="input-label">{t('input.uploadMaterials')}</label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 rounded-lg p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-slate-50 transition-all group"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-slate-50 transition-colors cursor-pointer group"
           >
-            <Upload className="w-8 h-8 md:w-10 md:h-10 text-slate-400 group-hover:text-primary mb-3" />
-            <p className="text-xs md:text-sm text-slate-500 text-center">
-              <span className="font-semibold text-primary">{t('input.clickToUpload')}</span> {t('input.dragAndDrop')}<br />
-              {t('input.fileFormats')}
-            </p>
             <input
               type="file"
               ref={fileInputRef}
@@ -180,6 +180,15 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
               accept="image/*,application/pdf"
               className="hidden"
             />
+            <div className="flex flex-col items-center gap-2 text-slate-500">
+              <div className="p-3 bg-slate-100 rounded-full text-slate-400 group-hover:text-indigo-500 transition-colors">
+                <Upload className="w-6 h-6" />
+              </div>
+              <p className="text-sm font-medium">
+                <span className="text-indigo-600">{t('input.clickToUpload')}</span> {t('input.dragAndDrop')}
+              </p>
+              <p className="text-xs text-slate-400">{t('input.fileFormats')}</p>
+            </div>
           </div>
 
           {files.length > 0 && (
@@ -205,25 +214,27 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
           )}
         </div>
 
-        {/* Action Button */}
-        <div className="pt-2">
+        {/* Sticky Action Button */}
+        <div className="sticky bottom-4 z-10 pt-2">
           <button
-            type="submit"
-            disabled={isLoading || (!text && files.length === 0)}
-            className={`btn w-full py-3 md:py-4 text-base md:text-lg ${isLoading || (!text && files.length === 0)
-              ? 'bg-slate-400 text-white cursor-not-allowed'
-              : 'btn-primary bg-gradient-to-r from-[var(--color-brand)] to-indigo-600 hover:shadow-lg transform hover:-translate-y-0.5'
+            type="button"
+            onClick={isLoading ? onStop : handleSubmit}
+            disabled={!isLoading && (!text && files.length === 0)}
+            className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
+              ? 'bg-red-500 hover:bg-red-600'
+              : (!text && files.length === 0)
+                ? 'bg-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500'
               }`}
           >
             {isLoading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
-                {t('input.generatingKit')}
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Stop Generation
               </>
             ) : (
               <>
                 {t('input.generateKit')}
-                <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>

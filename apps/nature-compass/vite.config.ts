@@ -10,13 +10,21 @@ export default defineConfig(({ mode }) => {
     envDir: path.resolve(__dirname, '../..'),
     server: {
       port: 3003,
+      warmup: {
+        clientFiles: ['./**/*.tsx'],
+      },
     },
     plugins: [react(), tailwindcss()],
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: {
         '@': path.resolve(__dirname, '.'),
         '@shared': path.resolve(__dirname, '../../packages/shared'),
-      }
-    }
+      },
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'lucide-react', 'zustand', 'motion'],
+    },
   };
 });
+

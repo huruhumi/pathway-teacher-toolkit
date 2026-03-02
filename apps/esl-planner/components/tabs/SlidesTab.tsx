@@ -1,50 +1,35 @@
 import React, { useState } from 'react';
 import { Slide } from '../../types';
-import { Sparkles, Check, Copy, Trash2, ExternalLink } from 'lucide-react';
-
-interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    minRows?: number;
-}
-const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({ minRows = 1, className, ...props }) => {
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
-    React.useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
-    }, [props.value]);
-
-    return (
-        <textarea
-            ref={textareaRef}
-            rows={minRows}
-            className={`resize-none overflow-hidden ${className || ''}`}
-            {...props}
-        />
-    );
-};
+import { FileText, Clipboard, ImageIcon, Info, Check, Trash2, ExternalLink, Sparkles } from 'lucide-react';
 
 interface SlidesTabProps {
     editableSlides: Slide[];
     setEditableSlides: (slides: Slide[]) => void;
     notebookLMPrompt: string;
-    openViewer: (tabId: string, subTabId?: string) => void;
 }
 
 export const SlidesTab: React.FC<SlidesTabProps> = ({
     editableSlides,
     setEditableSlides,
     notebookLMPrompt,
-    openViewer,
 }) => {
     const [copiedPrompt, setCopiedPrompt] = useState(false);
+    const [copiedVisual, setCopiedVisual] = useState<number | null>(null);
+    const [copiedContent, setCopiedContent] = useState<number | null>(null);
 
-    const copyToClipboard = async (text: string) => {
+    const copyToClipboard = async (text: string, type: 'visual' | 'content' | 'prompt', index?: number) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopiedPrompt(true);
-            setTimeout(() => setCopiedPrompt(false), 2000);
+            if (type === 'prompt') {
+                setCopiedPrompt(true);
+                setTimeout(() => setCopiedPrompt(false), 2000);
+            } else if (type === 'visual' && index !== undefined) {
+                setCopiedVisual(index);
+                setTimeout(() => setCopiedVisual(null), 2000);
+            } else if (type === 'content' && index !== undefined) {
+                setCopiedContent(index);
+                setTimeout(() => setCopiedContent(null), 2000);
+            }
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
@@ -61,77 +46,125 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
         setEditableSlides(ns);
     };
 
+    const handleCopyAllPrompts = () => {
+        const allPrompts = editableSlides.map((slide, idx) =>
+            `--- Slide ${idx + 1}: ${slide.title} ---\nVisual: ${slide.visual}\nContent: ${slide.content}\nLayout: ${slide.layoutDesign}`
+        ).join('\n\n');
+        copyToClipboard(allPrompts, 'prompt');
+    };
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-slate-800">Presentation Slides Outline</h3>
+                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <FileText size={18} className="text-indigo-600" />
+                    Presentation Slides Outline
+                </h3>
                 <div className="flex gap-2 no-print">
                     <button
-                        onClick={() => openViewer('slides')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm font-semibold"
+                        onClick={handleCopyAllPrompts}
+                        className="text-xs font-bold px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2"
                     >
-                        <ExternalLink className="w-4 h-4" />
-                        Open in Viewer
+                        <Clipboard size={14} /> Copy All Prompts
                     </button>
                 </div>
             </div>
 
-            <div className="bg-indigo-600 p-8 rounded-2xl text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-6 mb-8 no-print">
-                <div className="max-w-xl text-center md:text-left">
-                    <h2 className="text-2xl font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
-                        <Sparkles className="w-6 h-6" />
-                        NotebookLM Visual Assistant
-                    </h2>
-                    <p className="text-indigo-100 text-sm">Copy this specialized prompt and paste it into NotebookLM to generate a high-quality slide deck based on your lesson context.</p>
+            {notebookLMPrompt && (
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-4 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-sm font-bold text-indigo-800 flex items-center gap-2">
+                            <Sparkles size={16} /> NotebookLM Visual Assistant
+                        </h4>
+                        <button
+                            onClick={() => copyToClipboard(notebookLMPrompt, 'prompt')}
+                            className={`text-xs font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${copiedPrompt
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
+                                }`}
+                        >
+                            {copiedPrompt ? <Check size={14} /> : <Clipboard size={14} />}
+                            {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                        </button>
+                    </div>
+                    <p className="text-sm text-slate-600 font-mono italic leading-relaxed line-clamp-3">
+                        {notebookLMPrompt}
+                    </p>
+                    <div className="mt-2 text-xs text-indigo-500 font-medium">
+                        <Info size={12} className="inline ml-1 mb-0.5" />
+                        Paste this into NotebookLM to generate a high-quality slide deck based on your lesson context.
+                    </div>
                 </div>
-                <button
-                    onClick={() => copyToClipboard(notebookLMPrompt)}
-                    className="flex items-center gap-2 bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-50 transition-all active:scale-95 flex-shrink-0"
-                >
-                    {copiedPrompt ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-                    {copiedPrompt ? 'Copied Prompt!' : 'Copy Slide Prompt'}
-                </button>
-            </div>
+            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
                 {editableSlides.map((slide, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-2xl p-6 shadow-sm flex flex-col h-full hover:border-indigo-300 transition-colors">
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">Slide {idx + 1}</span>
-                            <button onClick={() => handleDeleteSlide(idx)} className="p-1 text-slate-300 hover:text-red-500 transition-colors no-print"><Trash2 className="w-4 h-4" /></button>
+                    <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm group relative">
+                        <button onClick={() => handleDeleteSlide(idx)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all no-print">
+                            <Trash2 size={16} />
+                        </button>
+
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100">
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Slide {idx + 1}</span>
+                                <input
+                                    value={slide.title}
+                                    onChange={(e) => handleSlideChange(idx, 'title', e.target.value)}
+                                    className="text-base font-bold text-slate-800 mt-1 bg-transparent border-b border-transparent focus:border-indigo-500 outline-none w-full block"
+                                    placeholder="Slide title..."
+                                />
+                            </div>
+                            <div className="max-w-xs text-right">
+                                <textarea
+                                    value={slide.layoutDesign}
+                                    onChange={(e) => handleSlideChange(idx, 'layoutDesign', e.target.value)}
+                                    className="w-full text-right text-sm text-slate-500 italic bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    rows={2}
+                                    onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
+                                    placeholder="Layout description..."
+                                />
+                            </div>
                         </div>
-                        <input
-                            value={slide.title}
-                            onChange={(e) => handleSlideChange(idx, 'title', e.target.value)}
-                            className="font-bold text-slate-800 dark:text-slate-200 mb-3 bg-transparent border-none outline-none w-full focus:bg-indigo-50/30 dark:focus:bg-indigo-900/20 rounded px-1 py-0.5"
-                            placeholder="Slide title..."
-                        />
-                        <AutoResizeTextarea
-                            value={slide.content}
-                            onChange={(e) => handleSlideChange(idx, 'content', e.target.value)}
-                            className="flex-1 text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed bg-transparent border-none outline-none w-full focus:bg-slate-50 dark:focus:bg-slate-800/50 rounded px-1 py-0.5"
-                            placeholder="Slide content..."
-                            minRows={2}
-                        />
-                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-2">
-                            <span className="font-bold text-[9px] uppercase block mb-1 tracking-widest text-slate-400">Visual</span>
-                            <AutoResizeTextarea
-                                value={slide.visual}
-                                onChange={(e) => handleSlideChange(idx, 'visual', e.target.value)}
-                                className="text-[11px] italic text-slate-500 bg-transparent border-none outline-none w-full focus:bg-white rounded px-1 py-0.5"
-                                placeholder="Visual description..."
-                                minRows={1}
-                            />
-                        </div>
-                        <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 mt-auto">
-                            <span className="font-bold text-[9px] uppercase block mb-1 tracking-widest text-indigo-400">Layout Design</span>
-                            <AutoResizeTextarea
-                                value={slide.layoutDesign}
-                                onChange={(e) => handleSlideChange(idx, 'layoutDesign', e.target.value)}
-                                className="text-[11px] italic text-indigo-700 bg-transparent border-none outline-none w-full focus:bg-indigo-100/30 rounded px-1 py-0.5"
-                                placeholder="Layout design instructions..."
-                                minRows={1}
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
+                                    <ImageIcon size={12} /> Visual Instruction
+                                </label>
+                                <textarea
+                                    value={slide.visual}
+                                    onChange={(e) => handleSlideChange(idx, 'visual', e.target.value)}
+                                    className="w-full text-sm text-slate-700 font-mono leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    rows={3}
+                                    onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
+                                    placeholder="Describe visual elements..."
+                                />
+                                <button
+                                    onClick={() => copyToClipboard(slide.visual, 'visual', idx)}
+                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
+                                >
+                                    {copiedVisual === idx ? <Check size={14} /> : <Clipboard size={14} />}
+                                </button>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
+                                    <FileText size={12} /> Slide Content
+                                </label>
+                                <textarea
+                                    value={slide.content}
+                                    onChange={(e) => handleSlideChange(idx, 'content', e.target.value)}
+                                    className="w-full text-sm text-slate-700 leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    rows={3}
+                                    onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
+                                    placeholder="Slide content text..."
+                                />
+                                <button
+                                    onClick={() => copyToClipboard(slide.content, 'content', idx)}
+                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
+                                >
+                                    {copiedContent === idx ? <Check size={14} /> : <Clipboard size={14} />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
