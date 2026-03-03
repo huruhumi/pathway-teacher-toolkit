@@ -1,27 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
-import { useSessionStorage } from '@shared/hooks/useSessionStorage';
 import { Header } from './components/Header';
-import { InputSection } from './components/InputSection';
-import { LessonPlanDisplay } from './components/LessonPlanDisplay';
-import { SavedProjectsPage } from './components/SavedProjectsPage';
-import { CurriculumPlanner } from './components/CurriculumPlanner';
-import { CurriculumResultDisplay } from './components/CurriculumResultDisplay';
-import { LessonInput, LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
-import { generateLessonPlanStreaming, translateLessonPlan, generateLessonPlanStreamingCN } from './services/geminiService';
+import { AuthModal } from './components/AuthModal';
+const CurriculumPage = React.lazy(() => import('./pages/CurriculumPage').then(m => ({ default: m.CurriculumPage })));
+const LessonKitPage = React.lazy(() => import('./pages/LessonKitPage').then(m => ({ default: m.LessonKitPage })));
+const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ default: m.RecordsPage })));
+import { LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
 import { fetchCloudPlans, upsertCloudPlan, deleteCloudPlan, renameCloudPlan } from './services/cloudDataService';
 import { useAuthStore } from './stores/useAuthStore';
-import { AuthModal } from './components/AuthModal';
 import { mapLessonToInput } from './utils/curriculumMapper';
-import { LanguageProvider } from './i18n/LanguageContext';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
 import { imageStore } from '@shared/imageStore';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
-import { Compass, ArrowLeft } from 'lucide-react';
-import { useBatchGenerate } from './hooks/useBatchGenerate';
-import { useLanguage } from './i18n/LanguageContext';
+import { useAppStore, useSessionStore } from './stores/appStore';
+import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
+import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 
 /** Generate a short description for a saved NC lesson kit */
 function generateNCKitDescription(plan: LessonPlanResponse): string {
@@ -58,90 +54,33 @@ const NatureHeroBanner = () => {
 };
 
 export const App: React.FC = () => {
-  const [input, setInput] = useState<LessonInput>({
-    theme: '',
-    topicIntroduction: '',
-    activityFocus: [],
-    weather: 'Sunny',
-    season: 'Spring',
-    studentAge: '6-8 years (Early Primary)',
-    studentCount: 12,
-    duration: 180,
-    cefrLevel: 'A1 (Beginner)',
-    handbookPages: 15,
-    uploadedFiles: [],
-  });
-
-  const [lessonPlan, setLessonPlan] = useSessionStorage<LessonPlanResponse | null>('nc-lesson-plan', null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Abort Controller for stopping generation
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Save/Load State
-  const [savedPlans, setSavedPlans] = useState<SavedLessonPlan[]>([]);
-  const savedPlansRef = useRef<SavedLessonPlan[]>(savedPlans);
-  useEffect(() => { savedPlansRef.current = savedPlans; }, [savedPlans]);
-  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  // Navigation
   const [view, setView] = useHashTab<'curriculum' | 'lesson' | 'saved'>('curriculum', ['curriculum', 'lesson', 'saved']);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Saved Curricula State
-  const [savedCurricula, setSavedCurricula] = useState<SavedCurriculum[]>([]);
-  const [externalCurriculum, setExternalCurriculum] = useSessionStorage<{ curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh' } | null>('nc-ext-curriculum', null);
+  // Global Stores
+  const { user, initialize: initAuth } = useAuthStore();
+  const { clearSessionState, setLessonPlan, setExternalCurriculum } = useSessionStore();
+  const {
+    currentPlanId, setCurrentPlanId, currentKitLanguage, setCurrentKitLanguage,
+    setInput
+  } = useAppStore();
 
-  // Track current language for lesson kit generation
-  const [currentKitLanguage, setCurrentKitLanguage] = useState<'en' | 'zh'>('en');
+  const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50);
+  const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50);
 
-  // Curriculum result state — for separate result page
-  const [curriculumResult, setCurriculumResult] = useSessionStorage<{
-    curriculumEN: Curriculum | null;
-    curriculumCN: Curriculum | null;
-    params: CurriculumParams;
-    activeLanguage: 'en' | 'zh';
-  } | null>('nc-cur-res', null);
-
-  // Clear session storage if entering from the landing page (no hash or exactly #curriculum)
-  // but ONLY on initial mount.
+  // Clear session on fresh landing
   useEffect(() => {
     if (!window.location.hash || window.location.hash === '#curriculum') {
-      sessionStorage.removeItem('nc-lesson-plan');
-      sessionStorage.removeItem('nc-cur-res');
-      sessionStorage.removeItem('nc-ext-curriculum');
-      setLessonPlan(null);
-      setCurriculumResult(null);
-      setExternalCurriculum(null);
+      clearSessionState();
+      setCurrentPlanId(null);
     }
   }, []);
 
-  // Batch Generate
-  const {
-    batchStatus, batchLessonMap, batchRunning, batchProgress,
-    handleBatchGenerate, handleCancelBatch, resetBatch,
-  } = useBatchGenerate(savedPlansRef, setSavedPlans);
-
-  // Auth
-  const { user, initialize: initAuth } = useAuthStore();
-  const { lang, t } = useLanguage();
-
-  // Stepped Loading State
-  const [loadingStep, setLoadingStep] = useState(0);
-  const LOADING_STEPS = [
-    "Consulting the Curriculum Oracle...",
-    "Designing the teaching roadmap...",
-    "Drafting the student handbook...",
-    "Curating specialized vocabulary...",
-    "Translating materials to Chinese...",
-    "Applying final polish..."
-  ];
-
-  // Load from LocalStorage on mount + init auth
+  // Load from LocalStorage + init auth
   useEffect(() => {
     initAuth();
-    const plans: SavedLessonPlan[] = safeStorage.get('nature-compass-plans', []);
-    setSavedPlans(plans);
-    plans.forEach(p => {
+    savedPlans.forEach(p => {
       if (p.coverImage && !p.coverImage.startsWith('data:')) {
         imageStore.get(p.coverImage).then(img => {
           if (img) {
@@ -152,10 +91,9 @@ export const App: React.FC = () => {
         });
       }
     });
-    setSavedCurricula(safeStorage.get('nature-compass-curricula', []));
   }, []);
 
-  // When user logs in, merge cloud plans
+  // Cloud sync on login
   useEffect(() => {
     if (user) {
       fetchCloudPlans(user.id).then(cloudPlans => {
@@ -164,9 +102,7 @@ export const App: React.FC = () => {
             const localIds = new Set(prev.map(p => p.id));
             const merged = [...prev];
             for (const cp of cloudPlans) {
-              if (!localIds.has(cp.id)) {
-                merged.push(cp);
-              }
+              if (!localIds.has(cp.id)) merged.push(cp);
             }
             safeStorage.set('nature-compass-plans', merged);
             return merged;
@@ -176,9 +112,10 @@ export const App: React.FC = () => {
     }
   }, [user]);
 
+  // =========== CRUD Handlers ===========
+
   const handleSavePlan = async (planToSave: LessonPlanResponse, coverImage?: string | null) => {
     const planId = currentPlanId || crypto.randomUUID();
-
     let coverRef: string | undefined;
     if (coverImage) {
       const imgKey = `nc-${planId}-cover`;
@@ -186,133 +123,67 @@ export const App: React.FC = () => {
       coverRef = imgKey;
     }
 
-    let updatedPlans;
-    if (currentPlanId) {
-      updatedPlans = savedPlans.map(p =>
-        p.id === currentPlanId
-          ? {
-            ...p,
-            timestamp: Date.now(),
-            plan: planToSave,
-            name: planToSave.missionBriefing.title || p.name,
-            description: p.description || generateNCKitDescription(planToSave),
-            ...(coverRef ? { coverImage: coverRef } : {})
-          }
-          : p
-      );
-    } else {
-      const newSavedPlan: SavedLessonPlan = {
-        id: planId,
-        timestamp: Date.now(),
-        name: planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
-        description: generateNCKitDescription(planToSave),
-        plan: planToSave,
-        language: currentKitLanguage,
-        ...(coverRef ? { coverImage: coverRef } : {})
-      };
-      updatedPlans = [newSavedPlan, ...savedPlans];
-      setCurrentPlanId(planId);
+    const existing = savedPlans.find(p => p.id === planId);
+
+    const newSavedPlan: SavedLessonPlan = {
+      id: planId, timestamp: Date.now(),
+      name: existing?.name || planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
+      description: existing?.description || generateNCKitDescription(planToSave),
+      plan: planToSave, language: currentKitLanguage,
+      ...((coverRef || existing?.coverImage) ? { coverImage: coverRef || existing?.coverImage } : {}),
+    };
+
+    savePlanDb(newSavedPlan);
+    setCurrentPlanId(planId);
+
+    // Provide instant UI update for base64 image ref before reload
+    if (coverImage) {
+      setSavedPlans((prev) => prev.map(p => p.id === planId ? { ...p, coverImage } : p));
     }
 
-    setSavedPlans(updatedPlans.map(p =>
-      p.id === planId && coverImage ? { ...p, coverImage } : p
-    ));
-    safeStorage.setWithLimit('nature-compass-plans', updatedPlans, 50);
-
-    if (user) {
-      const savedPlan = currentPlanId
-        ? updatedPlans.find(p => p.id === currentPlanId)
-        : updatedPlans[0];
-      if (savedPlan) upsertCloudPlan(user.id, savedPlan);
-    }
+    if (user) upsertCloudPlan(user.id, newSavedPlan);
   };
 
   const handleLoadPlan = (saved: SavedLessonPlan) => {
     setLessonPlan(saved.plan);
     setCurrentPlanId(saved.id);
     setView('lesson');
-
     setTimeout(() => {
-      const resultsElement = document.getElementById('results-section');
-      if (resultsElement) {
-        resultsElement.scrollIntoView({ behavior: 'smooth' });
-      }
+      document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
   const handleDeletePlan = (id: string) => {
-    const updatedPlans = savedPlans.filter(p => p.id !== id);
-    setSavedPlans(updatedPlans);
-    safeStorage.set('nature-compass-plans', updatedPlans);
+    deletePlanDb(id);
     imageStore.removeByPrefix(`nc-${id}-`);
     if (user) deleteCloudPlan(user.id, id);
-    if (currentPlanId === id) {
-      setCurrentPlanId(null);
-    }
+    if (currentPlanId === id) setCurrentPlanId(null);
   };
 
   const handleRenamePlan = (id: string, newName: string) => {
-    const updatedPlans = savedPlans.map(p =>
-      p.id === id ? { ...p, name: newName } : p
-    );
-    setSavedPlans(updatedPlans);
-    safeStorage.set('nature-compass-plans', updatedPlans);
+    renamePlanDb(id, newName);
     if (user) renameCloudPlan(id, newName);
   };
 
-  // --- Curriculum CRUD ---
   const handleSaveCurriculum = (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => {
     const name = `${language === 'zh' ? '[中文] ' : ''}${curriculum.theme || `Curriculum ${new Date().toLocaleDateString()}`}`;
-    const existingIdx = savedCurricula.findIndex(
-      c => c.curriculum.theme === curriculum.theme && c.language === language
-    );
+    const existing = savedCurricula.find(c => c.curriculum.theme === curriculum.theme && c.language === language);
+    const id = existing ? existing.id : crypto.randomUUID();
 
-    let updated: SavedCurriculum[];
-    if (existingIdx !== -1) {
-      updated = savedCurricula.map((c, i) =>
-        i === existingIdx ? { ...c, curriculum, params, name, description: c.description || curriculum.overview, timestamp: Date.now() } : c
-      );
-    } else {
-      const newSaved: SavedCurriculum = {
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-        name,
-        description: curriculum.overview,
-        curriculum,
-        params,
-        language,
-      };
-      updated = [newSaved, ...savedCurricula];
-    }
-
-    setSavedCurricula(updated);
-    safeStorage.set('nature-compass-curricula', updated);
+    const savedCurriculum: SavedCurriculum = {
+      id, timestamp: Date.now(), name, description: existing?.description || curriculum.overview, curriculum, params, language
+    };
+    saveCurriculumDb(savedCurriculum);
   };
 
   const handleDeleteCurriculum = (id: string) => {
-    const updated = savedCurricula.filter(c => c.id !== id);
-    setSavedCurricula(updated);
-    safeStorage.set('nature-compass-curricula', updated);
+    deleteCurriculumDb(id);
   };
 
   const handleRenameCurriculum = (id: string, newName: string) => {
-    const updated = savedCurricula.map(c =>
-      c.id === id ? { ...c, name: newName } : c
-    );
-    setSavedCurricula(updated);
-    safeStorage.set('nature-compass-curricula', updated);
+    renameCurriculumDb(id, newName);
   };
 
-  const handleStop = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      setIsLoading(false);
-      setError("Generation stopped by user.");
-    }
-  };
-
-  // Handler: when user clicks "生成课件" on a curriculum lesson card
   const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => {
     const mappedInput = mapLessonToInput(lesson, params);
     setInput(mappedInput);
@@ -323,236 +194,78 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handler: open a batch-generated plan by its saved ID
-  const handleOpenBatchPlan = (savedId: string) => {
-    const found = savedPlansRef.current.find(p => p.id === savedId);
-    if (found) {
-      handleLoadPlan(found);
-    }
-  };
-
-  // Handler: curriculum generated → show result page
-  const handleCurriculumGenerated = (data: {
-    curriculumEN: Curriculum | null;
-    curriculumCN: Curriculum | null;
-    params: CurriculumParams;
-    activeLanguage: 'en' | 'zh';
-  }) => {
-    setCurriculumResult(data);
-  };
-
-  // Handler: back from result → show config
-  const handleBackToConfig = () => {
-    setCurriculumResult(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Handler: new curriculum from result page → clear everything
-  const handleNewCurriculum = () => {
-    setCurriculumResult(null);
-    safeStorage.remove('nature-compass-curriculum');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    setLoadingStep(0);
-    setError(null);
-    setLessonPlan(null);
-    setCurrentPlanId(null);
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    try {
-      const streamFn = currentKitLanguage === 'zh' ? generateLessonPlanStreamingCN : generateLessonPlanStreaming;
-      const result = await streamFn(
-        input,
-        (partial, keys) => {
-          if (keys.includes('missionBriefing')) setLoadingStep(1);
-          if (keys.includes('roadmap')) setLoadingStep(2);
-          if (keys.includes('handbook')) setLoadingStep(3);
-          if (keys.includes('vocabulary')) setLoadingStep(4);
-        },
-        controller.signal
-      );
-
-      if (currentKitLanguage === 'en') {
-        setLoadingStep(5);
-        try {
-          const translatedResult = await translateLessonPlan(result, 'Simplified Chinese', controller.signal);
-          result.translatedPlan = translatedResult;
-        } catch (transErr) {
-          console.error("Upfront translation failed, falling back to English only:", transErr);
-        }
-      } else {
-        setLoadingStep(5);
-      }
-
-      setLessonPlan(result);
-
-      setTimeout(() => {
-        const resultsElement = document.getElementById('results-section');
-        if (resultsElement) {
-          resultsElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-
-    } catch (err: any) {
-      if (err.name === 'AbortError' || (err.message && err.message.includes('aborted'))) {
-        console.log('Generation aborted');
-        setError("Generation stopped.");
-      } else {
-        const errorMessage = err.message || "Failed to generate lesson plan. Please try again.";
-        setError(errorMessage);
-        alert(`Error: ${errorMessage}`);
-        console.error(err);
-      }
-    } finally {
-      if (abortControllerRef.current === controller) {
-        setIsLoading(false);
-        setLoadingStep(0);
-        abortControllerRef.current = null;
-      }
-    }
-  };
-
-  // Progression of loading steps
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isLoading) {
-      interval = setInterval(() => {
-        setLoadingStep(prev => (prev < LOADING_STEPS.length - 1 ? prev + 1 : prev));
-      }, 3500);
-    }
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
   return (
     <LanguageProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
-        <Header
-          currentView={view}
-          onNavigate={(v) => {
-            setView(v);
-            if (v === 'curriculum') {
-              setLessonPlan(null);
-              setCurriculumResult(null);
-              setExternalCurriculum(null);
+      <ErrorBoundary>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
+          <Header
+            currentView={view}
+            onNavigate={(v) => {
+              setView(v);
+              if (v === 'curriculum') {
+                clearSessionState();
+                setCurrentPlanId(null);
+              }
+            }}
+            onLogoClick={() => {
+              setView('curriculum');
+              clearSessionState();
               setCurrentPlanId(null);
-            }
-          }}
-          onLogoClick={() => {
-            setView('curriculum');
-            setLessonPlan(null);
-            setCurriculumResult(null);
-            setExternalCurriculum(null);
-            setCurrentPlanId(null);
-            sessionStorage.removeItem('nc-lesson-plan');
-            sessionStorage.removeItem('nc-cur-res');
-            sessionStorage.removeItem('nc-ext-curriculum');
-          }}
-          onShowAuth={() => setShowAuthModal(true)}
-        />
+            }}
+            onShowAuth={() => setShowAuthModal(true)}
+          />
 
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+          {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-        <PageLayout className="flex-1">
-          <NatureHeroBanner />
+          <PageLayout className="flex-1">
+            <NatureHeroBanner />
+            <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" /></div>}>
 
-          {/* Curriculum view — config or result */}
-          <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
-            <BodyContainer>
-              {curriculumResult ? (
-                <CurriculumResultDisplay
-                  curriculumEN={curriculumResult.curriculumEN}
-                  curriculumCN={curriculumResult.curriculumCN}
-                  activeLanguage={curriculumResult.activeLanguage}
-                  setActiveLanguage={(lang) => setCurriculumResult(prev => prev ? { ...prev, activeLanguage: lang } : prev)}
-                  savedParams={curriculumResult.params}
-                  onBack={handleBackToConfig}
-                  onNew={handleNewCurriculum}
-                  onSave={handleSaveCurriculum}
-                  onGenerateKit={handleGenerateLessonKit}
-                  batchStatus={batchStatus}
-                  batchLessonMap={batchLessonMap}
-                  batchRunning={batchRunning}
-                  batchProgress={batchProgress}
-                  onBatchGenerate={handleBatchGenerate}
-                  onCancelBatch={handleCancelBatch}
-                  onOpenPlan={handleOpenBatchPlan}
-                />
-              ) : (
-                <CurriculumPlanner
-                  onCurriculumGenerated={handleCurriculumGenerated}
-                  externalCurriculum={externalCurriculum}
-                />
-              )}
-            </BodyContainer>
-          </div>
-
-          {/* Lesson Kit view — always mounted, hidden when not active */}
-          <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
-            <BodyContainer className="flex flex-col gap-8">
-              {!lessonPlan ? (
-                <div className="w-full max-w-3xl mx-auto">
-                  <InputSection
-                    input={input}
-                    setInput={setInput}
-                    onSubmit={handleSubmit}
-                    onStop={handleStop}
-                    isLoading={isLoading}
+              <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
+                <BodyContainer>
+                  <CurriculumPage
+                    onSaveCurriculum={handleSaveCurriculum}
+                    onGenerateLessonKit={handleGenerateLessonKit}
+                    onNavigate={setView}
+                    savedPlans={savedPlans}
+                    savePlanDb={savePlanDb}
                   />
-                  {/* Error Message */}
-                  {error && (
-                    <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center mt-6">
-                      {error}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div id="results-section" className="w-full pb-20 mt-4 animate-fade-in-up">
-                  <div className="mb-4">
-                    <button
-                      onClick={() => { setLessonPlan(null); setCurrentPlanId(null); }}
-                      className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-4 text-sm md:text-base"
-                    >
-                      <ArrowLeft className="w-4 h-4" /> {lang === 'zh' ? '返回生成器' : 'Back to Generator'}
-                    </button>
-                    <LessonPlanDisplay
-                      plan={lessonPlan}
-                      onSave={handleSavePlan}
-                    />
-                  </div>
-                </div>
-              )}
-            </BodyContainer>
-          </div>
+                </BodyContainer>
+              </div>
 
-          {/* Saved view — always mounted, hidden when not active */}
-          <div style={{ display: view === 'saved' ? 'block' : 'none' }}>
-            <BodyContainer>
-              <SavedProjectsPage
-                savedPlans={savedPlans}
-                savedCurricula={savedCurricula}
-                onLoad={handleLoadPlan}
-                onDelete={handleDeletePlan}
-                onRename={handleRenamePlan}
-                onDeleteCurriculum={handleDeleteCurriculum}
-                onRenameCurriculum={handleRenameCurriculum}
-                onLoadCurriculum={(saved) => {
-                  setExternalCurriculum({ curriculum: saved.curriculum, params: saved.params, language: saved.language });
-                  setView('curriculum');
-                }}
-              />
-            </BodyContainer>
-          </div>
-        </PageLayout>
+              <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
+                <BodyContainer className="flex flex-col gap-8">
+                  <LessonKitPage
+                    onSavePlan={handleSavePlan}
+                  />
+                </BodyContainer>
+              </div>
 
-        <footer className="bg-white dark:bg-slate-950/50 border-t border-slate-200 dark:border-white/5 py-8 text-center text-slate-400 text-sm">
-          <p>&copy; {new Date().getFullYear()} Nature Compass. Powered by Google Gemini.</p>
-        </footer>
-      </div>
+              <div style={{ display: view === 'saved' ? 'block' : 'none' }}>
+                <BodyContainer>
+                  <RecordsPage
+                    savedPlans={savedPlans}
+                    savedCurricula={savedCurricula}
+                    onLoadPlan={handleLoadPlan}
+                    onDeletePlan={handleDeletePlan}
+                    onRenamePlan={handleRenamePlan}
+                    onDeleteCurriculum={handleDeleteCurriculum}
+                    onRenameCurriculum={handleRenameCurriculum}
+                    onLoadCurriculum={(saved) => {
+                      setExternalCurriculum({ curriculum: saved.curriculum, params: saved.params, language: saved.language });
+                      setView('curriculum');
+                    }}
+                  />
+                </BodyContainer>
+              </div>
+            </Suspense>
+          </PageLayout>
+
+          <footer className="bg-white dark:bg-slate-950/50 border-t border-slate-200 dark:border-white/5 py-8 text-center text-slate-400 text-sm">
+            <p>&copy; {new Date().getFullYear()} Nature Compass. Powered by Google Gemini.</p>
+          </footer>
+        </div>
+      </ErrorBoundary>
     </LanguageProvider>
   );
 };

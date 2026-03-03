@@ -8,7 +8,7 @@ interface SlidesTabProps {
     notebookLMPrompt: string;
 }
 
-export const SlidesTab: React.FC<SlidesTabProps> = ({
+export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
     editableSlides,
     setEditableSlides,
     notebookLMPrompt,
@@ -171,4 +171,4 @@ export const SlidesTab: React.FC<SlidesTabProps> = ({
             </div>
         </div>
     );
-};
+});

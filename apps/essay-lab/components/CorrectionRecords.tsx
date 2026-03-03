@@ -4,32 +4,43 @@ import ReportDisplay from './ReportDisplay';
 import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
+import localforage from 'localforage';
+
 const STORAGE_KEY = 'essay_lab_records';
 
-export function getRecords(): SavedRecord[] {
+export async function getRecords(): Promise<SavedRecord[]> {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const raw = await localforage.getItem<SavedRecord[]>(STORAGE_KEY);
+        return raw || [];
     } catch { return []; }
 }
 
-export function saveRecord(record: SavedRecord) {
-    const records = getRecords();
+export async function saveRecord(record: SavedRecord) {
+    const records = await getRecords();
     records.unshift(record);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    await localforage.setItem(STORAGE_KEY, records);
 }
 
-export function deleteRecord(id: string) {
-    const records = getRecords().filter(r => r.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+export async function deleteRecord(id: string) {
+    const records = await getRecords();
+    const updated = records.filter(r => r.id !== id);
+    await localforage.setItem(STORAGE_KEY, updated);
 }
 
 const CorrectionRecords: React.FC = () => {
     const { t } = useLanguage();
-    const [records, setRecords] = useState<SavedRecord[]>(getRecords);
+    const [records, setRecords] = useState<SavedRecord[]>([]);
     const [viewingReport, setViewingReport] = useState<SavedRecord | null>(null);
     const [filterGrade, setFilterGrade] = useState<string>('all');
     const [filterCefr, setFilterCefr] = useState<string>('all');
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    React.useEffect(() => {
+        getRecords().then(data => {
+            setRecords(data);
+            setIsLoaded(true);
+        });
+    }, []);
 
     const filtered = useMemo(() => {
         return records.filter(r => {
@@ -39,10 +50,11 @@ const CorrectionRecords: React.FC = () => {
         });
     }, [records, filterGrade, filterCefr]);
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (!confirm(t('records.deleteConfirm'))) return;
-        deleteRecord(id);
-        setRecords(getRecords());
+        await deleteRecord(id);
+        const updated = await getRecords();
+        setRecords(updated);
     };
 
     if (viewingReport) {

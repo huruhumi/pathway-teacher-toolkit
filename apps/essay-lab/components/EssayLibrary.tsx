@@ -9,21 +9,23 @@ import {
     BookMarked, Layers, PenTool, Search, Plus, X, Loader2
 } from 'lucide-react';
 
+import localforage from 'localforage';
+
 const ESSAYS_KEY = 'essay_lab_essays';
 
-function getStoredEssays(): GeneratedEssay[] {
+async function getStoredEssays(): Promise<GeneratedEssay[]> {
     try {
-        const raw = localStorage.getItem(ESSAYS_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const raw = await localforage.getItem<GeneratedEssay[]>(ESSAYS_KEY);
+        return raw || [];
     } catch { return []; }
 }
 
-function saveStoredEssays(essays: GeneratedEssay[]) {
-    localStorage.setItem(ESSAYS_KEY, JSON.stringify(essays));
+async function saveStoredEssays(essays: GeneratedEssay[]) {
+    await localforage.setItem(ESSAYS_KEY, essays);
 }
 
-function getCorrectionEssays(): SavedEssayFromCorrection[] {
-    const records = getRecords();
+async function getCorrectionEssays(): Promise<SavedEssayFromCorrection[]> {
+    const records = await getRecords();
     return records
         .filter(r => r.report.goldenVersion)
         .map(r => ({
@@ -50,11 +52,25 @@ const genreKeys: Record<EssayGenre, string> = {
 
 const EssayLibrary: React.FC = () => {
     const { t } = useLanguage();
-    const [storedEssays, setStoredEssays] = useState<GeneratedEssay[]>(getStoredEssays);
+    const [storedEssays, setStoredEssays] = useState<GeneratedEssay[]>([]);
+    const [correctionEssays, setCorrectionEssays] = useState<SavedEssayFromCorrection[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+
     const [showGenerator, setShowGenerator] = useState(false);
     const [generating, setGenerating] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        const load = async () => {
+            const essays = await getStoredEssays();
+            const corrections = await getCorrectionEssays();
+            setStoredEssays(essays);
+            setCorrectionEssays(corrections);
+            setIsLoaded(true);
+        };
+        load();
+    }, []);
 
     // Filters
     const [filterSource, setFilterSource] = useState<'all' | 'generated' | 'correction'>('all');
@@ -70,8 +86,6 @@ const EssayLibrary: React.FC = () => {
     const [genGenre, setGenGenre] = useState<EssayGenre>(EssayGenre.NARRATIVE);
     const [genWords, setGenWords] = useState(150);
     const [genError, setGenError] = useState<string | null>(null);
-
-    const correctionEssays = useMemo(() => getCorrectionEssays(), [storedEssays]);
 
     const allEssays: EssayItem[] = useMemo(() => {
         const combined = [...storedEssays, ...correctionEssays];
@@ -128,15 +142,15 @@ const EssayLibrary: React.FC = () => {
         }
     }, [storedEssays]);
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         const updated = storedEssays.filter(e => e.id !== id);
-        saveStoredEssays(updated);
+        await saveStoredEssays(updated);
         setStoredEssays(updated);
     };
 
-    const handleToggleFavorite = (id: string) => {
+    const handleToggleFavorite = async (id: string) => {
         const updated = storedEssays.map(e => e.id === id ? { ...e, favorite: !e.favorite } : e);
-        saveStoredEssays(updated);
+        await saveStoredEssays(updated);
         setStoredEssays(updated);
     };
 

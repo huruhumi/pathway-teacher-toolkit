@@ -35,7 +35,7 @@ interface ActivitiesTabProps {
     editablePlan: StructuredLessonPlan | null;
 }
 
-export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
+export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     editableGames,
     setEditableGames,
     editablePlan,
@@ -213,4 +213,4 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({
             </div>
         </div>
     );
-};
+});

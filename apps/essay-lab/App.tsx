@@ -1,17 +1,19 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { analyzeEssay } from './services/geminiService';
 import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord } from './types';
 import ReportDisplay from './components/ReportDisplay';
-import CorrectionRecords, { saveRecord } from './components/CorrectionRecords';
-import EssayLibrary from './components/EssayLibrary';
+import { saveRecord } from './components/CorrectionRecords';
+const CorrectionRecords = React.lazy(() => import('./components/CorrectionRecords'));
+const EssayLibrary = React.lazy(() => import('./components/EssayLibrary'));
 import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather, BookOpen } from 'lucide-react';
 import { AppHeader } from '@shared/components/AppHeader';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 interface FileData {
@@ -41,6 +43,7 @@ const AppContent: React.FC = () => {
   const [selectedCEFR, setSelectedCEFR] = useState<CEFRLevel>(CEFRLevel.B1);
 
   const [loadingMessage, setLoadingMessage] = useState(t('loading.1'));
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const essayFileRef = useRef<HTMLInputElement>(null);
   const topicFileRef = useRef<HTMLInputElement>(null);
@@ -56,16 +59,23 @@ const AppContent: React.FC = () => {
 
   const triggerLoadingMessages = useCallback(() => {
     let i = 0;
-    const interval = setInterval(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
       if (i < messages.length) {
         setLoadingMessage(messages[i]);
         i++;
       } else {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
       }
     }, 2000);
-    return interval;
+    return intervalRef.current;
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   const readFile = (file: File): Promise<FileData> => {
     return new Promise((resolve, reject) => {
@@ -123,7 +133,7 @@ const AppContent: React.FC = () => {
       setError(err.message || t('input.error'));
     } finally {
       setLoading(false);
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
   };
 
@@ -182,172 +192,174 @@ const AppContent: React.FC = () => {
           />
         )}
         <BodyContainer>
-          {viewMode === 'essays' ? (
-            <EssayLibrary />
-          ) : viewMode === 'records' ? (
-            <CorrectionRecords />
-          ) : !report && !loading ? (
-            <>
-              <div className="space-y-8">
-                {/* Title */}
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-indigo-500" />
-                  {t('input.submit')}
-                </h2>
-
-                {/* Grade & CEFR Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                      <School className="w-4 h-4 text-indigo-500" />
-                      {t('input.grade')}
-                    </label>
-                    <select
-                      value={selectedGrade}
-                      onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                      className="input-field appearance-none cursor-pointer py-3"
-                    >
-                      {Object.values(StudentGrade).map(grade => (
-                        <option key={grade} value={grade}>{grade}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                      <Gauge className="w-4 h-4 text-indigo-500" />
-                      {t('input.cefr')}
-                    </label>
-                    <select
-                      value={selectedCEFR}
-                      onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                      className="input-field appearance-none cursor-pointer py-3"
-                    >
-                      {Object.values(CEFRLevel).map(level => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Prompt & Essay Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Essay Prompt */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Target className="w-4 h-4 text-indigo-500" />
-                        {t('input.prompt')}
-                      </label>
-                      <button
-                        onClick={() => topicFileRef.current?.click()}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                      >
-                        <CloudUpload className="w-4 h-4" />
-                        {topicImage ? t('input.changeImage') : t('input.uploadImage')}
-                      </button>
-                    </div>
-
-                    {topicImage && (
-                      <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2 truncate">
-                          <ImageIcon className="w-4 h-4 text-indigo-400" />
-                          <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
-                        </div>
-                        <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    <textarea
-                      value={topicText}
-                      onChange={(e) => setTopicText(e.target.value)}
-                      placeholder={t('input.promptPlaceholder')}
-                      className="input-field h-48 text-sm resize-none"
-                    />
-                    <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
-                  </div>
-
-                  {/* Student Essay */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <PenTool className="w-4 h-4 text-indigo-500" />
-                        {t('input.essay')}
-                      </label>
-                      <button
-                        onClick={() => essayFileRef.current?.click()}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                      >
-                        <Camera className="w-4 h-4" />
-                        {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
-                      </button>
-                    </div>
-
-                    {essayImage && (
-                      <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2 truncate">
-                          <ImageIcon className="w-4 h-4 text-indigo-400" />
-                          <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
-                        </div>
-                        <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-
-                    <textarea
-                      value={essayText}
-                      onChange={(e) => setEssayText(e.target.value)}
-                      placeholder={t('input.essayPlaceholder')}
-                      className="input-field h-48 text-sm resize-none font-sans"
-                    />
-                    <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-2">
-                  <button
-                    onClick={handleSubmit}
-                    className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Sparkles className="w-5 h-5" />
+          <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+            {viewMode === 'essays' ? (
+              <EssayLibrary />
+            ) : viewMode === 'records' ? (
+              <CorrectionRecords />
+            ) : !report && !loading ? (
+              <>
+                <div className="space-y-8">
+                  {/* Title */}
+                  <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-500" />
                     {t('input.submit')}
-                  </button>
-                </div>
-              </div>
+                  </h2>
 
-              {error && (
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto mt-6">
-                  <AlertCircle className="w-4 h-4" />
-                  {error}
+                  {/* Grade & CEFR Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <School className="w-4 h-4 text-indigo-500" />
+                        {t('input.grade')}
+                      </label>
+                      <select
+                        value={selectedGrade}
+                        onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
+                        className="input-field appearance-none cursor-pointer py-3"
+                      >
+                        {Object.values(StudentGrade).map(grade => (
+                          <option key={grade} value={grade}>{grade}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                        <Gauge className="w-4 h-4 text-indigo-500" />
+                        {t('input.cefr')}
+                      </label>
+                      <select
+                        value={selectedCEFR}
+                        onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
+                        className="input-field appearance-none cursor-pointer py-3"
+                      >
+                        {Object.values(CEFRLevel).map(level => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Prompt & Essay Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Essay Prompt */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                          <Target className="w-4 h-4 text-indigo-500" />
+                          {t('input.prompt')}
+                        </label>
+                        <button
+                          onClick={() => topicFileRef.current?.click()}
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                        >
+                          <CloudUpload className="w-4 h-4" />
+                          {topicImage ? t('input.changeImage') : t('input.uploadImage')}
+                        </button>
+                      </div>
+
+                      {topicImage && (
+                        <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2 truncate">
+                            <ImageIcon className="w-4 h-4 text-indigo-400" />
+                            <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
+                          </div>
+                          <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      <textarea
+                        value={topicText}
+                        onChange={(e) => setTopicText(e.target.value)}
+                        placeholder={t('input.promptPlaceholder')}
+                        className="input-field h-48 text-sm resize-none"
+                      />
+                      <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
+                    </div>
+
+                    {/* Student Essay */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                          <PenTool className="w-4 h-4 text-indigo-500" />
+                          {t('input.essay')}
+                        </label>
+                        <button
+                          onClick={() => essayFileRef.current?.click()}
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                        >
+                          <Camera className="w-4 h-4" />
+                          {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
+                        </button>
+                      </div>
+
+                      {essayImage && (
+                        <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2 truncate">
+                            <ImageIcon className="w-4 h-4 text-indigo-400" />
+                            <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
+                          </div>
+                          <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      <textarea
+                        value={essayText}
+                        onChange={(e) => setEssayText(e.target.value)}
+                        placeholder={t('input.essayPlaceholder')}
+                        className="input-field h-48 text-sm resize-none font-sans"
+                      />
+                      <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={handleSubmit}
+                      className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      {t('input.submit')}
+                    </button>
+                  </div>
                 </div>
-              )}
-            </>
-          ) : loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
-              <div className="relative">
-                <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Feather className="w-5 h-5 text-indigo-600 animate-bounce" />
+
+                {error && (
+                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto mt-6">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                  </div>
+                )}
+              </>
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
+                <div className="relative">
+                  <div className="w-24 h-24 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Feather className="w-5 h-5 text-indigo-600 animate-bounce" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
+                  <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
-                <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
-              </div>
-            </div>
-          ) : (
-            report && (
-              <ReportDisplay
-                report={report}
-                onReset={reset}
-                readOnly={isPreviewing}
-                onTogglePreview={handleTogglePreview}
-              />
-            )
-          )}
+            ) : (
+              report && (
+                <ReportDisplay
+                  report={report}
+                  onReset={reset}
+                  readOnly={isPreviewing}
+                  onTogglePreview={handleTogglePreview}
+                />
+              )
+            )}
+          </Suspense>
         </BodyContainer>
       </PageLayout>
 
@@ -370,7 +382,9 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => (
   <LanguageProvider>
-    <AppContent />
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   </LanguageProvider>
 );
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { BrandData } from '../data/brandData';
 import { generateContent, generateImage, Type } from '../services/ai';
@@ -6,6 +6,7 @@ import { Loader2, Sparkles, Copy, Check, Image as ImageIcon, Type as TypeIcon, H
 import { motion } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { SavedNote } from '../types';
+import { applyLogoToImage, LogoPosition, LogoSize } from '../utils/imageProcessor';
 
 // Xiaohongshu banned/sensitive words that trigger content restrictions
 const BANNED_WORDS = [
@@ -92,16 +93,37 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
   const [contentHistory, setContentHistory] = useState<any[]>([]);
   const [imageCount, setImageCount] = useState(1);
   const [imageStyle, setImageStyle] = useState('Photography (Realism)');
-  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
-  const [generatedImages, setGeneratedImages] = useState<string[]>(initialNote ? initialNote.images : []);
-  const [editablePrompts, setEditablePrompts] = useState<string[]>([]);
-  const [generatingImageIndices, setGeneratingImageIndices] = useState<number[]>([]);
-  const [isRefreshingResource, setIsRefreshingResource] = useState<Record<number, boolean>>({});
+
+  // Consolidated image generation state to prevent render waterfalls
+  const [imageState, setImageState] = useState({
+    isGenerating: false,
+    images: initialNote ? initialNote.images : [] as string[],
+    prompts: [] as string[],
+    generatingIndices: [] as number[],
+    refreshingResource: {} as Record<number, boolean>,
+  });
+
+  // Backward-compatible aliases for minimal code churn
+  const isGeneratingImages = imageState.isGenerating;
+  const generatedImages = imageState.images;
+  const editablePrompts = imageState.prompts;
+  const generatingImageIndices = imageState.generatingIndices;
+  const isRefreshingResource = imageState.refreshingResource;
+
+  const setIsGeneratingImages = useCallback((v: boolean) => setImageState(s => ({ ...s, isGenerating: v })), []);
+  const setGeneratedImages = useCallback((v: string[] | ((prev: string[]) => string[])) =>
+    setImageState(s => ({ ...s, images: typeof v === 'function' ? v(s.images) : v })), []);
+  const setEditablePrompts = useCallback((v: string[] | ((prev: string[]) => string[])) =>
+    setImageState(s => ({ ...s, prompts: typeof v === 'function' ? v(s.prompts) : v })), []);
+  const setGeneratingImageIndices = useCallback((v: number[] | ((prev: number[]) => number[])) =>
+    setImageState(s => ({ ...s, generatingIndices: typeof v === 'function' ? v(s.generatingIndices) : v })), []);
+  const setIsRefreshingResource = useCallback((v: Record<number, boolean> | ((prev: Record<number, boolean>) => Record<number, boolean>)) =>
+    setImageState(s => ({ ...s, refreshingResource: typeof v === 'function' ? v(s.refreshingResource) : v })), []);
 
   // Logo Overlay Settings
   const [addLogoIndices, setAddLogoIndices] = useState<number[]>([]);
-  const [logoSize, setLogoSize] = useState<'小' | '中' | '大'>('中');
-  const [logoPosition, setLogoPosition] = useState<'左上' | '右上' | '左下' | '右下' | '居中'>('右下');
+  const [logoSize, setLogoSize] = useState<LogoSize>('中');
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>('右下');
 
   useEffect(() => {
     if (initialNote) {
@@ -153,7 +175,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       onNavigate('settings');
       return;
     }
-    console.log("handleGenerate called with topic:", topic);
+
     setIsGenerating(true);
     // Save current content to history before generating new one
     if (generatedContent) {
@@ -371,7 +393,9 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
     }
     setIsGenerating(true);
     setGeneratedContent(null);
-    setGeneratedImages([]); // Reset images on new content generation
+    setGeneratedImages(prev => {
+      return [];
+    });
 
     try {
       // Step 1: Generate Text Content using custom prompt
@@ -521,76 +545,13 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
 
     try {
       // Step 0: Define logo helper
-      const applyLogoToImage = async (base64Img: string, applyLogo: boolean): Promise<string> => {
-        if (!applyLogo || !brandData.logoUrl) return base64Img;
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return resolve(base64Img);
-
-            ctx.drawImage(img, 0, 0);
-
-            const logo = new Image();
-            logo.onload = () => {
-              // Calculate logo size
-              const baseSize = Math.min(canvas.width, canvas.height);
-              let scale = 0.15; // default '中'
-              if (logoSize === '小') scale = 0.08;
-              if (logoSize === '大') scale = 0.25;
-
-              const lWidth = baseSize * scale;
-              const lHeight = (logo.height / logo.width) * lWidth;
-
-              // Calculate position
-              const margin = baseSize * 0.05;
-              let x = 0;
-              let y = 0;
-
-              switch (logoPosition) {
-                case '左上':
-                  x = margin;
-                  y = margin;
-                  break;
-                case '右上':
-                  x = canvas.width - lWidth - margin;
-                  y = margin;
-                  break;
-                case '左下':
-                  x = margin;
-                  y = canvas.height - lHeight - margin;
-                  break;
-                case '右下':
-                  x = canvas.width - lWidth - margin;
-                  y = canvas.height - lHeight - margin;
-                  break;
-                case '居中':
-                  x = (canvas.width - lWidth) / 2;
-                  y = (canvas.height - lHeight) / 2;
-                  break;
-              }
-
-              ctx.drawImage(logo, x, y, lWidth, lHeight);
-              resolve(canvas.toDataURL('image/png'));
-            };
-            logo.onerror = () => resolve(base64Img);
-            logo.src = brandData.logoUrl as string;
-          };
-          img.onerror = () => resolve(base64Img);
-          img.src = base64Img;
-        });
-      };
-
       // Generate images sequentially to avoid hitting rate limits too hard
       for (let i = 0; i < promptsToUse.length; i++) {
         const prompt = promptsToUse[i];
         const fullPrompt = `${prompt}, ${imageStyle} style, high quality, aesthetic, xiaohongshu style, 3:4 aspect ratio`;
         const imageUrl = await generateImage(fullPrompt, "3:4");
         if (imageUrl) {
-          const processedUrl = await applyLogoToImage(imageUrl, addLogoIndices.includes(i));
+          const processedUrl = await applyLogoToImage(imageUrl, addLogoIndices.includes(i), brandData.logoUrl as string, logoSize, logoPosition);
           newImages.push(processedUrl);
           setGeneratedImages([...newImages]); // Update state progressively
         }
@@ -610,58 +571,14 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
     setGeneratingImageIndices(prev => [...prev, index]);
 
     try {
-      const applyLogoToImage = async (base64Img: string, applyLogo: boolean): Promise<string> => {
-        if (!applyLogo || !brandData.logoUrl) return base64Img;
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return resolve(base64Img);
-
-            ctx.drawImage(img, 0, 0);
-
-            const logo = new Image();
-            logo.onload = () => {
-              const baseSize = Math.min(canvas.width, canvas.height);
-              let scale = 0.15;
-              if (logoSize === '小') scale = 0.08;
-              if (logoSize === '大') scale = 0.25;
-
-              const lWidth = baseSize * scale;
-              const lHeight = (logo.height / logo.width) * lWidth;
-
-              const margin = baseSize * 0.05;
-              let x = 0, y = 0;
-
-              switch (logoPosition) {
-                case '左上': x = margin; y = margin; break;
-                case '右上': x = canvas.width - lWidth - margin; y = margin; break;
-                case '左下': x = margin; y = canvas.height - lHeight - margin; break;
-                case '右下': x = canvas.width - lWidth - margin; y = canvas.height - lHeight - margin; break;
-                case '居中': x = (canvas.width - lWidth) / 2; y = (canvas.height - lHeight) / 2; break;
-              }
-
-              ctx.drawImage(logo, x, y, lWidth, lHeight);
-              resolve(canvas.toDataURL('image/png'));
-            };
-            logo.onerror = () => resolve(base64Img);
-            logo.src = brandData.logoUrl as string;
-          };
-          img.onerror = () => resolve(base64Img);
-          img.src = base64Img;
-        });
-      };
-
       const fullPrompt = `${prompt}, ${imageStyle} style, high quality, aesthetic, xiaohongshu style, 3:4 aspect ratio`;
       const imageUrl = await generateImage(fullPrompt, "3:4");
 
       if (imageUrl) {
-        const processedUrl = await applyLogoToImage(imageUrl, addLogoIndices.includes(index));
+        const processedUrl = await applyLogoToImage(imageUrl, addLogoIndices.includes(index), brandData.logoUrl as string, logoSize, logoPosition);
         setGeneratedImages(prev => {
           const newImages = [...prev];
+          // base64 images handled naturally
           // Fill gaps if necessary
           while (newImages.length <= index) {
             newImages.push("");
@@ -986,7 +903,11 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
                           <button
                             onClick={() => {
                               setEditablePrompts(prev => prev.filter((_, i) => i !== idx));
-                              setGeneratedImages(prev => prev.filter((_, i) => i !== idx));
+                              setGeneratedImages(prev => {
+                                const newImages = [...prev];
+                                newImages.splice(idx, 1);
+                                return newImages;
+                              });
                             }}
                             className="text-slate-400 hover:text-red-500 transition-colors"
                             title="删除此提示词"

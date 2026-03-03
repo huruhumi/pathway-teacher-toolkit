@@ -1,14 +1,11 @@
-import { GoogleGenAI, Type, Schema, Part } from "@google/genai";
+import { Type, Schema, Part } from "@google/genai";
 import { LessonInput, LessonPlanResponse, UploadedFile } from "../types";
 
-// --- Retry Logic (shared utility) ---
-import { retryWithBackoff } from '@shared/retryWithBackoff';
-const MAX_RETRIES = 5;
-const BASE_DELAY = 3000;
+// --- Shared AI Utilities ---
+import { createAIClient } from '@shared/ai/client';
+import { retryAICall as retryOperation } from '@shared/ai/retry';
 
-// Exported for sub-modules (themeService, imageService, contentGenerators, curriculumService)
-export const retryOperation = <T>(operation: () => Promise<T>, signal?: AbortSignal): Promise<T> =>
-  retryWithBackoff(operation, { maxRetries: MAX_RETRIES, baseDelay: BASE_DELAY, signal });
+export { retryOperation }; // Re-export for sub-modules to use without rewriting all imports immediately
 
 export const THEME_PERSPECTIVES = [
   "Microscopic View (Zoom in on tiny details)",
@@ -160,7 +157,7 @@ export const lessonPlanSchema: Schema = {
 };
 
 export const generateLessonPlan = async (input: LessonInput, signal?: AbortSignal): Promise<LessonPlanResponse> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const ai = createAIClient();
   const handbookPageCount = input.handbookPages || 15;
 
   const systemInstruction = `
@@ -258,15 +255,104 @@ export const generateLessonPlan = async (input: LessonInput, signal?: AbortSigna
 };
 
 
-// --- Streaming Version ---
-// Attempts to use generateContentStream for progressive rendering.
-// Calls onPartialResult as new JSON keys become available.
+// --- Shared Streaming Helpers ---
+
+/**
+ * Attempts to parse accumulated JSON text, closing any unclosed braces/brackets.
+ * Calls onPartialResult when new top-level keys are detected.
+ */
+function tryPartialParse(
+  text: string,
+  lastKnownKeys: string[],
+  onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
+): string[] {
+  try {
+    const parsed = JSON.parse(text);
+    const keys = Object.keys(parsed);
+    if (keys.length > lastKnownKeys.length) {
+      onPartialResult(parsed, keys);
+      return keys;
+    }
+  } catch {
+    let attempt = text;
+    const openBraces = (attempt.match(/{/g) || []).length;
+    const closeBraces = (attempt.match(/}/g) || []).length;
+    const openBrackets = (attempt.match(/\[/g) || []).length;
+    const closeBrackets = (attempt.match(/\]/g) || []).length;
+    attempt = attempt.replace(/,\s*$/, '');
+    for (let i = 0; i < openBrackets - closeBrackets; i++) attempt += ']';
+    for (let i = 0; i < openBraces - closeBraces; i++) attempt += '}';
+    try {
+      const parsed = JSON.parse(attempt);
+      const keys = Object.keys(parsed);
+      if (keys.length > lastKnownKeys.length) {
+        onPartialResult(parsed, keys);
+        return keys;
+      }
+    } catch { /* skip */ }
+  }
+  return lastKnownKeys;
+}
+
+/**
+ * Builds the `contents` payload, handling optional uploaded files.
+ */
+function buildContents(input: LessonInput, fallbackText: string): any {
+  if (input.uploadedFiles && input.uploadedFiles.length > 0) {
+    const parts: Part[] = input.uploadedFiles.map(file => ({
+      inlineData: { mimeType: file.type, data: file.data }
+    }));
+    parts.push({ text: fallbackText });
+    return [{ parts }];
+  }
+  return [{ text: fallbackText }];
+}
+
+/**
+ * Shared streaming core for both EN and CN lesson plan generation.
+ */
+async function _streamLessonPlanCore(
+  systemInstruction: string,
+  contents: any,
+  onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
+  signal?: AbortSignal,
+): Promise<LessonPlanResponse> {
+  const ai = createAIClient();
+  let accumulatedText = '';
+  let lastKnownKeys: string[] = [];
+
+  return await retryOperation(async () => {
+    const response = await ai.models.generateContentStream({
+      model: 'gemini-3-flash-preview',
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: lessonPlanSchema,
+        temperature: 0.5,
+      },
+      contents,
+    });
+
+    for await (const chunk of response) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const chunkText = chunk.text;
+      if (chunkText) {
+        accumulatedText += chunkText;
+        lastKnownKeys = tryPartialParse(accumulatedText, lastKnownKeys, onPartialResult);
+      }
+    }
+
+    if (!accumulatedText) throw new Error("No response from Gemini stream");
+    return JSON.parse(accumulatedText) as LessonPlanResponse;
+  }, signal);
+}
+
+// --- Streaming Version (English / ESL) ---
 export const generateLessonPlanStreaming = async (
   input: LessonInput,
   onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
   signal?: AbortSignal,
 ): Promise<LessonPlanResponse> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
   const handbookPageCount = input.handbookPages || 15;
 
   const systemInstruction = `
@@ -317,88 +403,8 @@ export const generateLessonPlanStreaming = async (
     - Handbook: Exactly ${handbookPageCount} pages of meticulously structured instructional design.
   `;
 
-  // Handle uploaded files for context
-  let contents: any = [{ text: "Please generate the lesson plan based on these requirements." }];
-
-  if (input.uploadedFiles && input.uploadedFiles.length > 0) {
-    const parts: Part[] = [];
-    input.uploadedFiles.forEach(file => {
-      parts.push({
-        inlineData: {
-          mimeType: file.type,
-          data: file.data
-        }
-      });
-    });
-    parts.push({ text: "Reference materials attached above. Use them to shape the theme and activities." });
-    contents = [{ parts }];
-  }
-
-  let accumulatedText = '';
-  let lastKnownKeys: string[] = [];
-
-  const tryPartialParse = (text: string) => {
-    try {
-      const parsed = JSON.parse(text);
-      const keys = Object.keys(parsed);
-      if (keys.length > lastKnownKeys.length) {
-        lastKnownKeys = keys;
-        onPartialResult(parsed, keys);
-      }
-    } catch {
-      // Try to extract partial JSON by closing open braces/brackets
-      let attempt = text;
-      const openBraces = (attempt.match(/{/g) || []).length;
-      const closeBraces = (attempt.match(/}/g) || []).length;
-      const openBrackets = (attempt.match(/\[/g) || []).length;
-      const closeBrackets = (attempt.match(/\]/g) || []).length;
-
-      // Close any trailing comma
-      attempt = attempt.replace(/,\s*$/, '');
-
-      // Close open brackets then braces
-      for (let i = 0; i < openBrackets - closeBrackets; i++) attempt += ']';
-      for (let i = 0; i < openBraces - closeBraces; i++) attempt += '}';
-
-      try {
-        const parsed = JSON.parse(attempt);
-        const keys = Object.keys(parsed);
-        if (keys.length > lastKnownKeys.length) {
-          lastKnownKeys = keys;
-          onPartialResult(parsed, keys);
-        }
-      } catch {
-        // Still can't parse — skip this chunk
-      }
-    }
-  };
-
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-3-flash-preview',
-      config: {
-        systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: lessonPlanSchema,
-        temperature: 0.5,
-      },
-      contents: contents,
-    });
-
-    for await (const chunk of response) {
-      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-
-      const chunkText = chunk.text;
-      if (chunkText) {
-        accumulatedText += chunkText;
-        tryPartialParse(accumulatedText);
-      }
-    }
-
-    // Final parse
-    if (!accumulatedText) throw new Error("No response from Gemini stream");
-    return JSON.parse(accumulatedText) as LessonPlanResponse;
-  }, signal);
+  const contents = buildContents(input, "Reference materials attached above. Use them to shape the theme and activities.");
+  return _streamLessonPlanCore(systemInstruction, contents, onPartialResult, signal);
 };
 
 // --- Barrel re-exports from sub-modules ---
@@ -408,13 +414,12 @@ export { generateImagePrompt, generateImage, generateBadgePrompt } from './image
 export { generateSingleStep, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateSingleBackgroundInfo, generateSingleTeachingTip, translateLessonPlan } from './contentGenerators';
 export { suggestLocations, generateCurriculum, generateCurriculumCN } from './curriculumService';
 
-// ===== Chinese-only Lesson Plan Streaming (no ESL) =====
+// --- Streaming Version (Chinese / no ESL) ---
 export const generateLessonPlanStreamingCN = async (
   input: LessonInput,
   onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
   signal?: AbortSignal,
 ): Promise<LessonPlanResponse> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
   const handbookPageCount = input.handbookPages || 15;
 
   const systemInstruction = `
@@ -463,75 +468,6 @@ export const generateLessonPlanStreamingCN = async (
 - 手册：恰好${handbookPageCount} 页精心设计的教学内容。
 `;
 
-  let contents: any = [{ text: "请根据以上要求生成STEAM课程方案。" }];
-
-  if (input.uploadedFiles && input.uploadedFiles.length > 0) {
-    const parts: Part[] = [];
-    input.uploadedFiles.forEach(file => {
-      parts.push({
-        inlineData: {
-          mimeType: file.type,
-          data: file.data
-        }
-      });
-    });
-    parts.push({ text: "以上是参考材料，请据此设计主题和活动。" });
-    contents = [{ parts }];
-  }
-
-  let accumulatedText = '';
-  let lastKnownKeys: string[] = [];
-
-  const tryPartialParse = (text: string) => {
-    try {
-      const parsed = JSON.parse(text);
-      const keys = Object.keys(parsed);
-      if (keys.length > lastKnownKeys.length) {
-        lastKnownKeys = keys;
-        onPartialResult(parsed, keys);
-      }
-    } catch {
-      let attempt = text;
-      const openBraces = (attempt.match(/{/g) || []).length;
-      const closeBraces = (attempt.match(/}/g) || []).length;
-      const openBrackets = (attempt.match(/\[/g) || []).length;
-      const closeBrackets = (attempt.match(/\]/g) || []).length;
-      attempt = attempt.replace(/,\s*$/, '');
-      for (let i = 0; i < openBrackets - closeBrackets; i++) attempt += ']';
-      for (let i = 0; i < openBraces - closeBraces; i++) attempt += '}';
-      try {
-        const parsed = JSON.parse(attempt);
-        const keys = Object.keys(parsed);
-        if (keys.length > lastKnownKeys.length) {
-          lastKnownKeys = keys;
-          onPartialResult(parsed, keys);
-        }
-      } catch { /* skip */ }
-    }
-  };
-
-  return await retryOperation(async () => {
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-3-flash-preview',
-      config: {
-        systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: lessonPlanSchema,
-        temperature: 0.5,
-      },
-      contents: contents,
-    });
-
-    for await (const chunk of response) {
-      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      const chunkText = chunk.text;
-      if (chunkText) {
-        accumulatedText += chunkText;
-        tryPartialParse(accumulatedText);
-      }
-    }
-
-    if (!accumulatedText) throw new Error("Gemini流式响应为空");
-    return JSON.parse(accumulatedText) as LessonPlanResponse;
-  }, signal);
+  const contents = buildContents(input, "以上是参考材料，请据此设计主题和活动。");
+  return _streamLessonPlanCore(systemInstruction, contents, onPartialResult, signal);
 };

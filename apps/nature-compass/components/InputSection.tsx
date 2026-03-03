@@ -57,32 +57,31 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
   };
 
   const processFiles = async (files: FileList) => {
-    const newFiles: UploadedFile[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      // Simple validation for PDF or Images
+    const validFiles = Array.from(files).filter(file => {
       if (!file.type.match('image.*') && file.type !== 'application/pdf' && file.type !== 'text/plain') {
         alert(`File ${file.name} is not a supported format (PDF, Image, Text only).`);
-        continue;
+        return false;
       }
+      return true;
+    });
 
-      const reader = new FileReader();
-      await new Promise<void>((resolve) => {
+    const filePromises = validFiles.map(file => {
+      return new Promise<UploadedFile>((resolve) => {
+        const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
-          // Extract base64 part
           const base64Data = result.split(',')[1];
-          newFiles.push({
+          resolve({
             name: file.name,
             type: file.type,
             data: base64Data
           });
-          resolve();
         };
         reader.readAsDataURL(file);
       });
-    }
+    });
+
+    const newFiles = await Promise.all(filePromises);
 
     setInput(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...newFiles] }));
   };

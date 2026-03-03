@@ -3,6 +3,8 @@ import { GeneratedContent, SavedLesson, SavedCurriculum, ESLCurriculum, Curricul
 import { safeStorage } from '@shared/safeStorage';
 import { imageStore } from '@shared/imageStore';
 import { isToday, isThisWeek, isThisMonth } from '../utils/dateHelpers';
+import { useAppStore } from '../stores/appStore';
+import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
 
 /** Check if a string looks like a base64 data URI (not an IndexedDB key reference) */
 const isBase64 = (s?: string) => s?.startsWith('data:');
@@ -154,41 +156,29 @@ function generateCurriculumDescription(curriculum: ESLCurriculum): string {
 }
 
 export function useLessonHistory() {
-    const [savedLessons, setSavedLessons] = useState<SavedLesson[]>([]);
-    const [savedCurricula, setSavedCurricula] = useState<SavedCurriculum[]>([]);
-    const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+    const {
+        activeLessonId, setActiveLessonId,
+        curSearch, curLevel, curDate, curSort, curLessonRange,
+        kitSearch, kitLevel, kitDate, kitSort, recordsTab
+    } = useAppStore();
 
-    // Title editing state
+    const { items: savedLessons, setItems: setSavedLessons, saveItem: saveLessonDb, deleteItem: deleteLessonDb } = useProjectCRUD<SavedLesson>('esl_smart_planner_history', 50);
+    const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb } = useProjectCRUD<SavedCurriculum>('esl_planner_curricula', 50);
+
+    // Title editing state (still local because transient UI state)
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
-
-    // --- Curricula filter state ---
-    const [curSearch, setCurSearch] = useState('');
-    const [curLevel, setCurLevel] = useState('All Levels');
-    const [curDate, setCurDate] = useState('all');
-    const [curSort, setCurSort] = useState('newest');
-    const [curLessonRange, setCurLessonRange] = useState('all');
-
-    // --- Kits filter state ---
-    const [kitSearch, setKitSearch] = useState('');
-    const [kitLevel, setKitLevel] = useState('All Levels');
-    const [kitDate, setKitDate] = useState('all');
-    const [kitSort, setKitSort] = useState('newest');
-
-    // Records sub-tab
-    const [recordsTab, setRecordsTab] = useState<'curricula' | 'kits'>('curricula');
 
     // Load saved data on mount + hydrate images from IndexedDB
     useEffect(() => {
         const raw: SavedLesson[] = safeStorage.get('esl_smart_planner_history', []);
-        setSavedLessons(raw);
         // Hydrate images async
         raw.forEach(lesson => {
             hydrateImages(lesson).then(hydrated => {
                 setSavedLessons(prev => prev.map(l => l.id === hydrated.id ? hydrated : l));
             });
         });
-        setSavedCurricula(safeStorage.get('esl_planner_curricula', []));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // --- Filtered Curricula ---
@@ -250,66 +240,60 @@ export function useLessonHistory() {
         // Strip images to IndexedDB before saving to localStorage
         const strippedContent = await stripImages(lessonId, content);
 
-        let updatedHistory = [...savedLessons];
-        if (activeLessonId) {
-            updatedHistory = updatedHistory.map(lesson => {
-                if (lesson.id === activeLessonId) {
-                    return { ...lesson, lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || lesson.topic, level: content.structuredLessonPlan.classInformation.level, content: strippedContent, description: lesson.description || generateLessonDescription(content) };
-                }
-                return lesson;
-            });
-        } else {
-            const desc = generateLessonDescription(content);
-            const newRecord: SavedLesson = { id: lessonId, timestamp: Date.now(), lastModified: Date.now(), topic: content.structuredLessonPlan.classInformation.topic || 'Untitled Lesson', level: content.structuredLessonPlan.classInformation.level, description: desc, content: strippedContent };
-            updatedHistory = [newRecord, ...updatedHistory];
+        const existing = savedLessons.find(l => l.id === activeLessonId);
+        const desc = existing?.description || generateLessonDescription(content);
+
+        const newRecord: SavedLesson = {
+            id: lessonId,
+            timestamp: existing?.timestamp || Date.now(),
+            lastModified: Date.now(),
+            topic: content.structuredLessonPlan.classInformation.topic || existing?.topic || 'Untitled Lesson',
+            level: content.structuredLessonPlan.classInformation.level,
+            description: desc,
+            content: strippedContent
+        };
+
+        saveLessonDb(newRecord);
+
+        if (!activeLessonId) {
             setActiveLessonId(lessonId);
         }
+
         // In-memory keeps full base64 for display
-        setSavedLessons(updatedHistory.map(l =>
+        setSavedLessons((prev) => prev.map(l =>
             l.id === lessonId ? { ...l, content } : l
         ));
-        // localStorage gets stripped refs
-        safeStorage.setWithLimit('esl_smart_planner_history', updatedHistory, 50);
     };
 
     const handleSaveCurriculum = (curriculum: ESLCurriculum, params: CurriculumParams) => {
         const exists = savedCurricula.find(c => c.textbookTitle === curriculum.textbookTitle && c.totalLessons === curriculum.totalLessons);
         const desc = generateCurriculumDescription(curriculum);
-        let updated: SavedCurriculum[];
-        if (exists) {
-            updated = savedCurricula.map(c => c.id === exists.id ? { ...c, lastModified: Date.now(), description: c.description || desc, curriculum, params } : c);
-        } else {
-            const newRecord: SavedCurriculum = {
-                id: Date.now().toString(),
-                timestamp: Date.now(),
-                lastModified: Date.now(),
-                textbookTitle: curriculum.textbookTitle,
-                targetLevel: curriculum.targetLevel,
-                totalLessons: curriculum.totalLessons,
-                description: desc,
-                curriculum,
-                params,
-            };
-            updated = [newRecord, ...savedCurricula];
-        }
-        setSavedCurricula(updated);
-        safeStorage.set('esl_planner_curricula', updated);
+
+        const newRecord: SavedCurriculum = {
+            id: exists ? exists.id : Date.now().toString(),
+            timestamp: exists ? exists.timestamp : Date.now(),
+            lastModified: Date.now(),
+            textbookTitle: curriculum.textbookTitle,
+            targetLevel: curriculum.targetLevel,
+            totalLessons: curriculum.totalLessons,
+            description: exists?.description || desc,
+            curriculum,
+            params,
+        };
+
+        saveCurriculumDb(newRecord);
     };
 
     const handleDeleteCurriculum = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
-        const updated = savedCurricula.filter(c => c.id !== id);
-        setSavedCurricula(updated);
-        safeStorage.set('esl_planner_curricula', updated);
+        deleteCurriculumDb(id);
     };
 
     const handleDeleteRecord = (id: string, e?: React.MouseEvent) => {
         e?.preventDefault();
         e?.stopPropagation();
-        const updated = savedLessons.filter(l => l.id !== id);
+        deleteLessonDb(id);
         if (activeLessonId === id) setActiveLessonId(null);
-        setSavedLessons(updated);
-        safeStorage.set('esl_smart_planner_history', updated);
         // Clean up IndexedDB images
         imageStore.removeByPrefix(`esl-${id}-`);
     };
@@ -323,14 +307,25 @@ export function useLessonHistory() {
     const saveTitle = (id: string, e?: React.MouseEvent | React.KeyboardEvent) => {
         if (e) e.stopPropagation();
         if (!editTitle.trim()) return;
-        const updated = savedLessons.map(l => {
-            if (l.id === id) {
-                return { ...l, topic: editTitle, lastModified: Date.now(), content: { ...l.content, structuredLessonPlan: { ...l.content.structuredLessonPlan, classInformation: { ...l.content.structuredLessonPlan.classInformation, topic: editTitle } } } };
-            }
-            return l;
-        });
-        setSavedLessons(updated);
-        safeStorage.set('esl_smart_planner_history', updated);
+        const lesson = savedLessons.find(l => l.id === id);
+        if (lesson) {
+            const updated = {
+                ...lesson,
+                topic: editTitle,
+                lastModified: Date.now(),
+                content: {
+                    ...lesson.content,
+                    structuredLessonPlan: {
+                        ...lesson.content.structuredLessonPlan,
+                        classInformation: {
+                            ...lesson.content.structuredLessonPlan.classInformation,
+                            topic: editTitle
+                        }
+                    }
+                }
+            };
+            saveLessonDb(updated);
+        }
         setEditingLessonId(null);
     };
 
@@ -338,39 +333,19 @@ export function useLessonHistory() {
 
     const handleRenameLesson = (id: string, newName: string) => {
         if (!newName.trim()) return;
-        const updated = savedLessons.map(l => {
-            if (l.id === id) {
-                return { ...l, topic: newName, lastModified: Date.now(), content: { ...l.content, structuredLessonPlan: { ...l.content.structuredLessonPlan, classInformation: { ...l.content.structuredLessonPlan.classInformation, topic: newName } } } };
-            }
-            return l;
-        });
-        setSavedLessons(updated);
-        safeStorage.set('esl_smart_planner_history', updated);
+        const lesson = savedLessons.find(l => l.id === id);
+        if (lesson) {
+            const updated = { ...lesson, topic: newName, lastModified: Date.now(), content: { ...lesson.content, structuredLessonPlan: { ...lesson.content.structuredLessonPlan, classInformation: { ...lesson.content.structuredLessonPlan.classInformation, topic: newName } } } };
+            saveLessonDb(updated);
+        }
     };
 
     return {
         // Data
-        savedLessons, setSavedLessons,
+        savedLessons,
         savedCurricula,
-        activeLessonId, setActiveLessonId,
         filteredCurricula,
         filteredKits,
-
-        // Filter state — curricula
-        curSearch, setCurSearch,
-        curLevel, setCurLevel,
-        curDate, setCurDate,
-        curSort, setCurSort,
-        curLessonRange, setCurLessonRange,
-
-        // Filter state — kits
-        kitSearch, setKitSearch,
-        kitLevel, setKitLevel,
-        kitDate, setKitDate,
-        kitSort, setKitSort,
-
-        // Records sub-tab
-        recordsTab, setRecordsTab,
 
         // Title editing
         editingLessonId, editTitle, setEditTitle,
@@ -382,5 +357,8 @@ export function useLessonHistory() {
         handleDeleteCurriculum,
         handleDeleteRecord,
         handleRenameLesson,
+
+        // Raw DB Save for Batch Generation
+        saveLessonDb,
     };
 }

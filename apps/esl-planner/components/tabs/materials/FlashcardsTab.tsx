@@ -22,7 +22,7 @@ export interface FlashcardsTabProps {
     handleFlashcardChange: (index: number, field: keyof Flashcard, value: string) => void;
 }
 
-export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
+export const FlashcardsTab: React.FC<FlashcardsTabProps> = React.memo(({
     localFlashcards,
     flashcardImages,
     isGeneratingAll,
@@ -148,4 +148,4 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = ({
             </div>
         </div>
     );
-};
+});

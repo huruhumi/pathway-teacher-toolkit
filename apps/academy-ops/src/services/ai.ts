@@ -29,7 +29,7 @@ export const generateContent = async (prompt: string, systemInstruction?: string
     },
   };
 
-  console.log(`Calling Gemini REST API: ${model}`);
+
 
   try {
     const response = await fetch(url, {
@@ -76,7 +76,7 @@ export const generateImage = async (prompt: string, aspectRatio: "1:1" | "3:4" |
     },
   };
 
-  console.log(`Calling Gemini Image API: ${model}`);
+
 
   try {
     const response = await fetch(url, {

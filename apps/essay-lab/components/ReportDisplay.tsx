@@ -40,37 +40,41 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
   const [quizState, setQuizState] = useState<{ [key: number]: string | null }>({});
   const [quizResult, setQuizResult] = useState<{ [key: number]: boolean }>({});
 
-  const updateField = (field: keyof CorrectionReport, value: any) => {
+  const updateField = useCallback((field: keyof CorrectionReport, value: any) => {
     if (readOnly) return;
     setEditableReport(prev => ({ ...prev, [field]: value }));
-  };
+  }, [readOnly]);
 
-  const updateNestedField = (parent: string, field: string, value: any) => {
+  const updateNestedField = useCallback((parent: string, field: string, value: any) => {
     if (readOnly) return;
     setEditableReport(prev => ({
       ...prev,
       [parent]: { ...(prev as any)[parent], [field]: value }
     }));
-  };
+  }, [readOnly]);
 
-  const updateArrayItem = (field: keyof CorrectionReport, index: number, itemUpdate: any) => {
+  const updateArrayItem = useCallback((field: keyof CorrectionReport, index: number, itemUpdate: any) => {
     if (readOnly) return;
-    const arr = [...(editableReport[field] as any[])];
-    arr[index] = { ...arr[index], ...itemUpdate };
-    updateField(field, arr);
-  };
+    setEditableReport(prev => {
+      const arr = [...(prev[field] as any[])];
+      arr[index] = { ...arr[index], ...itemUpdate };
+      return { ...prev, [field]: arr };
+    });
+  }, [readOnly]);
 
-  const addArrayItem = (field: keyof CorrectionReport, newItem: any) => {
+  const addArrayItem = useCallback((field: keyof CorrectionReport, newItem: any) => {
     if (readOnly) return;
-    updateField(field, [...(editableReport[field] as any[]), newItem]);
-  };
+    setEditableReport(prev => ({ ...prev, [field]: [...(prev[field] as any[]), newItem] }));
+  }, [readOnly]);
 
-  const removeArrayItem = (field: keyof CorrectionReport, index: number) => {
+  const removeArrayItem = useCallback((field: keyof CorrectionReport, index: number) => {
     if (readOnly) return;
-    const arr = [...(editableReport[field] as any[])];
-    arr.splice(index, 1);
-    updateField(field, arr);
-  };
+    setEditableReport(prev => {
+      const arr = [...(prev[field] as any[])];
+      arr.splice(index, 1);
+      return { ...prev, [field]: arr };
+    });
+  }, [readOnly]);
 
   const handleAIAdd = async (type: any) => {
     if (readOnly) return;
@@ -105,11 +109,14 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
     }
   }, [onTogglePreview]);
 
-  const handleQuizAnswer = (index: number, option: string) => {
+  const handleQuizAnswer = useCallback((index: number, option: string) => {
     setQuizState(prev => ({ ...prev, [index]: option }));
-    const isCorrect = option === editableReport.errorQuiz[index].correctAnswer;
-    setQuizResult(prev => ({ ...prev, [index]: isCorrect }));
-  };
+    setEditableReport(currentReport => {
+      const isCorrect = option === currentReport.errorQuiz[index].correctAnswer;
+      setQuizResult(prev => ({ ...prev, [index]: isCorrect }));
+      return currentReport;
+    });
+  }, []);
 
   const isGrammarResolved = editableReport.grammarErrors.length === 0;
 
@@ -1061,7 +1068,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
             <button
               type="button"
               onClick={() => {
-                console.log("Finalized Report:", editableReport);
+
                 alert(t('report.saveConfirm'));
               }}
               className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"

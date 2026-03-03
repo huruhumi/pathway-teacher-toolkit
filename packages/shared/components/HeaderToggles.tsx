@@ -51,7 +51,7 @@ interface HeaderTogglesProps {
  * Shared header toggles for language (EN/ZH) and dark mode.
  * Can be used standalone (manages own state) or controlled (via props).
  */
-export const HeaderToggles: React.FC<HeaderTogglesProps> = ({
+export const HeaderToggles: React.FC<HeaderTogglesProps> = React.memo(({
     lang: externalLang,
     onLangChange,
     isDark: externalDark,
@@ -148,4 +148,4 @@ export const HeaderToggles: React.FC<HeaderTogglesProps> = ({
             )}
         </div>
     );
-};
+});

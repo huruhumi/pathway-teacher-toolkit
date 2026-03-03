@@ -1,11 +1,12 @@
 // Curriculum generation (EN + CN) and location suggestions
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { Curriculum } from "../types";
+import { createAIClient } from '@shared/ai/client';
 import { retryOperation } from './geminiService';
 
 export const suggestLocations = async (city: string): Promise<string[]> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -37,7 +38,7 @@ export const generateCurriculum = async (
     duration: string, preferredLocation: string, customTheme: string,
     city: string = "Wuhan", pdfText?: string
 ): Promise<Curriculum> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const truncatedPdf = pdfText ? pdfText.slice(0, 30000) : '';
 
     const pdfSection = truncatedPdf ? `
@@ -118,7 +119,7 @@ export const generateCurriculumCN = async (
     duration: string, preferredLocation: string, customTheme: string,
     city: string = "Wuhan", pdfText?: string
 ): Promise<Curriculum> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const truncatedPdf = pdfText ? pdfText.slice(0, 30000) : '';
 
     const pdfSection = truncatedPdf ? `

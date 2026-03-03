@@ -1,7 +1,8 @@
 // Curriculum generation and lesson kit translation
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { ESLCurriculum, CurriculumParams } from '../types';
+import { createAIClient } from '@shared/ai/client';
 import { retryApiCall } from './geminiService';
 
 const CURRICULUM_SCHEMA = {
@@ -37,7 +38,7 @@ export const generateESLCurriculum = async (
     textbookText: string,
     params: CurriculumParams
 ): Promise<ESLCurriculum> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
 
     let prompt = `You are an expert ESL curriculum designer. I am providing the extracted text content from a textbook or teaching material. Your task is to analyze this content and split it into EXACTLY ${params.lessonCount} well-structured ESL lessons.
 
@@ -75,7 +76,7 @@ CRITICAL INSTRUCTIONS:
 };
 
 export const translateLessonKit = async (content: any, targetLanguage: string = "Chinese"): Promise<any> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `You are an expert educational translator. I am providing a JSON object representing an English ESL lesson kit. 

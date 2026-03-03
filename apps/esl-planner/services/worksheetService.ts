@@ -1,11 +1,12 @@
 // Worksheet generation, games, reading tasks, web resources, trivia, reading passages
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { CEFRLevel, Game, Worksheet, ReadingPlanDay, ReadingTask, WebResource } from '../types';
+import { createAIClient } from '@shared/ai/client';
 import { retryApiCall, RESPONSE_SCHEMA } from './geminiService';
 
 export const generateWorksheet = async (level: CEFRLevel, topic: string, configs: any[]): Promise<Worksheet> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
 
     let instructionsText = `Generate a worksheet for Level: ${level}, Topic: ${topic} based on these configs: ${JSON.stringify(configs)}. `;
 
@@ -70,7 +71,7 @@ export const generateWorksheet = async (level: CEFRLevel, topic: string, configs
 };
 
 export const generateSingleGame = async (level: CEFRLevel, topic: string, skill: string, type: string, context: string): Promise<Game> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate a single educational game for Level: ${level}, Topic: ${topic}, Skill: ${skill}, Type: ${type}. Context: ${context}. Return the result in the specified JSON format.`,
@@ -93,7 +94,7 @@ export const generateSingleGame = async (level: CEFRLevel, topic: string, skill:
 };
 
 export const generateReadingTask = async (level: CEFRLevel, topic: string, focus: string): Promise<ReadingTask> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate a post-class reading or review task for Level: ${level}, Topic: ${topic}, Focus: ${focus}. Provide both English and Chinese. Return JSON.`,
@@ -115,7 +116,7 @@ export const generateReadingTask = async (level: CEFRLevel, topic: string, focus
 };
 
 export const generateWebResource = async (topic: string, focus: string): Promise<WebResource> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Suggest a high-quality educational web resource (YouTube, National Geographic, etc.) for Topic: ${topic}, Focus: ${focus}. Return JSON.`,
@@ -138,7 +139,7 @@ export const generateWebResource = async (topic: string, focus: string): Promise
 };
 
 export const generateNewCompanionDay = async (level: CEFRLevel, topic: string, dayNum: number): Promise<ReadingPlanDay> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate Day ${dayNum} of a 7-day review plan for Level: ${level}, Topic: ${topic}. Return JSON.`,
@@ -151,7 +152,7 @@ export const generateNewCompanionDay = async (level: CEFRLevel, topic: string, d
 };
 
 export const generateTrivia = async (topic: string, focus: string): Promise<{ en: string; cn: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate a trivia fact about ${topic} focusing on ${focus}. Return JSON.`,
@@ -171,7 +172,7 @@ export const generateTrivia = async (topic: string, focus: string): Promise<{ en
 };
 
 export const generateReadingPassage = async (level: string, topic: string, vocab: string[]): Promise<{ title: string, text: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate a short reading passage (about 100-150 words) appropriate for ESL Level: ${level}, Topic: ${topic}. Try to incorporate some of this target vocabulary if relevant: ${vocab.join(", ")}. Return the result as a JSON object with 'title' and 'text' fields.`,

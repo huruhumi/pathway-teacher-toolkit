@@ -1,11 +1,12 @@
 // Single-item content generators and translation
 
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { Type, Schema } from "@google/genai";
 import { LessonPlanResponse, VocabularyItem, VisualReferenceItem, RoadmapItem } from "../types";
+import { createAIClient } from '@shared/ai/client';
 import { retryOperation, lessonPlanSchema } from './geminiService';
 
 export const generateSingleStep = async (context: any, currentSteps: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -18,7 +19,7 @@ export const generateSingleStep = async (context: any, currentSteps: string[]): 
 };
 
 export const generateVocabularyItem = async (theme: string, existingWords: string[]): Promise<VocabularyItem> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -42,7 +43,7 @@ export const generateVocabularyItem = async (theme: string, existingWords: strin
 };
 
 export const generateVisualReferenceItem = async (theme: string, activityType: string, existingLabels: string[]): Promise<VisualReferenceItem> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -67,7 +68,7 @@ export const generateVisualReferenceItem = async (theme: string, activityType: s
 };
 
 export const generateRoadmapItem = async (theme: string, activityType: string, currentRoadmap: RoadmapItem[]): Promise<RoadmapItem> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const roadmapItemSchema: Schema = {
         type: Type.OBJECT,
         properties: {
@@ -102,7 +103,7 @@ export const generateRoadmapItem = async (theme: string, activityType: string, c
 };
 
 export const generateSingleBackgroundInfo = async (theme: string, activity: string, currentInfo: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -115,7 +116,7 @@ export const generateSingleBackgroundInfo = async (theme: string, activity: stri
 };
 
 export const generateSingleTeachingTip = async (theme: string, activity: string, currentTips: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -128,7 +129,7 @@ export const generateSingleTeachingTip = async (theme: string, activity: string,
 };
 
 export const translateLessonPlan = async (plan: LessonPlanResponse, targetLanguage: string, signal?: AbortSignal): Promise<LessonPlanResponse> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
 
     const systemInstruction = `
     You are an expert translator specializing in educational materials.

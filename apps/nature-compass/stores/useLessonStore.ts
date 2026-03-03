@@ -131,14 +131,39 @@ export const useLessonStore = create<LessonStore>((set, get) => ({
     setHandbookPages: (h) => set((state) => ({ handbookPages: resolveValue(h, state.handbookPages) })),
     setDisplayLanguage: (l) => set({ displayLanguage: l }),
     setTranslatedPlan: (p) => set({ translatedPlan: p }),
-    setBadgeImage: (img) => set({ badgeImage: img }),
+    setBadgeImage: (img) => set((s) => {
+        if (s.badgeImage && s.badgeImage.startsWith('blob:')) URL.revokeObjectURL(s.badgeImage);
+        return { badgeImage: img };
+    }),
     setLoadingBadge: (b) => set({ loadingBadge: b }),
     setBadgePrompt: (p) => set({ badgePrompt: p }),
-    setGeneratedImages: (imgs) => set((s) => ({ generatedImages: resolveValue(imgs, s.generatedImages) })),
+    setGeneratedImages: (imgs) => set((s) => {
+        const next = resolveValue(imgs, s.generatedImages);
+        // Revoke blob URLs for keys being overwritten
+        for (const key of Object.keys(s.generatedImages)) {
+            const oldUrl = s.generatedImages[key];
+            const newUrl = next[key];
+            if (oldUrl && oldUrl !== newUrl && oldUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(oldUrl);
+            }
+        }
+        return { generatedImages: next };
+    }),
     setLoadingImages: (s) => set((state) => ({ loadingImages: resolveValue(s, state.loadingImages) })),
     setArtStyles: (s) => set((state) => ({ artStyles: resolveValue(s, state.artStyles) })),
     setIsAddingWord: (b) => set({ isAddingWord: b }),
-    setGeneratedVisuals: (v) => set((s) => ({ generatedVisuals: resolveValue(v, s.generatedVisuals) })),
+    setGeneratedVisuals: (v) => set((s) => {
+        const next = resolveValue(v, s.generatedVisuals);
+        // Revoke blob URLs for keys being overwritten
+        for (const key of Object.keys(s.generatedVisuals)) {
+            const oldUrl = s.generatedVisuals[key];
+            const newUrl = next[key];
+            if (oldUrl && oldUrl !== newUrl && oldUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(oldUrl);
+            }
+        }
+        return { generatedVisuals: next };
+    }),
     setLoadingVisuals: (s) => set((state) => ({ loadingVisuals: resolveValue(s, state.loadingVisuals) })),
     setVisualStyles: (s) => set((state) => ({ visualStyles: resolveValue(s, state.visualStyles) })),
     setIsAddingVisual: (b) => set({ isAddingVisual: b }),
@@ -172,17 +197,23 @@ export const useLessonStore = create<LessonStore>((set, get) => ({
         });
     },
 
-    resetAssets: () => set({
-        generatedImages: {},
-        loadingImages: new Set(),
-        artStyles: {},
-        isAddingWord: false,
-        generatedVisuals: {},
-        loadingVisuals: new Set(),
-        visualStyles: {},
-        isAddingVisual: false,
-        isAddingRoadmapItem: false,
-        badgeImage: null,
-        loadingBadge: false,
+    resetAssets: () => set((s) => {
+        if (s.badgeImage && s.badgeImage.startsWith('blob:')) URL.revokeObjectURL(s.badgeImage);
+        Object.values(s.generatedImages).forEach(url => { if (url.startsWith('blob:')) URL.revokeObjectURL(url); });
+        Object.values(s.generatedVisuals).forEach(url => { if (url.startsWith('blob:')) URL.revokeObjectURL(url); });
+
+        return {
+            generatedImages: {},
+            loadingImages: new Set(),
+            artStyles: {},
+            isAddingWord: false,
+            generatedVisuals: {},
+            loadingVisuals: new Set(),
+            visualStyles: {},
+            isAddingVisual: false,
+            isAddingRoadmapItem: false,
+            badgeImage: null,
+            loadingBadge: false,
+        };
     }),
 }));

@@ -1,15 +1,11 @@
-import { useState, useRef, MutableRefObject } from 'react';
+import { useState, useRef } from 'react';
 import { CurriculumLesson, CurriculumParams, SavedLessonPlan, LessonPlanResponse } from '../types';
 import { mapLessonToInput } from '../utils/curriculumMapper';
 import { generateLessonPlanStreaming, generateLessonPlanStreamingCN, translateLessonPlan } from '../services/geminiService';
-import { safeStorage } from '@shared/safeStorage';
 
 export type BatchItemStatus = 'idle' | 'generating' | 'done' | 'error';
 
-export function useBatchGenerate(
-    savedPlansRef: MutableRefObject<SavedLessonPlan[]>,
-    setSavedPlans: (plans: SavedLessonPlan[]) => void,
-) {
+export function useBatchGenerate() {
     const [batchStatus, setBatchStatus] = useState<Record<number, BatchItemStatus>>({});
     const [batchLessonMap, setBatchLessonMap] = useState<Record<number, string>>({});
     const [batchRunning, setBatchRunning] = useState(false);
@@ -21,6 +17,7 @@ export function useBatchGenerate(
         lessons: CurriculumLesson[],
         params: CurriculumParams,
         language: 'en' | 'zh',
+        savePlan: (saved: SavedLessonPlan) => void
     ) => {
         batchCancelRef.current = false;
         setBatchRunning(true);
@@ -75,10 +72,7 @@ export function useBatchGenerate(
                     plan: result,
                     language,
                 };
-                const updatedPlans = [newSavedPlan, ...savedPlansRef.current];
-                savedPlansRef.current = updatedPlans;
-                setSavedPlans(updatedPlans);
-                safeStorage.set('nature-compass-plans', updatedPlans);
+                savePlan(newSavedPlan);
 
                 setBatchStatus(prev => ({ ...prev, [i]: 'done' }));
                 setBatchLessonMap(prev => ({ ...prev, [i]: newId }));

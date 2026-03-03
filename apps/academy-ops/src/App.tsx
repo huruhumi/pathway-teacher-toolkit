@@ -1,22 +1,24 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { motion } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
 import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
 import Dashboard from './components/Dashboard';
-import Planner from './components/Planner';
-import ContentGenerator from './components/ContentGenerator';
-import BrandSettings from './components/BrandSettings';
-import Calendar from './components/Calendar';
+const Planner = React.lazy(() => import('./components/Planner'));
+const ContentGenerator = React.lazy(() => import('./components/ContentGenerator'));
+const BrandSettings = React.lazy(() => import('./components/BrandSettings'));
+const Calendar = React.lazy(() => import('./components/Calendar'));
 import { INITIAL_BRAND_DATA } from './data/brandData';
 import { SavedNote } from './types';
 import { safeStorage } from '@shared/safeStorage';
+import localforage from 'localforage';
 import { AppHeader } from '@shared/components/AppHeader';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 
 
 
@@ -28,19 +30,36 @@ function AppContent() {
 
   // Persistent States
   const [brandData, setBrandData] = useState(() => safeStorage.get('pathway_brandData', INITIAL_BRAND_DATA));
-  const [savedPlans, setSavedPlans] = useState<any[]>(() => safeStorage.get('pathway_savedPlans', []));
-  const [savedNotes, setSavedNotes] = useState<SavedNote[]>(() => safeStorage.get('pathway_savedNotes', []));
+  const [savedPlans, setSavedPlans] = useState<any[]>([]);
+  const [savedNotes, setSavedNotes] = useState<SavedNote[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Ephemeral States
+  // Initialize from LocalForage
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const plans = await localforage.getItem<any[]>('pathway_savedPlans');
+        if (plans) setSavedPlans(plans);
+        const notes = await localforage.getItem<SavedNote[]>('pathway_savedNotes');
+        if (notes) setSavedNotes(notes);
+      } catch (e) {
+        console.error("Failed to load data from storage", e);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    loadData();
+  }, []);
+
   // Ephemeral States
   const [currentPlan, setCurrentPlan] = useState<any[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>('');
   const [editingSavedNote, setEditingSavedNote] = useState<SavedNote | undefined>(undefined);
 
-  // Sync with LocalStorage (debounced)
+  // Sync with LocalStorage/IndexedDB (debounced)
   useEffect(() => { safeStorage.set('pathway_brandData', brandData); }, [brandData]);
-  useEffect(() => { safeStorage.set('pathway_savedPlans', savedPlans); }, [savedPlans]);
-  useEffect(() => { safeStorage.set('pathway_savedNotes', savedNotes); }, [savedNotes]);
+  useEffect(() => { if (isLoaded) localforage.setItem('pathway_savedPlans', savedPlans); }, [savedPlans, isLoaded]);
+  useEffect(() => { if (isLoaded) localforage.setItem('pathway_savedNotes', savedNotes); }, [savedNotes, isLoaded]);
   useEffect(() => {
     safeStorage.set('pathway_darkMode', isDarkMode);
     if (isDarkMode) {
@@ -185,7 +204,9 @@ function AppContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {renderContent()}
+            <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+              {renderContent()}
+            </Suspense>
           </motion.div>
         </BodyContainer>
       </PageLayout>
@@ -196,7 +217,9 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </LanguageProvider>
   );
 }

@@ -1,12 +1,13 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { GeneratedContent, CEFRLevel } from '../types';
 
-import { retryWithBackoff } from '@shared/retryWithBackoff';
+// --- Shared AI Utilities ---
+import { createAIClient } from '@shared/ai/client';
+import { retryAICall } from '@shared/ai/retry';
 
-// Exported for sub-modules (worksheetService, itemGenerators, curriculumService)
 export const retryApiCall = <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000, signal?: AbortSignal): Promise<T> =>
-  retryWithBackoff(apiCall, { maxRetries: retries, baseDelay: delay, signal });
+  retryAICall(apiCall, signal);
 
 export const RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -237,7 +238,7 @@ export const generateLessonPlan = async (
   lessonTitle: string,
   signal?: AbortSignal
 ): Promise<GeneratedContent> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const ai = createAIClient();
 
   const parts: any[] = [{
     text: `Generate a complete lesson kit for Level: ${level}, Topic: ${lessonTitle}${topic ? ` (${topic})` : ''}, Duration: ${duration} mins, Students: ${studentCount}. ${textInput ? `Context: ${textInput}` : ''}. 
@@ -288,7 +289,7 @@ export const generateLessonPlan = async (
 };
 
 export const generateLessonImage = async (prompt: string, aspectRatio: string = "1:1"): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+  const ai = createAIClient();
   const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: prompt }] },

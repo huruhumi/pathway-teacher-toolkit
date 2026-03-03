@@ -89,7 +89,7 @@ const COLOR_MAP = {
     },
 };
 
-export const RecordCard: React.FC<RecordCardProps> = ({
+export const RecordCard: React.FC<RecordCardProps> = React.memo(({
     title, description, tags, timestamp, openLabel,
     onOpen, onDelete, onExport, exporting, onRename,
     customActions,
@@ -230,5 +230,6 @@ export const RecordCard: React.FC<RecordCardProps> = ({
                     </div>
                 </div>
             </div>
-            );
-};
+        </div>
+    );
+});

@@ -9,6 +9,7 @@ import { Curriculum, CurriculumParams } from '../types';
 import { AGE_RANGES, CEFR_LEVELS } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';
+import { GenerationButton } from '@shared/components/GenerationButton';
 
 const ENGLISH_LEVELS = [
     "Zero Foundation",
@@ -368,13 +369,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <input type="text" placeholder={t('cp.themePlaceholder')} value={customTheme} onChange={(e) => setCustomTheme(e.target.value)} className="input-field py-3" />
                     </div>
                     <div className="md:col-span-2 lg:col-span-3 pt-2">
-                        <button
+                        <GenerationButton
+                            loading={loading}
                             onClick={handleGenerate}
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? <Loader2 className="animate-spin" size={22} /> : <>{pdfText ? t('cp.generateFromPdf') : t('cp.generate')} <ArrowRight size={20} /></>}
-                        </button>
+                            defaultText={pdfText ? t('cp.generateFromPdf') : t('cp.generate')}
+                            theme="emerald"
+                        />
                     </div>
                 </div>
             </div>

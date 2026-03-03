@@ -1,11 +1,12 @@
 // Theme generation for nature compass workshops
 
-import { GoogleGenAI, Type, Part } from "@google/genai";
+import { Type, Part } from "@google/genai";
 import { UploadedFile } from "../types";
+import { createAIClient } from '@shared/ai/client';
 import { retryOperation, THEME_PERSPECTIVES } from './geminiService';
 
 export const generateRandomTheme = async (season: string, weather: string, focus: string[], age: string, uploadedFiles: UploadedFile[] = []): Promise<{ theme: string; introduction: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     return await retryOperation(async () => {
         const randomSeed = Math.floor(Math.random() * 10000);
         const perspective = THEME_PERSPECTIVES[Math.floor(Math.random() * THEME_PERSPECTIVES.length)];

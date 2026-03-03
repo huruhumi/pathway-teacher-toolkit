@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { LessonPlanResponse, RoadmapItem, VocabularyItem, VisualReferenceItem } from '../types';
 import { Clipboard, Check, Box, BookOpen, ImageIcon, FileText, BadgeCheck, Printer, Loader2, Sparkles, Download, Compass, Languages, ChevronDown, Share2, Save, X } from 'lucide-react';
 import { generateSingleStep, generateImagePrompt, generateImage, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateBadgePrompt, generateSingleBackgroundInfo, generateSingleTeachingTip } from '../services/geminiService';
@@ -139,41 +139,41 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
     };
 
     // Basic Info Handlers
-    const handleBasicInfoChange = (field: string, value: string) => {
+    const handleBasicInfoChange = useCallback((field: string, value: string) => {
         setBasicInfo(prev => ({ ...prev, [field]: value }));
-    };
+    }, [setBasicInfo]);
 
-    const addGoal = () => {
+    const addGoal = useCallback(() => {
         setBasicInfo(prev => ({ ...prev, learningGoals: [...prev.learningGoals, "New Learning Goal"] }));
-    };
+    }, [setBasicInfo]);
 
-    const handleGoalChange = (index: number, value: string) => {
+    const handleGoalChange = useCallback((index: number, value: string) => {
         setBasicInfo(prev => {
             const newGoals = [...prev.learningGoals];
             newGoals[index] = value;
             return { ...prev, learningGoals: newGoals };
         });
-    };
+    }, [setBasicInfo]);
 
-    const removeGoal = (index: number) => {
+    const removeGoal = useCallback((index: number) => {
         setBasicInfo(prev => ({
             ...prev,
             learningGoals: prev.learningGoals.filter((_, i) => i !== index)
         }));
-    };
+    }, [setBasicInfo]);
 
     // Roadmap Handlers
-    const handleRoadmapChange = (index: number, field: keyof RoadmapItem, value: string) => {
+    const handleRoadmapChange = useCallback((index: number, field: keyof RoadmapItem, value: string) => {
         setRoadmap(prev => {
             const newRoadmap = [...prev];
             newRoadmap[index] = { ...newRoadmap[index], [field]: value };
             return newRoadmap;
         });
-    };
+    }, [setRoadmap]);
 
-    const removeRoadmapItem = (index: number) => {
+    const removeRoadmapItem = useCallback((index: number) => {
         setRoadmap(prev => prev.filter((_, i) => i !== index));
-    };
+    }, [setRoadmap]);
 
     const addRoadmapItem = async () => {
         setIsAddingRoadmapItem(true);
@@ -394,43 +394,43 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         setDraggedRoadmapIndex(null);
     };
 
-    const handleSupplyChange = (type: 'permanent' | 'consumables', index: number, value: string) => {
+    const handleSupplyChange = useCallback((type: 'permanent' | 'consumables', index: number, value: string) => {
         setSupplies(prev => {
             const newList = [...prev[type]];
             newList[index] = value;
             return { ...prev, [type]: newList };
         });
-    };
+    }, [setSupplies]);
 
-    const addSupplyItem = (type: 'permanent' | 'consumables') => {
+    const addSupplyItem = useCallback((type: 'permanent' | 'consumables') => {
         setSupplies(prev => ({
             ...prev,
             [type]: [...prev[type], "New Item"]
         }));
-    };
+    }, [setSupplies]);
 
-    const removeSupplyItem = (type: 'permanent' | 'consumables', index: number) => {
+    const removeSupplyItem = useCallback((type: 'permanent' | 'consumables', index: number) => {
         setSupplies(prev => ({
             ...prev,
             [type]: prev[type].filter((_, i) => i !== index)
         }));
-    };
+    }, [setSupplies]);
 
-    const handleSafetyChange = (index: number, value: string) => {
+    const handleSafetyChange = useCallback((index: number, value: string) => {
         setSafetyProtocol(prev => {
             const newProtocol = [...prev];
             newProtocol[index] = value;
             return newProtocol;
         });
-    };
+    }, [setSafetyProtocol]);
 
-    const addSafetyItem = () => {
+    const addSafetyItem = useCallback(() => {
         setSafetyProtocol(prev => [...prev, "New Safety Rule"]);
-    };
+    }, [setSafetyProtocol]);
 
-    const removeSafetyItem = (index: number) => {
+    const removeSafetyItem = useCallback((index: number) => {
         setSafetyProtocol(prev => prev.filter((_, i) => i !== index));
-    };
+    }, [setSafetyProtocol]);
 
     const handleGenerateVisual = async (index: number) => {
         setLoadingVisuals(prev => new Set(prev).add(index));

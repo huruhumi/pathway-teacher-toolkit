@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CEFRLevel } from '../types';
-import { Upload, FileText, Image as ImageIcon, X, ArrowRight } from 'lucide-react';
+import { Upload, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { GenerationButton } from '@shared/components/GenerationButton';
 
 interface InputSectionProps {
   onGenerate: (
@@ -216,28 +217,26 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
 
         {/* Sticky Action Button */}
         <div className="sticky bottom-4 z-10 pt-2">
-          <button
-            type="button"
-            onClick={isLoading ? onStop : handleSubmit}
-            disabled={!isLoading && (!text && files.length === 0)}
-            className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
-              ? 'bg-red-500 hover:bg-red-600'
-              : (!text && files.length === 0)
-                ? 'bg-slate-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500'
-              }`}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Stop Generation
-              </>
-            ) : (
-              <>
-                {t('input.generateKit')}
-              </>
-            )}
-          </button>
+          {isLoading ? (
+            <GenerationButton
+              loading={false}
+              onClick={onStop}
+              defaultText="Stop Generation"
+              theme="indigo"
+              className="bg-red-500 hover:bg-red-600 shadow-lg"
+              icon={null}
+            />
+          ) : (
+            <GenerationButton
+              loading={isLoading}
+              disabled={!text && files.length === 0}
+              onClick={handleSubmit}
+              defaultText={t('input.generateKit')}
+              theme="indigo"
+              className="shadow-lg"
+              icon={null}
+            />
+          )}
         </div>
       </form>
     </div>

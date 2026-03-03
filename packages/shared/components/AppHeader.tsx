@@ -35,7 +35,7 @@ export interface AppHeaderProps {
     rightContent?: React.ReactNode;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({
+export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
     appName,
     subtitle,
     logoIcon,
@@ -126,4 +126,4 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </div>
         </header>
     );
-};
+});

@@ -1,11 +1,12 @@
 // Single-item generators (flashcards, grammar, objectives, materials, stages, phonics, etc.)
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { CEFRLevel, Flashcard, LessonStage } from '../types';
+import { createAIClient } from '@shared/ai/client';
 import { retryApiCall, RESPONSE_SCHEMA, cleanMarkdownPrefix } from './geminiService';
 
 export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, existingWords: string[]): Promise<Flashcard> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate a new target vocabulary flashcard for Level: ${level}, Topic: ${topic}. Avoid: ${existingWords.join(", ")}. Return JSON.`,
@@ -18,7 +19,7 @@ export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, e
 };
 
 export const generateSingleGrammarPoint = async (level: CEFRLevel, topic: string, existingPoints: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate one new grammar rule or target sentence for Level: ${level}, Topic: ${topic}. Avoid repeating: ${existingPoints.join(". ")}. DO NOT use markdown bold headers. Return ONLY the plain text string of the rule/sentence.`,
@@ -27,7 +28,7 @@ export const generateSingleGrammarPoint = async (level: CEFRLevel, topic: string
 };
 
 export const generateSingleObjective = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate one specific learning objective for Level: ${level}, Topic: ${topic}. It MUST follow the format: "Students will be able to [action] [content]". Existing ones: ${existing.join(". ")}. Return ONLY the objective text string.`,
@@ -36,7 +37,7 @@ export const generateSingleObjective = async (level: CEFRLevel, topic: string, e
 };
 
 export const generateSingleMaterial = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Suggest one teaching material or piece of equipment for Level: ${level}, Topic: ${topic}. Existing: ${existing.join(", ")}. Return ONLY the material name string.`,
@@ -45,7 +46,7 @@ export const generateSingleMaterial = async (level: CEFRLevel, topic: string, ex
 };
 
 export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ problem: string, solution: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Identify one anticipated learning problem and its practical solution for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
@@ -65,7 +66,7 @@ export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: 
 };
 
 export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ word: string, definition: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate one new target vocabulary word and its simple English definition for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
@@ -85,7 +86,7 @@ export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, e
 };
 
 export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[]): Promise<LessonStage> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. Return JSON.`,
@@ -98,7 +99,7 @@ export const generateSingleStage = async (level: CEFRLevel, topic: string, exist
 };
 
 export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string, existingPoints: string[], vocab: string[]): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Identify one specific phonics pattern or sound for Level: ${level}, Topic: ${topic} using vocabulary like ${vocab.join(", ")}. 
@@ -110,7 +111,7 @@ export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string
 };
 
 export const generateSingleDecodableText = async (level: CEFRLevel, topic: string, points: string[], vocab: string[]): Promise<{ text: string, visualPrompt: string }> => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Create a highly logical, engaging decodable rhyming story for Level: ${level}.

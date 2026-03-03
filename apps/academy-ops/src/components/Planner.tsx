@@ -131,7 +131,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
         }
       );
 
-      console.log("Raw AI response:", result);
+
 
       let plan;
       try {

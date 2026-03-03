@@ -16,7 +16,7 @@ export interface PhonicsTabProps {
     handleGenerateDtImage: (index: number) => void;
 }
 
-export const PhonicsTab: React.FC<PhonicsTabProps> = ({
+export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
     phonicsContent,
     setPhonicsContent,
     editablePlan,
@@ -169,4 +169,4 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = ({
             </div>
         </div>
     );
-};
+});
