@@ -2,7 +2,7 @@
 import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { analyzeEssay } from './services/geminiService';
-import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord } from './types';
+import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord, FileData } from './types';
 import ReportDisplay from './components/ReportDisplay';
 import { saveRecord } from './components/CorrectionRecords';
 const CorrectionRecords = React.lazy(() => import('./components/CorrectionRecords'));
@@ -15,12 +15,9 @@ import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { EssayInputForm } from './components/EssayInputForm';
 
-interface FileData {
-  base64: string;
-  mimeType: string;
-  name: string;
-}
+
 
 const AppContent: React.FC = () => {
   const { t, lang, setLang } = useLanguage();
@@ -30,23 +27,8 @@ const AppContent: React.FC = () => {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [viewMode, setViewMode] = useHashTab<'correction' | 'essays' | 'records'>('correction', ['correction', 'essays', 'records']);
 
-  // Essay Inputs
-  const [essayText, setEssayText] = useState('');
-  const [essayImage, setEssayImage] = useState<FileData | null>(null);
-
-  // Topic Inputs
-  const [topicText, setTopicText] = useState('');
-  const [topicImage, setTopicImage] = useState<FileData | null>(null);
-
-  // Settings
-  const [selectedGrade, setSelectedGrade] = useState<StudentGrade>(StudentGrade.G7);
-  const [selectedCEFR, setSelectedCEFR] = useState<CEFRLevel>(CEFRLevel.B1);
-
   const [loadingMessage, setLoadingMessage] = useState(t('loading.1'));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const essayFileRef = useRef<HTMLInputElement>(null);
-  const topicFileRef = useRef<HTMLInputElement>(null);
 
   const messages = [
     t('loading.2'),
@@ -77,55 +59,27 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
-  const readFile = (file: File): Promise<FileData> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve({
-          base64: (reader.result as string).split(',')[1],
-          mimeType: file.type,
-          name: file.name
-        });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleEssayFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setEssayImage(await readFile(file));
-  };
-
-  const handleTopicFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setTopicImage(await readFile(file));
-  };
-
-  const handleSubmit = async () => {
-    const essay = essayImage ? { base64: essayImage.base64, mimeType: essayImage.mimeType } : essayText;
-    const topic = topicImage ? { base64: topicImage.base64, mimeType: topicImage.mimeType } : topicText;
-
-    if (!essay) {
-      setError(t('input.noContent'));
-      return;
-    }
-
+  const handleSubmit = async (data: {
+    essay: string | FileData;
+    grade: StudentGrade;
+    cefr: CEFRLevel;
+    topic: string | FileData;
+  }) => {
     setError(null);
     setLoading(true);
     const interval = triggerLoadingMessages();
 
     try {
-      const result = await analyzeEssay(essay, selectedGrade, selectedCEFR, topic);
+      const result = await analyzeEssay(data.essay, data.grade, data.cefr, data.topic);
       setReport(result);
       // Auto-save to records
       const record: SavedRecord = {
         id: crypto.randomUUID(),
         timestamp: Date.now(),
-        grade: selectedGrade,
-        cefr: selectedCEFR,
-        topicText: topicText || undefined,
-        essayText: essayText || undefined,
+        grade: data.grade,
+        cefr: data.cefr,
+        topicText: typeof data.topic === 'string' ? data.topic : undefined,
+        essayText: typeof data.essay === 'string' ? data.essay : undefined,
         report: result,
       };
       saveRecord(record);
@@ -141,10 +95,6 @@ const AppContent: React.FC = () => {
     setReport(null);
     setIsPreviewing(false);
     setError(null);
-    setEssayText('');
-    setEssayImage(null);
-    setTopicText('');
-    setTopicImage(null);
   };
 
   const handleTogglePreview = (show: boolean) => {
@@ -199,135 +149,7 @@ const AppContent: React.FC = () => {
               <CorrectionRecords />
             ) : !report && !loading ? (
               <>
-                <div className="space-y-8">
-                  {/* Title */}
-                  <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-500" />
-                    {t('input.submit')}
-                  </h2>
-
-                  {/* Grade & CEFR Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <School className="w-4 h-4 text-indigo-500" />
-                        {t('input.grade')}
-                      </label>
-                      <select
-                        value={selectedGrade}
-                        onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                        className="input-field appearance-none cursor-pointer py-3"
-                      >
-                        {Object.values(StudentGrade).map(grade => (
-                          <option key={grade} value={grade}>{grade}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Gauge className="w-4 h-4 text-indigo-500" />
-                        {t('input.cefr')}
-                      </label>
-                      <select
-                        value={selectedCEFR}
-                        onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                        className="input-field appearance-none cursor-pointer py-3"
-                      >
-                        {Object.values(CEFRLevel).map(level => (
-                          <option key={level} value={level}>{level}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Prompt & Essay Row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Essay Prompt */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                          <Target className="w-4 h-4 text-indigo-500" />
-                          {t('input.prompt')}
-                        </label>
-                        <button
-                          onClick={() => topicFileRef.current?.click()}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                        >
-                          <CloudUpload className="w-4 h-4" />
-                          {topicImage ? t('input.changeImage') : t('input.uploadImage')}
-                        </button>
-                      </div>
-
-                      {topicImage && (
-                        <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2 truncate">
-                            <ImageIcon className="w-4 h-4 text-indigo-400" />
-                            <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
-                          </div>
-                          <button onClick={() => setTopicImage(null)} className="text-indigo-400 hover:text-rose-500">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-
-                      <textarea
-                        value={topicText}
-                        onChange={(e) => setTopicText(e.target.value)}
-                        placeholder={t('input.promptPlaceholder')}
-                        className="input-field h-48 text-sm resize-none"
-                      />
-                      <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
-                    </div>
-
-                    {/* Student Essay */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                          <PenTool className="w-4 h-4 text-indigo-500" />
-                          {t('input.essay')}
-                        </label>
-                        <button
-                          onClick={() => essayFileRef.current?.click()}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                        >
-                          <Camera className="w-4 h-4" />
-                          {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
-                        </button>
-                      </div>
-
-                      {essayImage && (
-                        <div className="bg-indigo-50 p-2 rounded-xl border border-indigo-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2 truncate">
-                            <ImageIcon className="w-4 h-4 text-indigo-400" />
-                            <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
-                          </div>
-                          <button onClick={() => setEssayImage(null)} className="text-indigo-400 hover:text-rose-500">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-
-                      <textarea
-                        value={essayText}
-                        onChange={(e) => setEssayText(e.target.value)}
-                        placeholder={t('input.essayPlaceholder')}
-                        className="input-field h-48 text-sm resize-none font-sans"
-                      />
-                      <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="pt-2">
-                    <button
-                      onClick={handleSubmit}
-                      className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Sparkles className="w-5 h-5" />
-                      {t('input.submit')}
-                    </button>
-                  </div>
-                </div>
+                <EssayInputForm onSubmit={handleSubmit} disabled={loading} />
 
                 {error && (
                   <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-sm flex items-center gap-3 max-w-lg mx-auto mt-6">

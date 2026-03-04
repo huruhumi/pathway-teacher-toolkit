@@ -1,9 +1,5 @@
-
-export interface UploadedFile {
-  name: string;
-  type: string;
-  data: string; // Base64 string without prefix
-}
+import { UploadedFile } from '@shared/types';
+export type { UploadedFile };
 
 export interface LessonInput {
   theme: string;

@@ -1,9 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { LessonInput, UploadedFile } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
-import { Sun, CloudRain, Shuffle, Loader2, UploadCloud, X, FileText, Image as ImageIcon, Square } from 'lucide-react';
+import { Sun, CloudRain, Shuffle, Loader2 } from 'lucide-react';
 import { generateRandomTheme } from '../services/geminiService';
 import { useLanguage, TranslationKey } from '../i18n/LanguageContext';
+import { FileUploadDropzone } from '@shared/components/ui/FileUploadDropzone';
+import { Input } from '@shared/components/ui/Input';
+import { Select } from '@shared/components/ui/Select';
+import { Textarea } from '@shared/components/ui/Textarea';
+import { Button } from '@shared/components/ui/Button';
 
 interface InputSectionProps {
   input: LessonInput;
@@ -86,19 +91,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
     setInput(prev => ({ ...prev, uploadedFiles: [...prev.uploadedFiles, ...newFiles] }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFiles(e.target.files);
-    }
-    // Reset input value to allow re-selecting same file if deleted
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFiles(e.dataTransfer.files);
-    }
+  const handleFilesAdded = (files: FileList) => {
+    processFiles(files);
   };
 
   const removeFile = (index: number) => {
@@ -180,68 +174,51 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="input-label">
-            {t('input.ageLabel')}</label>
-          <select
-            value={input.studentAge}
-            onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
-            className="input-field py-3"
-          >
-            {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}` as any)}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="input-label">
-            {t('input.studentsLabel')}</label>
-          <input
-            type="number"
-            min={1}
-            max={50}
-            value={input.studentCount}
-            onChange={(e) => setInput({ ...input, studentCount: parseInt(e.target.value) || 0 })}
-            className="input-field py-3"
-          />
-        </div>
+        <Select
+          label={t('input.ageLabel')}
+          value={input.studentAge}
+          onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
+          className="py-3"
+          options={AGE_RANGES.map(age => ({ label: t(`age.${age}` as any), value: age }))}
+        />
+        <Input
+          label={t('input.studentsLabel')}
+          type="number"
+          min={1}
+          max={50}
+          value={input.studentCount}
+          onChange={(e) => setInput({ ...input, studentCount: parseInt(e.target.value) || 0 })}
+          className="py-3"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label className="input-label">
-            {t('input.durationLabel')}</label>
-          <input
-            type="number"
-            min={30}
-            step={15}
-            value={input.duration}
-            onChange={(e) => setInput({ ...input, duration: parseInt(e.target.value) || 0 })}
-            className="input-field py-3"
-          />
-        </div>
-        <div>
-          <label className="input-label">
-            {t('input.cefrLabel')}</label>
-          <select
-            value={input.cefrLevel}
-            onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
-            className="input-field py-3"
-          >
-            {CEFR_LEVELS.map(level => <option key={level} value={level}>{t(`cefr.${level}` as any)}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="input-label">
-            {t('input.handbookLabel')}</label>
-          <input
-            type="number"
-            min={1}
-            max={20}
-            value={input.handbookPages}
-            onChange={(e) => setInput({ ...input, handbookPages: parseInt(e.target.value) || 0 })}
-            className="input-field py-3"
-            placeholder="e.g. 5"
-          />
-        </div>
+        <Input
+          label={t('input.durationLabel')}
+          type="number"
+          min={30}
+          step={15}
+          value={input.duration}
+          onChange={(e) => setInput({ ...input, duration: parseInt(e.target.value) || 0 })}
+          className="py-3"
+        />
+        <Select
+          label={t('input.cefrLabel')}
+          value={input.cefrLevel}
+          onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
+          className="py-3"
+          options={CEFR_LEVELS.map(level => ({ label: t(`cefr.${level}` as any), value: level }))}
+        />
+        <Input
+          label={t('input.handbookLabel')}
+          type="number"
+          min={1}
+          max={20}
+          value={input.handbookPages}
+          onChange={(e) => setInput({ ...input, handbookPages: parseInt(e.target.value) || 0 })}
+          className="py-3"
+          placeholder="e.g. 5"
+        />
       </div>
 
       <div>
@@ -249,16 +226,17 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
           {t('input.workshopTheme')}
         </label>
         <div className="relative">
-          <input
+          <Input
             type="text"
             value={input.theme}
             onChange={(e) => setInput({ ...input, theme: e.target.value })}
             placeholder={t('input.themePlaceholderLong')}
-            className="input-field py-3 pr-14"
+            className="py-3 pr-14"
           />
           <button
             onClick={handleRandomTheme}
             disabled={isGeneratingTheme}
+            type="button"
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
             title={t('input.randomThemeTitle')}
           >
@@ -267,72 +245,34 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
       </div>
 
+      <Textarea
+        label={t('input.introLabel')}
+        value={input.topicIntroduction}
+        onChange={(e) => setInput({ ...input, topicIntroduction: e.target.value })}
+        placeholder={t('input.introPlaceholderLong')}
+        rows={3}
+        className="py-3 resize-none"
+      />
+
       <div>
-        <label className="input-label">
-          {t('input.introLabel')}
-        </label>
-        <textarea
-          value={input.topicIntroduction}
-          onChange={(e) => setInput({ ...input, topicIntroduction: e.target.value })}
-          placeholder={t('input.introPlaceholderLong')}
-          rows={3}
-          className="input-field py-3 resize-none"
+        <FileUploadDropzone
+          label={t('input.materialsLabel')}
+          promptText={t('input.clickUpload')}
+          supportText={t('input.fileTypes')}
+          accept=".pdf,image/*,.txt"
+          multiple={true}
+          onFilesAdded={handleFilesAdded}
+          onRemoveFile={removeFile}
+          files={input.uploadedFiles}
+          hoverBorderColorClass="hover:border-emerald-400 group-hover:border-emerald-400"
+          iconHoverColorClass="group-hover:text-emerald-500"
+          listLayout="list"
         />
-      </div>
-
-      <div>
-        <label className="input-label">
-          {t('input.materialsLabel')}
-        </label>
-        <div
-          className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-400 hover:bg-slate-50 transition-colors cursor-pointer"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            multiple
-            accept=".pdf,image/*,.txt"
-            onChange={handleFileChange}
-          />
-          <div className="flex flex-col items-center gap-2 text-slate-500">
-            <div className="p-3 bg-slate-100 rounded-full text-slate-400">
-              <UploadCloud size={24} />
-            </div>
-            <p className="text-sm font-medium">{t('input.clickUpload')}</p>
-            <p className="text-xs text-slate-400">{t('input.fileTypes')}</p>
-          </div>
-        </div>
-
-        {/* File List */}
-        {input.uploadedFiles.length > 0 && (
-          <div className="mt-3 space-y-2">
-            {input.uploadedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="p-2 bg-white rounded-md border border-slate-100 text-slate-500">
-                    {file.type.includes('image') ? <ImageIcon size={16} /> : <FileText size={16} />}
-                  </div>
-                  <span className="text-sm text-slate-700 truncate font-medium">{file.name}</span>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Sticky CTA */}
       <div className="sticky bottom-4 z-10 pt-2">
-        <button
+        <Button
           onClick={isLoading ? () => { } : onSubmit}
           disabled={isLoading || (!input.theme && input.uploadedFiles.length === 0)}
           className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
@@ -341,16 +281,10 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
               ? 'bg-slate-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-emerald-600 to-teal-600'
             }`}
+          leftIcon={isLoading ? <Loader2 className="animate-spin" size={20} /> : undefined}
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="animate-spin" size={20} />
-              {t('input.generatingKit' as TranslationKey) || 'Generating...'}
-            </>
-          ) : (
-            t('input.generateKit')
-          )}
-        </button>
+          {isLoading ? (t('input.generatingKit' as TranslationKey) || 'Generating...') : t('input.generateKit')}
+        </Button>
       </div>
     </div>
   );

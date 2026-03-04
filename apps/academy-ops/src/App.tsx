@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
+import { useThemeStore } from '@shared/stores/useThemeStore';
 import { motion } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
 import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
@@ -26,7 +27,8 @@ function AppContent() {
   const { t, lang, setLang } = useLanguage();
   const [activeTab, setActiveTab] = useHashTab<'dashboard' | 'planner' | 'generator' | 'settings' | 'calendar'>('dashboard', ['dashboard', 'planner', 'generator', 'settings', 'calendar']);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => safeStorage.get('pathway_darkMode', false));
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const setDarkMode = useThemeStore((state) => state.setDarkMode);
 
   // Persistent States
   const [brandData, setBrandData] = useState(() => safeStorage.get('pathway_brandData', INITIAL_BRAND_DATA));
@@ -60,14 +62,6 @@ function AppContent() {
   useEffect(() => { safeStorage.set('pathway_brandData', brandData); }, [brandData]);
   useEffect(() => { if (isLoaded) localforage.setItem('pathway_savedPlans', savedPlans); }, [savedPlans, isLoaded]);
   useEffect(() => { if (isLoaded) localforage.setItem('pathway_savedNotes', savedNotes); }, [savedNotes, isLoaded]);
-  useEffect(() => {
-    safeStorage.set('pathway_darkMode', isDarkMode);
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
 
   const handleSaveNote = (note: SavedNote) => {
     setSavedNotes(prev => {
@@ -156,7 +150,7 @@ function AppContent() {
       lang={lang}
       onLangChange={setLang}
       isDark={isDarkMode}
-      onDarkChange={setIsDarkMode}
+      onDarkChange={setDarkMode}
     />
   );
 

@@ -7,7 +7,7 @@ const LessonKitPage = React.lazy(() => import('./pages/LessonKitPage').then(m =>
 const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ default: m.RecordsPage })));
 import { LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
 import { fetchCloudPlans, upsertCloudPlan, deleteCloudPlan, renameCloudPlan } from './services/cloudDataService';
-import { useAuthStore } from './stores/useAuthStore';
+import { useAuthStore } from '@shared/stores/useAuthStore';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { safeStorage } from '@shared/safeStorage';

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import JSZip from 'jszip';
+import { jsPDF } from 'jspdf';
 import { StructuredLessonPlan, Slide, Flashcard, Game, ReadingCompanionContent, Worksheet, PhonicsContent } from '../types';
 import { wrapViewerHtml } from './viewerShell';
 
@@ -744,6 +745,92 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         triggerDownloadMd(md, `Games_Activities_${editablePlan?.classInformation.topic.replace(/\s+/g, '_') || 'Lesson'}`);
     };
 
+    const handleDownloadFlashcardPDF = (index: number) => {
+        const card = localFlashcards[index];
+        const imgData = flashcardImages?.[index];
+        const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: [148, 105], // A6 Landscape
+        });
+
+        // Front Side (Image)
+        if (imgData) {
+            doc.addImage(imgData, "PNG", 10, 10, 128, 85);
+            doc.addPage();
+        }
+
+        // Back Side (Explanation)
+        doc.setFontSize(28);
+        doc.setTextColor(79, 70, 229); // indigo-600
+        doc.text(card.word, 148 / 2, 40, { align: "center" } as any);
+
+        doc.setFontSize(14);
+        doc.setTextColor(107, 114, 128); // slate-500
+        doc.setFont("helvetica", "italic");
+        const splitText = doc.splitTextToSize(card.definition, 120);
+        doc.text(splitText, 148 / 2, 60, { align: "center" } as any);
+
+        doc.save(
+            `Flashcard_${card.word.replace(/\s+/g, "_")}_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`,
+        );
+    };
+
+    const handleDownloadAllFlashcards = async () => {
+        const zip = new JSZip();
+        const folder = zip.folder("flashcards_bundle");
+
+        for (let i = 0; i < localFlashcards.length; i++) {
+            const card = localFlashcards[i];
+            const imgData = flashcardImages?.[i];
+
+            const doc = new jsPDF({
+                orientation: "landscape",
+                unit: "mm",
+                format: [148, 105], // A6 Landscape
+            });
+
+            // Front Side (Image or Placeholder)
+            if (imgData) {
+                doc.addImage(imgData, "PNG", 10, 10, 128, 85);
+            } else {
+                doc.setFontSize(20);
+                doc.text("Ready for Image", 148 / 2, 105 / 2, {
+                    align: "center",
+                } as any);
+            }
+
+            doc.addPage();
+
+            // Back Side (Explanation)
+            doc.setFontSize(28);
+            doc.setTextColor(79, 70, 229); // indigo-600
+            doc.text(card.word, 148 / 2, 40, { align: "center" } as any);
+
+            doc.setFontSize(14);
+            doc.setTextColor(107, 114, 128); // slate-500
+            doc.setFont("helvetica", "italic");
+            const splitText = doc.splitTextToSize(card.definition, 120);
+            doc.text(splitText, 148 / 2, 60, { align: "center" } as any);
+
+            const pdfData = doc.output("arraybuffer");
+            folder?.file(
+                `${card.word.replace(/\s+/g, "_")}_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}_flashcard.pdf`,
+                pdfData,
+            );
+        }
+
+        const blob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Flashcards_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return {
         openViewer,
         triggerDownloadMd,
@@ -751,6 +838,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         handleDownloadSlidesMd,
         handleDownloadWorksheetsMd,
         handleDownloadCompanionMd,
-        handleDownloadGamesMd
+        handleDownloadGamesMd,
+        handleDownloadFlashcardPDF,
+        handleDownloadAllFlashcards
     };
 };

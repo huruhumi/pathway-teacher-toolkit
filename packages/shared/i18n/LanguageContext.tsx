@@ -3,9 +3,10 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 const STORAGE_KEY = 'pathway_uiLang';
 type Lang = 'en' | 'zh';
 
-interface LanguageContextType {
+interface LanguageContextType<TKey extends string = string> {
     lang: Lang;
     setLang: (l: Lang) => void;
+    t: (key: TKey) => string;
 }
 
 function getStoredLang(): Lang {
@@ -16,38 +17,54 @@ function getStoredLang(): Lang {
     return 'en';
 }
 
-const LanguageContext = createContext<LanguageContextType>({
-    lang: 'en',
-    setLang: () => { },
-});
+/**
+ * Factory: creates a LanguageProvider + useLanguage hook bound to a specific translations dictionary.
+ * Each app calls this once with its own translations, eliminating 60 lines of duplicated context code per app.
+ */
+export function createLanguageContext<TKey extends string>(
+    translations: Record<TKey, Record<Lang, string>>
+) {
+    const Context = createContext<LanguageContextType<TKey>>({
+        lang: 'en',
+        setLang: () => { },
+        t: (key) => key,
+    });
 
-export const SharedLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [lang, setLangState] = useState<Lang>(getStoredLang);
+    const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+        const [lang, setLangState] = useState<Lang>(getStoredLang);
 
-    const setLang = useCallback((l: Lang) => {
-        setLangState(l);
-        try {
-            localStorage.setItem(STORAGE_KEY, l);
-        } catch { /* ignore */ }
-    }, []);
+        const setLang = useCallback((l: Lang) => {
+            setLangState(l);
+            try {
+                localStorage.setItem(STORAGE_KEY, l);
+            } catch { /* ignore */ }
+        }, []);
 
-    // Sync if another tab/window changes the value
-    useEffect(() => {
-        const handler = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY && (e.newValue === 'en' || e.newValue === 'zh')) {
-                setLangState(e.newValue);
-            }
-        };
-        window.addEventListener('storage', handler);
-        return () => window.removeEventListener('storage', handler);
-    }, []);
+        const t = useCallback(
+            (key: TKey): string => (translations as any)[key]?.[lang] ?? key,
+            [lang]
+        );
 
-    return (
-        <LanguageContext.Provider value={{ lang, setLang }}>
-            {children}
-        </LanguageContext.Provider>
-    );
-};
+        useEffect(() => {
+            const handler = (e: StorageEvent) => {
+                if (e.key === STORAGE_KEY && (e.newValue === 'en' || e.newValue === 'zh')) {
+                    setLangState(e.newValue);
+                }
+            };
+            window.addEventListener('storage', handler);
+            return () => window.removeEventListener('storage', handler);
+        }, []);
 
-export const useSharedLanguage = () => useContext(LanguageContext);
+        return (
+            <Context.Provider value={{ lang, setLang, t }}>
+                {children}
+            </Context.Provider>
+        );
+    };
+
+    const useLanguage = () => useContext(Context);
+
+    return { LanguageProvider, useLanguage };
+}
+
 export type { Lang };

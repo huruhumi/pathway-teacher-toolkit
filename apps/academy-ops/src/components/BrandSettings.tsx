@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { BrandData } from '../data/brandData';
 import { Save, Upload, X, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { Card } from '@shared/components/ui/Card';
+import { Input } from '@shared/components/ui/Input';
+import { Textarea } from '@shared/components/ui/Textarea';
 
 interface BrandSettingsProps {
   brandData: BrandData;
@@ -43,25 +46,20 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
         </button>
       </div>
 
-      <div className="card space-y-6">
+      <Card className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">{t('settings.brandName')}</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              className="input-field"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">{t('settings.slogan')}</label>
-            <input
-              type="text"
-              value={formData.slogan}
-              onChange={(e) => handleChange('slogan', e.target.value)}
-            />
-          </div>
+          <Input
+            label={t('settings.brandName')}
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+          />
+          <Input
+            label={t('settings.slogan')}
+            type="text"
+            value={formData.slogan}
+            onChange={(e) => handleChange('slogan', e.target.value)}
+          />
           <div className="space-y-2 col-span-1 md:col-span-2">
             <label className="text-sm font-medium text-slate-700">{t('settings.logo')}</label>
             <div className="flex items-center gap-4">
@@ -103,30 +101,25 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">{t('settings.description')}</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            className="input-field min-h-[100px]"
-          />
-        </div>
+        <Textarea
+          label={t('settings.description')}
+          value={formData.description}
+          onChange={(e) => handleChange('description', e.target.value)}
+          className="min-h-[100px]"
+        />
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">{t('settings.tone')}</label>
-          <input
-            type="text"
-            value={formData.tone}
-            onChange={(e) => handleChange('tone', e.target.value)}
-            className="input-field"
-          />
-        </div>
+        <Input
+          label={t('settings.tone')}
+          type="text"
+          value={formData.tone}
+          onChange={(e) => handleChange('tone', e.target.value)}
+        />
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">{t('settings.coreValues')}</label>
           <div className="space-y-2">
             {formData.coreValues.map((val, idx) => (
-              <input
+              <Input
                 key={idx}
                 type="text"
                 value={val}
@@ -135,12 +128,11 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
                   newValues[idx] = e.target.value;
                   handleChange('coreValues', newValues);
                 }}
-                className="input-field"
               />
             ))}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

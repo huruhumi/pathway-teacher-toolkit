@@ -2,6 +2,7 @@ import { Type, Schema, Part } from "@google/genai";
 import { LessonInput, LessonPlanResponse, UploadedFile } from "../types";
 
 // --- Shared AI Utilities ---
+import { NatureLessonPlanResponseSchema } from '@shared/types/schemas';
 import { createAIClient } from '@shared/ai/client';
 import { retryAICall as retryOperation } from '@shared/ai/retry';
 
@@ -250,7 +251,7 @@ export const generateLessonPlan = async (input: LessonInput, signal?: AbortSigna
 
     const text = response.text;
     if (!text) throw new Error("No response from Gemini");
-    return JSON.parse(text) as LessonPlanResponse;
+    return NatureLessonPlanResponseSchema.parse(JSON.parse(text)) as LessonPlanResponse;
   }, signal);
 };
 
@@ -343,7 +344,7 @@ async function _streamLessonPlanCore(
     }
 
     if (!accumulatedText) throw new Error("No response from Gemini stream");
-    return JSON.parse(accumulatedText) as LessonPlanResponse;
+    return NatureLessonPlanResponseSchema.parse(JSON.parse(accumulatedText)) as LessonPlanResponse;
   }, signal);
 }
 

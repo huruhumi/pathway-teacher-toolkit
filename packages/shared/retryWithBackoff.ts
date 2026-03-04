@@ -59,13 +59,16 @@ export async function retryWithBackoff<T>(
                 errorCode === 500 || nestedCode === 500 ||
                 errorMessage.toLowerCase().includes('no image generated');
 
+            const isZodError = error?.name === 'ZodError' || errorMessage.includes('ZodError');
+
             const isAuthError =
                 errorCode === 401 || errorCode === 403 ||
                 errorMessage.includes('401') ||
                 errorMessage.includes('403') ||
                 errorMessage.includes('API key');
 
-            const isRetryable = (isOverloaded || isRateLimited || isServerError) && attempt < maxRetries - 1;
+            // Zod errors are our own validation catches (e.g. LLM sent malformed JSON), so we SHOULD retry them. 
+            const isRetryable = (isOverloaded || isRateLimited || isServerError || isZodError) && attempt < maxRetries - 1;
 
             if (isRetryable) {
                 const delay = baseDelay * Math.pow(2, attempt);
@@ -102,6 +105,9 @@ export async function retryWithBackoff<T>(
             }
             if (isOverloaded) {
                 throw new Error("Gemini API is currently overloaded. Please try again in a few seconds.");
+            }
+            if (isZodError) {
+                throw new Error("The AI responded with incomplete or incorrectly formatted data after multiple attempts. Please try clicking Generate again.");
             }
 
             throw new Error(nestedMessage || errorMessage || "An unexpected error occurred during AI generation.");

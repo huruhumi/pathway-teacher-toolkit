@@ -1,10 +1,11 @@
 import React from 'react';
 import { Compass, FolderOpen, Cloud, LogOut, User, Map, FileText } from 'lucide-react';
-import { useAuthStore } from '../stores/useAuthStore';
-import { isSupabaseEnabled } from '../services/supabaseClient';
+import { useAuthStore } from '@shared/stores/useAuthStore';
+import { isSupabaseEnabled } from '@shared/services/supabaseClient';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AppHeader } from '@shared/components/AppHeader';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { useThemeStore } from '@shared/stores/useThemeStore';
 
 interface HeaderProps {
   currentView: 'curriculum' | 'lesson' | 'saved';
@@ -17,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoC
   const { user, signOut } = useAuthStore();
   const cloudEnabled = isSupabaseEnabled();
   const { t, lang, setLang } = useLanguage();
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
+  const setDarkMode = useThemeStore((state) => state.setDarkMode);
 
   const tabs = [
     { key: 'curriculum', label: t('nav.curriculum'), icon: <Map size={16} /> },
@@ -65,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoC
       onLogoClick={onLogoClick}
       rightContent={
         <div className="flex items-center gap-2">
-          <HeaderToggles lang={lang} onLangChange={setLang} />
+          <HeaderToggles lang={lang} onLangChange={setLang} isDark={isDarkMode} onDarkChange={setDarkMode} />
           {authContent}
         </div>
       }

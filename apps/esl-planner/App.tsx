@@ -19,9 +19,12 @@ const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ 
 // Stores & Hooks
 import { useAppStore, useSessionStore } from './stores/appStore';
 import { useLessonHistory } from './hooks/useLessonHistory';
+import { useThemeStore } from '@shared/stores/useThemeStore';
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
+    const isDarkMode = useThemeStore((state) => state.isDarkMode);
+    const setDarkMode = useThemeStore((state) => state.setDarkMode);
 
     // Hash router
     const [viewMode, setViewMode] = useHashTab<'curriculum' | 'create' | 'history'>('curriculum', ['curriculum', 'create', 'history']);
@@ -73,7 +76,7 @@ const AppContent: React.FC = () => {
                 activeTab={viewMode}
                 onTabChange={(key) => setViewMode(key as typeof viewMode)}
                 onLogoClick={() => { setViewMode('curriculum'); clearSessionState(); setActiveLessonId(null); setPrefilledValues(null); }}
-                rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
+                rightContent={<HeaderToggles lang={lang} onLangChange={setLang} isDark={isDarkMode} onDarkChange={setDarkMode} />}
             />
 
             <PageLayout>

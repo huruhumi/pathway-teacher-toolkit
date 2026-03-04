@@ -1,5 +1,5 @@
-import { supabase, isSupabaseEnabled } from './supabaseClient';
-import { SavedLessonPlan } from '../types';
+import { SavedLessonPlan, SavedCurriculum } from '../types';
+import { supabase, isSupabaseEnabled } from '@shared/services/supabaseClient';
 
 // --- Cloud Data Layer ---
 // Falls back to localStorage if Supabase is not configured.

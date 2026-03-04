@@ -1,6 +1,6 @@
-
 import { Type, GenerateContentResponse } from "@google/genai";
 import { GeneratedContent, CEFRLevel } from '../types';
+import { ESLGeneratedContentSchema } from '@shared/types/schemas';
 
 // --- Shared AI Utilities ---
 import { createAIClient } from '@shared/ai/client';
@@ -260,9 +260,10 @@ export const generateLessonPlan = async (
     });
   }
 
-  const response: GenerateContentResponse = await retryApiCall(async () => {
+  return retryApiCall(async () => {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    return ai.models.generateContent({
+
+    const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: { parts },
       config: {
@@ -270,22 +271,25 @@ export const generateLessonPlan = async (
         responseSchema: RESPONSE_SCHEMA as any,
       }
     });
+
+    const rawContent = JSON.parse(response.text || "{}");
+
+    // Validate with Zod - if this throws, retryApiCall will catch and retry automatically
+    const validatedContent = ESLGeneratedContentSchema.parse(rawContent);
+
+    // Clean grammar sentences from initial full generation
+    if (validatedContent.structuredLessonPlan?.lessonDetails?.grammarSentences) {
+      validatedContent.structuredLessonPlan.lessonDetails.grammarSentences =
+        validatedContent.structuredLessonPlan.lessonDetails.grammarSentences.map((s: string) => cleanMarkdownPrefix(s));
+    }
+
+    // Initialize worksheets as empty array
+    if (!validatedContent.worksheets) {
+      validatedContent.worksheets = [];
+    }
+
+    return validatedContent;
   }, 5, 3000, signal);
-
-  const content = JSON.parse(response.text || "{}");
-
-  // Clean grammar sentences from initial full generation
-  if (content.structuredLessonPlan?.lessonDetails?.grammarSentences) {
-    content.structuredLessonPlan.lessonDetails.grammarSentences =
-      content.structuredLessonPlan.lessonDetails.grammarSentences.map((s: string) => cleanMarkdownPrefix(s));
-  }
-
-  // Initialize worksheets as empty array
-  if (!content.worksheets) {
-    content.worksheets = [];
-  }
-
-  return content;
 };
 
 export const generateLessonImage = async (prompt: string, aspectRatio: string = "1:1"): Promise<string> => {
