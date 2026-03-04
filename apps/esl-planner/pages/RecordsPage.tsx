@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, BookOpen, History, Search, Hash, Clock, GraduationCap, Download, Layers } from 'lucide-react';
 import { RecordCard } from '@shared/components/RecordCard';
+import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
 import { FilterBar } from '../components/FilterBar';
 import { EmptyState } from '@shared/components/EmptyState';
 import { handleDownloadZip } from '../utils/exportUtils';
@@ -49,22 +50,15 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
 
     return (
         <div className="animate-fade-in-up">
-            <div className="flex gap-4 p-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/5 mx-auto max-w-sm mb-6">
-                <button
-                    onClick={() => setRecordsTab('curricula')}
-                    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${recordsTab === 'curricula' ? 'bg-violet-50 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                >
-                    <BookOpen className="w-4 h-4" />
-                    {lang === 'zh' ? `教材大纲 (${savedCurricula.length})` : `Curricula (${savedCurricula.length})`}
-                </button>
-                <button
-                    onClick={() => setRecordsTab('kits')}
-                    className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${recordsTab === 'kits' ? 'bg-violet-50 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                >
-                    <Layers className="w-4 h-4" />
-                    {lang === 'zh' ? `教学套件 (${savedLessons.length})` : `Lesson Kits (${savedLessons.length})`}
-                </button>
-            </div>
+            <RecordsTabSwitcher
+                tabs={[
+                    { key: 'curricula', label: lang === 'zh' ? '教材大纲' : 'Curricula', icon: <BookOpen className="w-4 h-4" />, count: savedCurricula.length },
+                    { key: 'kits', label: lang === 'zh' ? '教学套件' : 'Lesson Kits', icon: <Layers className="w-4 h-4" />, count: savedLessons.length },
+                ]}
+                activeTab={recordsTab}
+                onTabChange={(key) => setRecordsTab(key as typeof recordsTab)}
+                accentColor="violet"
+            />
 
             {recordsTab === 'curricula' && (
                 <div className="space-y-6">

@@ -1,14 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import JSZip from 'jszip';
 import { RecordCard } from '@shared/components/RecordCard';
 import { EmptyState } from '@shared/components/EmptyState';
 import { FilterBar, FilterSelect } from '@shared/components/FilterBar';
+import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
-    Search, Filter, ArrowUpDown, Calendar, BookOpen, Clock,
-    Trash2, Edit2, Download, ArrowRight, Check, X, Languages,
-    Microscope, Palette, Calculator, Utensils, Hammer, Globe,
-    Coins, Music, Compass, Theater, FileText, MapPin, Users, GraduationCap
+    Filter, ArrowUpDown, BookOpen, Languages,
+    MapPin, Users, GraduationCap, FileText, Compass
 } from 'lucide-react';
 import { AGE_RANGES } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -43,7 +41,6 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     onDeleteCurriculum, onRenameCurriculum, onLoadCurriculum,
 }) => {
     const { t } = useLanguage();
-    // --- Tab state ---
     const [activeTab, setActiveTab] = useState<'curricula' | 'kits'>('curricula');
 
     // --- Curricula filter state ---
@@ -62,23 +59,6 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const [kSort, setKSort] = useState('Newest First');
     const [kLang, setKLang] = useState<'all' | 'en' | 'zh'>('all');
 
-    // --- Renaming ---
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [tempName, setTempName] = useState('');
-
-    // Language toggle per card
-    const [cardLanguages, setCardLanguages] = useState<Record<string, 'en' | 'zh'>>({});
-    const [exportingId, setExportingId] = useState<string | null>(null);
-    const toggleLanguage = (id: string) => {
-        setCardLanguages(prev => ({ ...prev, [id]: prev[id] === 'zh' ? 'en' : 'zh' }));
-    };
-
-    const startEditing = (id: string, currentName: string) => {
-        setEditingId(id);
-        setTempName(currentName);
-    };
-    const cancelEditing = () => { setEditingId(null); setTempName(''); };
-
     // === Dynamic options ===
     const uniqueCities = useMemo(() =>
         Array.from(new Set(savedCurricula.map(c => c.params.city))).sort(),
@@ -93,7 +73,6 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const filteredCurricula = useMemo(() => {
         return savedCurricula
             .filter(c => {
-                // Search: name, theme, overview, lesson titles
                 if (cSearch) {
                     const s = cSearch.toLowerCase();
                     const inMeta = c.name.toLowerCase().includes(s)
@@ -149,102 +128,30 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     }, [savedPlans, kSearch, kLevel, kActivity, kSort, kLang]);
 
     // === Helpers ===
-    const getLevelBadge = (audience: string) => {
+    const getLevelLabel = (audience: string) => {
         const lower = (audience || '').toLowerCase();
-        if (/(beginner|a1|a2)/.test(lower)) return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700">Beginner</span>;
-        if (/(intermediate|b1|b2)/.test(lower)) return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700">Intermediate</span>;
-        if (/(advanced|c1|c2)/.test(lower)) return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">Advanced</span>;
-        return <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">General</span>;
+        if (/(beginner|a1|a2)/.test(lower)) return 'Beginner';
+        if (/(intermediate|b1|b2)/.test(lower)) return 'Intermediate';
+        if (/(advanced|c1|c2)/.test(lower)) return 'Advanced';
+        return 'General';
     };
-
-    const getCategoryIcon = (type: string) => {
-        const t = (type || '').toLowerCase();
-        if (t.includes('science') || t.includes('bio')) return Microscope;
-        if (t.includes('art') || t.includes('paint')) return Palette;
-        if (t.includes('math') || t.includes('data')) return Calculator;
-        if (t.includes('cook') || t.includes('food')) return Utensils;
-        if (t.includes('theater') || t.includes('drama')) return Theater;
-        if (t.includes('engineer') || t.includes('build')) return Hammer;
-        if (t.includes('music') || t.includes('song')) return Music;
-        if (t.includes('social') || t.includes('history')) return Globe;
-        if (t.includes('econom')) return Coins;
-        return Compass;
-    };
-
-    const getStats = (plan: any) => ({
-        visuals: plan.visualReferences?.length || 0,
-        activities: plan.roadmap?.length || 0,
-    });
-
-    // --- Editable title component ---
-    const EditableTitle = ({ id, name, onSaveEdit, translated }: {
-        id: string; name: string; onSaveEdit: (id: string, newName: string) => void; translated?: string;
-    }) => {
-        if (editingId === id) {
-            return (
-                <div className="flex items-center gap-2 mb-3">
-                    <input
-                        autoFocus
-                        className="text-base font-bold text-slate-800 border-b-2 border-emerald-500 outline-none bg-transparent w-full"
-                        value={tempName}
-                        onChange={(e) => setTempName(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') { onSaveEdit(id, tempName.trim()); setEditingId(null); }
-                            if (e.key === 'Escape') cancelEditing();
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                    <button onClick={(e) => { e.stopPropagation(); onSaveEdit(id, tempName.trim()); setEditingId(null); }} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Check size={18} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); cancelEditing(); }} className="text-slate-400 hover:bg-slate-100 p-1 rounded"><X size={18} /></button>
-                </div>
-            );
-        }
-        return (
-            <h3
-                className="text-base font-bold text-slate-800 mb-2 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); startEditing(id, name); }}
-                title="Click to rename"
-            >
-                {cardLanguages[id] === 'zh' && translated ? translated : name}
-            </h3>
-        );
-    };
-
-    const totalCount = savedCurricula.length + savedPlans.length;
 
     return (
-        <div className="animate-fade-in space-y-8">
-
+        <div className="animate-fade-in-up">
             {/* Tab Switcher */}
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 w-fit">
-                <button
-                    onClick={() => setActiveTab('curricula')}
-                    className={`px - 5 py - 2.5 rounded - lg text - sm font - semibold transition - all flex items - center gap - 2 ${activeTab === 'curricula'
-                        ? 'bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                        } `}
-                >
-                    <FileText size={16} />
-                    Curricula
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">{savedCurricula.length}</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab('kits')}
-                    className={`px - 5 py - 2.5 rounded - lg text - sm font - semibold transition - all flex items - center gap - 2 ${activeTab === 'kits'
-                        ? 'bg-white text-emerald-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                        } `}
-                >
-                    <BookOpen size={16} />
-                    Lesson Kits
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">{savedPlans.length}</span>
-                </button>
-            </div>
+            <RecordsTabSwitcher
+                tabs={[
+                    { key: 'curricula', label: t('nav.curriculum' as any) || 'Curricula', icon: <FileText size={16} />, count: savedCurricula.length },
+                    { key: 'kits', label: t('nav.lessonKit' as any) || 'Lesson Kits', icon: <BookOpen size={16} />, count: savedPlans.length },
+                ]}
+                activeTab={activeTab}
+                onTabChange={(key) => setActiveTab(key as 'curricula' | 'kits')}
+                accentColor="emerald"
+            />
 
             {/* ===== CURRICULA TAB ===== */}
             {activeTab === 'curricula' && (
-                <>
-                    {/* Filters */}
+                <div className="space-y-6">
                     <FilterBar
                         search={cSearch}
                         onSearchChange={setCSearch}
@@ -258,7 +165,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                 <FilterSelect value={cAge} onChange={setCAge} icon={Users}>
                                     <option value="all">All Ages</option>
                                     {AGE_RANGES.map(age => {
-                                        const short = age.split(' ')[0]; // "6-9"
+                                        const short = age.split(' ')[0];
                                         return <option key={age} value={short}>{t(`age.${age} ` as any)}</option>;
                                     })}
                                 </FilterSelect>
@@ -285,7 +192,6 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                         }
                     />
 
-                    {/* Curriculum Grid */}
                     {filteredCurricula.length === 0 ? (
                         <EmptyState
                             icon={FileText}
@@ -293,7 +199,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             description={savedCurricula.length > 0 ? 'Try adjusting your filters.' : 'Generate and save a curriculum to see it here.'}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredCurricula.map(item => (
                                 <RecordCard
                                     key={item.id}
@@ -324,13 +230,12 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             ))}
                         </div>
                     )}
-                </>
+                </div>
             )}
 
             {/* ===== LESSON KITS TAB ===== */}
             {activeTab === 'kits' && (
-                <>
-                    {/* Filters */}
+                <div className="space-y-6">
                     <FilterBar
                         search={kSearch}
                         onSearchChange={setKSearch}
@@ -362,123 +267,46 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                         }
                     />
 
-                    {/* Grid */}
                     {filteredPlans.length === 0 ? (
                         <EmptyState
                             icon={BookOpen}
                             iconSize={48}
-                            iconClassName="text-slate-300 w-12 h-12 bg-transparent"
+                            iconClassName="text-slate-300 w-12 h-12 bg-transparent dark:bg-transparent"
                             title="No lesson kits found"
                             description={savedPlans.length > 0 ? 'Try adjusting your filters.' : 'Generate and save a lesson kit to see it here.'}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {filteredPlans.map(item => {
-                                const stats = getStats(item.plan);
-                                const CategoryIcon = getCategoryIcon(item.plan.basicInfo?.activityType || '');
-
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-emerald-100 transition-all group flex flex-col overflow-hidden"
-                                    >
-                                        <div className="p-4 flex-1 flex gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    {getLevelBadge(item.plan.basicInfo?.targetAudience || '')}
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
-                                                                const url = URL.createObjectURL(blob);
-                                                                const a = document.createElement('a');
-                                                                a.href = url;
-                                                                a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Data.json`;
-                                                                a.click();
-                                                            }}
-                                                            className="text-slate-300 hover:text-emerald-600 transition-colors"
-                                                            title="Download JSON"
-                                                        >
-                                                            <Download size={18} />
-                                                        </button>
-                                                        {item.plan?.translatedPlan && (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); toggleLanguage(item.id); }}
-                                                                className={`ml - 1 px - 2 py - 1 rounded transition - colors text - xs font - bold flex items - center gap - 1 border ${cardLanguages[item.id] === 'zh'
-                                                                    ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                                                    : 'bg-white text-slate-400 border-slate-200 hover:text-blue-500 hover:border-blue-300'
-                                                                    } `}
-                                                                title="Toggle Language (EN / 中)"
-                                                            >
-                                                                <Languages size={14} />
-                                                                {cardLanguages[item.id] === 'zh' ? '中' : 'EN'}
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <EditableTitle
-                                                    id={item.id}
-                                                    name={item.name}
-                                                    onSaveEdit={onRename}
-                                                    translated={item.plan?.translatedPlan?.basicInfo?.theme}
-                                                />
-
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                                                        <Clock size={16} className="text-slate-400" />
-                                                        <span>{new Date(item.timestamp).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                                                        <BookOpen size={16} className="text-slate-400" />
-                                                        <span>{stats.visuals} Visuals, {stats.activities} Activities</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-24 flex items-center justify-center opacity-80">
-                                                {item.coverImage ? (
-                                                    <img src={item.coverImage} className="w-16 h-16 object-cover rounded-2xl group-hover:scale-105 transition-all duration-300 shadow-sm" alt="Cover" />
-                                                ) : (
-                                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-emerald-600/20 group-hover:text-emerald-600/40 group-hover:bg-emerald-50 transition-all border border-slate-100 group-hover:scale-105 duration-300">
-                                                        <CategoryIcon size={32} strokeWidth={1.5} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                                            <button
-                                                onClick={() => onLoad(item)}
-                                                className="text-sm font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1.5 transition-all"
-                                            >
-                                                Open Kit
-                                                <ArrowRight size={16} />
-                                            </button>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); startEditing(item.id, item.name); }}
-                                                    className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                    title="Rename"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredPlans.map(item => (
+                                <RecordCard
+                                    key={item.id}
+                                    title={item.name}
+                                    description={item.plan.missionBriefing?.title || item.plan.basicInfo?.theme || ''}
+                                    tags={[
+                                        { icon: <GraduationCap size={11} />, label: getLevelLabel(item.plan.basicInfo?.targetAudience || '') },
+                                        ...(item.plan.basicInfo?.activityType ? [{ icon: <Compass size={11} />, label: item.plan.basicInfo.activityType }] : []),
+                                        { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} activities`, accent: true },
+                                        { icon: null, label: item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                    ]}
+                                    timestamp={item.timestamp}
+                                    openLabel="Open Kit"
+                                    onOpen={() => onLoad(item)}
+                                    onDelete={() => onDelete(item.id)}
+                                    onExport={() => {
+                                        const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - LessonKit.json`;
+                                        a.click();
+                                    }}
+                                    onRename={(newName) => onRename(item.id, newName)}
+                                    accentColor="emerald"
+                                />
+                            ))}
                         </div>
                     )}
-                </>
+                </div>
             )}
         </div>
     );
