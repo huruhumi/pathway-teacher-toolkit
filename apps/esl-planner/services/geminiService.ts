@@ -5,6 +5,7 @@ import { ESLGeneratedContentSchema } from '@shared/types/schemas';
 // --- Shared AI Utilities ---
 import { createAIClient } from '@shared/ai/client';
 import { retryAICall } from '@shared/ai/retry';
+import { generateAIImage, fileToBase64 } from '@shared/ai/image';
 
 export const retryApiCall = <T>(apiCall: () => Promise<T>, retries = 5, delay = 3000, signal?: AbortSignal): Promise<T> =>
   retryAICall(apiCall, signal);
@@ -292,35 +293,8 @@ export const generateLessonPlan = async (
   }, 5, 3000, signal);
 };
 
-export const generateLessonImage = async (prompt: string, aspectRatio: string = "1:1"): Promise<string> => {
-  const ai = createAIClient();
-  const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
-    contents: { parts: [{ text: prompt }] },
-    config: {
-      imageConfig: { aspectRatio: aspectRatio as any }
-    }
-  }));
-
-  if (response.candidates && response.candidates.length > 0) {
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-  }
-  throw new Error("No image generated");
-};
-
-// Utility to convert File to base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-};
+export const generateLessonImage = (prompt: string, aspectRatio: string = "1:1"): Promise<string> =>
+  generateAIImage(prompt, aspectRatio);
 
 // --- Barrel re-exports from sub-modules ---
 // Consumers can keep importing from 'geminiService' unchanged.

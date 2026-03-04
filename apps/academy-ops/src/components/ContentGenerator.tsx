@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@shared/stores/useToast';
 import { BrandData } from '../data/brandData';
 import { generateContent, generateImage, Type } from '../services/ai';
 import { Loader2, Sparkles, Copy, Check, Image as ImageIcon, Type as TypeIcon, Hash, Download, Calendar as CalendarIcon, Save, X, ChevronLeft, ChevronRight, Globe, PenTool, RefreshCw, Smartphone, Monitor } from 'lucide-react';
@@ -160,11 +160,11 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
 
   const handleGenerate = async () => {
     if (!topic) {
-      toast.error("请输入笔记主题后再点击生成。");
+      useToast.getState().error("请输入笔记主题后再点击生成。");
       return;
     }
     if (!brandData.name) {
-      toast.error("请先在设置中完善品牌名称。");
+      useToast.getState().error("请先在设置中完善品牌名称。");
       onNavigate('settings');
       return;
     }
@@ -368,7 +368,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
 
     } catch (error: any) {
       console.error("Failed to generate content", error);
-      toast.error("生成内容失败: " + (error.message || "未知错误"));
+      useToast.getState().error("生成内容失败: " + (error.message || "未知错误"));
     } finally {
       setIsGenerating(false);
     }
@@ -376,11 +376,11 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
 
   const handleGenerateCustom = async () => {
     if (!customPrompt) {
-      toast.error("请输入提示词后再点击生成。");
+      useToast.getState().error("请输入提示词后再点击生成。");
       return;
     }
     if (!brandData.name) {
-      toast.error("请先在设置中完善品牌名称。");
+      useToast.getState().error("请先在设置中完善品牌名称。");
       onNavigate('settings');
       return;
     }
@@ -521,7 +521,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
 
     } catch (error: any) {
       console.error("Failed to generate custom content", error);
-      toast.error("生成自定义内容失败: " + (error.message || "未知错误"));
+      useToast.getState().error("生成自定义内容失败: " + (error.message || "未知错误"));
     } finally {
       setIsGenerating(false);
     }
@@ -551,7 +551,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       }
     } catch (error: any) {
       console.error("Failed to generate images", error);
-      toast.error("图片生成部分失败: " + (error.message || "未知错误"));
+      useToast.getState().error("图片生成部分失败: " + (error.message || "未知错误"));
     } finally {
       setIsGeneratingImages(false);
     }
@@ -582,7 +582,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       }
     } catch (error: any) {
       console.error("Failed to generate image", error);
-      toast.error("图片生成失败: " + (error.message || "未知错误"));
+      useToast.getState().error("图片生成失败: " + (error.message || "未知错误"));
     } finally {
       setGeneratingImageIndices(prev => prev.filter(i => i !== index));
     }
@@ -626,13 +626,13 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
           newResources[index] = { ...newResources[index], image_url: parsed.image_url };
           return { ...prev, resources: newResources };
         });
-        toast.success("配图已更新");
+        useToast.getState().success("配图已更新");
       } else {
-        toast.error("未能找到新的有效图片链接，请手动查找。");
+        useToast.getState().error("未能找到新的有效图片链接，请手动查找。");
       }
     } catch (e: any) {
       console.error(e);
-      toast.error("刷新网络资源配图失败：" + (e.message || "未知错误"));
+      useToast.getState().error("刷新网络资源配图失败：" + (e.message || "未知错误"));
     } finally {
       setIsRefreshingResource(prev => ({ ...prev, [index]: false }));
     }

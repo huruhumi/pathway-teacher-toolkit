@@ -1,23 +1,22 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { Header } from './components/Header';
-import { AuthModal } from './components/AuthModal';
 const CurriculumPage = React.lazy(() => import('./pages/CurriculumPage').then(m => ({ default: m.CurriculumPage })));
 const LessonKitPage = React.lazy(() => import('./pages/LessonKitPage').then(m => ({ default: m.LessonKitPage })));
 const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ default: m.RecordsPage })));
 import { LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
-import { fetchCloudPlans, upsertCloudPlan, deleteCloudPlan, renameCloudPlan } from './services/cloudDataService';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
-import { safeStorage } from '@shared/safeStorage';
 import { imageStore } from '@shared/imageStore';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
+import AppFooter from '@shared/components/AppFooter';
 import { useAppStore, useSessionStore } from './stores/appStore';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+import ToastContainer from '@shared/components/ui/ToastContainer';
 
 /** Generate a short description for a saved NC lesson kit */
 function generateNCKitDescription(plan: LessonPlanResponse): string {
@@ -56,7 +55,6 @@ const NatureHeroBanner = () => {
 export const App: React.FC = () => {
   // Navigation
   const [view, setView] = useHashTab<'curriculum' | 'lesson' | 'saved'>('curriculum', ['curriculum', 'lesson', 'saved']);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Global Stores
   const { user, initialize: initAuth } = useAuthStore();
@@ -66,8 +64,16 @@ export const App: React.FC = () => {
     setInput
   } = useAppStore();
 
-  const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50);
-  const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50);
+  const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
+    cloudTable: 'lesson_plans',
+    mapToCloud: (p: SavedLessonPlan) => ({ id: p.id, name: p.name, plan_data: p.plan, cover_image: p.coverImage || null }),
+    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), plan: row.plan_data, coverImage: row.cover_image || undefined } as SavedLessonPlan),
+  });
+  const { items: savedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50, {
+    cloudTable: 'curricula',
+    mapToCloud: (c: SavedCurriculum) => ({ id: c.id, name: c.name, curriculum_data: c.curriculum, params_data: c.params, language: c.language }),
+    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), curriculum: row.curriculum_data, params: row.params_data, language: row.language, description: row.description || '' } as SavedCurriculum),
+  });
 
   // Clear session on fresh landing
   useEffect(() => {
@@ -93,24 +99,7 @@ export const App: React.FC = () => {
     });
   }, []);
 
-  // Cloud sync on login
-  useEffect(() => {
-    if (user) {
-      fetchCloudPlans(user.id).then(cloudPlans => {
-        if (cloudPlans.length > 0) {
-          setSavedPlans(prev => {
-            const localIds = new Set(prev.map(p => p.id));
-            const merged = [...prev];
-            for (const cp of cloudPlans) {
-              if (!localIds.has(cp.id)) merged.push(cp);
-            }
-            safeStorage.set('nature-compass-plans', merged);
-            return merged;
-          });
-        }
-      });
-    }
-  }, [user]);
+  // Cloud sync is now handled automatically by useProjectCRUD's cloudTable option.
 
   // =========== CRUD Handlers ===========
 
@@ -141,7 +130,7 @@ export const App: React.FC = () => {
       setSavedPlans((prev) => prev.map(p => p.id === planId ? { ...p, coverImage } : p));
     }
 
-    if (user) upsertCloudPlan(user.id, newSavedPlan);
+    // Cloud sync is automatic via useProjectCRUD
   };
 
   const handleLoadPlan = (saved: SavedLessonPlan) => {
@@ -156,13 +145,11 @@ export const App: React.FC = () => {
   const handleDeletePlan = (id: string) => {
     deletePlanDb(id);
     imageStore.removeByPrefix(`nc-${id}-`);
-    if (user) deleteCloudPlan(user.id, id);
     if (currentPlanId === id) setCurrentPlanId(null);
   };
 
   const handleRenamePlan = (id: string, newName: string) => {
     renamePlanDb(id, newName);
-    if (user) renameCloudPlan(id, newName);
   };
 
   const handleSaveCurriculum = (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => {
@@ -212,10 +199,7 @@ export const App: React.FC = () => {
               clearSessionState();
               setCurrentPlanId(null);
             }}
-            onShowAuth={() => setShowAuthModal(true)}
           />
-
-          {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
           <PageLayout className="flex-1">
             <NatureHeroBanner />
@@ -261,11 +245,10 @@ export const App: React.FC = () => {
             </Suspense>
           </PageLayout>
 
-          <footer className="bg-white dark:bg-slate-950/50 border-t border-slate-200 dark:border-white/5 py-8 text-center text-slate-400 text-sm">
-            <p>&copy; {new Date().getFullYear()} Nature Compass. Powered by Google Gemini.</p>
-          </footer>
+          <AppFooter appName="Nature Compass" />
         </div>
       </ErrorBoundary>
+      <ToastContainer />
     </LanguageProvider>
   );
 };

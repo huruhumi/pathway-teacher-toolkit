@@ -9,6 +9,8 @@ import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+import AppFooter from '@shared/components/AppFooter';
+import ToastContainer from '@shared/components/ui/ToastContainer';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 // Pages — lazy-loaded for code splitting
@@ -77,6 +79,7 @@ const AppContent: React.FC = () => {
                 onTabChange={(key) => setViewMode(key as typeof viewMode)}
                 onLogoClick={() => { setViewMode('curriculum'); clearSessionState(); setActiveLessonId(null); setPrefilledValues(null); }}
                 rightContent={<HeaderToggles lang={lang} onLangChange={setLang} isDark={isDarkMode} onDarkChange={setDarkMode} />}
+                signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
             />
 
             <PageLayout>
@@ -115,11 +118,7 @@ const AppContent: React.FC = () => {
                 </BodyContainer>
             </PageLayout>
 
-            <footer className="bg-white dark:bg-slate-950/50 border-t border-slate-200 dark:border-white/5 mt-12 py-8">
-                <div className="max-w-5xl mx-auto px-4 text-center text-slate-500 text-xs md:text-sm">
-                    <p>{t('footer')}</p>
-                </div>
-            </footer>
+            <AppFooter appName="ESL Smart Planner" />
         </div>
     );
 };
@@ -129,6 +128,7 @@ const App: React.FC = () => (
         <ErrorBoundary>
             <AppContent />
         </ErrorBoundary>
+        <ToastContainer />
     </LanguageProvider>
 );
 

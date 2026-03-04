@@ -1,6 +1,6 @@
 import { Save, Loader2, Sparkles, Download, Type as TypeIcon, Check, Copy, Smartphone, Monitor, Image as ImageIcon, Hash } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@shared/stores/useToast';
 import { ContentGeneratorChildProps } from './types';
 
 // Xiaohongshu banned/sensitive words that trigger content restrictions
@@ -95,7 +95,7 @@ export default function ContentOutput({ state, actions }: ContentGeneratorChildP
                                         document.body.removeChild(link);
                                     }, idx * 500);
                                 });
-                                toast.success(`正在下载 ${state.imageState.images.filter(Boolean).length} 张图片...`);
+                                useToast.getState().success(`正在下载 ${state.imageState.images.filter(Boolean).length} 张图片...`);
                             }}
                             className="w-full py-2.5 rounded-xl bg-slate-800 text-white text-sm font-medium flex items-center justify-center gap-2 hover:bg-slate-700 transition-colors"
                         >

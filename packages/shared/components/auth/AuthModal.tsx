@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2, LogIn, UserPlus } from 'lucide-react';
-import { useAuthStore } from '@shared/stores/useAuthStore';
-import { Modal } from '@shared/components/ui/Modal';
-import { AppHeader } from '@shared/components/AppHeader';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { Modal } from '../ui/Modal';
 
 interface AuthModalProps {
     onClose: () => void;

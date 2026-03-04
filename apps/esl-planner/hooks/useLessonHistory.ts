@@ -162,8 +162,16 @@ export function useLessonHistory() {
         kitSearch, kitLevel, kitDate, kitSort, recordsTab
     } = useAppStore();
 
-    const { items: savedLessons, setItems: setSavedLessons, saveItem: saveLessonDb, deleteItem: deleteLessonDb } = useProjectCRUD<SavedLesson>('esl_smart_planner_history', 50);
-    const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb } = useProjectCRUD<SavedCurriculum>('esl_planner_curricula', 50);
+    const { items: savedLessons, setItems: setSavedLessons, saveItem: saveLessonDb, deleteItem: deleteLessonDb } = useProjectCRUD<SavedLesson>('esl_smart_planner_history', 50, {
+        cloudTable: 'esl_lessons',
+        mapToCloud: (l: SavedLesson) => ({ id: l.id, name: l.topic, level: l.level, description: l.description, content_data: l.content }),
+        mapFromCloud: (row: any) => ({ id: row.id, timestamp: new Date(row.updated_at || row.created_at).getTime(), topic: row.name || 'Untitled', level: row.level, description: row.description || '', content: row.content_data } as SavedLesson),
+    });
+    const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb } = useProjectCRUD<SavedCurriculum>('esl_planner_curricula', 50, {
+        cloudTable: 'esl_curricula',
+        mapToCloud: (c: SavedCurriculum) => ({ id: c.id, name: c.textbookTitle, level: c.targetLevel, total_lessons: c.totalLessons, description: c.description, curriculum_data: c.curriculum, params_data: c.params }),
+        mapFromCloud: (row: any) => ({ id: row.id, timestamp: new Date(row.updated_at || row.created_at).getTime(), textbookTitle: row.name, targetLevel: row.level, totalLessons: row.total_lessons, description: row.description || '', curriculum: row.curriculum_data, params: row.params_data } as SavedCurriculum),
+    });
 
     // Title editing state (still local because transient UI state)
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);

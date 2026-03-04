@@ -5,16 +5,11 @@
         "apps/*"
     ],
     "scripts": {
-        "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" concurrently -n planner,essay,nature,ops,proxy -c cyan,green,yellow,magenta,white \"npm run dev:planner\" \"npm run dev:essay\" \"npm run dev:nature\" \"npm run dev:ops\" \"npm run dev:proxy\"",
-        "dev:proxy": "vite --config dev-proxy.config.ts",
+        "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=1536\" concurrently -n planner,essay,nature,ops -c cyan,green,yellow,magenta \"npm run dev:planner\" \"npm run dev:essay\" \"npm run dev:nature\" \"npm run dev:ops\"",
         "dev:planner": "npm -w apps/esl-planner run dev",
         "dev:essay": "npm -w apps/essay-lab run dev",
         "dev:nature": "npm -w apps/nature-compass run dev",
         "dev:ops": "npm -w apps/academy-ops run dev",
-        "dev:planner-only": "concurrently -n planner,proxy -c cyan,white \"npm run dev:planner\" \"npm run dev:proxy\"",
-        "dev:essay-only": "concurrently -n essay,proxy -c green,white \"npm run dev:essay\" \"npm run dev:proxy\"",
-        "dev:nature-only": "concurrently -n nature,proxy -c yellow,white \"npm run dev:nature\" \"npm run dev:proxy\"",
-        "dev:ops-only": "concurrently -n ops,proxy -c magenta,white \"npm run dev:ops\" \"npm run dev:proxy\"",
         "build:planner": "npm -w apps/esl-planner run build",
         "build:essay": "npm -w apps/essay-lab run build",
         "build:nature": "npm -w apps/nature-compass run build",

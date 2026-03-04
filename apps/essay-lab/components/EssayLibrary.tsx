@@ -1,46 +1,12 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { GeneratedEssay, SavedEssayFromCorrection, EssayItem, EssayGenre, StudentGrade, CEFRLevel } from '../types';
-import { generateModelEssay } from '../services/essayGeneratorService';
-import { getRecords } from './CorrectionRecords';
+import React from 'react';
+import { GeneratedEssay, EssayGenre, StudentGrade, CEFRLevel } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useEssayLibrary } from '../hooks/useEssayLibrary';
 import {
     BookOpen, Sparkles, Star, StarOff, Trash2, Copy, Check, RefreshCw,
     School, Gauge, FileText, Filter, ChevronDown, ChevronUp, Lightbulb,
     BookMarked, Layers, PenTool, Search, Plus, X, Loader2
 } from 'lucide-react';
-
-import localforage from 'localforage';
-
-const ESSAYS_KEY = 'essay_lab_essays';
-
-async function getStoredEssays(): Promise<GeneratedEssay[]> {
-    try {
-        const raw = await localforage.getItem<GeneratedEssay[]>(ESSAYS_KEY);
-        return raw || [];
-    } catch { return []; }
-}
-
-async function saveStoredEssays(essays: GeneratedEssay[]) {
-    await localforage.setItem(ESSAYS_KEY, essays);
-}
-
-async function getCorrectionEssays(): Promise<SavedEssayFromCorrection[]> {
-    const records = await getRecords();
-    return records
-        .filter(r => r.report.goldenVersion)
-        .map(r => ({
-            id: `corr_${r.id}`,
-            timestamp: r.timestamp,
-            topic: r.topicText || r.report.topicText || 'Untitled',
-            grade: r.grade,
-            cefr: r.cefr,
-            content: r.report.goldenVersion,
-            wordCount: r.report.goldenVersion.split(/\s+/).length,
-            source: 'correction' as const,
-            favorite: false,
-            recordId: r.id,
-        }));
-}
 
 const genreKeys: Record<EssayGenre, string> = {
     [EssayGenre.NARRATIVE]: 'genre.narrative',
@@ -52,113 +18,26 @@ const genreKeys: Record<EssayGenre, string> = {
 
 const EssayLibrary: React.FC = () => {
     const { t } = useLanguage();
-    const [storedEssays, setStoredEssays] = useState<GeneratedEssay[]>([]);
-    const [correctionEssays, setCorrectionEssays] = useState<SavedEssayFromCorrection[]>([]);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const {
+        isLoaded, filtered, allEssays,
+        showGenerator, setShowGenerator,
+        generating, expandedId, setExpandedId,
+        copiedId,
+        filterSource, setFilterSource,
+        filterGrade, setFilterGrade,
+        filterCefr, setFilterCefr,
+        filterGenre, setFilterGenre,
+        searchQuery, setSearchQuery,
+        genTopic, setGenTopic,
+        genGrade, setGenGrade,
+        genCefr, setGenCefr,
+        genGenre, setGenGenre,
+        genWords, setGenWords,
+        genError,
+        handleGenerate, handleRegenerate, handleDelete, handleToggleFavorite, handleCopy,
+    } = useEssayLibrary();
 
-    const [showGenerator, setShowGenerator] = useState(false);
-    const [generating, setGenerating] = useState(false);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    React.useEffect(() => {
-        const load = async () => {
-            const essays = await getStoredEssays();
-            const corrections = await getCorrectionEssays();
-            setStoredEssays(essays);
-            setCorrectionEssays(corrections);
-            setIsLoaded(true);
-        };
-        load();
-    }, []);
-
-    // Filters
-    const [filterSource, setFilterSource] = useState<'all' | 'generated' | 'correction'>('all');
-    const [filterGrade, setFilterGrade] = useState<string>('all');
-    const [filterCefr, setFilterCefr] = useState<string>('all');
-    const [filterGenre, setFilterGenre] = useState<string>('all');
-    const [searchQuery, setSearchQuery] = useState('');
-
-    // Generator form
-    const [genTopic, setGenTopic] = useState('');
-    const [genGrade, setGenGrade] = useState<StudentGrade>(StudentGrade.G7);
-    const [genCefr, setGenCefr] = useState<CEFRLevel>(CEFRLevel.B1);
-    const [genGenre, setGenGenre] = useState<EssayGenre>(EssayGenre.NARRATIVE);
-    const [genWords, setGenWords] = useState(150);
-    const [genError, setGenError] = useState<string | null>(null);
-
-    const allEssays: EssayItem[] = useMemo(() => {
-        const combined = [...storedEssays, ...correctionEssays];
-        return combined.sort((a, b) => b.timestamp - a.timestamp);
-    }, [storedEssays, correctionEssays]);
-
-    const filtered = useMemo(() => {
-        return allEssays.filter(e => {
-            if (filterSource !== 'all' && e.source !== filterSource) return false;
-            if (filterGrade !== 'all' && e.grade !== filterGrade) return false;
-            if (filterCefr !== 'all' && e.cefr !== filterCefr) return false;
-            if (filterGenre !== 'all' && e.source === 'generated' && (e as GeneratedEssay).genre !== filterGenre) return false;
-            if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                const topicMatch = e.topic.toLowerCase().includes(q);
-                const contentMatch = e.content.toLowerCase().includes(q);
-                if (!topicMatch && !contentMatch) return false;
-            }
-            return true;
-        });
-    }, [allEssays, filterSource, filterGrade, filterCefr, filterGenre, searchQuery]);
-
-    const handleGenerate = useCallback(async () => {
-        if (!genTopic.trim()) return;
-        setGenerating(true);
-        setGenError(null);
-        try {
-            const essay = await generateModelEssay(genTopic, genGrade, genCefr, genGenre, genWords);
-            const updated = [essay, ...storedEssays];
-            saveStoredEssays(updated);
-            setStoredEssays(updated);
-            setShowGenerator(false);
-            setGenTopic('');
-            setExpandedId(essay.id);
-        } catch (err: any) {
-            setGenError(err.message || 'Generation failed');
-        } finally {
-            setGenerating(false);
-        }
-    }, [genTopic, genGrade, genCefr, genGenre, genWords, storedEssays]);
-
-    const handleRegenerate = useCallback(async (essay: GeneratedEssay) => {
-        setGenerating(true);
-        try {
-            const newEssay = await generateModelEssay(essay.topic, essay.grade, essay.cefr, essay.genre, essay.targetWords);
-            const updated = [newEssay, ...storedEssays];
-            saveStoredEssays(updated);
-            setStoredEssays(updated);
-            setExpandedId(newEssay.id);
-        } catch (err) {
-            // silently fail
-        } finally {
-            setGenerating(false);
-        }
-    }, [storedEssays]);
-
-    const handleDelete = async (id: string) => {
-        const updated = storedEssays.filter(e => e.id !== id);
-        await saveStoredEssays(updated);
-        setStoredEssays(updated);
-    };
-
-    const handleToggleFavorite = async (id: string) => {
-        const updated = storedEssays.map(e => e.id === id ? { ...e, favorite: !e.favorite } : e);
-        await saveStoredEssays(updated);
-        setStoredEssays(updated);
-    };
-
-    const handleCopy = async (content: string, id: string) => {
-        await navigator.clipboard.writeText(content);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
-    };
 
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">

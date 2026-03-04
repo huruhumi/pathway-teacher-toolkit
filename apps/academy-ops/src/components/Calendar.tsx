@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@shared/stores/useToast';
 import { SavedNote } from '../types';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, FileText, Image as ImageIcon, Save, Copy, Check, Download, X, PenTool } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -27,7 +27,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
     if (editingNote && onUpdateNote) {
       onUpdateNote(editingNote);
       setSelectedNote(editingNote); // Update the selected note to reflect changes
-      toast.success('保存成功！');
+      useToast.getState().success('保存成功！');
     }
   };
 
@@ -103,7 +103,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
               const note = savedNotes.find(n => n.id === draggedNoteId);
               if (note) {
                 onUpdateNote({ ...note, date: dateStr });
-                toast.success(`已移动到 ${dateStr}`);
+                useToast.getState().success(`已移动到 ${dateStr}`);
               }
             }
             setDraggedNoteId(null);

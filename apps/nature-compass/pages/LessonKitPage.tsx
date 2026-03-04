@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { generateLessonPlanStreaming, translateLessonPlan, generateLessonPlanStreamingCN } from '../services/geminiService';
 import type { LessonInput, LessonPlanResponse } from '../types';
+import { useToast } from '@shared/stores/useToast';
 
 import { useAppStore, useSessionStore } from '../stores/appStore';
 
@@ -103,7 +104,7 @@ export const LessonKitPage: React.FC<LessonKitPageProps> = ({
             } else {
                 const errorMessage = err.message || "Failed to generate lesson plan. Please try again.";
                 setError(errorMessage);
-                alert(`Error: ${errorMessage}`);
+                useToast.getState().error(`Error: ${errorMessage}`);
                 console.error(err);
             }
         } finally {

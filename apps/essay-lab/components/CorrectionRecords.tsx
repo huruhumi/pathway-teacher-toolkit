@@ -3,6 +3,8 @@ import { SavedRecord, StudentGrade, CEFRLevel } from '../types';
 import ReportDisplay from './ReportDisplay';
 import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuthStore } from '@shared/stores/useAuthStore';
+import { upsertCloudRecord, deleteCloudRecord, fetchCloudRecords } from '@shared/services/cloudSync';
 
 import localforage from 'localforage';
 
@@ -19,12 +21,27 @@ export async function saveRecord(record: SavedRecord) {
     const records = await getRecords();
     records.unshift(record);
     await localforage.setItem(STORAGE_KEY, records);
+
+    // Cloud sync (fire-and-forget)
+    const user = useAuthStore.getState().user;
+    if (user) {
+        upsertCloudRecord('essay_records', user.id, {
+            id: record.id, grade: record.grade, cefr: record.cefr,
+            topic_text: record.topicText || null, essay_text: record.essayText || null,
+            report_data: record.report,
+        });
+    }
 }
 
 export async function deleteRecord(id: string) {
     const records = await getRecords();
     const updated = records.filter(r => r.id !== id);
     await localforage.setItem(STORAGE_KEY, updated);
+
+    const user = useAuthStore.getState().user;
+    if (user) {
+        deleteCloudRecord('essay_records', user.id, id);
+    }
 }
 
 const CorrectionRecords: React.FC = () => {
@@ -36,10 +53,36 @@ const CorrectionRecords: React.FC = () => {
     const [isLoaded, setIsLoaded] = useState(false);
 
     React.useEffect(() => {
-        getRecords().then(data => {
-            setRecords(data);
+        (async () => {
+            const local = await getRecords();
+            setRecords(local);
             setIsLoaded(true);
-        });
+
+            // Merge cloud records if logged in
+            const user = useAuthStore.getState().user;
+            if (user) {
+                const cloudRows = await fetchCloudRecords<any>('essay_records', user.id);
+                if (cloudRows.length > 0) {
+                    const localIds = new Set(local.map((r: SavedRecord) => r.id));
+                    const newFromCloud: SavedRecord[] = [];
+                    for (const row of cloudRows) {
+                        if (!localIds.has(row.id)) {
+                            newFromCloud.push({
+                                id: row.id, timestamp: new Date(row.updated_at).getTime(),
+                                grade: row.grade, cefr: row.cefr,
+                                topicText: row.topic_text || undefined, essayText: row.essay_text || undefined,
+                                report: row.report_data,
+                            });
+                        }
+                    }
+                    if (newFromCloud.length > 0) {
+                        const merged = [...newFromCloud, ...local];
+                        setRecords(merged);
+                        await localforage.setItem(STORAGE_KEY, merged);
+                    }
+                }
+            }
+        })();
     }, []);
 
     const filtered = useMemo(() => {

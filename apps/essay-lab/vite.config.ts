@@ -14,6 +14,14 @@ export default defineConfig(({ mode }) => {
       warmup: {
         clientFiles: ['./**/*.tsx'],
       },
+      proxy: {
+        '/supabase-proxy': {
+          target: env.VITE_SUPABASE_URL || 'https://mjvxaicypucfrrvollwm.supabase.co',
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(/^\/supabase-proxy/, ''),
+          secure: true,
+        },
+      },
     },
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -32,6 +40,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             vendor: ['react', 'react-dom'],
             icons: ['lucide-react'],
+            state: ['zustand'],
           },
         },
       },

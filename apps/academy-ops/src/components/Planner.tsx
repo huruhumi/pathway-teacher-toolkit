@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@shared/stores/useToast';
 import { BrandData } from '../data/brandData';
 import { generateContent, Type } from '../services/ai';
 import { Loader2, Calendar as CalendarIcon, CheckCircle2, ArrowRight, Copy, Check, Sparkles, Save, X } from 'lucide-react';
@@ -77,11 +77,11 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
 
   const handleGeneratePlan = async () => {
     if (!focus) {
-      toast.error(t('plan.noFocus'));
+      useToast.getState().error(t('plan.noFocus'));
       return;
     }
     if (!brandData.name) {
-      toast.error(t('plan.noBrand'));
+      useToast.getState().error(t('plan.noBrand'));
       onNavigate('settings');
       return;
     }
@@ -157,7 +157,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
       onPlanGenerated(plan);
     } catch (error: any) {
       console.error("Failed to generate plan", error);
-      toast.error(`${t('plan.generateFailed')}: ${error.message || 'Unknown error'}`);
+      useToast.getState().error(`${t('plan.generateFailed')}: ${error.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }

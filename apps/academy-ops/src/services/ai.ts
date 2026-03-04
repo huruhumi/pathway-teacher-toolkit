@@ -59,57 +59,8 @@ export const generateContent = async (prompt: string, systemInstruction?: string
   }
 };
 
-export const generateImage = async (prompt: string, aspectRatio: "1:1" | "3:4" | "4:3" | "9:16" | "16:9" = "3:4") => {
-  const model = "gemini-2.5-flash-image";
-  const url = `${BASE_URL}/${model}:generateContent?key=${API_KEY}`;
+import { generateAIImage } from '@shared/ai/image';
 
-  const body = {
-    contents: [
-      {
-        parts: [{ text: prompt }],
-      },
-    ],
-    generationConfig: {
-      imageConfig: {
-        aspectRatio: aspectRatio,
-      },
-    },
-  };
+export const generateImage = (prompt: string, aspectRatio: "1:1" | "3:4" | "4:3" | "9:16" | "16:9" = "3:4") =>
+  generateAIImage(prompt, aspectRatio);
 
-
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("Image API error:", errorBody);
-      throw new Error(`Image API returned ${response.status}: ${errorBody.substring(0, 300)}`);
-    }
-
-    const data = await response.json();
-
-    // Find the image part in the response
-    for (const part of data?.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        const base64 = part.inlineData.data;
-        const mimeType = part.inlineData.mimeType || "image/png";
-        return `data:${mimeType};base64,${base64}`;
-      }
-    }
-    console.warn("No image data found in response:", JSON.stringify(data).substring(0, 500));
-    return null;
-  } catch (error: any) {
-    console.error("Error generating image:", error);
-    throw new Error(`Image generation failed: ${error.message || "Unknown error"}`);
-  }
-};
-
-// Keep getAIClient export for backward compatibility (not used anymore)
-export const getAIClient = () => {
-  throw new Error("SDK client is no longer used. All calls go through REST API.");
-};

@@ -3,6 +3,7 @@ import { LessonPlanResponse, RoadmapItem, VocabularyItem, VisualReferenceItem } 
 import { Clipboard, Check, Box, BookOpen, ImageIcon, FileText, BadgeCheck, Printer, Loader2, Sparkles, Download, Compass, Languages, ChevronDown, Share2, Save, X } from 'lucide-react';
 import { generateSingleStep, generateImagePrompt, generateImage, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateBadgePrompt, generateSingleBackgroundInfo, generateSingleTeachingTip } from '../services/geminiService';
 import { useLessonStore } from '../stores/useLessonStore';
+import { useToast } from '@shared/stores/useToast';
 import { useLanguage } from '../i18n/LanguageContext';
 import { RichTextEditor } from './RichTextEditor';
 import { usePrintUtils } from '../hooks/usePrintUtils';
@@ -92,7 +93,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 applyPlanToState(translatedPlan);
                 setDisplayLanguage('zh');
             } else {
-                alert("Chinese translation is not available for this plan.");
+                useToast.getState().error("Chinese translation is not available for this plan.");
             }
         } else {
             applyPlanToState(plan);
@@ -533,6 +534,26 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             newPages[index] = { ...newPages[index], [field]: value };
             return newPages;
         });
+    };
+
+    const copyToClipboard = async (text: string, type: 'image' | 'content', index: number) => {
+        await navigator.clipboard.writeText(text);
+        if (type === 'image') {
+            setCopiedImagePrompt(index);
+            setTimeout(() => setCopiedImagePrompt(null), 2000);
+        } else {
+            setCopiedContentPrompt(index);
+            setTimeout(() => setCopiedContentPrompt(null), 2000);
+        }
+    };
+
+    const handleCopyAllPrompts = async () => {
+        const allPrompts = handbookPages.map((page, i) =>
+            `--- Page ${i + 1} ---\n[Visual] ${page.visualPrompt}\n[Content] ${page.contentPrompt}`
+        ).join('\n\n');
+        await navigator.clipboard.writeText(allPrompts);
+        setCopiedNotebook(true);
+        setTimeout(() => setCopiedNotebook(false), 2000);
     };
 
 

@@ -12,8 +12,10 @@ import { AppHeader } from '@shared/components/AppHeader';
 import { HeroBanner } from '@shared/components/HeroBanner';
 import { PageLayout } from '@shared/components/PageLayout';
 import { BodyContainer } from '@shared/components/BodyContainer';
+import AppFooter from '@shared/components/AppFooter';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+import ToastContainer from '@shared/components/ui/ToastContainer';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { EssayInputForm } from './components/EssayInputForm';
 
@@ -123,6 +125,7 @@ const AppContent: React.FC = () => {
           onTabChange={(key) => { setViewMode(key as typeof viewMode); if (key === 'correction') { setReport(null); setIsPreviewing(false); } }}
           onLogoClick={() => { setViewMode('correction'); setReport(null); setIsPreviewing(false); }}
           rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
+          signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
         />
       )}
 
@@ -186,17 +189,7 @@ const AppContent: React.FC = () => {
       </PageLayout>
 
       {!isPreviewing && (
-        <footer className="py-12 border-t border-slate-200 dark:border-white/5 mt-12 print:hidden backdrop-blur-sm dark:bg-slate-950/50">
-          <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-slate-400 text-sm">
-            <div className="flex items-center gap-2 grayscale opacity-50">
-              <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white">
-                <GraduationCap className="w-4 h-4" />
-              </div>
-              <span className="font-bold">Essay Lab</span>
-            </div>
-            <p>{t('footer')}</p>
-          </div>
-        </footer>
+        <AppFooter appName="Essay Lab" />
       )}
     </div>
   );
@@ -207,6 +200,7 @@ const App: React.FC = () => (
     <ErrorBoundary>
       <AppContent />
     </ErrorBoundary>
+    <ToastContainer />
   </LanguageProvider>
 );
 

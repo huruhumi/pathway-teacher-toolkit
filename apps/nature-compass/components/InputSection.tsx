@@ -3,6 +3,7 @@ import { LessonInput, UploadedFile } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
 import { Sun, CloudRain, Shuffle, Loader2 } from 'lucide-react';
 import { generateRandomTheme } from '../services/geminiService';
+import { useToast } from '@shared/stores/useToast';
 import { useLanguage, TranslationKey } from '../i18n/LanguageContext';
 import { FileUploadDropzone } from '@shared/components/ui/FileUploadDropzone';
 import { Input } from '@shared/components/ui/Input';
@@ -64,7 +65,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
   const processFiles = async (files: FileList) => {
     const validFiles = Array.from(files).filter(file => {
       if (!file.type.match('image.*') && file.type !== 'application/pdf' && file.type !== 'text/plain') {
-        alert(`File ${file.name} is not a supported format (PDF, Image, Text only).`);
+        useToast.getState().error(`File ${file.name} is not a supported format (PDF, Image, Text only).`);
         return false;
       }
       return true;

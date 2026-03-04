@@ -8,8 +8,8 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-2xl font-bold text-slate-900">内容创作工坊</h2>
-                <p className="text-slate-500 mt-1">打造高转化、高互动的优质笔记。</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">内容创作工坊</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">打造高转化、高互动的优质笔记。</p>
             </div>
 
             <Card className="space-y-6">
@@ -43,11 +43,11 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
 
                     {/* Prompt Framework Templates */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">内容框架模板</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">内容框架模板</label>
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => actions.setSelectedFramework('')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-600 border-slate-200 hover:border-rose-200 hover:text-rose-600'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-rose-200 hover:text-rose-600'}`}
                             >
                                 默认
                             </button>
@@ -56,7 +56,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                                     key={fw.id}
                                     onClick={() => actions.setSelectedFramework(fw.id === state.selectedFramework ? '' : fw.id)}
                                     title={fw.desc}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white text-slate-600 border-slate-200 hover:border-rose-200 hover:text-rose-600'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-rose-200 hover:text-rose-600'}`}
                                 >
                                     {fw.label}
                                 </button>
@@ -113,7 +113,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <PenTool size={16} className="text-rose-500" />
                                     自定义内容提示词
                                 </label>

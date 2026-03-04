@@ -1,18 +1,61 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { safeStorage } from '../safeStorage';
+import { useAuthStore } from '../stores/useAuthStore';
+import {
+    fetchCloudRecords,
+    upsertCloudRecord,
+    deleteCloudRecord,
+    renameCloudRecord,
+} from '../services/cloudSync';
 
 export interface BaseRecord {
     id: string;
     timestamp: number;
+    name?: string;
     [key: string]: any;
 }
 
-export const useProjectCRUD = <T extends BaseRecord>(storageKey: string, limit: number = 50) => {
+interface UseProjectCRUDOptions {
+    /** Supabase table name. If provided, CRUD auto-syncs to cloud for logged-in users. */
+    cloudTable?: string;
+    /** Column used for mapping from cloud row → local record. Default: pass-through. */
+    mapFromCloud?: (row: any) => any;
+    /** Column used for mapping from local record → cloud row. Default: pass-through. */
+    mapToCloud?: (record: any) => any;
+}
+
+export const useProjectCRUD = <T extends BaseRecord>(
+    storageKey: string,
+    limit: number = 50,
+    options: UseProjectCRUDOptions = {},
+) => {
     const [items, setItems] = useState<T[]>(() => safeStorage.get<T[]>(storageKey, []));
+    const user = useAuthStore((s) => s.user);
+    const { cloudTable, mapFromCloud = (r: any) => r, mapToCloud = (r: any) => r } = options;
+
+    // ── Cloud sync on login ──
+    useEffect(() => {
+        if (!user || !cloudTable) return;
+
+        fetchCloudRecords<any>(cloudTable, user.id).then((cloudRows) => {
+            if (cloudRows.length === 0) return;
+            setItems((prev) => {
+                const localIds = new Set(prev.map((p) => p.id));
+                const merged = [...prev];
+                for (const row of cloudRows) {
+                    const mapped = mapFromCloud(row);
+                    if (!localIds.has(mapped.id)) {
+                        merged.push(mapped as T);
+                    }
+                }
+                safeStorage.set(storageKey, merged);
+                return merged;
+            });
+        });
+    }, [user, cloudTable]);
 
     const saveItem = useCallback((item: T) => {
         setItems((prev) => {
-            // If the item already exists, update it, otherwise add to front
             const exists = prev.some((p) => p.id === item.id);
             let updated = exists
                 ? prev.map((p) => (p.id === item.id ? item : p))
@@ -21,7 +64,12 @@ export const useProjectCRUD = <T extends BaseRecord>(storageKey: string, limit: 
             safeStorage.set(storageKey, updated);
             return updated;
         });
-    }, [storageKey, limit]);
+
+        // Cloud sync (fire-and-forget)
+        if (user && cloudTable) {
+            upsertCloudRecord(cloudTable, user.id, mapToCloud(item));
+        }
+    }, [storageKey, limit, user, cloudTable, mapToCloud]);
 
     const deleteItem = useCallback((id: string) => {
         setItems((prev) => {
@@ -29,7 +77,11 @@ export const useProjectCRUD = <T extends BaseRecord>(storageKey: string, limit: 
             safeStorage.set(storageKey, updated);
             return updated;
         });
-    }, [storageKey]);
+
+        if (user && cloudTable) {
+            deleteCloudRecord(cloudTable, user.id, id);
+        }
+    }, [storageKey, user, cloudTable]);
 
     const renameItem = useCallback((id: string, newName: string, nameField: keyof T = 'name' as keyof T) => {
         setItems((prev) => {
@@ -42,7 +94,11 @@ export const useProjectCRUD = <T extends BaseRecord>(storageKey: string, limit: 
             safeStorage.set(storageKey, updated);
             return updated;
         });
-    }, [storageKey]);
+
+        if (user && cloudTable) {
+            renameCloudRecord(cloudTable, id, newName, nameField as string);
+        }
+    }, [storageKey, user, cloudTable]);
 
     return {
         items,

@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Cloud, LogOut, User } from 'lucide-react';
+import { useAuthStore } from '../stores/useAuthStore';
+import { isSupabaseEnabled } from '../services/supabaseClient';
+import { AuthModal } from './auth/AuthModal';
 
 export interface NavTab {
     key: string;
@@ -33,6 +37,8 @@ export interface AppHeaderProps {
     onLogoClick?: () => void;
     /** Optional right-side content (e.g. auth buttons, dark mode toggle) */
     rightContent?: React.ReactNode;
+    /** Label for the sign-in button (for i18n) */
+    signInLabel?: string;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
@@ -45,7 +51,11 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
     onTabChange,
     onLogoClick,
     rightContent,
+    signInLabel,
 }) => {
+    const { user, signOut } = useAuthStore();
+    const cloudEnabled = isSupabaseEnabled();
+    const [showAuthModal, setShowAuthModal] = useState(false);
     return (
         <header className="bg-white dark:bg-slate-950/80 dark:backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50 shadow-sm dark:shadow-none print:hidden">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -75,7 +85,7 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
                         <button
                             key={tab.key}
                             onClick={() => onTabChange(tab.key)}
-                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap
                 ${activeTab === tab.key
                                     ? `bg-white dark:bg-white/10 ${brand.activeText} shadow-sm dark:shadow-none`
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -120,6 +130,36 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
                         <>
                             <div className="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1 hidden sm:block" />
                             {rightContent}
+                        </>
+                    )}
+
+                    {cloudEnabled && (
+                        <>
+                            <div className="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1 hidden sm:block" />
+                            {user ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
+                                        <Cloud size={14} />
+                                        <span className="hidden sm:inline max-w-[120px] truncate">{user.email}</span>
+                                    </div>
+                                    <button
+                                        onClick={signOut}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                        title="Sign Out"
+                                    >
+                                        <LogOut size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setShowAuthModal(true)}
+                                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                                >
+                                    <User size={16} />
+                                    <span className="hidden sm:inline">{signInLabel || 'Sign In'}</span>
+                                </button>
+                            )}
+                            {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
                         </>
                     )}
                 </div>

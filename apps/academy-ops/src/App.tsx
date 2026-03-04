@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { useThemeStore } from '@shared/stores/useThemeStore';
 import { motion } from 'motion/react';
-import { Toaster } from 'react-hot-toast';
+
 import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 const Planner = React.lazy(() => import('./components/Planner'));
@@ -20,6 +20,8 @@ import { BodyContainer } from '@shared/components/BodyContainer';
 import { HeaderToggles } from '@shared/components/HeaderToggles';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
+import AppFooter from '@shared/components/AppFooter';
+import ToastContainer from '@shared/components/ui/ToastContainer';
 
 
 
@@ -156,7 +158,7 @@ function AppContent() {
 
   return (
     <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900'}`}>
-      <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#334155', color: '#fff', borderRadius: '12px' } }} />
+
 
       <AppHeader
         appName="Rednote Ops"
@@ -176,6 +178,7 @@ function AppContent() {
           setEditingSavedNote(undefined);
         }}
         rightContent={headerToggles}
+        signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
       />
 
       <PageLayout>
@@ -204,6 +207,7 @@ function AppContent() {
           </motion.div>
         </BodyContainer>
       </PageLayout>
+      <AppFooter appName="Academy Ops" />
     </div>
   );
 }
@@ -214,6 +218,7 @@ export default function App() {
       <ErrorBoundary>
         <AppContent />
       </ErrorBoundary>
+      <ToastContainer />
     </LanguageProvider>
   );
 }

@@ -9,6 +9,7 @@ import {
 import { CEFRLevel, ESLCurriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { generateESLCurriculum } from '../services/geminiService';
 import { safeStorage } from '@shared/safeStorage';
+import { extractPdfText as extractPdfTextShared } from '@shared/utils/pdf';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface CurriculumPlannerProps {
@@ -96,29 +97,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         }
     }, [curriculum, savedParams]);
 
-    // PDF text extraction using pdf.js
-    const extractPdfText = async (file: File) => {
+    // PDF text extraction using shared utility
+    const extractPdfTextLocal = async (file: File) => {
         setExtracting(true);
         try {
-            // @ts-ignore - loaded from CDN
-            const pdfjsLib = await import(/* @vite-ignore */ 'https://esm.sh/pdfjs-dist@4.10.38');
-
-            // Point to CDN-hosted worker
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
-
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            setPdfPageCount(pdf.numPages);
-
-            let fullText = '';
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                const pageText = content.items.map((item: any) => item.str).join(' ');
-                fullText += `\n--- Page ${i} ---\n${pageText}`;
-            }
-
-            setPdfText(fullText.trim());
+            const { text, pageCount } = await extractPdfTextShared(file);
+            setPdfPageCount(pageCount);
+            setPdfText(text);
         } catch (err: any) {
             console.error('PDF extraction failed:', err);
             setErrorMsg(`PDF parsing failed: ${err.message || 'Unknown error'}`);
@@ -133,7 +118,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setPdfFile(file);
             setPdfText('');
             setPdfPageCount(0);
-            extractPdfText(file);
+            extractPdfTextLocal(file);
         }
     };
 

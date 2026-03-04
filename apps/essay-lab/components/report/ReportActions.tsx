@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pen, ChevronLeft, FileCheck, CheckCheck } from 'lucide-react';
+import { useToast } from '@shared/stores/useToast';
 import { ReportSectionProps } from './types';
 
 export default function ReportActions({
@@ -41,7 +42,7 @@ export default function ReportActions({
                     <button
                         type="button"
                         onClick={() => {
-                            alert(t('report.saveConfirm'));
+                            useToast.getState().success(t('report.saveConfirm'));
                         }}
                         className="px-12 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-black shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"
                     >

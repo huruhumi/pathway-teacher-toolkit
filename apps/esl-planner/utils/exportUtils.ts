@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { useToast } from '@shared/stores/useToast';
 import React from 'react';
 import { SavedLesson } from '../types';
 import {
@@ -51,7 +52,7 @@ export const handleDownloadZip = async (
         URL.revokeObjectURL(url);
     } catch (err) {
         console.error("Export failed", err);
-        alert("Export failed. Please try again.");
+        useToast.getState().error("Export failed. Please try again.");
     } finally {
         setIsExporting(null);
     }
