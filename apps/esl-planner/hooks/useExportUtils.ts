@@ -46,114 +46,203 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
 
         if (tabId === 'plan' && editablePlan) {
             title = `Plan: ${editablePlan.classInformation.topic}`;
+            // Split stages into step rows (mirroring editor logic)
+            const splitSteps = (text: string): string[] => {
+                const parts = text.split(/(?=\d+\.\s)/).map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
+                return parts.length > 0 ? parts : [text];
+            };
+            const splitInteractions = (text: string): string[] =>
+                text.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+
             contentHtml = `
-            <div class="bg-indigo-600 text-white p-8 rounded-t-2xl mb-8">
-                <h1 class="text-3xl font-bold mb-4">Lesson Plan: ${editablePlan.classInformation.topic}</h1>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-indigo-100">
-                    <div><span class="block text-[10px] uppercase font-black opacity-60">Level</span> ${editablePlan.classInformation.level}</div>
-                    <div><span class="block text-[10px] uppercase font-black opacity-60">Date</span> ${editablePlan.classInformation.date}</div>
-                    <div><span class="block text-[10px] uppercase font-black opacity-60">Topic</span> ${editablePlan.classInformation.topic}</div>
-                    <div><span class="block text-[10px] uppercase font-black opacity-60">Students</span> ${editablePlan.classInformation.students}</div>
+            <!-- Lesson Details Card -->
+            <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-5">
+                <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="text-violet-600">ℹ</span> Lesson Details
+                </h3>
+                <!-- Topic — own row -->
+                <div class="mb-4">
+                    <div class="text-[10px] font-black text-gray-400 uppercase mb-0.5">TOPIC</div>
+                    <div class="font-semibold text-gray-800">${editablePlan.classInformation.topic}</div>
                 </div>
-            </div>
-            <div class="space-y-8 px-2">
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Lesson Aim & Objectives</h2>
-                    <div class="mb-4">
-                        <h3 class="font-bold text-indigo-800 text-sm uppercase mb-1">Main Aim</h3>
-                        <p class="text-gray-700 italic">${editablePlan.lessonDetails.aim}</p>
+                <!-- Level / Students / Date -->
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <div class="text-[10px] font-black text-gray-400 uppercase mb-0.5">LEVEL</div>
+                        <div class="font-semibold text-gray-800">${editablePlan.classInformation.level}</div>
                     </div>
                     <div>
-                        <h3 class="font-bold text-indigo-800 text-sm uppercase mb-1">Learning Objectives</h3>
-                        <ul class="list-disc list-inside space-y-1 text-gray-700">
-                            ${editablePlan.lessonDetails.objectives.map(o => `<li>${o}</li>`).join('')}
-                        </ul>
+                        <div class="text-[10px] font-black text-gray-400 uppercase mb-0.5">STUDENTS</div>
+                        <div class="font-semibold text-gray-800">${editablePlan.classInformation.students}</div>
                     </div>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Materials & Equipment</h2>
-                    <ul class="list-disc list-inside space-y-1 text-gray-700">
-                        ${editablePlan.lessonDetails.materials.map(m => `<li>${m}</li>`).join('')}
-                    </ul>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Vocab & Grammar</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 class="font-bold text-teal-700 mb-2">Target Vocabulary</h3>
-                            <div class="space-y-3">
-                                ${editablePlan.lessonDetails.targetVocab.map(v => `
-                                    <div class="p-3 bg-teal-50 rounded-lg border border-teal-100">
-                                        <div class="font-bold text-teal-800">${v.word}</div>
-                                        <div class="text-sm text-gray-600">${v.definition}</div>
-                                    </div>
-                                `).join('')}
+                    <div>
+                        <div class="text-[10px] font-black text-gray-400 uppercase mb-0.5">DATE</div>
+                        <div class="font-semibold text-gray-800">${editablePlan.classInformation.date}</div>
+                    </div>
+                </div>
+                <!-- Lesson Aim -->
+                <div class="mb-4">
+                    <div class="text-[10px] font-black text-gray-400 uppercase mb-0.5">LESSON AIM</div>
+                    <div class="text-gray-700 italic">${editablePlan.lessonDetails.aim}</div>
+                </div>
+                <!-- Learning Objectives -->
+                <div>
+                    <div class="text-[10px] font-black text-gray-400 uppercase mb-2">LEARNING OBJECTIVES</div>
+                    <div class="space-y-1.5">
+                        ${editablePlan.lessonDetails.objectives.map(o => `
+                            <div class="flex items-start gap-2">
+                                <span class="text-violet-500 mt-0.5">●</span>
+                                <span class="text-sm text-gray-700">${o}</span>
                             </div>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-indigo-700 mb-2">Grammar & Sentences</h3>
-                            <ul class="space-y-2">
-                                ${editablePlan.lessonDetails.grammarSentences.map(s => `<li class="p-2 bg-indigo-50 rounded border border-indigo-100 text-sm text-gray-700">• ${s}</li>`).join('')}
-                            </ul>
-                        </div>
+                        `).join('')}
                     </div>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Anticipated Problems & Solutions</h2>
-                    <div class="space-y-4">
-                        ${editablePlan.lessonDetails.anticipatedProblems.map(p => `
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-red-50/30 rounded-xl border border-red-100">
-                               <div>
-                                    <h4 class="font-bold text-red-800 text-xs uppercase mb-1">Problem</h4>
-                                    <p class="text-gray-700 text-sm">${p.problem}</p>
+                </div>
+            </div>
+
+            <!-- Vocab & Grammar side-by-side -->
+            <div style="break-inside: avoid;" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <!-- Vocabulary -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                        <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                            <span class="text-teal-500">📖</span> Target Vocabulary
+                        </h4>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        ${editablePlan.lessonDetails.targetVocab.map(v => `
+                            <div class="p-3">
+                                <div class="font-bold text-sm text-gray-800">${v.word}</div>
+                                <div class="text-xs text-gray-500">${v.definition}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <!-- Grammar & Sentences -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                        <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                            <span class="text-indigo-500">📚</span> Grammar & Sentences
+                        </h4>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        ${editablePlan.lessonDetails.grammarSentences.map(s => `
+                            <div class="flex gap-2 items-start p-3">
+                                <span class="text-indigo-400 mt-0.5">●</span>
+                                <span class="text-sm text-gray-700">${s}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials & Equipment -->
+            <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-5">
+                <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2 mb-3">
+                    <span class="text-violet-500">📋</span> Materials & Equipment
+                </h4>
+                <div class="space-y-1.5">
+                    ${editablePlan.lessonDetails.materials.map(m => `
+                        <div class="flex items-start gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-violet-400 mt-2 flex-shrink-0"></span>
+                            <span class="text-sm text-gray-700">${m}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Anticipated Problems & Solutions -->
+            <div style="break-inside: avoid;" class="bg-amber-50 rounded-xl p-4 border border-amber-100 mb-5">
+                <div class="text-xs font-bold text-amber-600 uppercase flex items-center gap-1 mb-3">
+                    ⚠ Anticipated Problems & Solutions
+                </div>
+                <div class="space-y-3">
+                    ${editablePlan.lessonDetails.anticipatedProblems.map(p => `
+                        <div style="break-inside: avoid;" class="bg-white rounded-lg border border-amber-200 p-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <div class="text-[10px] font-bold text-amber-500 uppercase mb-1">Problem</div>
+                                    <div class="text-sm text-amber-900">${p.problem}</div>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-green-800 text-xs uppercase mb-1">Solution</h4>
-                                    <p class="text-gray-700 text-sm">${p.solution}</p>
+                                    <div class="text-[10px] font-bold text-emerald-500 uppercase mb-1">Solution</div>
+                                    <div class="text-sm text-emerald-900">${p.solution}</div>
                                 </div>
                             </div>
-                        `).join('')}
-                        ${editablePlan.lessonDetails.anticipatedProblems.length === 0 ? '<p class="text-gray-400 italic text-sm">None anticipated.</p>' : ''}
-                    </div>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Phonics Focus</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${phonicsContent.keyPoints.map(p => `
-                            <div class="p-3 bg-purple-50 rounded-lg border border-purple-100 text-sm text-gray-700">
-                                ${p}
+                        </div>
+                    `).join('')}
+                    ${editablePlan.lessonDetails.anticipatedProblems.length === 0 ? '<p class="text-gray-400 italic text-sm">None anticipated.</p>' : ''}
+                </div>
+            </div>
+
+            <!-- Teaching Stages (card-based, matching editor) -->
+            <div class="space-y-4">
+                ${editablePlan.stages.map((stage, i) => {
+                const teacherSteps = splitSteps(stage.teacherActivity);
+                const studentSteps = splitSteps(stage.studentActivity);
+                const interactionParts = splitInteractions(stage.interaction);
+                const maxLen = Math.max(teacherSteps.length, studentSteps.length);
+                return `
+                    <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <!-- Stage Header -->
+                        <div class="p-3 bg-gray-50 border-b border-gray-100">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <span class="text-sm font-bold text-violet-700 bg-violet-50 border border-violet-100 rounded px-2 py-1">${stage.timing}</span>
+                                <span class="font-bold text-gray-800 uppercase tracking-wide">${stage.stage}</span>
                             </div>
-                        `).join('')}
-                        ${phonicsContent.keyPoints.length === 0 ? '<p class="text-gray-400 italic text-sm">No phonics focus defined.</p>' : ''}
-                    </div>
-                </section>
-                <section>
-                    <h2 class="text-xl font-bold text-indigo-900 border-b-2 border-indigo-100 pb-2 mb-4">Teaching Stages</h2>
-                    <div class="overflow-hidden rounded-xl border border-gray-200">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-100 text-gray-700 font-bold uppercase text-[10px]">
-                                <tr>
-                                    <th class="px-4 py-3">Stage</th>
-                                    <th class="px-4 py-3">Timing</th>
-                                    <th class="px-4 py-3">Int.</th>
-                                    <th class="px-4 py-3 w-1/3">Teacher Activity</th>
-                                    <th class="px-4 py-3 w-1/3">Student Activity</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${editablePlan.stages.map(s => `
-                                    <tr class="align-top">
-                                        <td class="px-4 py-4 font-bold text-indigo-700">${s.stage}</td>
-                                        <td class="px-4 py-4 text-gray-500 whitespace-nowrap">${s.timing}</td>
-                                        <td class="px-4 py-4 text-gray-400 font-medium">${s.interaction}</td>
-                                        <td class="px-4 py-4 whitespace-pre-wrap">${s.teacherActivity}</td>
-                                        <td class="px-4 py-4 whitespace-pre-wrap">${s.studentActivity}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                            <div class="text-sm italic text-gray-500 mt-1">${stage.stageAim}</div>
+                        </div>
+                        <!-- Stage Steps -->
+                        <div class="p-4">
+                            <!-- Column headers -->
+                            <div class="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-2 items-center">
+                                <div></div>
+                                <div class="text-[10px] font-black text-blue-400 uppercase tracking-widest text-center">MODE</div>
+                                <div class="text-[10px] font-black text-violet-400 uppercase tracking-widest text-center">TEACHER SCRIPT</div>
+                                <div class="text-[10px] font-black text-emerald-500 uppercase tracking-widest text-center">STUDENT ACTIVITY</div>
+                            </div>
+                            ${Array.from({ length: maxLen }).map((_, si) => `
+                                <div class="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-1.5 items-start">
+                                    <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-[11px] font-bold flex items-center justify-center">${si + 1}</span>
+                                    <div class="text-[10px] font-semibold text-blue-600 bg-blue-50 rounded-lg px-2 py-1.5 text-center">${interactionParts[si] ?? interactionParts[interactionParts.length - 1] ?? ''}</div>
+                                    <div class="text-sm text-violet-900 bg-violet-50/30 rounded-lg px-2.5 py-1.5 leading-relaxed">${teacherSteps[si] || ''}</div>
+                                    <div class="text-sm text-emerald-900 bg-emerald-50/30 rounded-lg px-2.5 py-1.5 leading-relaxed">${studentSteps[si] || ''}</div>
+                                </div>
+                            `).join('')}
+
+                            ${(stage.backgroundKnowledge && stage.backgroundKnowledge.length > 0) ? `
+                            <div style="break-inside: avoid;" class="mt-3 bg-blue-50 rounded-lg p-2.5 border border-blue-100">
+                                <div class="text-xs font-bold text-blue-500 uppercase mb-2 flex items-center gap-1">📖 Background Knowledge</div>
+                                <div class="space-y-1">
+                                    ${stage.backgroundKnowledge.map(info => `
+                                        <div class="flex items-start gap-2">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2 flex-shrink-0"></span>
+                                            <span class="text-sm text-blue-900">${info}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+
+                            ${(stage.teachingTips && stage.teachingTips.length > 0) ? `
+                            <div style="break-inside: avoid;" class="mt-3 bg-purple-50 rounded-lg p-2.5 border border-purple-100">
+                                <div class="text-xs font-bold text-purple-500 uppercase mb-2 flex items-center gap-1">💡 Teaching Tips</div>
+                                <div class="space-y-1">
+                                    ${stage.teachingTips.map(tip => `
+                                        <div class="flex items-start gap-2">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 flex-shrink-0"></span>
+                                            <span class="text-sm text-purple-900">${tip}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+
+                            ${stage.fillerActivity ? `
+                            <div style="break-inside: avoid;" class="mt-3 bg-amber-50 rounded-lg p-2.5 border border-amber-100">
+                                <div class="text-xs font-bold text-amber-600 uppercase mb-2 flex items-center gap-1">⚡ Filler Activity</div>
+                                <div class="text-sm text-amber-900">${stage.fillerActivity}</div>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+            }).join('')}
             </div>
         `;
         } else if (tabId === 'slides') {
@@ -213,57 +302,192 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         `;
         } else if (tabId === 'companion') {
             title = `Review Plan: ${editablePlan?.classInformation.topic || 'Lesson'}`;
-            contentHtml = `
-            <h1 class="text-3xl font-bold text-orange-900 mb-8">7-Day Post-Class Review Plan</h1>
-            <div class="space-y-8">
-                ${editableReadingCompanion.days.map(d => `
-                    <div class="bg-white border-2 border-orange-100 rounded-2xl overflow-hidden shadow-sm">
-                        <div class="bg-orange-50 px-6 py-4 border-b border-orange-100 flex justify-between items-center">
-                            <div>
-                                <h2 class="text-xl font-bold text-orange-800">Day ${d.day}: ${d.focus}</h2>
-                                <p class="text-sm italic text-orange-600">${d.focus_cn}</p>
+
+            // Generate HTML for a single card
+            const renderCard = (d: any, isTitle: boolean = false) => {
+                if (isTitle) {
+                    return `
+                        <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 flex flex-col justify-center items-center text-center shadow-sm print:shadow-none h-full w-full box-border">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-orange-100 print:shadow-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+                            </div>
+                            <h1 class="text-3xl font-black text-orange-900 mb-4 uppercase tracking-tight">7-Day Learning Companion</h1>
+                            <p class="text-base font-bold text-orange-700 bg-white px-6 py-2 rounded-full shadow-sm print:shadow-none border border-orange-100 truncate w-full max-w-[90%]">${editablePlan?.classInformation.topic || 'Lesson Overview'}</p>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div style="background:#fff; border:1px solid #cbd5e1; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; height:100%; width:100%; box-sizing:border-box;">
+                        <!-- Header -->
+                        <div style="background:#f8fafc; padding:10px 16px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                            <div style="padding:5px 14px; background:#fff; border-radius:8px; color:#7c3aed; font-weight:700; font-size:16px; border:1px solid #e2e8f0; white-space:nowrap;">
+                                Day ${d.day}
+                            </div>
+                            <div style="min-width:0; flex:1;">
+                                <div style="font-size:17px; font-weight:700; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.3;">${d.focus || ''}</div>
+                                <div style="font-size:13px; font-weight:500; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; line-height:1.2;">${d.focus_cn || ''}</div>
                             </div>
                         </div>
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div>
-                                <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-3 tracking-widest">Review Tasks</h3>
-                                <ul class="space-y-4">
-                                    ${d.tasks?.map(t => `
-                                        <li class="flex gap-3 items-start">
-                                            <div class="w-5 h-5 rounded border border-orange-200 mt-1 flex-shrink-0"></div>
-                                            <div>
-                                                <div class="text-sm font-semibold text-gray-800">${t.text}</div>
-                                                <div class="text-xs text-gray-500">${t.text_cn}</div>
-                                            </div>
-                                        </li>
-                                    `).join('')}
-                                </ul>
-                            </div>
-                            <div class="space-y-6">
-                                ${d.trivia ? `
-                                    <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-                                        <h3 class="text-[10px] font-bold text-yellow-600 uppercase mb-2 tracking-widest">Daily Trivia Fact</h3>
-                                        <p class="text-sm font-bold text-yellow-900">${d.trivia.en}</p>
-                                        <p class="text-xs text-yellow-700 italic mt-1">${d.trivia.cn}</p>
+
+                        <!-- Body: 2 columns -->
+                        <div style="padding:12px; display:flex; flex-direction:row; gap:12px; flex:1; min-height:0;">
+                            <!-- LEFT COLUMN: Core Task + Step-by-Step -->
+                            <div style="flex:1; display:flex; flex-direction:column; min-height:0; min-width:0;">
+                                <!-- Core Task (max 40% height) -->
+                                <div style="background:#f8fafc; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:10px; max-height:40%; overflow:hidden; flex-shrink:0;">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                                        <div style="background:#dbeafe; color:#2563eb; padding:4px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Core Task</span>
                                     </div>
-                                ` : ''}
-                                <div>
-                                    <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-widest">Resources</h3>
-                                    <div class="space-y-3">
-                                        ${d.resources?.map(r => `
-                                            <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                                <div class="text-sm font-bold text-blue-800">${r.title}</div>
-                                                <div class="text-xs text-blue-600 mb-1 truncate">${r.url}</div>
-                                                <div class="text-xs text-gray-500">${r.description}</div>
+                                    <div style="font-size:15px; font-weight:600; color:#1e293b; line-height:1.5; white-space:pre-wrap; overflow:hidden;">${d.activity || 'No task defined.'}</div>
+                                    <div style="font-size:13px; color:#64748b; margin-top:4px; line-height:1.4; overflow:hidden;">${d.activity_cn || ''}</div>
+                                </div>
+
+                                <!-- Step-by-Step Tasks -->
+                                <div style="flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center; gap:6px; padding-bottom:6px; margin-bottom:6px; border-bottom:1px solid #f1f5f9; flex-shrink:0;">
+                                        <div style="background:#d1fae5; color:#059669; padding:4px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Step-by-Step Tasks</span>
+                                    </div>
+                                    <div style="flex:1; overflow:hidden;">
+                                        ${(d.tasks && d.tasks.length > 0) ? d.tasks.map((task: any) => `
+                                            <div style="display:flex; gap:8px; align-items:flex-start; padding:6px 8px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:5px;">
+                                                <div style="width:16px; height:16px; flex-shrink:0; border-radius:3px; border:1.5px solid #94a3b8; margin-top:2px; background:#fff; display:flex; align-items:center; justify-content:center;">
+                                                    ${task.isCompleted ? '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                                                </div>
+                                                <div style="flex:1; min-width:0;">
+                                                    <div style="font-size:14px; font-weight:500; line-height:1.4; color:${task.isCompleted ? '#94a3b8' : '#334155'}; ${task.isCompleted ? 'text-decoration:line-through;' : ''}">${task.text}</div>
+                                                    <div style="font-size:12px; line-height:1.3; margin-top:2px; color:${task.isCompleted ? '#cbd5e1' : '#64748b'};">${task.text_cn || ''}</div>
+                                                </div>
                                             </div>
-                                        `).join('')}
+                                        `).join('') : '<p style="font-size:13px; color:#94a3b8; font-style:italic;">No tasks defined.</p>'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN: Trivia + Resources -->
+                            <div style="flex:1; display:flex; flex-direction:column; gap:10px; min-height:0; min-width:0;">
+                                <!-- Trivia -->
+                                <div style="background:#f5f3ff; padding:10px 12px; border-radius:10px; border:1px solid #ede9fe; flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-shrink:0;">
+                                        <div style="background:#ede9fe; color:#7c3aed; padding:4px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 10 14.5V17h4v-2.5c0-.663-.1-1.304-.293-1.893"/></svg>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:700; color:#6d28d9; text-transform:uppercase; letter-spacing:0.05em;">Daily Trivia</span>
+                                    </div>
+                                    <div style="flex:1; overflow:hidden;">
+                                        ${d.trivia ? `
+                                            <p style="font-size:14px; font-weight:700; color:#4c1d95; line-height:1.5;">${d.trivia.en}</p>
+                                            <p style="font-size:12px; color:#7c3aed; font-style:italic; margin-top:4px; line-height:1.4;">${d.trivia.cn}</p>
+                                        ` : '<p style="font-size:13px; color:#94a3b8; font-style:italic;">No trivia generated.</p>'}
+                                    </div>
+                                </div>
+
+                                <!-- Resources -->
+                                <div style="background:#eef2ff; padding:10px 12px; border-radius:10px; border:1px solid #e0e7ff; flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column;">
+                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-shrink:0;">
+                                        <div style="background:#e0e7ff; color:#4f46e5; padding:4px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:700; color:#4338ca; text-transform:uppercase; letter-spacing:0.05em;">Explore More</span>
+                                    </div>
+                                    <div style="flex:1; overflow:hidden;">
+                                        ${(d.resources || []).length > 0 ? (d.resources || []).map((r: any) => `
+                                            <div style="display:flex; align-items:flex-start; gap:8px; padding:6px 10px; border-radius:8px; border:1px solid #e0e7ff80; background:#fff8; margin-bottom:5px; overflow:hidden;">
+                                                <div style="margin-top:2px; background:#fff; padding:4px; border-radius:5px; box-shadow:0 1px 2px rgba(0,0,0,0.05); flex-shrink:0;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                                </div>
+                                                <div style="min-width:0; display:flex; flex-direction:column; justify-content:center; overflow:hidden;">
+                                                    <span style="font-size:13px; font-weight:600; color:#312e81; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.title || r.title_cn}</span>
+                                                    <span style="font-size:10px; color:#6366f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px;">${r.url.replace('https://', '').replace('www.', '')}</span>
+                                                </div>
+                                            </div>
+                                        `).join('') : '<p style="font-size:13px; color:#94a3b8; font-style:italic;">No external resources added.</p>'}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                `).join('')}
-            </div>
+                `;
+            };
+
+            const pages = [
+                // Page 1: Cover + Day 1
+                [{ isTitle: true }, editableReadingCompanion.days[0]],
+                // Page 2: Day 2 + Day 3
+                [editableReadingCompanion.days[1], editableReadingCompanion.days[2]],
+                // Page 3: Day 4 + Day 5
+                [editableReadingCompanion.days[3], editableReadingCompanion.days[4]],
+                // Page 4: Day 6 + Day 7
+                [editableReadingCompanion.days[5], editableReadingCompanion.days[6]],
+            ];
+
+            contentHtml = `
+            <style>
+                @media print {
+                    @page { size: A4 portrait; margin: 0; }
+                    body { 
+                        -webkit-print-color-adjust: exact; 
+                        print-color-adjust: exact; 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                        background: white; 
+                    }
+                    .viewer-container {
+                        max-width: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .print-page {
+                        height: 100vh !important;
+                        width: 100vw !important;
+                        padding: 8mm !important; 
+                        page-break-after: always;
+                        box-sizing: border-box;
+                        overflow: hidden !important;
+                    }
+                    .print-page:last-child {
+                        page-break-after: auto;
+                    }
+                }
+                
+                @media screen {
+                    body {
+                        background: #f1f5f9;
+                        padding: 20px !important;
+                    }
+                    .viewer-container {
+                        max-width: none !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    .print-page {
+                        width: 210mm;
+                        height: 297mm;
+                        padding: 8mm;
+                        margin: 0 auto 20px;
+                        background: white;
+                        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                        box-sizing: border-box;
+                        overflow: hidden !important;
+                    }
+                }
+            </style>
+            
+            ${pages.map((pageCards, pageIdx) => `
+                <div class="print-page" style="display:flex; flex-direction:column; gap:8px;">
+                    ${pageCards.filter(Boolean).map((c: any) => `
+                        <div style="flex:1; min-height:0; overflow:hidden;">
+                            ${renderCard(c, !!c.isTitle)}
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')}
         `;
         } else if (tabId === 'materials') {
             if (subTabId === 'flashcards') {

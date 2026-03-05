@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/geminiService';
-import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw } from 'lucide-react';
+import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, Target, List } from 'lucide-react';
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
@@ -171,55 +171,67 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <h3 className="text-xl font-bold text-slate-800">7-Day Post-Class Review Plan</h3>
+                <h3 className="text-xl font-bold text-slate-800">7-Day Learning Companion</h3>
                 <div className="flex gap-2 no-print">
                 </div>
             </div>
 
-            <div className="space-y-12">
+            <div className="space-y-6">
                 {editableReadingCompanion.days.map((day, dIdx) => (
-                    <div key={dIdx} className="bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row min-h-[400px] border-slate-200">
-                        <div className="w-full md:w-64 bg-orange-50/50 p-6 border-b md:border-b-0 md:border-r border-slate-100 flex flex-col">
-                            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-orange-500 font-bold text-xl border border-orange-100 shadow-sm mb-6">
-                                {day.day}
+                    <div key={dIdx} className="bg-white border rounded-xl overflow-hidden shadow-sm flex flex-col border-slate-200 print:break-inside-avoid print:shadow-none print:border-slate-300">
+                        {/* Compact Top Header */}
+                        <div className="w-full bg-slate-50/80 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:bg-slate-50">
+                            <div className="flex items-center gap-3 w-full sm:w-auto flex-1 min-w-0">
+                                <div className="px-3 shrink-0 h-10 bg-white rounded-lg flex items-center justify-center text-violet-600 font-bold text-sm border border-slate-200 shadow-sm print:shadow-none whitespace-nowrap">
+                                    Day {day.day}
+                                </div>
+                                <div className="flex flex-col min-w-0 flex-1">
+                                    <input
+                                        value={day.focus}
+                                        onChange={(e) => {
+                                            const newDays = [...editableReadingCompanion.days];
+                                            newDays[dIdx].focus = e.target.value;
+                                            setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+                                        }}
+                                        className="text-base font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none w-full pb-0.5 transition-colors heading-font placeholder:text-slate-300 truncate"
+                                        placeholder="Day Focus"
+                                    />
+                                    <input
+                                        value={day.focus_cn}
+                                        onChange={(e) => {
+                                            const newDays = [...editableReadingCompanion.days];
+                                            newDays[dIdx].focus_cn = e.target.value;
+                                            setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+                                        }}
+                                        className="text-[11px] font-medium text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none w-full transition-colors placeholder:text-slate-300 truncate mt-0.5"
+                                        placeholder="Chinese Translation"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <input
-                                    value={day.focus}
-                                    onChange={(e) => {
-                                        const newDays = [...editableReadingCompanion.days];
-                                        newDays[dIdx].focus = e.target.value;
-                                        setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-                                    }}
-                                    className="text-lg font-bold text-orange-900 bg-transparent border-b border-transparent hover:border-orange-200 focus:border-orange-400 outline-none w-full mb-2 pb-1 transition-colors"
-                                    placeholder="Day Focus"
-                                />
-                                <input
-                                    value={day.focus_cn}
-                                    onChange={(e) => {
-                                        const newDays = [...editableReadingCompanion.days];
-                                        newDays[dIdx].focus_cn = e.target.value;
-                                        setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-                                    }}
-                                    className="text-xs font-semibold text-orange-600 italic bg-transparent border-b border-transparent hover:border-orange-200 focus:border-orange-400 outline-none w-full pb-1 transition-colors"
-                                    placeholder="Chinese translation"
-                                />
-                            </div>
-                            <div className="pt-6 border-t border-slate-200/50 space-y-3 no-print">
-                                <button onClick={() => handleAddNewTask(dIdx)} disabled={addingTaskIndex === dIdx} className="w-full py-2 bg-orange-50 text-orange-600 border border-orange-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-orange-100 hover:text-orange-700 transition-all shadow-sm flex items-center justify-center gap-1 disabled:opacity-50">
-                                    {addingTaskIndex === dIdx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />} Smart Task
+                            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end print:hidden">
+                                <button onClick={() => handleAddNewTask(dIdx)} disabled={addingTaskIndex === dIdx} className="px-3 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
+                                    {addingTaskIndex === dIdx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Plus className="w-3.5 h-3.5" />}
+                                    <span>Task</span>
                                 </button>
-                                <button onClick={() => handleAddDayResource(dIdx)} disabled={addingDayResourceIndex === dIdx} className="w-full py-2 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-indigo-100 hover:text-indigo-700 transition-all shadow-sm flex items-center justify-center gap-1 disabled:opacity-50">
-                                    {addingDayResourceIndex === dIdx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />} Resource
+                                <button onClick={() => handleAddDayResource(dIdx)} disabled={addingDayResourceIndex === dIdx} className="px-3 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
+                                    {addingDayResourceIndex === dIdx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Globe className="w-3.5 h-3.5" />}
+                                    <span>Resource</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex-1 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white">
-                            <div className="space-y-8">
-                                <div>
-                                    <h5 className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-3 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Core Task</h5>
-                                    <div className="space-y-2">
+                        {/* Tight 2-Column Body Grid */}
+                        <div className="p-4 flex flex-col lg:flex-row gap-5">
+                            {/* Left Column: Core Task + Step-by-Step */}
+                            <div className="flex-1 flex flex-col gap-4">
+                                <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 shadow-sm print:border-slate-200 print:shadow-none">
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                        <div className="bg-blue-100 text-blue-600 p-1 rounded-md">
+                                            <Target size={12} />
+                                        </div>
+                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Core Task</h5>
+                                    </div>
+                                    <div className="space-y-1">
                                         <AutoResizeTextarea
                                             value={day.activity}
                                             onChange={(e) => {
@@ -227,9 +239,9 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 newDays[dIdx].activity = e.target.value;
                                                 setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                             }}
-                                            className="w-full text-sm font-semibold text-slate-800 bg-slate-50/50 border border-transparent hover:border-slate-200 focus:border-orange-300 p-3 rounded-xl outline-none transition-colors leading-relaxed"
-                                            minRows={2}
-                                            placeholder="Core activity description..."
+                                            className="w-full text-[13px] font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400 outline-none transition-colors leading-snug placeholder:text-slate-300"
+                                            minRows={1}
+                                            placeholder="Core activity description (English)..."
                                         />
                                         <AutoResizeTextarea
                                             value={day.activity_cn}
@@ -238,81 +250,86 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 newDays[dIdx].activity_cn = e.target.value;
                                                 setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                             }}
-                                            className="w-full text-xs text-slate-500 italic bg-slate-50/30 border border-transparent hover:border-slate-200 focus:border-orange-300 p-3 rounded-xl outline-none transition-colors"
+                                            className="w-full text-[11px] text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400 outline-none transition-colors leading-tight placeholder:text-slate-300 mt-1"
                                             minRows={1}
-                                            placeholder="Chinese translation..."
+                                            placeholder="Core activity description (Chinese)..."
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1"><Check className="w-3 h-3" /> Step-by-Step Guidance</h5>
-                                    <div className="space-y-3">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                                        <div className="bg-emerald-100 text-emerald-600 p-1 rounded-md">
+                                            <List size={12} />
+                                        </div>
+                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Step-by-Step Tasks</h5>
+                                    </div>
+                                    <div className="space-y-2">
                                         {day.tasks?.map((task, tIdx) => (
-                                            <div key={tIdx} className="flex gap-3 items-start bg-white p-3 rounded-xl border border-slate-100 shadow-sm group hover:border-indigo-200 transition-colors">
+                                            <div key={tIdx} className="flex gap-2 items-start p-2 bg-slate-50/50 rounded-lg border border-slate-100/60 group hover:border-slate-300 transition-colors print:border-slate-200">
                                                 <button
                                                     onClick={() => handleTaskChange(dIdx, tIdx, 'isCompleted', !task.isCompleted)}
-                                                    className={`w-5 h-5 rounded-md border shrink-0 transition-all mt-0.5 flex items-center justify-center ${task.isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-slate-50 border-slate-300 hover:border-indigo-400'}`}
+                                                    className={`w-4 h-4 shrink-0 rounded border transition-all mt-0.5 flex items-center justify-center print:border-slate-400 ${task.isCompleted ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-300 hover:border-emerald-400'}`}
                                                 >
-                                                    {task.isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
+                                                    {task.isCompleted && <Check className="w-2.5 h-2.5 text-white stroke-[3] print:text-black" />}
                                                 </button>
-                                                <div className="flex-1 space-y-1">
+                                                <div className="flex-1 flex flex-col">
                                                     <input
                                                         value={task.text}
                                                         onChange={(e) => handleTaskChange(dIdx, tIdx, 'text', e.target.value)}
-                                                        className={`w-full text-sm font-medium bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-400 outline-none pb-0.5 transition-colors ${task.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700'}`}
+                                                        className={`w-full text-xs font-medium bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-400 outline-none pb-0.5 transition-colors leading-tight ${task.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700'}`}
                                                     />
                                                     <input
                                                         value={task.text_cn}
                                                         onChange={(e) => handleTaskChange(dIdx, tIdx, 'text_cn', e.target.value)}
-                                                        className={`w-full text-[11px] italic bg-transparent border-b border-transparent hover:border-slate-200 focus:border-indigo-400 outline-none pb-0.5 transition-colors ${task.isCompleted ? 'text-slate-300' : 'text-slate-500'}`}
+                                                        className={`w-full text-[10px] text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-400 outline-none transition-colors leading-tight ${task.isCompleted ? 'text-slate-300' : 'text-slate-500'}`}
                                                     />
                                                 </div>
-                                                <button onClick={() => handleDeleteTask(dIdx, tIdx)} className="text-slate-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                                                    <Trash2 className="w-4 h-4" />
+                                                <button onClick={() => handleDeleteTask(dIdx, tIdx)} className="text-slate-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                                                    <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
                                         ))}
-                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">No specific tasks defined. Click 'Smart Task' to generate.</p>}
+                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-[10px] text-slate-400 text-center py-3 bg-slate-50/50 rounded-lg border border-dashed border-slate-200 print:hidden">No tasks defined.</p>}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-8">
+                            {/* Right Column: Trivia + Resources */}
+                            <div className="flex-1 flex flex-col gap-4">
                                 {day.trivia && (
-                                    <div className="bg-amber-50/40 p-5 rounded-2xl border border-amber-100 relative group transition-colors hover:border-amber-200">
-                                        <div className="absolute top-4 right-4 no-print opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-amber-50/40 p-3 rounded-xl border border-amber-100 relative group transition-colors hover:border-amber-200 hover:bg-amber-50/80 print:border-slate-200 print:bg-slate-50">
+                                        <div className="absolute top-2 right-2 print:hidden opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleRegenerateTrivia(dIdx)}
                                                 disabled={isRegeneratingTriviaMap[dIdx]}
-                                                className="p-1.5 text-amber-500 hover:text-amber-700 hover:bg-amber-100 rounded transition-colors disabled:opacity-50"
+                                                className="p-1 text-amber-500 hover:text-amber-700 hover:bg-amber-100 rounded disabled:opacity-50"
                                                 title="Regenerate Trivia Fact"
                                             >
-                                                {isRegeneratingTriviaMap[dIdx] ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                                {isRegeneratingTriviaMap[dIdx] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                                             </button>
                                         </div>
-                                        <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                                            <Lightbulb className="w-3.5 h-3.5" />
+                                        <h5 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 print:text-slate-600">
+                                            <Lightbulb className="w-3 h-3" />
                                             Daily Trivia
                                         </h5>
                                         {isRegeneratingTriviaMap[dIdx] ? (
-                                            <div className="space-y-3 py-2 animate-pulse">
-                                                <div className="h-4 bg-amber-200/50 rounded w-full"></div>
-                                                <div className="h-4 bg-amber-200/50 rounded w-3/4"></div>
-                                                <div className="h-3 bg-amber-200/30 rounded w-1/2 mt-4"></div>
+                                            <div className="space-y-1.5 py-1 animate-pulse">
+                                                <div className="h-3 bg-amber-200/50 rounded w-full"></div>
+                                                <div className="h-3 bg-amber-200/50 rounded w-3/4"></div>
                                             </div>
                                         ) : (
-                                            <div className="space-y-2 pr-6">
+                                            <div className="space-y-1 pr-5">
                                                 <AutoResizeTextarea
                                                     value={day.trivia.en}
                                                     onChange={(e) => handleDayTriviaChange(dIdx, 'en', e.target.value)}
-                                                    className="w-full text-sm font-semibold text-amber-900 leading-relaxed bg-transparent border-b border-transparent hover:border-amber-200 focus:border-amber-400 outline-none pb-0.5 transition-colors"
+                                                    className="w-full text-xs font-semibold text-amber-900 leading-snug bg-transparent border-b border-transparent hover:border-amber-200 focus:border-amber-400 outline-none transition-colors print:text-slate-800"
                                                     minRows={1}
                                                 />
                                                 <AutoResizeTextarea
                                                     value={day.trivia.cn}
                                                     onChange={(e) => handleDayTriviaChange(dIdx, 'cn', e.target.value)}
-                                                    className="w-full text-xs text-amber-700 italic bg-transparent border-b border-transparent hover:border-amber-200 focus:border-amber-400 outline-none pb-0.5 transition-colors"
+                                                    className="w-full text-[10px] text-amber-700 italic bg-transparent border-b border-transparent hover:border-amber-200 focus:border-amber-400 outline-none transition-colors print:text-slate-600"
                                                     minRows={1}
                                                 />
                                             </div>
@@ -320,42 +337,47 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                     </div>
                                 )}
 
-                                <div>
-                                    <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-1"><Globe className="w-3 h-3" /> Web Resources</h5>
-                                    <div className="space-y-3">
+                                <div className="space-y-2 relative">
+                                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                                        <div className="bg-orange-100 text-orange-600 p-1 rounded-md">
+                                            <Globe size={12} />
+                                        </div>
+                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Web Resources</h5>
+                                    </div>
+                                    <div className="space-y-2">
                                         {day.resources?.map((res, rIdx) => (
-                                            <div key={rIdx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative group hover:border-indigo-300 transition-colors">
-                                                <button onClick={() => handleDeleteDayResource(dIdx, rIdx)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded no-print">
-                                                    <X className="w-4 h-4" />
+                                            <div key={rIdx} className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100/60 shadow-sm relative group hover:border-slate-300 transition-colors print:border-slate-200 print:shadow-none">
+                                                <button onClick={() => handleDeleteDayResource(dIdx, rIdx)} className="absolute top-2 right-2 p-0.5 text-slate-300 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded print:hidden">
+                                                    <X className="w-3.5 h-3.5" />
                                                 </button>
-                                                <div className="flex justify-between items-start mb-2 pr-8">
+                                                <div className="flex items-center mb-1 pr-5">
                                                     <input
                                                         value={res.title}
                                                         onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'title', e.target.value)}
-                                                        className="flex-1 text-sm font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none pb-0.5 transition-colors"
+                                                        className="flex-1 text-[11px] font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-orange-400 outline-none transition-colors truncate"
                                                     />
-                                                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-600 transition-colors ml-2 mt-0.5 no-print">
-                                                        <ExternalLink className="w-3.5 h-3.5" />
+                                                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:text-orange-600 transition-colors ml-1.5 shrink-0 print:hidden" title="Open Link">
+                                                        <ExternalLink className="w-3 h-3" />
                                                     </a>
                                                 </div>
                                                 <input
                                                     value={res.url}
                                                     onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'url', e.target.value)}
-                                                    className="w-full text-[10px] text-indigo-400 truncate mb-3 bg-transparent border-b border-transparent hover:border-indigo-200 focus:border-indigo-400 outline-none pb-0.5 transition-colors italic hover:text-indigo-600"
+                                                    className="w-full text-[9px] text-slate-400 truncate mb-1.5 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-orange-400 outline-none transition-colors font-mono"
                                                     placeholder="URL link..."
                                                 />
                                                 <AutoResizeTextarea
                                                     value={res.description}
                                                     onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'description', e.target.value)}
-                                                    className="w-full text-[11px] text-slate-600 leading-relaxed bg-slate-50/50 border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded-lg p-2 outline-none transition-colors"
-                                                    minRows={2}
+                                                    className="w-full text-[10px] font-medium text-slate-600 leading-snug bg-white border border-slate-200/60 hover:border-slate-300 focus:border-orange-300 rounded md p-1.5 outline-none transition-colors"
+                                                    minRows={1}
                                                 />
                                             </div>
                                         ))}
                                         {(!day.resources || day.resources.length === 0) && (
-                                            <button onClick={() => handleManualAddDayResource(dIdx)} className="w-full py-4 border border-dashed border-slate-300 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-slate-50 hover:border-indigo-300 transition-all flex items-center justify-center gap-2 no-print bg-white">
-                                                <Globe className="w-4 h-4 opacity-50" />
-                                                <span className="text-[11px] font-bold uppercase tracking-wider">Add Manual Resource</span>
+                                            <button onClick={() => handleManualAddDayResource(dIdx)} className="w-full py-3 border border-dashed border-slate-200 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50/50 hover:border-orange-300 transition-all flex items-center justify-center gap-1.5 bg-slate-50/50 print:hidden">
+                                                <Globe className="w-3 h-3 opacity-70" />
+                                                <span className="text-[9px] font-bold uppercase tracking-wider">Add Manual Resource</span>
                                             </button>
                                         )}
                                     </div>

@@ -144,9 +144,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                         </button>
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex-1 mr-4">
-                                <div className="flex items-center gap-3 mb-2">
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
                                     <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">{game.type}</span>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{game.interactionType}</span>
+                                    {game.linkedStage && (
+                                        <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                            🔗 {game.linkedStage}
+                                        </span>
+                                    )}
                                 </div>
                                 <input
                                     value={game.name}

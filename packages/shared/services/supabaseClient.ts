@@ -9,7 +9,13 @@ const effectiveUrl = import.meta.env.DEV && supabaseUrl
     : supabaseUrl;
 
 export const supabase = supabaseUrl && supabaseAnonKey
-    ? createClient(effectiveUrl, supabaseAnonKey)
+    ? createClient(effectiveUrl, supabaseAnonKey, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+        },
+    })
     : null;
 
 // Check if Supabase is configured

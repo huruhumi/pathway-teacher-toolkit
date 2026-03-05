@@ -23,7 +23,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 }) => {
     return (
         <div
-            className={`print:hidden relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} px-6 py-8 sm:px-8 sm:py-10 shadow-lg`}
+            className={`print:hidden relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} px-6 py-8 sm:px-8 sm:py-10 shadow-lg dark:shadow-none dark:brightness-[0.65] dark:saturate-[0.85]`}
         >
             {/* Decorative blobs */}
             <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />

@@ -168,8 +168,24 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const [editableSlides, setEditableSlides] = useState<Slide[]>(
     content.slides || [],
   );
+  // Strip HTML tags from stage text fields (for existing saved data with <br/> etc.)
+  const sanitizePlan = (plan: StructuredLessonPlan | null): StructuredLessonPlan | null => {
+    if (!plan) return null;
+    const strip = (s: string) => s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s{2,}/g, ' ').trim();
+    return {
+      ...plan,
+      stages: plan.stages.map(stage => ({
+        ...stage,
+        teacherActivity: strip(stage.teacherActivity || ''),
+        studentActivity: strip(stage.studentActivity || ''),
+        stageAim: strip(stage.stageAim || ''),
+        stage: strip(stage.stage || ''),
+      }))
+    };
+  };
+
   const [editablePlan, setEditablePlan] = useState<StructuredLessonPlan | null>(
-    content.structuredLessonPlan || null,
+    sanitizePlan(content.structuredLessonPlan || null),
   );
   const [editableReadingCompanion, setEditableReadingCompanion] =
     useState<ReadingCompanionContent>(content.readingCompanion);

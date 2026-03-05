@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { SavedLesson, CurriculumLesson, CurriculumParams } from '../types';
+import type { SavedLesson, CurriculumLesson, CurriculumParams, ESLCurriculum } from '../types';
 import { safeStorage } from '@shared/safeStorage';
 import { mapLessonToESLInput } from '../utils/curriculumMapper';
 import { generateLessonPlan } from '../services/geminiService';
@@ -23,7 +23,8 @@ export function useBatchGenerate() {
     const handleBatchGenerate = async (
         lessons: CurriculumLesson[],
         params: CurriculumParams,
-        saveLesson: (saved: SavedLesson) => void
+        saveLesson: (saved: SavedLesson) => void,
+        curriculum?: ESLCurriculum | null
     ) => {
         batchCancelRef.current = false;
         setBatchState(prev => ({
@@ -52,7 +53,7 @@ export function useBatchGenerate() {
                 status: { ...prev.status, [i]: 'generating' }
             }));
             try {
-                const mapped = mapLessonToESLInput(lessons[i], params);
+                const mapped = mapLessonToESLInput(lessons[i], params, curriculum);
                 const content = await generateLessonPlan(
                     mapped.text, [], mapped.level, mapped.topic,
                     mapped.slideCount, mapped.duration, mapped.studentCount, mapped.lessonTitle
@@ -78,7 +79,7 @@ export function useBatchGenerate() {
                     progress: { done: doneCount, total: lessons.length, errors: errorCount }
                 }));
             } catch (err: any) {
-                console.error(`Batch generate lesson ${i + 1} failed:`, err);
+                console.error(`Batch generate lesson ${i + 1} failed: `, err);
                 errorCount++;
                 setBatchState(prev => ({
                     ...prev,

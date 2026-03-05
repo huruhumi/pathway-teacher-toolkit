@@ -26,7 +26,8 @@ export const GameSchema = z.object({
     interactionType: z.string(),
     instructions: z.string(),
     materials: z.array(z.string()),
-    isCompleted: z.boolean().optional()
+    isCompleted: z.boolean().optional(),
+    linkedStage: z.string().optional()
 });
 
 export const SlideSchema = z.object({
@@ -72,7 +73,11 @@ export const LessonStageSchema = z.object({
     timing: z.string(),
     interaction: z.string(),
     teacherActivity: z.string(),
-    studentActivity: z.string()
+    studentActivity: z.string(),
+    teachingTips: z.array(z.string()).optional(),
+    backgroundKnowledge: z.array(z.string()).optional(),
+    fillerActivity: z.string().optional(),
+    suggestedGameName: z.string().optional()
 });
 
 export const StructuredLessonPlanSchema = z.object({

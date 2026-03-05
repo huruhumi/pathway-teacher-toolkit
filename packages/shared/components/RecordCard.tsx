@@ -123,7 +123,8 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
 
     return (
         <div
-            className={`bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border shadow-sm hover:shadow-lg transition-all group flex flex-col overflow-hidden ${active
+            onClick={onOpen}
+            className={`cursor-pointer bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border shadow-sm hover:shadow-lg transition-all group flex flex-col overflow-hidden ${active
                 ? 'border-violet-500 ring-1 ring-violet-500'
                 : `border-slate-200 dark:border-white/5 ${colors.hoverBorder} dark:hover:border-white/10`
                 }`}
@@ -189,8 +190,8 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
             {/* Footer action bar */}
             <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                 <button
-                    onClick={onOpen}
-                    className={`text-sm font-bold ${colors.open} flex items-center gap-1.5 transition-all`}
+                    onClick={(e) => { e.stopPropagation(); onOpen(); }}
+                    className={`text-xs font-bold whitespace-nowrap ${colors.open} flex items-center gap-1.5 transition-all`}
                 >
                     {openLabel}
                     <ArrowRight size={16} />

@@ -16,6 +16,7 @@ export interface Game {
   instructions: string;
   materials: string[];
   isCompleted?: boolean;
+  linkedStage?: string;
 }
 
 export interface Slide {
@@ -62,6 +63,10 @@ export interface LessonStage {
   interaction: string;
   teacherActivity: string;
   studentActivity: string;
+  teachingTips?: string[];
+  backgroundKnowledge?: string[];
+  fillerActivity?: string;
+  suggestedGameName?: string;
 }
 
 export interface StructuredLessonPlan {
@@ -156,6 +161,9 @@ export interface AppState {
 
 export interface CurriculumLesson {
   lessonNumber: number;
+  unitNumber?: number;
+  lessonInUnit?: number;
+  lessonType?: string;
   title: string;
   topic: string;
   description: string;
@@ -168,6 +176,7 @@ export interface CurriculumLesson {
 
 export interface ESLCurriculum {
   textbookTitle: string;
+  seriesName?: string;
   overview: string;
   totalLessons: number;
   targetLevel: string;

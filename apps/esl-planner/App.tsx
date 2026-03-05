@@ -1,6 +1,6 @@
 import React, { useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
-import { CurriculumLesson, CurriculumParams } from './types';
+import { CurriculumLesson, CurriculumParams, ESLCurriculum } from './types';
 import { mapLessonToESLInput } from './utils/curriculumMapper';
 import { Sparkles, Brain, BookOpen, History } from 'lucide-react';
 import { AppHeader } from '@shared/components/AppHeader';
@@ -46,8 +46,8 @@ const AppContent: React.FC = () => {
     }, [clearSessionState]);
 
     // Cross-page navigation handlers
-    const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams) => {
-        const mapped = mapLessonToESLInput(lesson, params);
+    const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => {
+        const mapped = mapLessonToESLInput(lesson, params, curriculum);
         setPrefilledValues(mapped);
         setState(prev => ({ ...prev, generatedContent: null, error: null }));
         setActiveLessonId(null);
@@ -58,7 +58,7 @@ const AppContent: React.FC = () => {
     const NAV_TABS = [
         { key: 'curriculum', label: t('nav.curriculum'), icon: <BookOpen className="w-4 h-4" /> },
         { key: 'create', label: t('nav.planner'), icon: <Sparkles className="w-4 h-4" /> },
-        { key: 'history', label: t('nav.records'), icon: <History className="w-4 h-4" />, badge: savedLessons.length + savedCurricula.length },
+        { key: 'history', label: t('nav.records'), icon: <History className="w-4 h-4" /> },
     ];
 
     return (
@@ -97,23 +97,23 @@ const AppContent: React.FC = () => {
                 />
                 <BodyContainer>
                     <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" /></div>}>
-                        {viewMode === 'curriculum' && (
+                        <div style={{ display: viewMode === 'curriculum' ? 'block' : 'none' }}>
                             <CurriculumPage
                                 onGenerateKit={handleGenerateLessonKit}
                                 onGoToCreate={() => setViewMode('create')}
                             />
-                        )}
+                        </div>
 
-                        {viewMode === 'create' && (
+                        <div style={{ display: viewMode === 'create' ? 'block' : 'none' }}>
                             <CreatePage />
-                        )}
+                        </div>
 
-                        {viewMode === 'history' && (
+                        <div style={{ display: viewMode === 'history' ? 'block' : 'none' }}>
                             <RecordsPage
                                 onGoToCurriculum={() => setViewMode('curriculum')}
                                 onGoToCreate={() => setViewMode('create')}
                             />
-                        )}
+                        </div>
                     </Suspense>
                 </BodyContainer>
             </PageLayout>

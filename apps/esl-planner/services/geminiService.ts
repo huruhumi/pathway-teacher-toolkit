@@ -70,11 +70,15 @@ export const RESPONSE_SCHEMA = {
               stage: { type: Type.STRING },
               stageAim: { type: Type.STRING },
               timing: { type: Type.STRING },
-              interaction: { type: Type.STRING },
+              interaction: { type: Type.STRING, description: "Comma-separated interaction modes, one per numbered step in teacherActivity/studentActivity. Use standard ESL codes: T-S (teacher to students), S-S (student to student), S-S (pairs), S-S (groups), T-Ss, S-T, etc. Must have the same count as the numbered steps." },
               teacherActivity: { type: Type.STRING, description: "Detailed numbered list of 5+ teacher actions" },
-              studentActivity: { type: Type.STRING, description: "Detailed numbered list of 5+ student responses" }
+              studentActivity: { type: Type.STRING, description: "Detailed numbered list of 5+ student responses" },
+              teachingTips: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 practical ESL teaching methodology tips for this specific stage (e.g., scaffolding techniques, TPR suggestions, visual aids, sentence frames, error correction strategies)." },
+              backgroundKnowledge: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 relevant background knowledge points for the teacher about this stage's content (cultural context, linguistic notes, common misconceptions, subject matter facts)." },
+              fillerActivity: { type: Type.STRING, description: "A quick 2-3 minute optional filler/extension activity for this stage in case students finish early or need extra practice. Keep it simple and equipment-free." },
+              suggestedGameName: { type: Type.STRING, description: "Name of a game/activity that would work well at this stage. This will be used to generate a matching activity card." }
             },
-            required: ["stage", "stageAim", "timing", "interaction", "teacherActivity", "studentActivity"]
+            required: ["stage", "stageAim", "timing", "interaction", "teacherActivity", "studentActivity", "teachingTips", "backgroundKnowledge", "fillerActivity", "suggestedGameName"]
           }
         }
       },
@@ -123,9 +127,10 @@ export const RESPONSE_SCHEMA = {
             description: "Type of student interaction required."
           },
           instructions: { type: Type.STRING, description: "Detailed numbered instructions. Every step MUST start with a number and a new line." },
-          materials: { type: Type.ARRAY, items: { type: Type.STRING } }
+          materials: { type: Type.ARRAY, items: { type: Type.STRING } },
+          linkedStage: { type: Type.STRING, description: "The exact stage name this game/activity is designed for. Must match one of the stage names in structuredLessonPlan.stages[].stage." }
         },
-        required: ["name", "type", "interactionType", "instructions", "materials"]
+        required: ["name", "type", "interactionType", "instructions", "materials", "linkedStage"]
       }
     },
     phonics: {
@@ -249,7 +254,11 @@ export const generateLessonPlan = async (
   CRITICAL: You MUST generate exactly 7 review days in the "readingCompanion.days" array. Do not skip any days. Number them 1 through 7.
   CRITICAL: Each review day MUST include at least 1 web resource in its "resources" array. Provide real, working URLs to YouTube videos, educational articles, or interactive tools that are directly relevant to that day's focus topic. Do NOT leave resources empty.
   CRITICAL: If ${slideCount} > 15, you MUST explicitly include a "Global Style & Formatting Guidelines" section at the very beginning of the "notebookLMPrompt". This section must define a strict, unified visual style (specific color palette hex codes, typography/fonts, and 2D/3D illustration style) to ensure absolute visual consistency when the user generates these slides in multiple batches in NotebookLM.
-  IMPORTANT: In grammar sentences, do not include any bold headers like **Target Sentence:**. Just provide the plain text.` }];
+  IMPORTANT: In grammar sentences, do not include any bold headers like **Target Sentence:**. Just provide the plain text.
+   IMPORTANT: For each stage's "interaction" field, provide a COMMA-SEPARATED list of interaction modes, one for each numbered step in teacherActivity/studentActivity. Example for 5 steps: "T-S, S-S (pairs), S-S (pairs), S-S (groups), T-S". Use codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss.
+   IMPORTANT: In stage teacherActivity and studentActivity fields, do NOT use any HTML tags like <br/>, <br>, <b>, <p>, etc. Use plain text only. Separate numbered steps with spaces, not HTML line breaks.
+   IMPORTANT: Each stage MUST include 2-3 teachingTips (practical ESL methodology), 2-3 backgroundKnowledge points (teacher reference), a fillerActivity (quick 2-3 min extension), and a suggestedGameName.
+   IMPORTANT: For the "games" array, generate one game/activity per lesson stage. Each game's "linkedStage" MUST exactly match the corresponding stage name. The game should be a detailed expansion of the stage's suggestedGameName.` }];
 
   for (const img of images) {
     const base64 = await fileToBase64(img);
@@ -289,6 +298,18 @@ export const generateLessonPlan = async (
       validatedContent.worksheets = [];
     }
 
+    // Strip HTML tags from stage text fields (Gemini sometimes outputs <br/> etc.)
+    if (validatedContent.structuredLessonPlan?.stages) {
+      const stripHtml = (s: string) => s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s{2,}/g, ' ').trim();
+      validatedContent.structuredLessonPlan.stages = validatedContent.structuredLessonPlan.stages.map((stage: any) => ({
+        ...stage,
+        teacherActivity: stripHtml(stage.teacherActivity || ''),
+        studentActivity: stripHtml(stage.studentActivity || ''),
+        stageAim: stripHtml(stage.stageAim || ''),
+        stage: stripHtml(stage.stage || ''),
+      }));
+    }
+
     return validatedContent;
   }, 5, 3000, signal);
 };
@@ -299,5 +320,5 @@ export const generateLessonImage = (prompt: string, aspectRatio: string = "1:1")
 // --- Barrel re-exports from sub-modules ---
 // Consumers can keep importing from 'geminiService' unchanged.
 export { generateWorksheet, generateSingleGame, generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia, generateReadingPassage } from './worksheetService';
-export { generateSingleFlashcard, generateSingleGrammarPoint, generateSingleObjective, generateSingleMaterial, generateSingleAnticipatedProblem, generateSingleVocabItem, generateSingleStage, generateSinglePhonicsPoint, generateSingleDecodableText } from './itemGenerators';
+export { generateSingleFlashcard, generateSingleGrammarPoint, generateSingleObjective, generateSingleMaterial, generateSingleAnticipatedProblem, generateSingleVocabItem, generateSingleStage, generateSinglePhonicsPoint, generateSingleDecodableText, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from './itemGenerators';
 export { generateESLCurriculum, translateLessonKit } from './curriculumService';

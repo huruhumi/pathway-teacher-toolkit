@@ -57,7 +57,7 @@ export const App: React.FC = () => {
   const [view, setView] = useHashTab<'curriculum' | 'lesson' | 'saved'>('curriculum', ['curriculum', 'lesson', 'saved']);
 
   // Global Stores
-  const { user, initialize: initAuth } = useAuthStore();
+  const { user } = useAuthStore();
   const { clearSessionState, setLessonPlan, setExternalCurriculum } = useSessionStore();
   const {
     currentPlanId, setCurrentPlanId, currentKitLanguage, setCurrentKitLanguage,
@@ -83,9 +83,8 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Load from LocalStorage + init auth
+  // Load cover images from IndexedDB
   useEffect(() => {
-    initAuth();
     savedPlans.forEach(p => {
       if (p.coverImage && !p.coverImage.startsWith('data:')) {
         imageStore.get(p.coverImage).then(img => {

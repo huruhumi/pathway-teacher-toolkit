@@ -8,59 +8,67 @@ interface AuthStore {
     isInitialized: boolean;
     isAuthLoading: boolean;
 
-    initialize: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<{ error?: string }>;
-    signUp: (email: string, password: string) => Promise<{ error?: string }>;
+    signUp: (email: string, password: string) => Promise<{ error?: string; needsConfirmation?: boolean }>;
     signOut: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-    user: null,
-    session: null,
-    isInitialized: false,
-    isAuthLoading: false,
-
-    initialize: async () => {
-        if (!isSupabaseEnabled() || !supabase) {
-            set({ isInitialized: true });
-            return;
-        }
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
+export const useAuthStore = create<AuthStore>((set) => {
+    // ── Auto-initialize: restore session + listen for changes ──
+    if (isSupabaseEnabled() && supabase) {
+        // Restore persisted session on load
+        supabase.auth.getSession().then(({ data: { session } }) => {
             set({ user: session?.user ?? null, session, isInitialized: true });
-
-            // Listen for auth changes
-            supabase.auth.onAuthStateChange((_event, session) => {
-                set({ user: session?.user ?? null, session });
-            });
-        } catch {
+        }).catch(() => {
             set({ isInitialized: true });
-        }
-    },
+        });
 
-    signIn: async (email: string, password: string) => {
-        if (!supabase) return { error: 'Supabase not configured' };
-        set({ isAuthLoading: true });
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        set({ isAuthLoading: false });
-        if (error) return { error: error.message };
-        set({ user: data.user, session: data.session });
-        return {};
-    },
+        // Listen for auth state changes (token refresh, sign-out from another tab, etc.)
+        supabase.auth.onAuthStateChange((_event, session) => {
+            set({ user: session?.user ?? null, session });
+        });
+    } else {
+        // No Supabase — mark as initialized immediately
+        setTimeout(() => set({ isInitialized: true }), 0);
+    }
 
-    signUp: async (email: string, password: string) => {
-        if (!supabase) return { error: 'Supabase not configured' };
-        set({ isAuthLoading: true });
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        set({ isAuthLoading: false });
-        if (error) return { error: error.message };
-        set({ user: data.user, session: data.session });
-        return {};
-    },
+    return {
+        user: null,
+        session: null,
+        isInitialized: false,
+        isAuthLoading: false,
 
-    signOut: async () => {
-        if (!supabase) return;
-        await supabase.auth.signOut();
-        set({ user: null, session: null });
-    },
-}));
+        signIn: async (email: string, password: string) => {
+            if (!supabase) return { error: 'Supabase not configured' };
+            set({ isAuthLoading: true });
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            set({ isAuthLoading: false });
+            if (error) return { error: error.message };
+            set({ user: data.user, session: data.session });
+            return {};
+        },
+
+        signUp: async (email: string, password: string) => {
+            if (!supabase) return { error: 'Supabase not configured' };
+            set({ isAuthLoading: true });
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            set({ isAuthLoading: false });
+            if (error) return { error: error.message };
+
+            // If session is returned, user is auto-confirmed (no email verification needed)
+            if (data.session) {
+                set({ user: data.user, session: data.session });
+                return {};
+            }
+            // No session = email confirmation required
+            return { needsConfirmation: true };
+        },
+
+        signOut: async () => {
+            if (!supabase) return;
+            await supabase.auth.signOut();
+            set({ user: null, session: null });
+        },
+    };
+});
+

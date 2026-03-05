@@ -54,6 +54,7 @@ interface AppStoreState {
     kitLevel: string; setKitLevel: (v: string) => void;
     kitDate: string; setKitDate: (v: string) => void;
     kitSort: string; setKitSort: (v: string) => void;
+    kitTextbook: string; setKitTextbook: (v: string) => void;
 
     recordsTab: 'curricula' | 'kits'; setRecordsTab: (v: 'curricula' | 'kits') => void;
 }
@@ -75,6 +76,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     kitLevel: 'All Levels', setKitLevel: (v) => set({ kitLevel: v }),
     kitDate: 'all', setKitDate: (v) => set({ kitDate: v }),
     kitSort: 'newest', setKitSort: (v) => set({ kitSort: v }),
+    kitTextbook: 'all', setKitTextbook: (v) => set({ kitTextbook: v }),
 
     recordsTab: 'curricula', setRecordsTab: (v) => set({ recordsTab: v })
 }));

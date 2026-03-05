@@ -159,7 +159,7 @@ export function useLessonHistory() {
     const {
         activeLessonId, setActiveLessonId,
         curSearch, curLevel, curDate, curSort, curLessonRange,
-        kitSearch, kitLevel, kitDate, kitSort, recordsTab
+        kitSearch, kitLevel, kitDate, kitSort, kitTextbook, recordsTab
     } = useAppStore();
 
     const { items: savedLessons, setItems: setSavedLessons, saveItem: saveLessonDb, deleteItem: deleteLessonDb } = useProjectCRUD<SavedLesson>('esl_smart_planner_history', 50, {
@@ -228,6 +228,10 @@ export function useLessonHistory() {
             result = result.filter(l => l.topic.toLowerCase().includes(q));
         }
         if (kitLevel !== 'All Levels') result = result.filter(l => l.level === kitLevel);
+        if (kitTextbook && kitTextbook !== 'all') {
+            const tb = kitTextbook.toLowerCase();
+            result = result.filter(l => l.topic.toLowerCase().includes(tb));
+        }
         if (kitDate === 'today') result = result.filter(l => isToday(l.timestamp));
         else if (kitDate === 'week') result = result.filter(l => isThisWeek(l.timestamp));
         else if (kitDate === 'month') result = result.filter(l => isThisMonth(l.timestamp));
@@ -239,7 +243,19 @@ export function useLessonHistory() {
             return 0;
         });
         return result;
-    }, [savedLessons, kitSearch, kitLevel, kitDate, kitSort]);
+    }, [savedLessons, kitSearch, kitLevel, kitDate, kitSort, kitTextbook]);
+
+    // --- Unique textbook names for filter dropdown ---
+    const textbookNames = useMemo(() => {
+        const names = new Set<string>();
+        savedCurricula.forEach(c => {
+            const name = c.curriculum?.seriesName
+                || c.textbookTitle?.replace(/\s*Student'?s?\s*Book/gi, '').trim()
+                || c.textbookTitle;
+            if (name) names.add(name);
+        });
+        return Array.from(names).sort();
+    }, [savedCurricula]);
 
     // --- CRUD handlers ---
 
@@ -354,6 +370,7 @@ export function useLessonHistory() {
         savedCurricula,
         filteredCurricula,
         filteredKits,
+        textbookNames,
 
         // Title editing
         editingLessonId, editTitle, setEditTitle,

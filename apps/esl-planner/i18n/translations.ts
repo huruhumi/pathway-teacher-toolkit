@@ -123,6 +123,7 @@ export const translations = {
     'cp.batchPaused': { en: '⏸️ Paused', zh: '⏸️ 已暂停' },
     'cp.completed': { en: 'completed', zh: '已完成' },
     'cp.failed': { en: 'failed', zh: '个失败' },
+    'cp.stop': { en: 'Stop Generation', zh: '停止生成' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

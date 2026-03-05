@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, Loader2, LogIn, UserPlus } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, Loader2, LogIn, UserPlus, CheckCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { Modal } from '../ui/Modal';
 
@@ -12,20 +12,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
     const { signIn, signUp, isAuthLoading } = useAuthStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccessMsg('');
 
-        const result = mode === 'login'
-            ? await signIn(email, password)
-            : await signUp(email, password);
-
-        if (result.error) {
-            setError(result.error);
+        if (mode === 'login') {
+            const result = await signIn(email, password);
+            if (result.error) {
+                setError(result.error);
+            } else {
+                onClose();
+            }
         } else {
-            onClose();
+            const result = await signUp(email, password);
+            if (result.error) {
+                setError(result.error);
+            } else if (result.needsConfirmation) {
+                setSuccessMsg('Account created! Please check your email to confirm, then sign in.');
+                setMode('login');
+            } else {
+                onClose();
+            }
         }
     };
 
@@ -44,6 +55,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 {error && (
                     <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
                         {error}
+                    </div>
+                )}
+                {successMsg && (
+                    <div className="p-3 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-start gap-2">
+                        <CheckCircle size={16} className="mt-0.5 shrink-0" />
+                        <span>{successMsg}</span>
                     </div>
                 )}
 
@@ -88,12 +105,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
                 <div className="text-center text-sm text-slate-500">
                     {mode === 'login' ? (
-                        <>Don't have an account? <button type="button" onClick={() => setMode('signup')} className="text-emerald-600 font-semibold hover:underline">Sign Up</button></>
+                        <>Don't have an account? <button type="button" onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }} className="text-emerald-600 font-semibold hover:underline">Sign Up</button></>
                     ) : (
-                        <>Already have an account? <button type="button" onClick={() => setMode('login')} className="text-emerald-600 font-semibold hover:underline">Sign In</button></>
+                        <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }} className="text-emerald-600 font-semibold hover:underline">Sign In</button></>
                     )}
                 </div>
             </form>
         </Modal>
     );
 };
+

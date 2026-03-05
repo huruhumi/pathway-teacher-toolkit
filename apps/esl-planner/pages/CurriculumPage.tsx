@@ -1,12 +1,12 @@
 import React from 'react';
 import { CurriculumPlanner } from '../components/CurriculumPlanner';
-import type { CurriculumLesson, CurriculumParams } from '../types';
+import type { CurriculumLesson, CurriculumParams, ESLCurriculum } from '../types';
 import { useSessionStore, useAppStore } from '../stores/appStore';
 import { useLessonHistory } from '../hooks/useLessonHistory';
 import { useBatchGenerate } from '../hooks/useBatchGenerate';
 
 export interface CurriculumPageProps {
-    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams) => void;
+    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => void;
     onGoToCreate: () => void;
 }
 
@@ -40,7 +40,7 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
             batchLessonMap={batchLessonMap}
             batchRunning={batchRunning}
             batchProgress={batchProgress}
-            onBatchGenerate={(lessons, params) => handleBatchGenerate(lessons, params, saveLessonDb)}
+            onBatchGenerate={(lessons, params, curriculum) => handleBatchGenerate(lessons, params, saveLessonDb, curriculum)}
             onCancelBatch={handleCancelBatch}
             onOpenKit={handleOpenKit}
         />

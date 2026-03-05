@@ -89,7 +89,7 @@ export const generateSingleStage = async (level: CEFRLevel, topic: string, exist
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. Return JSON.`,
+        contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. IMPORTANT: The "interaction" field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. Return JSON.`,
         config: {
             responseMimeType: "application/json",
             responseSchema: (RESPONSE_SCHEMA.properties.structuredLessonPlan.properties.stages as any).items
@@ -140,4 +140,31 @@ Also provide a simple visual prompt describing the scene for an AI image generat
         }
     }));
     return JSON.parse(response.text || "{}");
+};
+
+export const generateSingleTeachingTip = async (level: CEFRLevel, topic: string, stageName: string, existingTips: string[]): Promise<string> => {
+    const ai = createAIClient();
+    const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Generate one practical ESL teaching methodology tip for Level: ${level}, Topic: ${topic}, Stage: ${stageName}. Focus on scaffolding techniques, TPR, visual aids, sentence frames, or error correction strategies. Existing tips: ${existingTips.join(". ")}. Return ONLY the tip text string.`,
+    }));
+    return response.text?.trim() || "";
+};
+
+export const generateSingleBackgroundKnowledge = async (level: CEFRLevel, topic: string, stageName: string, existingInfo: string[]): Promise<string> => {
+    const ai = createAIClient();
+    const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Generate one background knowledge point for the teacher about Level: ${level}, Topic: ${topic}, Stage: ${stageName}. Include cultural context, linguistic notes, common misconceptions, or subject matter facts. Existing info: ${existingInfo.join(". ")}. Return ONLY the knowledge point text string.`,
+    }));
+    return response.text?.trim() || "";
+};
+
+export const generateFillerActivity = async (level: CEFRLevel, topic: string, stageName: string): Promise<string> => {
+    const ai = createAIClient();
+    const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Generate a quick 2-3 minute filler/extension activity for Level: ${level}, Topic: ${topic}, Stage: ${stageName}. It should be simple, require no extra equipment, and serve as a backup if students finish early or need extra practice. Return ONLY the activity description text string.`,
+    }));
+    return response.text?.trim() || "";
 };

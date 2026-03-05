@@ -1,13 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CEFRLevel } from '../types';
-import { Upload, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { GenerationButton } from '@shared/components/GenerationButton';
 import { FileUploadDropzone } from '@shared/components/ui/FileUploadDropzone';
 import { Input } from '@shared/components/ui/Input';
 import { Select } from '@shared/components/ui/Select';
 import { Textarea } from '@shared/components/ui/Textarea';
+import { GenerationProgress } from '@shared/components/GenerationProgress';
 
 interface InputSectionProps {
   onGenerate: (
@@ -34,7 +35,7 @@ interface InputSectionProps {
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues, onStop }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [level, setLevel] = useState<CEFRLevel>(CEFRLevel.Beginner);
@@ -163,14 +164,20 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
         {/* Sticky Action Button */}
         <div className="sticky bottom-4 z-10 pt-2">
           {isLoading ? (
-            <GenerationButton
-              loading={false}
-              onClick={onStop}
-              defaultText="Stop Generation"
-              theme="indigo"
-              className="bg-red-500 hover:bg-red-600 shadow-lg"
-              icon={null}
-            />
+            <>
+              <GenerationButton
+                loading={false}
+                onClick={onStop}
+                defaultText={<><Loader2 className="animate-spin" size={20} /> Stop Generation</>}
+                theme="indigo"
+                className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg"
+                icon={null}
+              />
+              <GenerationProgress
+                statusText={lang === 'zh' ? '正在生成课程套件...' : 'Generating lesson kit...'}
+                theme="indigo"
+              />
+            </>
           ) : (
             <GenerationButton
               loading={isLoading}

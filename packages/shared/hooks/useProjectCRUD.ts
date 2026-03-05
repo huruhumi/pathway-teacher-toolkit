@@ -33,6 +33,28 @@ export const useProjectCRUD = <T extends BaseRecord>(
     const user = useAuthStore((s) => s.user);
     const { cloudTable, mapFromCloud = (r: any) => r, mapToCloud = (r: any) => r } = options;
 
+    // ── Same-tab cross-instance sync via custom event ──
+    useEffect(() => {
+        const handleSync = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (detail === storageKey) {
+                setItems(safeStorage.get<T[]>(storageKey, []));
+            }
+        };
+        // Cross-tab sync via native storage event
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === storageKey) {
+                setItems(safeStorage.get<T[]>(storageKey, []));
+            }
+        };
+        window.addEventListener('storage-sync', handleSync);
+        window.addEventListener('storage', handleStorage);
+        return () => {
+            window.removeEventListener('storage-sync', handleSync);
+            window.removeEventListener('storage', handleStorage);
+        };
+    }, [storageKey]);
+
     // ── Cloud sync on login ──
     useEffect(() => {
         if (!user || !cloudTable) return;
@@ -49,6 +71,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     }
                 }
                 safeStorage.set(storageKey, merged);
+                setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
                 return merged;
             });
         });
@@ -62,6 +85,8 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 : [item, ...prev];
             if (updated.length > limit) updated = updated.slice(0, limit);
             safeStorage.set(storageKey, updated);
+            // Notify other hook instances in same tab
+            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
             return updated;
         });
 
@@ -75,6 +100,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
         setItems((prev) => {
             const updated = prev.filter((item) => item.id !== id);
             safeStorage.set(storageKey, updated);
+            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
             return updated;
         });
 
@@ -92,6 +118,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 return item;
             });
             safeStorage.set(storageKey, updated);
+            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
             return updated;
         });
 

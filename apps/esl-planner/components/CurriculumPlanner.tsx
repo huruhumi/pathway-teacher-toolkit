@@ -11,12 +11,14 @@ import { generateESLCurriculum } from '../services/geminiService';
 import { safeStorage } from '@shared/safeStorage';
 import { extractPdfText as extractPdfTextShared } from '@shared/utils/pdf';
 import { useLanguage } from '../i18n/LanguageContext';
+import { formatLessonDisplayName } from '../utils/curriculumMapper';
+import { GenerationProgress } from '@shared/components/GenerationProgress';
 
 interface CurriculumPlannerProps {
-    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams) => void;
+    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => void;
     onSaveCurriculum?: (curriculum: ESLCurriculum, params: CurriculumParams) => void;
     loadedCurriculum?: { curriculum: ESLCurriculum; params: CurriculumParams } | null;
-    onBatchGenerate?: (lessons: CurriculumLesson[], params: CurriculumParams) => void;
+    onBatchGenerate?: (lessons: CurriculumLesson[], params: CurriculumParams, curriculum?: ESLCurriculum) => void;
     onCancelBatch?: () => void;
     batchStatus?: Record<number, 'idle' | 'generating' | 'done' | 'error'>;
     batchLessonMap?: Record<number, string>;
@@ -33,12 +35,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     batchRunning = false, batchProgress = { done: 0, total: 0, errors: 0 }, onOpenKit
 }) => {
     // PDF state
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfText, setPdfText] = useState('');
     const [pdfPageCount, setPdfPageCount] = useState(0);
     const [extracting, setExtracting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Config state
     const [lessonCount, setLessonCount] = useState(40);
@@ -138,6 +141,15 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         customInstructions,
     });
 
+    const handleStopGenerate = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setLoading(false);
+        setErrorMsg('Generation cancelled.');
+    };
+
     const handleGenerate = async () => {
         if (!pdfText) {
             setErrorMsg(t('cp.uploadFirst'));
@@ -146,15 +158,18 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         setLoading(true);
         setErrorMsg(null);
         setCurriculum(null);
+        abortControllerRef.current = new AbortController();
         try {
             const params = getCurrentParams();
-            const result = await generateESLCurriculum(pdfText, params);
+            const result = await generateESLCurriculum(pdfText, params, abortControllerRef.current.signal);
             setCurriculum(result);
             setSavedParams(params);
         } catch (error: any) {
+            if (error.name === 'AbortError' || error.message === 'Operation aborted') return;
             setErrorMsg(error.message || t('cp.generateFailed'));
         } finally {
             setLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -329,23 +344,34 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 />
                             </div>
 
-                            {/* Generate Button */}
+                            {/* Generate / Stop Button */}
                             <div className="md:col-span-2 lg:col-span-3 pt-2">
-                                <button
-                                    onClick={handleGenerate}
-                                    disabled={loading || !pdfText}
-                                    className={`w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md
-                    ${loading || !pdfText
-                                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg hover:-translate-y-0.5'
-                                        }`}
-                                >
-                                    {loading ? (
-                                        <><Loader2 className="animate-spin" size={22} /> {t('cp.analyzing')}</>
-                                    ) : (
-                                        <>{t('cp.generate')} <ArrowRight size={20} /></>
-                                    )}
-                                </button>
+                                {loading ? (
+                                    <>
+                                        <button
+                                            onClick={handleStopGenerate}
+                                            className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-red-500 to-rose-500 text-white hover:shadow-lg hover:-translate-y-0.5"
+                                        >
+                                            <Square size={18} /> {t('cp.stop') || 'Stop'}
+                                        </button>
+                                        <GenerationProgress
+                                            statusText={lang === 'zh' ? '正在分析教材并生成大纲...' : 'Analyzing textbook and generating outline...'}
+                                            theme="violet"
+                                        />
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={handleGenerate}
+                                        disabled={!pdfText}
+                                        className={`w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md
+                    ${!pdfText
+                                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:shadow-lg hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        {t('cp.generate')} <ArrowRight size={20} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -382,7 +408,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => onBatchGenerate(curriculum.lessons, savedParams || getCurrentParams())}
+                                        onClick={() => onBatchGenerate(curriculum.lessons, savedParams || getCurrentParams(), curriculum)}
                                         className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:from-violet-700 hover:to-purple-700 transition-all shadow-sm"
                                     >
                                         <Rocket size={15} />
@@ -420,7 +446,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.textbookTitle}</h2>
                         <p className="text-slate-600 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
-                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-medium flex items-center gap-1.5"><FileText size={14} /> {curriculum.textbookTitle}</span>
+                            <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-medium flex items-center gap-1.5"><FileText size={14} /> {curriculum.textbookTitle || curriculum.seriesName}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} {t('cp.lessonsUnit')}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><GraduationCap size={14} /> {curriculum.targetLevel}</span>
                             {savedParams && (
@@ -452,7 +478,14 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                 {String(lesson.lessonNumber || index + 1).padStart(2, '0')}
                                             </span>
                                             <div className="min-w-0">
-                                                <h3 className="text-lg font-bold text-slate-900 truncate">{lesson.title}</h3>
+                                                {(() => {
+                                                    const displayName = formatLessonDisplayName(lesson, curriculum);
+                                                    return (
+                                                        <h3 className="text-lg font-bold text-slate-900 truncate" title={displayName}>
+                                                            {displayName}
+                                                        </h3>
+                                                    );
+                                                })()}
                                                 <p className="text-sm text-slate-500 truncate">{lesson.topic}</p>
                                             </div>
                                         </div>
@@ -556,7 +589,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            onGenerateKit(lesson, savedParams || getCurrentParams());
+                                                            onGenerateKit(lesson, savedParams || getCurrentParams(), curriculum);
                                                         }}
                                                         className="w-full mt-2 bg-red-50 border border-red-200 text-red-600 rounded-xl py-3 font-semibold hover:bg-red-100 transition-all flex items-center justify-center gap-2"
                                                     >
@@ -569,7 +602,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onGenerateKit(lesson, savedParams || getCurrentParams());
+                                                        onGenerateKit(lesson, savedParams || getCurrentParams(), curriculum);
                                                     }}
                                                     className="w-full mt-2 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 text-violet-700 rounded-xl py-3 font-semibold hover:from-violet-100 hover:to-purple-100 transition-all flex items-center justify-center gap-2"
                                                 >
