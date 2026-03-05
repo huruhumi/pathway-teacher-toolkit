@@ -190,7 +190,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 title: `${editablePlan.classInformation.topic} - Learning Companion`,
                 description: `A 7-day learning companion for ${editablePlan.classInformation.topic}`,
                 class_id: classId,
-                type: 'companion',
+                content_type: 'companion',
                 content: editableReadingCompanion, // JSON payload
                 due_date: dueDate || null
             } as any);

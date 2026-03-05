@@ -19,6 +19,14 @@
     {
       "source": "/academy-ops/(.*)",
       "destination": "/academy-ops/index.html"
+    },
+    {
+      "source": "/edu-hub/(.*)",
+      "destination": "/edu-hub/index.html"
+    },
+    {
+      "source": "/student-portal/(.*)",
+      "destination": "/student-portal/index.html"
     }
   ]
 }

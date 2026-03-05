@@ -443,7 +443,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
         title: dataToAssign.title || editablePlan.classInformation.topic || 'Worksheet',
         description: dataToAssign.instructions || `A ${editablePlan.classInformation.level || ''} level worksheet about ${editablePlan.classInformation.topic || 'English'}.`,
         class_id: classId,
-        type: 'worksheet',
+        content_type: 'worksheet',
         content: dataToAssign, // JSON payload of the first worksheet
         due_date: dueDate || null
       } as any);
