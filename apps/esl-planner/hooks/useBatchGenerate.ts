@@ -24,7 +24,8 @@ export function useBatchGenerate() {
         lessons: CurriculumLesson[],
         params: CurriculumParams,
         saveLesson: (saved: SavedLesson) => void,
-        curriculum?: ESLCurriculum | null
+        curriculum?: ESLCurriculum | null,
+        curriculumId?: string
     ) => {
         batchCancelRef.current = false;
         setBatchState(prev => ({
@@ -68,6 +69,9 @@ export function useBatchGenerate() {
                     topic: content.structuredLessonPlan.classInformation.topic || lessons[i].title,
                     level: content.structuredLessonPlan.classInformation.level,
                     content,
+                    curriculumId,
+                    unitNumber: lessons[i].unitNumber,
+                    lessonIndex: i,
                 };
                 saveLesson(newRecord);
 

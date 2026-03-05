@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, Loader2, LogIn, UserPlus, CheckCircle } from 'lucide-react';
+import { X, Lock, User, Loader2, LogIn, UserPlus, CheckCircle, Mail } from 'lucide-react';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { Modal } from '../ui/Modal';
 
@@ -11,6 +11,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const { signIn, signUp, isAuthLoading } = useAuthStore();
@@ -28,7 +29,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 onClose();
             }
         } else {
-            const result = await signUp(email, password);
+            if (!username.trim()) {
+                setError('Username is required');
+                return;
+            }
+            const result = await signUp(email, password, username.trim());
             if (result.error) {
                 setError(result.error);
             } else if (result.needsConfirmation) {
@@ -42,8 +47,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
     return (
         <Modal isOpen={true} onClose={onClose} maxWidth="max-w-md" className="rounded-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                     {mode === 'login' ? 'Sign In' : 'Create Account'}
                 </h2>
                 <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
@@ -53,19 +58,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {error && (
-                    <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+                    <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-sm rounded-lg border border-red-200 dark:border-red-500/20">
                         {error}
                     </div>
                 )}
                 {successMsg && (
-                    <div className="p-3 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-start gap-2">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm rounded-lg border border-emerald-200 dark:border-emerald-500/20 flex items-start gap-2">
                         <CheckCircle size={16} className="mt-0.5 shrink-0" />
                         <span>{successMsg}</span>
                     </div>
                 )}
 
+                {mode === 'signup' && (
+                    <div>
+                        <label className="input-label text-xs uppercase text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5 mb-1">
+                            <User size={12} /> Username
+                        </label>
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="input-field"
+                            placeholder="Your display name"
+                            required
+                        />
+                    </div>
+                )}
+
                 <div>
-                    <label className="input-label text-xs uppercase text-slate-400">Email</label>
+                    <label className="input-label text-xs uppercase text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5 mb-1">
+                        <Mail size={12} /> Email
+                    </label>
                     <input
                         type="email"
                         value={email}
@@ -77,7 +100,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                 </div>
 
                 <div>
-                    <label className="input-label text-xs uppercase text-slate-400">Password</label>
+                    <label className="input-label text-xs uppercase text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1.5 mb-1">
+                        <Lock size={12} /> Password
+                    </label>
                     <input
                         type="password"
                         value={password}
@@ -114,4 +139,3 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
         </Modal>
     );
 };
-

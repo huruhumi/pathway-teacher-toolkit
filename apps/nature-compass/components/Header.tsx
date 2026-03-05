@@ -41,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoC
         </div>
       }
       signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+      homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
     />
   );
 };

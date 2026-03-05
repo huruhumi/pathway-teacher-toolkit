@@ -16,6 +16,15 @@ export const translations = {
     'plan.interactiveGames': { en: 'Interactive Games', zh: '互动游戏' },
     'plan.backToGenerator': { en: 'Back to Generator', zh: '返回生成器' },
 
+    // Assign Modal
+    'assign.title': { en: 'Assign to Students', zh: '布置给学生' },
+    'assign.selectClass': { en: 'Select Class', zh: '选择班级' },
+    'assign.dueDate': { en: 'Due Date', zh: '截止日期' },
+    'assign.confirm': { en: 'Assign', zh: '确认布置' },
+    'assign.noClasses': { en: 'No classes found. Please create a class in Edu Hub first.', zh: '未找到班级。请先在教务系统中创建班级。' },
+    'assign.success': { en: 'Assigned successfully!', zh: '布置成功！' },
+    'assign.error': { en: 'Failed to assign.', zh: '布置失败。' },
+
     // Records tab
     'rec.title': { en: 'Saved Records', zh: '已保存记录' },
     'rec.desc': { en: 'Manage saved curriculum outlines and Lesson Kits.', zh: '管理已保存的课程大纲和Lesson Kit。' },

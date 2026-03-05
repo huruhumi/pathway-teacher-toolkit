@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 
 <body>
@@ -27,6 +28,7 @@
                 </div>
             </div>
             <div class="nav-right">
+                <div id="auth-container" class="auth-container"></div>
                 <div class="toolkit-status">
                     <span class="status-dot"></span>
                     <span data-i18n="status">TOOLKIT ACTIVE</span>
@@ -107,6 +109,31 @@
                         Ops</a>
                 </div>
             </div>
+            <div class="tool-card">
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon eduhub-icon">🎓</div>
+                </div>
+                <h3 data-i18n="tool.eduhub.title">Edu Hub</h3>
+                <p data-i18n="tool.eduhub.desc">Education management system for classes, students, assignments,
+                    attendance, and book lending.</p>
+                <div class="card-footer">
+                    <a href="/edu-hub/" target="_blank" class="btn btn-outline" data-i18n="tool.eduhub.btn">Open Edu
+                        Hub</a>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <div class="tool-icon-wrapper">
+                    <div class="tool-icon student-icon">📖</div>
+                </div>
+                <h3 data-i18n="tool.student.title">Student Portal</h3>
+                <p data-i18n="tool.student.desc">Student-facing view for assignments, schedules, and classroom
+                    activities.</p>
+                <div class="card-footer">
+                    <a href="/student-portal/" target="_blank" class="btn btn-outline" data-i18n="tool.student.btn">Open
+                        Portal</a>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -118,6 +145,7 @@
     </footer>
 
     <script src="i18n.js"></script>
+    <script src="auth.js"></script>
 </body>
 
 </html>

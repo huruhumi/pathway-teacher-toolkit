@@ -8,6 +8,10 @@ export interface MappedESLInput {
     duration: string;
     studentCount: string;
     lessonTitle: string;
+    /** Curriculum metadata for precise kit→unit matching */
+    curriculumId?: string;
+    unitNumber?: number;
+    lessonIndex?: number;
 }
 
 /**
@@ -45,7 +49,9 @@ export function mapLessonToESLInput(
     lesson: CurriculumLesson,
     params: CurriculumParams,
     curriculum?: ESLCurriculum | null,
-    textbookTitle: string = ''
+    textbookTitle: string = '',
+    curriculumId?: string,
+    lessonIndex?: number
 ): MappedESLInput {
     const contextParts = [
         lesson.description,
@@ -66,5 +72,8 @@ export function mapLessonToESLInput(
         duration: params.duration,
         studentCount: params.studentCount,
         lessonTitle: formattedTitle,
+        curriculumId,
+        unitNumber: lesson.unitNumber,
+        lessonIndex,
     };
 }

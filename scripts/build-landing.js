@@ -9,6 +9,8 @@ const apps = [
     { name: 'essay-lab', dir: 'essay-lab' },
     { name: 'nature-compass', dir: 'nature-compass' },
     { name: 'academy-ops', dir: 'academy-ops' },
+    { name: 'edu-hub', dir: 'edu-hub' },
+    { name: 'student-portal', dir: 'student-portal' },
 ];
 
 function copyDir(src, dest) {
@@ -31,7 +33,7 @@ if (fs.existsSync(DIST)) {
 fs.mkdirSync(DIST, { recursive: true });
 
 // Copy landing page files
-for (const file of ['index.html', 'style.css', 'logo.png', 'i18n.js']) {
+for (const file of ['index.html', 'style.css', 'logo.png', 'i18n.js', 'auth.js']) {
     const src = path.join(ROOT, file);
     if (fs.existsSync(src)) {
         fs.copyFileSync(src, path.join(DIST, file));

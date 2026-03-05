@@ -5,16 +5,20 @@
         "apps/*"
     ],
     "scripts": {
-        "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=1536\" concurrently -n planner,essay,nature,ops -c cyan,green,yellow,magenta \"npm run dev:planner\" \"npm run dev:essay\" \"npm run dev:nature\" \"npm run dev:ops\"",
+        "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048\" concurrently -n planner,essay,nature,ops,edu,student -c cyan,green,yellow,magenta,blue,white \"npm run dev:planner\" \"npm run dev:essay\" \"npm run dev:nature\" \"npm run dev:ops\" \"npm run dev:edu\" \"npm run dev:student\"",
         "dev:planner": "npm -w apps/esl-planner run dev",
         "dev:essay": "npm -w apps/essay-lab run dev",
         "dev:nature": "npm -w apps/nature-compass run dev",
-        "dev:ops": "npm -w apps/academy-ops run dev",
+        "dev:ops": "npm -w apps/rednote-ops run dev",
+        "dev:edu": "npm -w apps/edu-hub run dev",
+        "dev:student": "npm -w apps/student-portal run dev",
         "build:planner": "npm -w apps/esl-planner run build",
         "build:essay": "npm -w apps/essay-lab run build",
         "build:nature": "npm -w apps/nature-compass run build",
-        "build:ops": "npm -w apps/academy-ops run build",
-        "build:apps": "npm run build:planner && npm run build:essay && npm run build:nature && npm run build:ops",
+        "build:ops": "npm -w apps/rednote-ops run build",
+        "build:edu": "npm -w apps/edu-hub run build",
+        "build:student": "npm -w apps/student-portal run build",
+        "build:apps": "npm run build:planner && npm run build:essay && npm run build:nature && npm run build:ops && npm run build:edu && npm run build:student",
         "build": "npm run build:apps && node scripts/build-landing.js"
     },
     "devDependencies": {

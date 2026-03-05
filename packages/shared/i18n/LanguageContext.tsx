@@ -9,20 +9,23 @@ interface LanguageContextType<TKey extends string = string> {
     t: (key: TKey) => string;
 }
 
-function getStoredLang(): Lang {
+function getStoredLang(defaultLang: Lang = 'en'): Lang {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored === 'zh') return 'zh';
+        if (stored === 'en') return 'en';
     } catch { /* ignore */ }
-    return 'en';
+    return defaultLang;
 }
 
 /**
  * Factory: creates a LanguageProvider + useLanguage hook bound to a specific translations dictionary.
  * Each app calls this once with its own translations, eliminating 60 lines of duplicated context code per app.
+ * @param defaultLang - default language when no preference is stored (default: 'en')
  */
 export function createLanguageContext<TKey extends string>(
-    translations: Record<TKey, Record<Lang, string>>
+    translations: Record<TKey, Record<Lang, string>>,
+    defaultLang: Lang = 'en',
 ) {
     const Context = createContext<LanguageContextType<TKey>>({
         lang: 'en',
@@ -31,7 +34,7 @@ export function createLanguageContext<TKey extends string>(
     });
 
     const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-        const [lang, setLangState] = useState<Lang>(getStoredLang);
+        const [lang, setLangState] = useState<Lang>(() => getStoredLang(defaultLang));
 
         const setLang = useCallback((l: Lang) => {
             setLangState(l);

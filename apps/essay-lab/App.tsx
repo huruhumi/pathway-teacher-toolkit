@@ -126,6 +126,7 @@ const AppContent: React.FC = () => {
           onLogoClick={() => { setViewMode('correction'); setReport(null); setIsPreviewing(false); }}
           rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
           signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+          homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
         />
       )}
 

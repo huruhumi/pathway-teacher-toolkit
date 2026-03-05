@@ -149,6 +149,12 @@ export interface SavedLesson {
   level: string;
   description?: string;
   content: GeneratedContent;
+  /** Links kit to its source curriculum */
+  curriculumId?: string;
+  /** Unit number from CurriculumLesson */
+  unitNumber?: number;
+  /** Index in curriculum.lessons[] */
+  lessonIndex?: number;
 }
 
 export interface AppState {

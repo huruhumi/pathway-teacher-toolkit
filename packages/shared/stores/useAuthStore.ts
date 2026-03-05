@@ -8,27 +8,74 @@ interface AuthStore {
     isInitialized: boolean;
     isAuthLoading: boolean;
 
+    /** Get display name from user_metadata, fallback to email */
+    displayName: () => string;
     signIn: (email: string, password: string) => Promise<{ error?: string }>;
-    signUp: (email: string, password: string) => Promise<{ error?: string; needsConfirmation?: boolean }>;
+    signUp: (email: string, password: string, username?: string) => Promise<{ error?: string; needsConfirmation?: boolean }>;
     signOut: () => Promise<void>;
+    updateDisplayName: (name: string) => Promise<{ error?: string }>;
 }
 
-export const useAuthStore = create<AuthStore>((set) => {
+/** Check URL for cross-port auth tokens (landing page SSO) */
+function consumeUrlTokens(): { access_token: string; refresh_token: string } | null {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const access = params.get('_token');
+        const refresh = params.get('_refresh');
+        if (access && refresh) {
+            // Clean URL
+            params.delete('_token');
+            params.delete('_refresh');
+            const clean = params.toString();
+            const newUrl = window.location.pathname + (clean ? '?' + clean : '') + window.location.hash;
+            window.history.replaceState(null, '', newUrl);
+            return { access_token: access, refresh_token: refresh };
+        }
+    } catch { /* ignore */ }
+    return null;
+}
+
+export const useAuthStore = create<AuthStore>((set, get) => {
     // ── Auto-initialize: restore session + listen for changes ──
     if (isSupabaseEnabled() && supabase) {
-        // Restore persisted session on load
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            set({ user: session?.user ?? null, session, isInitialized: true });
-        }).catch(() => {
-            set({ isInitialized: true });
-        });
+        const urlTokens = consumeUrlTokens();
 
-        // Listen for auth state changes (token refresh, sign-out from another tab, etc.)
+        if (urlTokens) {
+            // Cross-port SSO: restore session from URL tokens
+            supabase.auth.setSession(urlTokens).then(({ data: { session }, error }) => {
+                if (error) {
+                    console.warn('[Auth] Failed to restore session from URL tokens:', error.message);
+                }
+                set({ user: session?.user ?? null, session: session ?? null, isInitialized: true });
+            });
+        } else {
+            // Normal: restore persisted session
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                set({ user: session?.user ?? null, session, isInitialized: true });
+            }).catch(() => {
+                set({ isInitialized: true });
+            });
+        }
+
+        // Listen for auth state changes
         supabase.auth.onAuthStateChange((_event, session) => {
             set({ user: session?.user ?? null, session });
         });
+
+        // Cross-port logout sync: verify session with server when tab becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && supabase) {
+                supabase.auth.getUser().then(({ data: { user: serverUser }, error }) => {
+                    const current = useAuthStore.getState().user;
+                    if (current && (error || !serverUser)) {
+                        // Session was revoked server-side (e.g. signed out from another port)
+                        supabase!.auth.signOut({ scope: 'local' });
+                        set({ user: null, session: null });
+                    }
+                });
+            }
+        });
     } else {
-        // No Supabase — mark as initialized immediately
         setTimeout(() => set({ isInitialized: true }), 0);
     }
 
@@ -37,6 +84,12 @@ export const useAuthStore = create<AuthStore>((set) => {
         session: null,
         isInitialized: false,
         isAuthLoading: false,
+
+        displayName: () => {
+            const user = get().user;
+            if (!user) return '';
+            return user.user_metadata?.display_name || user.email?.split('@')[0] || '';
+        },
 
         signIn: async (email: string, password: string) => {
             if (!supabase) return { error: 'Supabase not configured' };
@@ -48,19 +101,21 @@ export const useAuthStore = create<AuthStore>((set) => {
             return {};
         },
 
-        signUp: async (email: string, password: string) => {
+        signUp: async (email: string, password: string, username?: string) => {
             if (!supabase) return { error: 'Supabase not configured' };
             set({ isAuthLoading: true });
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const options: any = { email, password };
+            if (username) {
+                options.options = { data: { display_name: username } };
+            }
+            const { data, error } = await supabase.auth.signUp(options);
             set({ isAuthLoading: false });
             if (error) return { error: error.message };
 
-            // If session is returned, user is auto-confirmed (no email verification needed)
             if (data.session) {
                 set({ user: data.user, session: data.session });
                 return {};
             }
-            // No session = email confirmation required
             return { needsConfirmation: true };
         },
 
@@ -69,6 +124,15 @@ export const useAuthStore = create<AuthStore>((set) => {
             await supabase.auth.signOut();
             set({ user: null, session: null });
         },
+
+        updateDisplayName: async (name: string) => {
+            if (!supabase) return { error: 'Supabase not configured' };
+            const { data, error } = await supabase.auth.updateUser({
+                data: { display_name: name },
+            });
+            if (error) return { error: error.message };
+            set({ user: data.user });
+            return {};
+        },
     };
 });
-

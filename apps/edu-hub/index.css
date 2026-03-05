@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "../../packages/shared/styles/tokens.css";
+@source "../../packages/shared";
+
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Edu Hub Brand Colors ── */
+@theme {
+    --color-brand: #f59e0b;
+    --color-brand-light: #fef3c7;
+    --color-brand-hover: #d97706;
+    --color-brand-dark: #b45309;
+}

@@ -7,6 +7,7 @@ import { useToast } from '@shared/stores/useToast';
 import { useLanguage } from '../i18n/LanguageContext';
 import { RichTextEditor } from './RichTextEditor';
 import { usePrintUtils } from '../hooks/usePrintUtils';
+import { useAutoSave, SaveStatus } from '@shared/hooks/useAutoSave';
 
 // Tab Components
 import { TabRoadmap } from './tabs/TabRoadmap';
@@ -85,6 +86,29 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         setBadgePrompt(`A circular merit badge sticker for: "${plan.basicInfo.theme}". Vector style, simple icon, white background, high quality.`);
 
     }, [plan]);
+
+    // --- Auto-Save ---
+    const getCurrentContentObject = useCallback(() => {
+        const currentPlan: LessonPlanResponse = {
+            ...plan,
+            missionBriefing, basicInfo, roadmap, supplies, safetyProtocol,
+            vocabulary: { ...plan.vocabulary, keywords: vocabList },
+            visualReferences: visualRefs,
+            handbookStylePrompt: plan.handbookStylePrompt,
+            handbook: handbookPages,
+            translatedPlan: plan.translatedPlan,
+        };
+        return { plan: currentPlan, coverImage: badgeImage };
+    }, [plan, missionBriefing, basicInfo, roadmap, supplies, safetyProtocol, vocabList, visualRefs, handbookPages, badgeImage]);
+
+    const { saveStatus, lastSaved } = useAutoSave({
+        getCurrentContentObject,
+        onSave: (data: { plan: LessonPlanResponse; coverImage: string | null }) => {
+            onSave?.(data.plan, data.coverImage);
+        },
+        editablePlan: onSave ? plan : null, // Only auto-save if onSave prop exists
+        debounceMs: 5000,
+    });
 
     // Language Toggle Handler
     const handleLanguageToggle = () => {
@@ -723,17 +747,25 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                         <span className="hidden md:inline">Print View</span>
                     </button>
                     {onSave && (
-                        <button
-                            onClick={handleSaveClick}
-                            disabled={isSaved}
-                            className={`flex items-center justify-center gap-2 px-5 py-2 text-white rounded-full font-bold text-sm shadow-md transition-all whitespace-nowrap ${isSaved
-                                ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default disabled:opacity-100'
-                                : 'bg-slate-900 hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0'
-                                }`}
-                        >
-                            {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                            <span className="hidden md:inline">{isSaved ? t('lp.saved') : t('lp.save')}</span>
-                        </button>
+                        <>
+                            {saveStatus !== 'saved' && (
+                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${saveStatus === 'saving' ? 'text-amber-600 bg-amber-50' : 'text-slate-400 bg-slate-100'
+                                    }`}>
+                                    {saveStatus === 'saving' ? '⏳ Saving...' : '● Unsaved'}
+                                </span>
+                            )}
+                            <button
+                                onClick={handleSaveClick}
+                                disabled={isSaved}
+                                className={`flex items-center justify-center gap-2 px-5 py-2 text-white rounded-full font-bold text-sm shadow-md transition-all whitespace-nowrap ${isSaved
+                                    ? 'bg-emerald-500 hover:bg-emerald-500 cursor-default disabled:opacity-100'
+                                    : 'bg-slate-900 hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0'
+                                    }`}
+                            >
+                                {isSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                                <span className="hidden md:inline">{isSaved ? t('lp.saved') : t('lp.save')}</span>
+                            </button>
+                        </>
                     )}
                 </div>
             </div>

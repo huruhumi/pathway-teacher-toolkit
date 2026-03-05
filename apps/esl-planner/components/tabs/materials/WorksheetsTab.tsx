@@ -36,6 +36,9 @@ import {
 } from "../../../types";
 import { AutoResizeTextarea } from "../../common/AutoResizeTextarea";
 import { useLanguage } from '../../../i18n/LanguageContext';
+import { AssignModal } from '../../AssignModal';
+import * as edu from '@shared/services/educationService';
+import { useAuthStore } from '@shared/stores/useAuthStore';
 import {
   generateWorksheet,
   generateLessonImage,
@@ -68,6 +71,15 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
   const [regeneratingSectionId, setRegeneratingSectionId] = useState<
     string | null
   >(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Assigning state
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [assignError, setAssignError] = useState('');
+  const [assignSuccess, setAssignSuccess] = useState('');
+
+  const teacherId = useAuthStore(s => s.user?.id);
   const [isGeneratingPassageId, setIsGeneratingPassageId] = useState<
     string | null
   >(null);
@@ -416,11 +428,62 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
     handleGeneratePassage,
   };
 
+  const handleAssign = async (classId: string, dueDate: string) => {
+    if (!teacherId || !editablePlan || worksheets.length === 0) return; // Ensure there's at least one worksheet to assign
+    setIsAssigning(true);
+    setAssignError('');
+    setAssignSuccess('');
+
+    try {
+      // For assignment, we'll use the first worksheet in the array as the primary content
+      const dataToAssign = worksheets[0];
+
+      const assignment = await edu.upsertAssignment({
+        teacher_id: teacherId,
+        title: dataToAssign.title || editablePlan.classInformation.topic || 'Worksheet',
+        description: dataToAssign.instructions || `A ${editablePlan.classInformation.level || ''} level worksheet about ${editablePlan.classInformation.topic || 'English'}.`,
+        class_id: classId,
+        type: 'worksheet',
+        content: dataToAssign, // JSON payload of the first worksheet
+        due_date: dueDate || null
+      } as any);
+
+      if (assignment) {
+        // Determine class students
+        const clsStudents = await edu.fetchClassStudents(classId);
+        const sids = clsStudents.map(cs => cs.student_id);
+        await edu.createSubmissionsForClass(assignment.id, sids);
+
+        setAssignSuccess(t('assign.success') as string);
+        setTimeout(() => {
+          setIsAssignOpen(false);
+          setAssignSuccess('');
+        }, 2000);
+      } else {
+        setAssignError(t('assign.error') as string);
+      }
+    } catch (e: any) {
+      console.error("Assignment failed:", e);
+      setAssignError(e.message || t('assign.error'));
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
         <h3 className="text-lg font-bold text-slate-800">Custom Worksheets</h3>
         <div className="flex gap-2">
+          <button
+            onClick={() => setIsAssignOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg transition-transform hover:-translate-y-0.5"
+            title={t('assign.title') as string}
+          >
+            ✨ {t('assign.confirm') as string}
+          </button>
+          {/* Assuming handleOpenPrint is defined elsewhere or will be added */}
+          {/* <button onClick={handleOpenPrint}>Print</button> */}
         </div>
       </div>
 
@@ -866,6 +929,25 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
           </div>
         ))}
       </div>
+
+      <AssignModal
+        isOpen={isAssignOpen}
+        onClose={() => setIsAssignOpen(false)}
+        onAssign={handleAssign}
+        assignmentType="worksheet"
+        isSaving={isAssigning}
+      />
+
+      {assignSuccess && (
+        <div className="fixed bottom-6 right-6 bg-emerald-50 text-emerald-600 border border-emerald-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
+          <Check className="w-4 h-4" /> {assignSuccess}
+        </div>
+      )}
+      {assignError && (
+        <div className="fixed bottom-6 right-6 bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
+          <AlertCircle className="w-4 h-4" /> {assignError}
+        </div>
+      )}
     </div>
   );
 };

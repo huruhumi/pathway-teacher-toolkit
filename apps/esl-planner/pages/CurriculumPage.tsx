@@ -40,7 +40,10 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
             batchLessonMap={batchLessonMap}
             batchRunning={batchRunning}
             batchProgress={batchProgress}
-            onBatchGenerate={(lessons, params, curriculum) => handleBatchGenerate(lessons, params, saveLessonDb, curriculum)}
+            onBatchGenerate={(lessons, params, curriculum) => {
+                const sc = curriculum ? history.savedCurricula.find(c => c.textbookTitle === curriculum.textbookTitle && c.totalLessons === curriculum.totalLessons) : undefined;
+                handleBatchGenerate(lessons, params, saveLessonDb, curriculum, sc?.id);
+            }}
             onCancelBatch={handleCancelBatch}
             onOpenKit={handleOpenKit}
         />

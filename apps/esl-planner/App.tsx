@@ -47,7 +47,10 @@ const AppContent: React.FC = () => {
 
     // Cross-page navigation handlers
     const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => {
-        const mapped = mapLessonToESLInput(lesson, params, curriculum);
+        // Resolve curriculumId from savedCurricula and lessonIndex from curriculum
+        const matchedCurriculum = curriculum ? savedCurricula.find(sc => sc.textbookTitle === curriculum.textbookTitle && sc.totalLessons === curriculum.totalLessons) : undefined;
+        const lessonIndex = curriculum ? curriculum.lessons.indexOf(lesson) : undefined;
+        const mapped = mapLessonToESLInput(lesson, params, curriculum, '', matchedCurriculum?.id, lessonIndex !== undefined && lessonIndex >= 0 ? lessonIndex : undefined);
         setPrefilledValues(mapped);
         setState(prev => ({ ...prev, generatedContent: null, error: null }));
         setActiveLessonId(null);
@@ -80,6 +83,7 @@ const AppContent: React.FC = () => {
                 onLogoClick={() => { setViewMode('curriculum'); clearSessionState(); setActiveLessonId(null); setPrefilledValues(null); }}
                 rightContent={<HeaderToggles lang={lang} onLangChange={setLang} isDark={isDarkMode} onDarkChange={setDarkMode} />}
                 signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+                homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
             />
 
             <PageLayout>

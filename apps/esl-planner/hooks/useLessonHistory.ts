@@ -157,7 +157,7 @@ function generateCurriculumDescription(curriculum: ESLCurriculum): string {
 
 export function useLessonHistory() {
     const {
-        activeLessonId, setActiveLessonId,
+        activeLessonId, setActiveLessonId, prefilledValues,
         curSearch, curLevel, curDate, curSort, curLessonRange,
         kitSearch, kitLevel, kitDate, kitSort, kitTextbook, recordsTab
     } = useAppStore();
@@ -274,7 +274,11 @@ export function useLessonHistory() {
             topic: content.structuredLessonPlan.classInformation.topic || existing?.topic || 'Untitled Lesson',
             level: content.structuredLessonPlan.classInformation.level,
             description: desc,
-            content: strippedContent
+            content: strippedContent,
+            // Curriculum metadata from prefilledValues (preserve existing on re-save)
+            curriculumId: existing?.curriculumId ?? prefilledValues?.curriculumId,
+            unitNumber: existing?.unitNumber ?? prefilledValues?.unitNumber,
+            lessonIndex: existing?.lessonIndex ?? prefilledValues?.lessonIndex,
         };
 
         saveLessonDb(newRecord);

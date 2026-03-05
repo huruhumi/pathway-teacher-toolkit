@@ -80,6 +80,30 @@
             en: 'Manage Ops',
             zh: '管理运营',
         },
+        'tool.eduhub.title': {
+            en: 'Edu Hub',
+            zh: '教务中心',
+        },
+        'tool.eduhub.desc': {
+            en: 'Education management system for classes, students, assignments, attendance, and book lending.',
+            zh: '教务管理系统：班级、学生、作业、考勤和借书管理。',
+        },
+        'tool.eduhub.btn': {
+            en: 'Open Edu Hub',
+            zh: '打开教务中心',
+        },
+        'tool.student.title': {
+            en: 'Student Portal',
+            zh: '学生端',
+        },
+        'tool.student.desc': {
+            en: 'Student-facing view for assignments, schedules, and classroom activities.',
+            zh: '学生端：查看作业、课表和课堂活动。',
+        },
+        'tool.student.btn': {
+            en: 'Open Portal',
+            zh: '打开学生端',
+        },
 
         // Footer
         'footer': {

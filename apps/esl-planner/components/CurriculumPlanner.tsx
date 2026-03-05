@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import {
     Upload, FileText, BookOpen, Users, GraduationCap,
@@ -13,6 +13,7 @@ import { extractPdfText as extractPdfTextShared } from '@shared/utils/pdf';
 import { useLanguage } from '../i18n/LanguageContext';
 import { formatLessonDisplayName } from '../utils/curriculumMapper';
 import { GenerationProgress } from '@shared/components/GenerationProgress';
+import { useAutoSave } from '@shared/hooks/useAutoSave';
 
 interface CurriculumPlannerProps {
     onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => void;
@@ -99,6 +100,24 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             });
         }
     }, [curriculum, savedParams]);
+
+    // Auto-save curriculum to Records (debounced)
+    const autoSaveGetParams = useCallback((): CurriculumParams => ({
+        lessonCount, level, duration, studentCount, slideCount, customInstructions
+    }), [lessonCount, level, duration, studentCount, slideCount, customInstructions]);
+
+    const getCurriculumContent = useCallback(() => {
+        return { curriculum: curriculum!, params: savedParams || autoSaveGetParams() };
+    }, [curriculum, savedParams, autoSaveGetParams]);
+
+    const { saveStatus: curriculumSaveStatus } = useAutoSave({
+        getCurrentContentObject: getCurriculumContent,
+        onSave: (data: { curriculum: ESLCurriculum; params: CurriculumParams }) => {
+            onSaveCurriculum?.(data.curriculum, data.params);
+        },
+        editablePlan: (onSaveCurriculum && curriculum && isSaved) ? curriculum : null,
+        debounceMs: 5000,
+    });
 
     // PDF text extraction using shared utility
     const extractPdfTextLocal = async (file: File) => {

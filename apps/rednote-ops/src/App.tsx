@@ -179,6 +179,7 @@ function AppContent() {
         }}
         rightContent={headerToggles}
         signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+        homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
       />
 
       <PageLayout>

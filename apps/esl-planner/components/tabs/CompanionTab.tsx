@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/geminiService';
-import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, Target, List } from 'lucide-react';
-
+import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, Target, List, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { AssignModal } from '../AssignModal';
+import * as edu from '@shared/services/educationService';
+import { useAuthStore } from '@shared/stores/useAuthStore';
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
 }
@@ -32,6 +35,13 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
     const [addingTaskIndex, setAddingTaskIndex] = useState<number | null>(null);
     const [addingDayResourceIndex, setAddingDayResourceIndex] = useState<number | null>(null);
     const [isRegeneratingTriviaMap, setIsRegeneratingTriviaMap] = useState<Record<number, boolean>>({});
+
+    const { t } = useLanguage();
+    const teacherId = useAuthStore(s => s.user?.id);
+    const [isAssignOpen, setIsAssignOpen] = useState(false);
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [assignError, setAssignError] = useState('');
+    const [assignSuccess, setAssignSuccess] = useState('');
 
     const handleTaskChange = (dIdx: number, tIdx: number, field: keyof ReadingTask, value: any) => {
         const newDays = [...editableReadingCompanion.days];
@@ -168,11 +178,56 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
         }
     };
 
+    const handleAssign = async (classId: string, dueDate: string) => {
+        if (!teacherId || !editablePlan || !editableReadingCompanion) return;
+        setIsAssigning(true);
+        setAssignError('');
+        setAssignSuccess('');
+
+        try {
+            const assignment = await edu.upsertAssignment({
+                teacher_id: teacherId,
+                title: `${editablePlan.classInformation.topic} - Learning Companion`,
+                description: `A 7-day learning companion for ${editablePlan.classInformation.topic}`,
+                class_id: classId,
+                type: 'companion',
+                content: editableReadingCompanion, // JSON payload
+                due_date: dueDate || null
+            } as any);
+
+            if (assignment) {
+                const clsStudents = await edu.fetchClassStudents(classId);
+                const sids = clsStudents.map(cs => cs.student_id);
+                await edu.createSubmissionsForClass(assignment.id, sids);
+
+                setAssignSuccess(t('assign.success') as string);
+                setTimeout(() => {
+                    setIsAssignOpen(false);
+                    setAssignSuccess('');
+                }, 2000);
+            } else {
+                setAssignError(t('assign.error') as string);
+            }
+        } catch (e: any) {
+            console.error("Assignment failed:", e);
+            setAssignError(e.message || t('assign.error'));
+        } finally {
+            setIsAssigning(false);
+        }
+    };
+
     return (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-8 animate-fade-in relative">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <h3 className="text-xl font-bold text-slate-800">7-Day Learning Companion</h3>
                 <div className="flex gap-2 no-print">
+                    <button
+                        onClick={() => setIsAssignOpen(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg transition-transform hover:-translate-y-0.5"
+                        title={t('assign.title') as string}
+                    >
+                        ✨ {t('assign.confirm') as string}
+                    </button>
                 </div>
             </div>
 
@@ -391,6 +446,25 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 {isAddingDay ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                 {isAddingDay ? 'Planning Next Day...' : 'Extend Review Plan (Add Day)'}
             </button>
+
+            <AssignModal
+                isOpen={isAssignOpen}
+                onClose={() => setIsAssignOpen(false)}
+                onAssign={handleAssign}
+                assignmentType="companion"
+                isSaving={isAssigning}
+            />
+
+            {assignSuccess && (
+                <div className="fixed bottom-6 right-6 bg-emerald-50 text-emerald-600 border border-emerald-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
+                    <Check className="w-4 h-4" /> {assignSuccess}
+                </div>
+            )}
+            {assignError && (
+                <div className="fixed bottom-6 right-6 bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
+                    <AlertCircle className="w-4 h-4" /> {assignError}
+                </div>
+            )}
         </div>
     );
 };

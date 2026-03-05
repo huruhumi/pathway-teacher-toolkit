@@ -38,7 +38,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
 
     // --- Textbook Tree (for Lesson Kits index) ---
     const textbookTree = useMemo(() => {
-        const tree: { name: string; level: string; units: Map<number, CurriculumLesson[]> }[] = [];
+        const tree: { name: string; level: string; curriculumIds: Set<string>; units: Map<number, CurriculumLesson[]> }[] = [];
         savedCurricula.forEach(sc => {
             const name = sc.curriculum?.seriesName
                 || sc.textbookTitle?.replace(/\s*Student'?s?\s*Book/gi, '').trim()
@@ -50,33 +50,29 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                 if (!units.has(u)) units.set(u, []);
                 units.get(u)!.push(l);
             });
-            // Merge into same textbook name if already exists
             const existing = tree.find(t => t.name === name);
             if (existing) {
+                existing.curriculumIds.add(sc.id);
                 units.forEach((lessons, u) => {
                     if (!existing.units.has(u)) existing.units.set(u, []);
                     existing.units.get(u)!.push(...lessons);
                 });
             } else {
-                tree.push({ name, level: sc.targetLevel, units });
+                tree.push({ name, level: sc.targetLevel, curriculumIds: new Set([sc.id]), units });
             }
         });
         return tree;
     }, [savedCurricula]);
 
-    // --- Lessons filtered by tree selection ---
+    // --- Lessons filtered by tree selection (metadata-based) ---
     const treeFilteredKits = useMemo(() => {
-        if (!selectedTextbook) return null; // null = no tree filter, show all
+        if (!selectedTextbook) return null;
         const tb = textbookTree.find(t => t.name === selectedTextbook);
         if (!tb) return [];
         if (selectedUnit === null) return [];
-        // Show only this unit's lessons
-        const unitLessons = tb.units.get(selectedUnit) || [];
-        const unitTitles = new Set(unitLessons.map(l => l.title.toLowerCase()));
-        return history.filteredKits.filter(lk => {
-            const topic = lk.topic.toLowerCase();
-            return [...unitTitles].some(t => topic.includes(t));
-        });
+        return history.filteredKits.filter(lk =>
+            lk.curriculumId && tb.curriculumIds.has(lk.curriculumId) && lk.unitNumber === selectedUnit
+        );
     }, [selectedTextbook, selectedUnit, textbookTree, history.filteredKits]);
 
     const displayedKits = treeFilteredKits ?? history.filteredKits;
@@ -272,12 +268,10 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                 return (
                                     <div className="flex flex-wrap gap-2">
                                         {sortedUnits.map(([unitNum, lessons]) => {
-                                            // Count generated kits matching this unit
-                                            const unitTitles = new Set(lessons.map(l => l.title.toLowerCase()));
-                                            const generatedCount = history.filteredKits.filter(lk => {
-                                                const topic = lk.topic.toLowerCase();
-                                                return [...unitTitles].some(t => topic.includes(t));
-                                            }).length;
+                                            // Count generated kits matching this unit by metadata
+                                            const generatedCount = history.filteredKits.filter(lk =>
+                                                lk.curriculumId && tb.curriculumIds.has(lk.curriculumId) && lk.unitNumber === unitNum
+                                            ).length;
                                             return (
                                                 <button
                                                     key={unitNum}
