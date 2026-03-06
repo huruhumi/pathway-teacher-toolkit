@@ -64,6 +64,11 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         return tree;
     }, [savedCurricula]);
 
+    // --- Ungrouped kits (no curriculum metadata) ---
+    const ungroupedKits = useMemo(() =>
+        history.filteredKits.filter(lk => !lk.curriculumId),
+        [history.filteredKits]);
+
     // --- Lessons filtered by tree selection (metadata-based) ---
     const treeFilteredKits = useMemo(() => {
         if (!selectedTextbook) return null;
@@ -75,7 +80,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         );
     }, [selectedTextbook, selectedUnit, textbookTree, history.filteredKits]);
 
-    const displayedKits = treeFilteredKits ?? history.filteredKits;
+    const displayedKits = treeFilteredKits ?? (textbookTree.length > 0 ? ungroupedKits : history.filteredKits);
 
     const handleLoadCurriculum = (saved: SavedCurriculum) => {
         setLoadedCurriculum({ curriculum: saved.curriculum, params: saved.params });
@@ -299,8 +304,8 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                         </div>
                     )}
 
-                    {/* Cards only show when unit is selected OR no tree exists */}
-                    {(selectedUnit !== null || textbookTree.length === 0) && displayedKits.length === 0 ? (
+                    {/* Cards show when: unit selected, no tree exists, or ungrouped kits exist with no textbook selected */}
+                    {(selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) && displayedKits.length === 0 ? (
                         <EmptyState
                             icon={Layers}
                             iconSize={48}
@@ -314,45 +319,56 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             onAction={selectedTextbook ? () => { setSelectedTextbook(null); setSelectedUnit(null); } : onGoToCreate}
                             actionClassName="bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20"
                         />
-                    ) : (selectedUnit !== null || textbookTree.length === 0) ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {displayedKits.map((lesson) => (
-                                <RecordCard
-                                    key={lesson.id}
-                                    title={lesson.topic}
-                                    description={lesson.description || ''}
-                                    timestamp={lesson.timestamp}
-                                    tags={[
-                                        { icon: <GraduationCap size={16} />, label: lesson.level },
-                                        ...(lesson.content?.structuredLessonPlan?.lessonDetails?.type
-                                            ? [{ icon: <Sparkles size={16} />, label: lesson.content.structuredLessonPlan.lessonDetails.type }]
-                                            : [{ icon: <Sparkles size={16} />, label: 'Lesson Kit' }]),
-                                        ...(lesson.content?.structuredLessonPlan?.stages?.length
-                                            ? [{ icon: <Layers size={16} />, label: `${lesson.content.structuredLessonPlan.stages.length} stages` }]
-                                            : []),
-                                    ]}
-                                    active={activeLessonId === lesson.id}
-                                    onOpen={() => handleLoadRecord(lesson)}
-                                    openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
+                    ) : (selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) ? (
+                        <>
+                            {!selectedTextbook && textbookTree.length > 0 && (
+                                <div className="flex items-center gap-2 mt-2 mb-1">
+                                    <FileText size={16} className="text-slate-400" />
+                                    <span className="text-sm font-semibold text-slate-500">
+                                        {lang === 'zh' ? '独立课件' : 'Standalone Kits'}
+                                    </span>
+                                    <span className="text-xs text-slate-400">({ungroupedKits.length})</span>
+                                </div>
+                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {displayedKits.map((lesson) => (
+                                    <RecordCard
+                                        key={lesson.id}
+                                        title={lesson.topic}
+                                        description={lesson.description || ''}
+                                        timestamp={lesson.timestamp}
+                                        tags={[
+                                            { icon: <GraduationCap size={16} />, label: lesson.level },
+                                            ...(lesson.content?.structuredLessonPlan?.lessonDetails?.type
+                                                ? [{ icon: <Sparkles size={16} />, label: lesson.content.structuredLessonPlan.lessonDetails.type }]
+                                                : [{ icon: <Sparkles size={16} />, label: 'Lesson Kit' }]),
+                                            ...(lesson.content?.structuredLessonPlan?.stages?.length
+                                                ? [{ icon: <Layers size={16} />, label: `${lesson.content.structuredLessonPlan.stages.length} stages` }]
+                                                : []),
+                                        ]}
+                                        active={activeLessonId === lesson.id}
+                                        onOpen={() => handleLoadRecord(lesson)}
+                                        openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
 
-                                    onRename={(newName) => history.handleRenameLesson(lesson.id, newName)}
-                                    onDelete={() => history.handleDeleteRecord(lesson.id)}
-                                    customActions={(
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDownloadZip(lesson, setIsExporting);
-                                            }}
-                                            disabled={isExporting === lesson.id}
-                                            className={`p-2 rounded-lg transition-colors ${isExporting === lesson.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
-                                            title="Download/Export"
-                                        >
-                                            <Download size={16} className={isExporting === lesson.id ? "animate-pulse" : ""} />
-                                        </button>
-                                    )}
-                                />
-                            ))}
-                        </div>
+                                        onRename={(newName) => history.handleRenameLesson(lesson.id, newName)}
+                                        onDelete={() => history.handleDeleteRecord(lesson.id)}
+                                        customActions={(
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDownloadZip(lesson, setIsExporting);
+                                                }}
+                                                disabled={isExporting === lesson.id}
+                                                className={`p-2 rounded-lg transition-colors ${isExporting === lesson.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
+                                                title="Download/Export"
+                                            >
+                                                <Download size={16} className={isExporting === lesson.id ? "animate-pulse" : ""} />
+                                            </button>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </>
                     ) : null}
                 </div>
             )}
