@@ -45,10 +45,14 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                 || sc.textbookTitle;
             if (!name || !sc.curriculum?.lessons?.length) return;
             const units = new Map<number, CurriculumLesson[]>();
-            sc.curriculum.lessons.forEach(l => {
-                if (l.unitNumber == null) return; // skip lessons without unit info
-                if (!units.has(l.unitNumber)) units.set(l.unitNumber, []);
-                units.get(l.unitNumber)!.push(l);
+            // Check if ANY lesson has unitNumber
+            const hasUnits = sc.curriculum.lessons.some(l => l.unitNumber != null);
+            sc.curriculum.lessons.forEach((l, i) => {
+                // If no lessons have unitNumber, group by lesson number as the "unit"
+                const u = hasUnits ? (l.unitNumber ?? -1) : (l.lessonNumber ?? i + 1);
+                if (u === -1) return; // skip lessons that somehow have no unit when others do
+                if (!units.has(u)) units.set(u, []);
+                units.get(u)!.push(l);
             });
             const existing = tree.find(t => t.name === name);
             if (existing) {
@@ -74,12 +78,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         if (!selectedTextbook) return null;
         const tb = textbookTree.find(t => t.name === selectedTextbook);
         if (!tb) return [];
-        // When no unit selected, show ALL kits for this textbook
-        if (selectedUnit === null) {
-            return history.filteredKits.filter(lk =>
-                lk.curriculumId && tb.curriculumIds.has(lk.curriculumId)
-            );
-        }
+        if (selectedUnit === null) return [];
         return history.filteredKits.filter(lk =>
             lk.curriculumId && tb.curriculumIds.has(lk.curriculumId) && lk.unitNumber === selectedUnit
         );
@@ -309,8 +308,8 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                         </div>
                     )}
 
-                    {/* Cards show when: textbook or unit selected, no tree exists, or ungrouped kits exist */}
-                    {(selectedTextbook || selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) && displayedKits.length === 0 ? (
+                    {/* Cards show when: unit selected, no tree exists, or ungrouped kits with no textbook selected */}
+                    {(selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) && displayedKits.length === 0 ? (
                         <EmptyState
                             icon={Layers}
                             iconSize={48}
@@ -324,7 +323,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             onAction={selectedTextbook ? () => { setSelectedTextbook(null); setSelectedUnit(null); } : onGoToCreate}
                             actionClassName="bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20"
                         />
-                    ) : (selectedTextbook || selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) ? (
+                    ) : (selectedUnit !== null || textbookTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0)) ? (
                         <>
                             {!selectedTextbook && textbookTree.length > 0 && (
                                 <div className="flex items-center gap-2 mt-2 mb-1">
