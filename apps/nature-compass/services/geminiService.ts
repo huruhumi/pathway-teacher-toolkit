@@ -21,6 +21,20 @@ export const THEME_PERSPECTIVES = [
   "Sky Pirates (Wind and weather)"
 ];
 
+export const PATHWAY_BRAND_STYLE_BLOCK = `
+[Pathway Academy Brand Identity (MANDATORY)]
+The generated 'handbookStylePrompt' MUST incorporate these brand elements:
+- Primary: Deep Navy Blue (#1A2B58) for headings & borders
+- Accent 1: Vibrant Fuchsia Pink (#E91E63) for CTA boxes & subtitles
+- Accent 2: Warm Golden Yellow (#FFC107) for icons & highlights
+- Accent 3: Sky Blue (#87CEEB) for soft background tints
+- Style: Modern flat vector illustrations, geometric shapes (hexagons & chevrons)
+- Background: White (#FFFFFF) or near-white (#F8F9FA)
+- Typography: Geometric sans-serif (Montserrat, Open Sans)
+- Layout: Rounded-corner bordered activity zones, high negative space
+`;
+
+
 export const lessonPlanSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -139,7 +153,7 @@ export const lessonPlanSchema: Schema = {
         properties: {
           pageNumber: { type: Type.NUMBER },
           title: { type: Type.STRING },
-          section: { type: Type.STRING, enum: ['Introduction', 'Safety', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Certificate'] },
+          section: { type: Type.STRING, enum: ['Introduction', 'Table of Contents', 'Safety', 'Prop Checklist', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Reflection', 'Certificate', 'Back Cover'] },
           layoutDescription: { type: Type.STRING, description: "How the page should look (e.g. 'Split screen with large hero image')." },
           visualPrompt: { type: Type.STRING, description: "Prompt for generating the visual assets for this page." },
           contentPrompt: { type: Type.STRING, description: "Prompt to generate the text content for this page." },
@@ -156,6 +170,32 @@ export const lessonPlanSchema: Schema = {
   },
   required: ["missionBriefing", "basicInfo", "vocabulary", "roadmap", "supplies", "safetyProtocol", "visualReferences", "handbookStylePrompt", "handbook", "notebookLMPrompt", "imagePrompts"],
 };
+
+/**
+ * Shared handbook design rules injected into all system prompts (EN + CN).
+ * Fixes: brand enforcement, certificate badge shape, numbering, deduplication.
+ */
+function buildHandbookRules(pageCount: number, age: string, cefr: string): string {
+  return `
+    [Handbook Design Rules (CRITICAL)]
+    You must design a ${pageCount}-page student handbook that is directly synchronized with the Roadmap and deeply integrated with the lesson content.
+    1. GLOBAL STYLE: Generate a 'handbookStylePrompt' based on the Pathway Academy Brand Identity defined below. The prompt must be detailed enough for Midjourney/NotebookLM to reproduce a consistent visual across all pages.
+    2. PROGRESSION: Cover -> Table of Contents -> Safety/Prop Checklist -> 5E Journey (Engage/Explore/Explain/Elaborate) -> Data Log/Observations -> Reflection -> Certificate -> Back Cover.
+    3. STRICT SYNCHRONIZATION: Every single Roadmap phase MUST have at least one corresponding 'Activity/Worksheet' or 'Reading' page in the Handbook. The handbook is the student's physical guide through the roadmap.
+    4. BACKGROUND KNOWLEDGE INTEGRATION: You MUST extract the facts from the Roadmap's 'backgroundInfo' and translate them into student-facing 'Background Knowledge' or 'Reading' passages in the handbook. Use a heuristic, inquiry-based tone — pose questions and paradoxes rather than simply stating facts. Do NOT leave facts only for the teacher.
+    5. RICH, EXACT CONTENT: The 'contentPrompt' must not be a vague summary. It MUST contain the EXACT text that goes on the page. Write the actual reading paragraphs, specific inquiry questions, exact fill-in-the-blank sentences, or observation instructions.
+    6. AGE & LANGUAGE (CEFR) ADAPTATION (Target: Age ${age}, CEFR ${cefr}):
+       - For Preschool/Early Primary (Ages 3-8) or Beginner (A1-A2): Use single target words, very simple 3-word commands, large visual labels, tracing exercises, matching games, and drawing activities.
+       - For Upper Primary/Middle (Ages 9-14) or Intermediate+ (B1+): Write detailed multi-paragraph reading passages, complex graphic organizers, critical thinking questions, hypothesis formulation, and detailed data logging.
+    7. PROMPT DETAIL:
+       - 'visualPrompt': Describe the exact illustration needed (specify style, e.g., "Line art for coloring", "Realistic scientific cross-section diagram", subject matter, and composition).
+       - 'contentPrompt': The exact text content, questions, and worksheet structure to be printed on the page.
+    8. CERTIFICATE PAGE: The final page (page ${pageCount}) MUST be a beautifully designed "Certificate of Achievement". The layoutDescription and visualPrompt MUST explicitly include a clearly marked 3cm × 3cm SQUARE dashed-border placeholder box labeled 'Place Your Pathway Badge Here', positioned at the bottom-center of the certificate.
+    9. BACK COVER: The last page should contain Pathway Academy branding, a closing inspirational quote, and contact information.
+
+    ${PATHWAY_BRAND_STYLE_BLOCK}
+  `;
+}
 
 export const generateLessonPlan = async (input: LessonInput, signal?: AbortSignal): Promise<LessonPlanResponse> => {
   const ai = createAIClient();
@@ -189,20 +229,7 @@ export const generateLessonPlan = async (input: LessonInput, signal?: AbortSigna
     - Generate exactly 5-6 logical phases following the 5E model. 
     - Each phase must include detailed 'steps', 'backgroundInfo' (scientific/factual accuracy), and 'teachingTips' (ESL scaffolding like TPR, visual aids, or sentence frames).
 
-    [Handbook Design Rules (CRITICAL)]
-    You must design a ${handbookPageCount}-page student handbook that is directly synchronized with the Roadmap and deeply integrated with the lesson content.
-    1. GLOBAL STYLE: Generate a 'handbookStylePrompt' that defines a global, universal aesthetic (e.g., "Whimsical watercolor, earth tones, friendly rounded fonts") so that if fed into NotebookLM/Midjourney, all >15 pages look like they belong to the same book.
-    2. PROGRESSION: Cover -> Safety/Tools -> 5E Journey (Engage/Explore/Explain/Elaborate) -> Data Log/Observations -> Reflection -> Certificate.
-    3. STRICT SYNCHRONIZATION: Every single Roadmap phase MUST have at least one corresponding 'Activity/Worksheet' or 'Reading' page in the Handbook. The handbook is the student's physical guide through the roadmap.
-    4. BACKGROUND KNOWLEDGE INTEGRATION: You MUST extract the facts from the Roadmap's 'backgroundInfo' and translate them into student-facing 'Reading' passages or diagrams in the handbook. Do NOT leave facts only for the teacher. 
-    5. RICH, EXACT CONTENT: The 'contentPrompt' must not be a vague summary. It MUST contain the EXACT text that goes on the page. Write the actual reading paragraphs, specific inquiry questions, exact fill-in-the-blank sentences, or observation instructions.
-    6. AGE & LANGUAGE (CEFR) ADAPTATION (Target: Age ${input.studentAge}, CEFR ${input.cefrLevel}):
-       - For Preschool/Early Primary (Ages 3-8) or Beginner (A1-A2): Use single target words, very simple 3-word commands, large visual labels, tracing exercises, matching games, and drawing activities.
-       - For Upper Primary/Middle (Ages 9-14) or Intermediate+ (B1+): Write detailed multi-paragraph reading passages, complex graphic organizers, critical thinking questions, hypothesis formulation, and detailed data logging.
-    7. PROMPT DETAIL: 
-       - 'visualPrompt': Describe the exact illustration needed (specify style, e.g., "Line art for coloring", "Realistic scientific cross-section diagram", subject matter, and composition).
-       - 'contentPrompt': The exact text content, questions, and worksheet structure to be printed on the page.
-    8. CERTIFICATE PAGE: The final page (page ${handbookPageCount}) MUST be a beautifully designed "Certificate of Achievement". The layoutDescription and visualPrompt MUST explicitly include a beautiful 3x3cm circular placeholder area designated for the student to attach their physical badge sticker.
+    ${buildHandbookRules(handbookPageCount, input.studentAge, input.cefrLevel || 'A1 (Beginner)')}
 
     Structure Requirement:
     - Mission Briefing: Engaging title & narrative.
@@ -384,19 +411,7 @@ export const generateLessonPlanStreaming = async (
     - Generate exactly 5-6 logical phases following the 5E model. 
     - Each phase must include detailed 'steps', 'backgroundInfo' (scientific/factual accuracy), and 'teachingTips' (ESL scaffolding like TPR, visual aids, or sentence frames).
 
-    [Handbook Design Rules (CRITICAL)]
-    You must design a ${handbookPageCount}-page student handbook that is directly synchronized with the Roadmap and deeply integrated with the lesson content.
-    1. GLOBAL STYLE: Generate a 'handbookStylePrompt' that defines a global, universal aesthetic (e.g., "Whimsical watercolor, earth tones, friendly rounded fonts") so that if fed into NotebookLM/Midjourney, all >15 pages look like they belong to the same book.
-    2. PROGRESSION: Cover -> Safety/Tools -> 5E Journey (Engage/Explore/Explain/Elaborate) -> Data Log/Observations -> Reflection -> Certificate.
-    3. STRICT SYNCHRONIZATION: Every single Roadmap phase MUST have at least one corresponding 'Activity/Worksheet' or 'Reading' page in the Handbook. The handbook is the student's physical guide through the roadmap.
-    4. BACKGROUND KNOWLEDGE INTEGRATION: You MUST extract the facts from the Roadmap's 'backgroundInfo' and translate them into student-facing 'Reading' passages or diagrams in the handbook. Do NOT leave facts only for the teacher. 
-    5. RICH, EXACT CONTENT: The 'contentPrompt' must not be a vague summary. It MUST contain the EXACT text that goes on the page. Write the actual reading paragraphs, specific inquiry questions, exact fill-in-the-blank sentences, or observation instructions.
-    6. AGE & LANGUAGE (CEFR) ADAPTATION (Target: Age ${input.studentAge}, CEFR ${input.cefrLevel}):
-       - For Preschool/Early Primary (Ages 3-8) or Beginner (A1-A2): Use single target words, very simple 3-word commands, large visual labels, tracing exercises, matching games, and drawing activities.
-       - For Upper Primary/Middle (Ages 9-14) or Intermediate+ (B1+): Write detailed multi-paragraph reading passages, complex graphic organizers, critical thinking questions, hypothesis formulation, and detailed data logging.
-       - 'visualPrompt': Describe the exact illustration needed (specify style, e.g., "Line art for coloring", "Realistic scientific cross-section diagram", subject matter, and composition).
-       - 'contentPrompt': The exact text content, questions, and worksheet structure to be printed on the page.
-    8. CERTIFICATE PAGE: The final page (page ${handbookPageCount}) MUST be a beautifully designed "Certificate of Achievement". The layoutDescription and visualPrompt MUST explicitly include a beautiful 3x3cm circular placeholder area designated for the student to attach their physical badge sticker.
+    ${buildHandbookRules(handbookPageCount, input.studentAge, input.cefrLevel || 'A1 (Beginner)')}
 
     Structure Requirement:
     - Mission Briefing: Engaging title & narrative.
@@ -451,17 +466,12 @@ export const generateLessonPlanStreamingCN = async (
 - 每个阶段必须包含详细的"步骤"、"背景知识"（科学 / 事实准确性）和"教学建议"（具体的教学方法建议）。
 
 [学生手册设计规则（关键）]
-    你必须设计一本${handbookPageCount} 页的学生手册，与教学流程直接同步并深度整合。
-1. 全局风格：生成一个"handbookStylePrompt"，定义全局统一的美学风格。
-2. 顺序：封面 -> 安全 / 工具 -> 5E旅程 -> 数据记录 / 观察 -> 反思 -> 证书。
-3. 严格同步：每个教学流程阶段都必须有至少一个对应的手册页面。
-4. 背景知识整合：必须将背景知识转化为面向学生的阅读材料或图表。
-5. 丰富精确的内容："contentPrompt"必须包含页面上的确切文字内容。
-6. 年龄适配（目标：${input.studentAge} 岁）：
-- 低龄 / 小学低年级(3 - 8岁)：使用简单词汇、简短指令、大字标签、描画练习、配对游戏和绘画活动。
-- 小学高年级 / 初中(9 - 14岁)：编写详细的多段落阅读材料、复杂的图形组织器、批判性思维问题。
-7. 证书页：最后一页必须是精美的"结业证书"，包含3x3cm圆形贴纸区域。
-8. 所有手册内容必须用中文书写。
+以下英文规范为手册页面设计的完整规则（JSON key名保持英文），仅手册文本内容（contentPrompt）使用中文书写。背景知识页面请使用启发式、探究式语气——通过提问和悖论引发好奇心，而非直接陈述事实。
+${buildHandbookRules(handbookPageCount, input.studentAge, input.cefrLevel || 'A1')}
+
+额外中文规则：
+- 所有手册文本内容（contentPrompt、title）必须用中文书写。
+- visualPrompt 和 handbookStylePrompt 保持英文，以确保图像生成质量。
 
 结构要求：
 - 任务简报：引人入胜的标题和叙事。

@@ -56,6 +56,8 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             setPhonicsContent({ ...phonicsContent, keyPoints: updated });
                                         }}
                                         className="flex-1 bg-transparent border-none outline-none text-purple-900 font-bold"
+                                        title="Target Sound"
+                                        placeholder="Enter target sound"
                                     />
                                     <button
                                         onClick={() => {
@@ -63,6 +65,8 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             setPhonicsContent({ ...phonicsContent, keyPoints: updated });
                                         }}
                                         className="text-purple-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all no-print"
+                                        aria-label="Remove sound"
+                                        title="Remove sound"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
@@ -103,6 +107,8 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             setPhonicsContent({ ...phonicsContent, decodableTexts: newTexts, decodableTextPrompts: newPrompts });
                                         }}
                                         className="absolute top-4 right-4 p-2 bg-slate-50 text-slate-300 hover:text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all no-print z-10"
+                                        aria-label="Delete story"
+                                        title="Delete story"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>

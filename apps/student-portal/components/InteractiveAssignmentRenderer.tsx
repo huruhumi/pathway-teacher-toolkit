@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle } from 'lucide-react';
 import type { Assignment, Submission } from '@shared/types/education';
 import { Worksheet, ReadingCompanionContent } from '../../esl-planner/types'; // Assuming we can import types, wait we should copy or move them to shared, but for now we can import or define locally.
+import { Button } from '@shared/components/ui/Button';
+import { Textarea } from '@shared/components/ui/Textarea';
 
 interface Props {
     assignment: Assignment & { submission?: Submission };
@@ -110,12 +112,12 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                                                 ))}
                                                             </div>
                                                         ) : (
-                                                            <textarea
+                                                            <Textarea
                                                                 value={val}
                                                                 onChange={e => handleAnswerChange(answerKey, e.target.value)}
                                                                 disabled={isCompleted}
                                                                 placeholder="Type your answer here..."
-                                                                className="w-full min-h-[100px] p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:border-sky-500 focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-slate-800 dark:text-slate-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                                                                className="min-h-[100px] py-3 text-base dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-sky-500 bg-slate-50 w-full"
                                                             />
                                                         )}
                                                     </div>
@@ -132,13 +134,15 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                 {/* Footer Navigation */}
                 <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
                     <div className="max-w-3xl mx-auto flex items-center justify-between">
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => setCurrentStep(prev => prev - 1)}
                             disabled={currentStep === 0}
-                            className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-all flex items-center gap-2"
+                            leftIcon={<ChevronLeft size={18} />}
+                            className="dark:text-slate-300 dark:hover:bg-slate-800"
                         >
-                            <ChevronLeft size={18} /> Previous
-                        </button>
+                            Previous
+                        </Button>
 
                         <div className="flex gap-1">
                             {sections.map((_, idx) => (
@@ -147,21 +151,24 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                         </div>
 
                         {currentStep === sections.length - 1 ? (
-                            <button
+                            <Button
+                                theme="emerald"
                                 onClick={handleFinalSubmit}
                                 disabled={isCompleted || isSubmitting}
-                                className="px-6 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
+                                leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                                className="shadow-md font-bold"
                             >
-                                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                 {isCompleted ? 'Submitted' : 'Turn In'}
-                            </button>
+                            </Button>
                         ) : (
-                            <button
+                            <Button
+                                variant="primary"
                                 onClick={() => setCurrentStep(prev => prev + 1)}
-                                className="px-5 py-2.5 rounded-xl font-bold text-white bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 shadow-sm transition-all flex items-center gap-2"
+                                rightIcon={<ChevronRight size={18} />}
+                                className="dark:bg-slate-700 dark:hover:bg-slate-600 font-bold"
                             >
-                                Next <ChevronRight size={18} />
-                            </button>
+                                Next
+                            </Button>
                         )}
                     </div>
                 </footer>
@@ -234,32 +241,37 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
 
                 <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
                     <div className="max-w-2xl mx-auto flex items-center justify-between">
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => setCurrentStep(prev => prev - 1)}
                             disabled={currentStep === 0}
-                            className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-all flex items-center gap-2"
+                            leftIcon={<ChevronLeft size={18} />}
+                            className="dark:text-slate-300 dark:hover:bg-slate-800 font-bold"
                         >
-                            <ChevronLeft size={18} /> Prev Day
-                        </button>
+                            Prev Day
+                        </Button>
 
                         <div className="text-sm font-bold text-slate-400">Day {currentStep + 1}</div>
 
                         {currentStep === days.length - 1 ? (
-                            <button
+                            <Button
+                                theme="emerald"
                                 onClick={handleFinalSubmit}
                                 disabled={isCompleted || isSubmitting}
-                                className="px-6 py-2.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-md disabled:opacity-50 transition-all flex items-center gap-2"
+                                leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                                className="shadow-md font-bold"
                             >
-                                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                 Turn In
-                            </button>
+                            </Button>
                         ) : (
-                            <button
+                            <Button
+                                variant="primary"
                                 onClick={() => setCurrentStep(prev => prev + 1)}
-                                className="px-5 py-2.5 rounded-xl font-bold text-white bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 shadow-sm transition-all flex items-center gap-2"
+                                rightIcon={<ChevronRight size={18} />}
+                                className="font-bold dark:bg-slate-700 dark:hover:bg-slate-600"
                             >
-                                Next Day <ChevronRight size={18} />
-                            </button>
+                                Next Day
+                            </Button>
                         )}
                     </div>
                 </footer>
@@ -273,11 +285,17 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                 <h3 className="text-xl font-bold mb-4">{assignment.title}</h3>
                 <p className="text-slate-500 mb-6">This assignment type ({assignment.content_type}) cannot be completed interactively. Please complete it offline and mark as done.</p>
                 <div className="flex gap-3 justify-end">
-                    <button onClick={onClose} className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold hover:bg-slate-200 dark:hover:bg-slate-600">Cancel</button>
+                    <Button variant="ghost" onClick={onClose} className="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white font-bold">Cancel</Button>
                     {!isCompleted && (
-                        <button onClick={handleFinalSubmit} disabled={isSubmitting} className="px-4 py-2 rounded-xl bg-sky-500 text-white font-bold hover:bg-sky-600">
+                        <Button
+                            theme="indigo"
+                            onClick={handleFinalSubmit}
+                            disabled={isSubmitting}
+                            loading={isSubmitting}
+                            className="font-bold"
+                        >
                             {isSubmitting ? 'Submitting...' : 'Mark as Done'}
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>

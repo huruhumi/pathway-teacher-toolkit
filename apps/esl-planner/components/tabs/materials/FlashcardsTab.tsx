@@ -114,6 +114,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = React.memo(({
                                     value={card.word}
                                     onChange={(e) => handleFlashcardChange(idx, 'word', e.target.value)}
                                     className="text-base font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-indigo-500 outline-none w-full mr-2"
+                                    title="Flashcard Word"
+                                    placeholder="Enter word"
                                 />
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity no-print">
                                     <button onClick={() => handleDownloadFlashcardPDF(idx)} className="text-slate-400 hover:text-indigo-600 p-1" title="Download Complete PDF">
@@ -132,6 +134,8 @@ export const FlashcardsTab: React.FC<FlashcardsTabProps> = React.memo(({
                                 onChange={(e) => handleFlashcardChange(idx, 'definition', e.target.value)}
                                 className="text-sm text-slate-500 bg-transparent border-none outline-none resize-none w-full"
                                 rows={2}
+                                title="Flashcard Definition"
+                                placeholder="Enter definition"
                             />
                         </div>
                     </div>

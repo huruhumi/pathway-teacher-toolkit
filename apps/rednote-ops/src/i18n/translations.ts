@@ -1,4 +1,7 @@
+import { commonTranslations } from '@shared/i18n/commonTranslations';
+
 export const translations = {
+    ...commonTranslations,
     // Nav tabs (App.tsx)
     'nav.dashboard': { en: 'Dashboard', zh: '运营概览' },
     'nav.planner': { en: 'Planner', zh: '运营计划' },

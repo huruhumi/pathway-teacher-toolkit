@@ -17,6 +17,8 @@ import { useAppStore, useSessionStore } from './stores/appStore';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import ToastContainer from '@shared/components/ui/ToastContainer';
+import AppLayout from '@shared/components/AppLayout';
+import { RouteGuard } from '@shared/components/auth/RouteGuard';
 
 /** Generate a short description for a saved NC lesson kit */
 function generateNCKitDescription(plan: LessonPlanResponse): string {
@@ -183,69 +185,73 @@ export const App: React.FC = () => {
   return (
     <LanguageProvider>
       <ErrorBoundary>
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
-          <Header
-            currentView={view}
-            onNavigate={(v) => {
-              setView(v);
-              if (v === 'curriculum') {
-                clearSessionState();
-                setCurrentPlanId(null);
-              }
-            }}
-            onLogoClick={() => {
-              setView('curriculum');
-              clearSessionState();
-              setCurrentPlanId(null);
-            }}
-          />
+        <RouteGuard>
+          <AppLayout currentApp="nature-compass" userName="Teacher">
+            <div className="min-h-screen h-full w-full overflow-y-auto bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
+              <Header
+                currentView={view}
+                onNavigate={(v) => {
+                  setView(v);
+                  if (v === 'curriculum') {
+                    clearSessionState();
+                    setCurrentPlanId(null);
+                  }
+                }}
+                onLogoClick={() => {
+                  setView('curriculum');
+                  clearSessionState();
+                  setCurrentPlanId(null);
+                }}
+              />
 
-          <PageLayout className="flex-1">
-            <NatureHeroBanner />
-            <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" /></div>}>
+              <PageLayout className="flex-1">
+                <NatureHeroBanner />
+                <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" /></div>}>
 
-              <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
-                <BodyContainer>
-                  <CurriculumPage
-                    onSaveCurriculum={handleSaveCurriculum}
-                    onGenerateLessonKit={handleGenerateLessonKit}
-                    onNavigate={setView}
-                    savedPlans={savedPlans}
-                    savePlanDb={savePlanDb}
-                  />
-                </BodyContainer>
-              </div>
+                  <div style={{ display: view === 'curriculum' ? 'block' : 'none' }}>
+                    <BodyContainer>
+                      <CurriculumPage
+                        onSaveCurriculum={handleSaveCurriculum}
+                        onGenerateLessonKit={handleGenerateLessonKit}
+                        onNavigate={setView}
+                        savedPlans={savedPlans}
+                        savePlanDb={savePlanDb}
+                      />
+                    </BodyContainer>
+                  </div>
 
-              <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
-                <BodyContainer className="flex flex-col gap-8">
-                  <LessonKitPage
-                    onSavePlan={handleSavePlan}
-                  />
-                </BodyContainer>
-              </div>
+                  <div style={{ display: view === 'lesson' ? 'block' : 'none' }}>
+                    <BodyContainer className="flex flex-col gap-8">
+                      <LessonKitPage
+                        onSavePlan={handleSavePlan}
+                      />
+                    </BodyContainer>
+                  </div>
 
-              <div style={{ display: view === 'saved' ? 'block' : 'none' }}>
-                <BodyContainer>
-                  <RecordsPage
-                    savedPlans={savedPlans}
-                    savedCurricula={savedCurricula}
-                    onLoadPlan={handleLoadPlan}
-                    onDeletePlan={handleDeletePlan}
-                    onRenamePlan={handleRenamePlan}
-                    onDeleteCurriculum={handleDeleteCurriculum}
-                    onRenameCurriculum={handleRenameCurriculum}
-                    onLoadCurriculum={(saved) => {
-                      setExternalCurriculum({ curriculum: saved.curriculum, params: saved.params, language: saved.language });
-                      setView('curriculum');
-                    }}
-                  />
-                </BodyContainer>
-              </div>
-            </Suspense>
-          </PageLayout>
+                  <div style={{ display: view === 'saved' ? 'block' : 'none' }}>
+                    <BodyContainer>
+                      <RecordsPage
+                        savedPlans={savedPlans}
+                        savedCurricula={savedCurricula}
+                        onLoadPlan={handleLoadPlan}
+                        onDeletePlan={handleDeletePlan}
+                        onRenamePlan={handleRenamePlan}
+                        onDeleteCurriculum={handleDeleteCurriculum}
+                        onRenameCurriculum={handleRenameCurriculum}
+                        onLoadCurriculum={(saved) => {
+                          setExternalCurriculum({ curriculum: saved.curriculum, params: saved.params, language: saved.language });
+                          setView('curriculum');
+                        }}
+                      />
+                    </BodyContainer>
+                  </div>
+                </Suspense>
+              </PageLayout>
 
-          <AppFooter appName="Nature Compass" />
-        </div>
+              <AppFooter appName="Nature Compass" />
+            </div>
+          </AppLayout>
+        </RouteGuard>
       </ErrorBoundary>
       <ToastContainer />
     </LanguageProvider>

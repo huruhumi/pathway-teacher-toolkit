@@ -16,7 +16,8 @@ import * as edu from '@shared/services/educationService';
 import { InteractiveAssignmentRenderer } from './components/InteractiveAssignmentRenderer';
 import { ReadingView } from './components/ReadingView';
 import { AppHeader } from '@shared/components/AppHeader';
-import { StudentAuth } from './components/StudentAuth';
+import AppLayout from '@shared/components/AppLayout';
+import { RouteGuard } from '@shared/components/auth/RouteGuard';
 
 type View = 'assignments' | 'schedule' | 'reading';
 
@@ -212,47 +213,47 @@ const AppContent: React.FC = () => {
 
     return (
         <ErrorBoundary>
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
-                <AppHeader
-                    appName={lang === 'zh' ? '学生端通' : 'Student Portal'}
-                    logoIcon={<GraduationCap className="w-5 h-5 text-white" />}
-                    brand={{
-                        logoBg: 'bg-gradient-to-br from-sky-400 to-blue-600',
-                        activeBg: 'bg-sky-100 dark:bg-sky-500/20',
-                        activeText: 'text-sky-700 dark:text-sky-300',
-                    }}
-                    tabs={[
-                        { key: 'assignments', label: t('nav.assignments') as string, icon: <ClipboardList size={16} /> },
-                        { key: 'schedule', label: t('nav.schedule') as string, icon: <CalendarDays size={16} /> },
-                        { key: 'reading', label: (t('nav.reading') as string) || (lang === 'en' ? 'Reading' : '阅读'), icon: <BookOpen size={16} /> },
-                    ]}
-                    activeTab={view}
-                    onTabChange={(key) => setView(key as View)}
-                    rightContent={
-                        <button onClick={() => setLang(lang === 'en' ? 'zh' : 'en')} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                            <Languages size={15} />
-                            <span>{lang === 'en' ? '中文' : 'EN'}</span>
-                        </button>
-                    }
-                    hideSignIn
-                    homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
-                />
+            <AppLayout currentApp="student-portal" userName="Student">
+                <div className="min-h-screen h-full w-full overflow-y-auto bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
+                    <AppHeader
+                        appName={lang === 'zh' ? '学生端通' : 'Student Portal'}
+                        logoIcon={<GraduationCap className="w-5 h-5 text-white" />}
+                        brand={{
+                            logoBg: 'bg-gradient-to-br from-sky-400 to-blue-600',
+                            activeBg: 'bg-sky-100 dark:bg-sky-500/20',
+                            activeText: 'text-sky-700 dark:text-sky-300',
+                        }}
+                        tabs={[
+                            { key: 'assignments', label: t('nav.assignments') as string, icon: <ClipboardList size={16} /> },
+                            { key: 'schedule', label: t('nav.schedule') as string, icon: <CalendarDays size={16} /> },
+                            { key: 'reading', label: (t('nav.reading') as string) || (lang === 'en' ? 'Reading' : '阅读'), icon: <BookOpen size={16} /> },
+                        ]}
+                        activeTab={view}
+                        onTabChange={(key) => setView(key as View)}
+                        rightContent={
+                            <button onClick={() => setLang(lang === 'en' ? 'zh' : 'en')} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <Languages size={15} />
+                                <span>{lang === 'en' ? '中文' : 'EN'}</span>
+                            </button>
+                        }
+                        hideSignIn
+                        homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
+                    />
 
-                {!user ? (
-                    <StudentAuth />
-                ) : (
-                    <main className="w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1" style={{ maxWidth: '1152px' }}>
-                        <BodyContainer className="w-full">
-                            <WelcomeBanner />
-                            {view === 'assignments' && <AssignmentsView />}
-                            {view === 'schedule' && <ScheduleView />}
-                            {view === 'reading' && <ReadingView />}
-                        </BodyContainer>
-                    </main>
-                )}
+                    <RouteGuard>
+                        <main className="w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1" style={{ maxWidth: '1152px' }}>
+                            <BodyContainer className="w-full">
+                                <WelcomeBanner />
+                                {view === 'assignments' && <AssignmentsView />}
+                                {view === 'schedule' && <ScheduleView />}
+                                {view === 'reading' && <ReadingView />}
+                            </BodyContainer>
+                        </main>
+                    </RouteGuard>
 
-                <AppFooter appName="Student Portal" />
-            </div>
+                    <AppFooter appName="Student Portal" />
+                </div>
+            </AppLayout>
             <ToastContainer />
         </ErrorBoundary>
     );

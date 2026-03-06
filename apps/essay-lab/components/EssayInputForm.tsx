@@ -2,6 +2,9 @@ import React, { useRef, useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { StudentGrade, CEFRLevel, FileData } from '../types';
 import { Target, CloudUpload, Image as ImageIcon, X, PenTool, Camera, Sparkles, School, Gauge } from 'lucide-react';
+import { Button } from '@shared/components/ui/Button';
+import { Textarea } from '@shared/components/ui/Textarea';
+import { Select } from '@shared/components/ui/Select';
 
 interface EssayInputFormProps {
     onSubmit: (data: {
@@ -78,38 +81,28 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
 
             {/* Grade & CEFR Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <School className="w-4 h-4 text-indigo-500" />
-                        {t('input.grade')}
-                    </label>
-                    <select
-                        value={selectedGrade}
-                        onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
-                        className="input-field appearance-none cursor-pointer py-3"
-                        disabled={disabled}
-                    >
-                        {Object.values(StudentGrade).map(grade => (
-                            <option key={grade} value={grade}>{grade}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                        <Gauge className="w-4 h-4 text-indigo-500" />
-                        {t('input.cefr')}
-                    </label>
-                    <select
-                        value={selectedCEFR}
-                        onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
-                        className="input-field appearance-none cursor-pointer py-3"
-                        disabled={disabled}
-                    >
-                        {Object.values(CEFRLevel).map(level => (
-                            <option key={level} value={level}>{level}</option>
-                        ))}
-                    </select>
-                </div>
+                <Select
+                    label={t('input.grade')}
+                    value={selectedGrade}
+                    onChange={(e) => setSelectedGrade(e.target.value as StudentGrade)}
+                    disabled={disabled}
+                    containerClassName="space-y-2"
+                >
+                    {Object.values(StudentGrade).map(grade => (
+                        <option key={grade} value={grade}>{grade}</option>
+                    ))}
+                </Select>
+                <Select
+                    label={t('input.cefr')}
+                    value={selectedCEFR}
+                    onChange={(e) => setSelectedCEFR(e.target.value as CEFRLevel)}
+                    disabled={disabled}
+                    containerClassName="space-y-2"
+                >
+                    {Object.values(CEFRLevel).map(level => (
+                        <option key={level} value={level}>{level}</option>
+                    ))}
+                </Select>
             </div>
 
             {/* Prompt & Essay Row */}
@@ -121,14 +114,16 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
                             <Target className="w-4 h-4 text-indigo-500" />
                             {t('input.prompt')}
                         </label>
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => topicFileRef.current?.click()}
-                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                             disabled={disabled}
+                            leftIcon={<CloudUpload className="w-4 h-4" />}
                         >
-                            <CloudUpload className="w-4 h-4" />
                             {topicImage ? t('input.changeImage') : t('input.uploadImage')}
-                        </button>
+                        </Button>
                     </div>
 
                     {topicImage && (
@@ -137,21 +132,23 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
                                 <ImageIcon className="w-4 h-4 text-indigo-400" />
                                 <span className="text-xs font-medium text-indigo-700 truncate">{topicImage.name}</span>
                             </div>
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setTopicImage(null)}
-                                className="text-indigo-400 hover:text-rose-500"
+                                className="text-indigo-400 hover:text-rose-500 p-1 h-auto"
                                 disabled={disabled}
                             >
-                                <X className="w-3 h-3" />
-                            </button>
+                                <X className="w-4 h-4" />
+                            </Button>
                         </div>
                     )}
 
-                    <textarea
+                    <Textarea
                         value={topicText}
                         onChange={(e) => setTopicText(e.target.value)}
                         placeholder={t('input.promptPlaceholder')}
-                        className="input-field h-48 text-sm resize-none"
+                        className="h-48 text-sm resize-none"
                         disabled={disabled}
                     />
                     <input type="file" ref={topicFileRef} onChange={handleTopicFileChange} className="hidden" accept="image/*" />
@@ -164,14 +161,16 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
                             <PenTool className="w-4 h-4 text-indigo-500" />
                             {t('input.essay')}
                         </label>
-                        <button
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => essayFileRef.current?.click()}
-                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                             disabled={disabled}
+                            leftIcon={<Camera className="w-4 h-4" />}
                         >
-                            <Camera className="w-4 h-4" />
                             {essayImage ? t('input.changePhoto') : t('input.takePhoto')}
-                        </button>
+                        </Button>
                     </div>
 
                     {essayImage && (
@@ -180,21 +179,23 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
                                 <ImageIcon className="w-4 h-4 text-indigo-400" />
                                 <span className="text-xs font-medium text-indigo-700 truncate">{essayImage.name}</span>
                             </div>
-                            <button
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setEssayImage(null)}
-                                className="text-indigo-400 hover:text-rose-500"
+                                className="text-indigo-400 hover:text-rose-500 p-1 h-auto"
                                 disabled={disabled}
                             >
-                                <X className="w-3 h-3" />
-                            </button>
+                                <X className="w-4 h-4" />
+                            </Button>
                         </div>
                     )}
 
-                    <textarea
+                    <Textarea
                         value={essayText}
                         onChange={(e) => setEssayText(e.target.value)}
                         placeholder={t('input.essayPlaceholder')}
-                        className="input-field h-48 text-sm resize-none font-sans"
+                        className="h-48 text-sm resize-none font-sans"
                         disabled={disabled}
                     />
                     <input type="file" ref={essayFileRef} onChange={handleEssayFileChange} className="hidden" accept="image/*" />
@@ -203,14 +204,16 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
 
             {/* Submit Button */}
             <div className="pt-2">
-                <button
+                <Button
+                    variant="primary"
+                    size="lg"
                     onClick={handleSubmit}
-                    className="w-full rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-md bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 text-lg bg-gradient-to-r from-violet-600 to-indigo-600 border-none hover:-translate-y-0.5"
                     disabled={disabled || (!essayText && !essayImage)}
+                    leftIcon={<Sparkles className="w-5 h-5" />}
                 >
-                    <Sparkles className="w-5 h-5" />
                     {t('input.submit')}
-                </button>
+                </Button>
             </div>
         </div>
     );

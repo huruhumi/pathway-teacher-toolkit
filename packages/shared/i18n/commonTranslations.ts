@@ -1,0 +1,17 @@
+export const commonTranslations = {
+    'common.save': { en: 'Save', zh: '保存' },
+    'common.cancel': { en: 'Cancel', zh: '取消' },
+    'common.delete': { en: 'Delete', zh: '删除' },
+    'common.edit': { en: 'Edit', zh: '编辑' },
+    'common.close': { en: 'Close', zh: '关闭' },
+    'common.confirm': { en: 'Confirm', zh: '确认' },
+    'common.loading': { en: 'Loading...', zh: '加载中...' },
+    'common.retry': { en: 'Retry', zh: '重试' },
+    'common.back': { en: 'Back', zh: '返回' },
+    'common.logout': { en: 'Logout', zh: '退出登录' },
+    'common.login': { en: 'Login', zh: '登录' },
+    'common.email': { en: 'Email', zh: '邮箱' },
+    'common.password': { en: 'Password', zh: '密码' },
+    'common.loginBtn': { en: 'Sign In', zh: '登录' },
+    'common.loginError': { en: 'Invalid email or password', zh: '邮箱或密码错误' },
+} as const;

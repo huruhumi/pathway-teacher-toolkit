@@ -4,7 +4,6 @@ import { BrandData } from '../data/brandData';
 import { generateContent, generateImage, Type } from '../services/ai';
 import { Loader2, Sparkles, Copy, Check, Image as ImageIcon, Type as TypeIcon, Hash, Download, Calendar as CalendarIcon, Save, X, ChevronLeft, ChevronRight, Globe, PenTool, RefreshCw, Smartphone, Monitor } from 'lucide-react';
 import { motion } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
 import { SavedNote } from '../types';
 import { applyLogoToImage, LogoPosition, LogoSize } from '../utils/imageProcessor';
 import { InputSection, ImageSettings, ResourceImages, ContentOutput, SaveCalendarModal, ContentGeneratorState, ContentGeneratorActions } from './content-generator';

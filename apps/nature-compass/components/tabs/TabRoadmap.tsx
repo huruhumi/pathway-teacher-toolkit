@@ -86,6 +86,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             value={basicInfo.theme}
                             onChange={(e) => handleBasicInfoChange('theme', e.target.value)}
                             className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            aria-label="Workshop Theme"
+                            title="Workshop Theme"
+                            placeholder="Theme"
                         />
                     </div>
                     <div>
@@ -94,6 +97,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             value={basicInfo.activityType}
                             onChange={(e) => handleBasicInfoChange('activityType', e.target.value)}
                             className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            aria-label="Activity Type"
+                            title="Activity Type"
+                            placeholder="Activity Type"
                         />
                     </div>
                     <div>
@@ -102,6 +108,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                             value={basicInfo.targetAudience}
                             onChange={(e) => handleBasicInfoChange('targetAudience', e.target.value)}
                             className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            aria-label="Target Audience"
+                            title="Target Audience"
+                            placeholder="Target Audience"
                         />
                     </div>
                     <div>
@@ -112,6 +121,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 value={basicInfo.location || ''}
                                 onChange={(e) => handleBasicInfoChange('location', e.target.value)}
                                 className="flex-1 font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                                aria-label="Location"
+                                title="Location"
+                                placeholder="Location"
                             />
                         </div>
                     </div>
@@ -138,8 +150,11 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     value={goal}
                                     onChange={(e) => handleGoalChange(i, e.target.value)}
                                     className="flex-1 text-sm text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                                    aria-label="Learning Goal"
+                                    title="Learning Goal"
+                                    placeholder="Enter learning goal"
                                 />
-                                <button onClick={() => removeGoal(i)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity">
+                                <button onClick={() => removeGoal(i)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity" aria-label="Remove Goal" title="Remove Goal">
                                     <X size={14} />
                                 </button>
                             </div>
@@ -171,6 +186,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         value={item.timeRange}
                                         onChange={(e) => handleRoadmapChange(idx, 'timeRange', e.target.value)}
                                         className="w-full text-sm font-bold text-emerald-700 bg-emerald-50/50 border border-transparent hover:border-emerald-200 rounded px-2 py-1 outline-none"
+                                        aria-label="Time Range"
+                                        title="Time Range"
+                                        placeholder="Time"
                                     />
                                 </div>
                                 <div className="md:col-span-4">
@@ -179,6 +197,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         value={item.phase}
                                         onChange={(e) => handleRoadmapChange(idx, 'phase', e.target.value)}
                                         className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
+                                        aria-label="Phase"
+                                        title="Phase"
+                                        placeholder="Phase"
                                     />
                                 </div>
                                 <div className="md:col-span-6">
@@ -187,10 +208,13 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         value={item.activity}
                                         onChange={(e) => handleRoadmapChange(idx, 'activity', e.target.value)}
                                         className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
+                                        aria-label="Activity Name"
+                                        title="Activity Name"
+                                        placeholder="Activity Name"
                                     />
                                 </div>
                             </div>
-                            <button onClick={() => removeRoadmapItem(idx)} className="text-slate-400 hover:text-red-500 p-1">
+                            <button onClick={() => removeRoadmapItem(idx)} className="text-slate-400 hover:text-red-500 p-1" aria-label="Remove Roadmap Item" title="Remove Roadmap Item">
                                 <Trash2 size={16} />
                             </button>
                         </div>
@@ -204,6 +228,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         onChange={(e) => handleRoadmapChange(idx, 'description', e.target.value)}
                                         rows={2}
                                         className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                                        aria-label="Description"
+                                        title="Description"
+                                        placeholder="Description"
                                     />
                                 </div>
                                 <div>
@@ -214,6 +241,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 value={item.activityType}
                                                 onChange={(e) => handleRoadmapChange(idx, 'activityType', e.target.value)}
                                                 className="w-full text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                                                aria-label="Activity Type"
+                                                title="Activity Type"
+                                                placeholder="Activity Type"
                                             />
                                         </div>
                                         <div>
@@ -222,6 +252,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 value={item.location}
                                                 onChange={(e) => handleRoadmapChange(idx, 'location', e.target.value)}
                                                 className="w-full text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                                                aria-label="Location"
+                                                title="Location"
+                                                placeholder="Location"
                                             />
                                         </div>
                                     </div>
@@ -231,6 +264,9 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                             value={item.learningObjective}
                                             onChange={(e) => handleRoadmapChange(idx, 'learningObjective', e.target.value)}
                                             className="w-full text-xs italic text-slate-500 border-b border-slate-200 focus:border-emerald-500 outline-none pb-1 bg-transparent"
+                                            aria-label="Learning Objective"
+                                            title="Learning Objective"
+                                            placeholder="Learning Objective"
                                         />
                                     </div>
                                 </div>
@@ -250,8 +286,11 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 rows={1}
                                                 style={{ minHeight: '1.5em', height: 'auto' }}
                                                 onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
+                                                aria-label="Background Info"
+                                                title="Background Info"
+                                                placeholder="Background Info"
                                             />
-                                            <button onClick={() => removeBackgroundInfoItem(idx, infoIdx)} className="text-blue-300 hover:text-red-500">
+                                            <button onClick={() => removeBackgroundInfoItem(idx, infoIdx)} className="text-blue-300 hover:text-red-500" aria-label="Remove info" title="Remove info">
                                                 <X size={14} />
                                             </button>
                                         </div>
@@ -282,8 +321,11 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 rows={1}
                                                 style={{ minHeight: '1.5em', height: 'auto' }}
                                                 onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
+                                                aria-label="Teaching Tip"
+                                                title="Teaching Tip"
+                                                placeholder="Teaching Tip"
                                             />
-                                            <button onClick={() => removeTeachingTipsItem(idx, tipIdx)} className="text-purple-300 hover:text-red-500">
+                                            <button onClick={() => removeTeachingTipsItem(idx, tipIdx)} className="text-purple-300 hover:text-red-500" aria-label="Remove tip" title="Remove tip">
                                                 <X size={14} />
                                             </button>
                                         </div>
@@ -330,9 +372,12 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                         e.currentTarget.style.height = 'auto';
                                                         e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
                                                     }}
+                                                    aria-label="Teacher Instruction Step"
+                                                    title="Teacher Instruction Step"
+                                                    placeholder="Enter instruction step"
                                                 />
                                             </div>
-                                            <button onClick={() => removeStep(idx, sIdx)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity">
+                                            <button onClick={() => removeStep(idx, sIdx)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity" aria-label="Remove step" title="Remove step">
                                                 <X size={16} />
                                             </button>
                                         </div>

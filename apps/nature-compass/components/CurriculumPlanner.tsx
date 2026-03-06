@@ -239,7 +239,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 <span className="font-semibold text-teal-600">{t('cp.clickUpload')}</span> {t('cp.pdfFile')}<br />
                                 <span className="text-xs text-slate-400">{t('cp.pdfSupport')}</span>
                             </p>
-                            <input type="file" ref={fileInputRef} accept=".pdf" onChange={handleFileChange} className="hidden" />
+                            <input type="file" ref={fileInputRef} accept=".pdf" onChange={handleFileChange} className="hidden" aria-label="Upload PDF Document" title="Upload PDF Document" />
                         </div>
                     ) : (
                         <div className="flex items-center justify-between bg-teal-50 border border-teal-200 rounded-xl px-4 py-3">
@@ -258,7 +258,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={removePdf} className="p-1.5 hover:bg-teal-100 rounded-lg transition-colors">
+                            <button onClick={removePdf} className="p-1.5 hover:bg-teal-100 rounded-lg transition-colors" aria-label="Remove extracted PDF" title="Remove PDF">
                                 <X size={16} className="text-slate-400" />
                             </button>
                         </div>
@@ -270,7 +270,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <Users size={16} /> {t('cp.ageGroup')}
                         </label>
-                        <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3">
+                        <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3" aria-label="Select Age Group" title="Age Group">
                             {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}` as any)}</option>)}
                         </select>
                     </div>
@@ -278,7 +278,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <GraduationCap size={16} /> {t('cp.englishLevel')}
                         </label>
-                        <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3">
+                        <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3" aria-label="Select English Level" title="English Level">
                             {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{t(`level.${lvl}` as any)}</option>)}
                         </select>
                     </div>
@@ -286,20 +286,20 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <BookOpen size={16} /> {t('cp.numLessons')}
                         </label>
-                        <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3" />
+                        <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3" aria-label="Number of Lessons" title="Number of Lessons" placeholder="Number of lessons" />
                     </div>
                     <div className="space-y-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <Wind size={16} /> {t('cp.duration')}
                         </label>
-                        <input type="text" placeholder={t('cp.durationPlaceholder')} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3" />
+                        <input type="text" placeholder={t('cp.durationPlaceholder') as string} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3" aria-label="Lesson Duration" title="Lesson Duration" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <MapPin size={16} /> {t('cp.city')}
                         </label>
                         <div className="flex gap-3">
-                            <input type="text" placeholder={t('cp.cityPlaceholder')} value={city} onChange={(e) => setCity(e.target.value)} className="input-field flex-1 py-3" />
+                            <input type="text" placeholder={t('cp.cityPlaceholder') as string} value={city} onChange={(e) => setCity(e.target.value)} className="input-field flex-1 py-3" aria-label="City" title="City" />
                             <button onClick={handleConfirmCity} disabled={loadingLocations} className="btn btn-primary px-6 py-3">
                                 {loadingLocations ? <Loader2 size={18} className="animate-spin" /> : <><Search size={18} /> {t('cp.confirm')}</>}
                             </button>

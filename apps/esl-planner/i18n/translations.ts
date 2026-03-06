@@ -1,4 +1,7 @@
+import { commonTranslations } from '@shared/i18n/commonTranslations';
+
 export const translations = {
+    ...commonTranslations,
     // Nav tabs
     'nav.curriculum': { en: 'Curriculum', zh: '课程' },
     'nav.planner': { en: 'Lesson Kit', zh: '课件生成' },

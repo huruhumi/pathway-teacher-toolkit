@@ -3,6 +3,7 @@ import { ContentGeneratorChildProps } from './types';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { Select } from '@shared/components/ui/Select';
 import { Card } from '@shared/components/ui/Card';
+import { Button } from '@shared/components/ui/Button';
 
 export default function InputSection({ state, actions }: ContentGeneratorChildProps) {
     return (
@@ -19,14 +20,16 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">从计划中快速选择</label>
                         <div className="flex flex-wrap gap-2">
                             {state.currentPlan.map((item, idx) => (
-                                <button
+                                <Button
                                     key={idx}
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => actions.handleQuickSelect(item.topic)}
                                     title={item.topic}
-                                    className="text-xs bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 px-3 py-2 rounded-lg transition-colors text-left truncate max-w-[200px]"
+                                    className="bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 hover:border-rose-200 text-left truncate max-w-[200px] h-auto py-2"
                                 >
                                     {item.topic}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                     </div>
@@ -45,21 +48,25 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">内容框架模板</label>
                         <div className="flex flex-wrap gap-2">
-                            <button
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => actions.setSelectedFramework('')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-rose-200 hover:text-rose-600'}`}
+                                className={`px-3 py-1.5 h-auto text-xs ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white border-slate-200 hover:border-rose-200 hover:text-rose-600 text-slate-600'}`}
                             >
                                 默认
-                            </button>
+                            </Button>
                             {state.PROMPT_FRAMEWORKS.map(fw => (
-                                <button
+                                <Button
                                     key={fw.id}
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => actions.setSelectedFramework(fw.id === state.selectedFramework ? '' : fw.id)}
                                     title={fw.desc}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-rose-200 hover:text-rose-600'}`}
+                                    className={`px-3 py-1.5 h-auto text-xs ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white border-slate-200 hover:border-rose-200 hover:text-rose-600 text-slate-600'}`}
                                 >
                                     {fw.label}
-                                </button>
+                                </Button>
                             ))}
                         </div>
                         {state.selectedFramework && (
@@ -82,68 +89,54 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                     </Select>
                 </div>
 
-                <button
+                <Button
+                    variant="primary"
+                    size="lg"
                     onClick={actions.handleGenerate}
-                    disabled={state.isGenerating}
-                    className="btn w-full py-4 text-lg bg-gradient-to-r from-rose-500 to-orange-500 text-white hover:shadow-lg hover:shadow-rose-200 transform hover:-translate-y-0.5 border-none"
+                    isLoading={state.isGenerating}
+                    leftIcon={!state.isGenerating && <Sparkles size={24} />}
+                    className="w-full py-4 text-lg bg-gradient-to-r from-rose-500 to-orange-500 border-none transform hover:-translate-y-0.5"
                 >
-                    {state.isGenerating ? (
-                        <>
-                            <Loader2 size={24} className="animate-spin" />
-                            <span>正在撰写文案与构思配图...</span>
-                        </>
-                    ) : (
-                        <>
-                            <Sparkles size={24} />
-                            <span>生成笔记</span>
-                        </>
-                    )}
-                </button>
+                    {state.isGenerating ? '正在撰写文案与构思配图...' : '生成笔记'}
+                </Button>
 
                 {/* Custom Note Section */}
                 <div className="pt-4 border-t border-slate-100">
                     {!state.showCustomPrompt ? (
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => actions.setShowCustomPrompt(true)}
-                            className="w-full py-3 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center gap-2 transition-colors"
+                            className="w-full py-3 border-dashed shadow-none text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                            leftIcon={<PenTool size={18} />}
                         >
-                            <PenTool size={18} />
-                            <span>添加自定义笔记</span>
-                        </button>
+                            添加自定义笔记
+                        </Button>
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                                     <PenTool size={16} className="text-rose-500" />
                                     自定义内容提示词
                                 </label>
-                                <button onClick={() => actions.setShowCustomPrompt(false)} className="text-slate-400 hover:text-slate-600">
+                                <Button variant="ghost" size="sm" onClick={() => actions.setShowCustomPrompt(false)} className="text-slate-400 hover:text-slate-600 p-1 h-auto">
                                     <X size={16} />
-                                </button>
+                                </Button>
                             </div>
-                            <textarea
+                            <Textarea
                                 value={state.customPrompt}
                                 onChange={(e) => actions.setCustomPrompt(e.target.value)}
                                 placeholder="在这里输入详细的提示词，例如：帮我写一篇关于如何为3岁孩子挑选英语启蒙绘本的笔记，语气要温柔，多用案例..."
-                                className="w-full p-4 border border-rose-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-50/30 min-h-[120px] text-sm"
+                                className="min-h-[120px] text-sm bg-rose-50/30 border-rose-200 focus:ring-rose-500/20 focus:border-rose-500"
                             />
-                            <button
+                            <Button
+                                variant="secondary"
                                 onClick={actions.handleGenerateCustom}
-                                disabled={state.isGenerating}
-                                className="btn btn-secondary w-full py-3 border border-rose-200"
+                                isLoading={state.isGenerating}
+                                leftIcon={!state.isGenerating && <Sparkles size={18} />}
+                                className="w-full py-3 border-rose-200"
                             >
-                                {state.isGenerating ? (
-                                    <>
-                                        <Loader2 size={18} className="animate-spin" />
-                                        <span>正在撰写自定义笔记...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles size={18} />
-                                        <span>通过提示词生成笔记</span>
-                                    </>
-                                )}
-                            </button>
+                                {state.isGenerating ? '正在撰写自定义笔记...' : '通过提示词生成笔记'}
+                            </Button>
                         </div>
                     )}
                 </div>

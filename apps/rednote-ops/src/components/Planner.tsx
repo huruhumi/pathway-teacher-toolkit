@@ -5,6 +5,9 @@ import { generateContent, Type } from '../services/ai';
 import { Loader2, Calendar as CalendarIcon, CheckCircle2, ArrowRight, Copy, Check, Sparkles, Save, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { Button } from '@shared/components/ui/Button';
+import { Input } from '@shared/components/ui/Input';
+import { Select } from '@shared/components/ui/Select';
 
 interface PlannerProps {
   brandData: BrandData;
@@ -172,75 +175,57 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
 
       <div className="card space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">{t('plan.month')}</label>
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="input-field"
-            >
-              {months.map(m => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label={t('plan.month')}
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            containerClassName="space-y-2"
+          >
+            {months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </Select>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">{t('plan.days')}</label>
-            <select
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="input-field"
-            >
-              <option value={3}>{t('plan.days3')}</option>
-              <option value={7}>{t('plan.days7')}</option>
-              <option value={14}>{t('plan.days14')}</option>
-              <option value={30}>{t('plan.days30')}</option>
-            </select>
-          </div>
+          <Select
+            label={t('plan.days')}
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            containerClassName="space-y-2"
+          >
+            <option value={3}>{t('plan.days3')}</option>
+            <option value={7}>{t('plan.days7')}</option>
+            <option value={14}>{t('plan.days14')}</option>
+            <option value={30}>{t('plan.days30')}</option>
+          </Select>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">{t('plan.focus')}</label>
-            <input
-              type="text"
-              value={focus}
-              onChange={(e) => setFocus(e.target.value)}
-              placeholder={t('plan.focusPlaceholder')}
-              className="input-field"
-            />
-          </div>
+          <Input
+            label={t('plan.focus')}
+            value={focus}
+            onChange={(e) => setFocus(e.target.value)}
+            placeholder={t('plan.focusPlaceholder')}
+            containerClassName="space-y-2 md:col-span-2"
+          />
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">{t('plan.promotion')}</label>
-            <input
-              type="text"
+            <Input
+              label={t('plan.promotion')}
               value={promotionProduct}
               onChange={(e) => setPromotionProduct(e.target.value)}
               placeholder={t('plan.promotionPlaceholder')}
-              className="input-field"
             />
-            <p className="text-xs text-slate-400">{t('plan.promotionHint')}</p>
+            <p className="text-xs text-slate-400 mt-1">{t('plan.promotionHint')}</p>
           </div>
         </div>
 
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="primary"
             onClick={handleGeneratePlan}
-            disabled={isGenerating}
-            className="btn btn-primary"
+            isLoading={isGenerating}
+            leftIcon={!isGenerating && <CalendarIcon size={18} />}
           >
-            {isGenerating ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>{t('plan.generating')}</span>
-              </>
-            ) : (
-              <>
-                <CalendarIcon size={18} />
-                <span>{t('plan.generate')}</span>
-              </>
-            )}
-          </button>
+            {isGenerating ? t('plan.generating') : t('plan.generate')}
+          </Button>
         </div>
       </div>
 
@@ -252,12 +237,15 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
         >
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold text-slate-900">{t('plan.generatedTitle')}</h3>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onNavigate('generator')}
-              className="text-rose-500 font-medium text-sm flex items-center gap-1 hover:underline"
+              className="text-rose-500 font-medium hover:text-rose-600 hover:bg-rose-50"
+              rightIcon={<ArrowRight size={16} />}
             >
-              {t('plan.goCreate')} <ArrowRight size={16} />
-            </button>
+              {t('plan.goCreate')}
+            </Button>
           </div>
 
           <div className="grid gap-4">
@@ -273,27 +261,33 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                       <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-md font-medium">{item.format}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleCopy(`${item.topic}\n${item.angle}`, index)}
-                        className="text-slate-300 hover:text-rose-500 transition-colors p-1"
+                        className="text-slate-400 hover:text-rose-500 p-1 h-auto"
                         title={t('plan.copyTopic')}
                       >
                         {copiedIndex === index ? <Check size={16} /> : <Copy size={16} />}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleSaveClick(index)}
-                        className="text-slate-300 hover:text-emerald-500 transition-colors p-1"
+                        className="text-slate-400 hover:text-emerald-500 p-1 h-auto"
                         title={t('plan.saveToPlan')}
                       >
                         <Save size={16} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleGenerateContent(item.topic)}
-                        className="text-xs bg-rose-50 text-rose-600 px-2 py-1 rounded-md hover:bg-rose-100 transition-colors flex items-center gap-1 font-medium"
+                        className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 h-7"
+                        leftIcon={<Sparkles size={12} />}
                       >
-                        <Sparkles size={12} />
                         {t('plan.goGenerate')}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <h4 className="font-bold text-slate-900 text-lg">{item.topic}</h4>
@@ -309,22 +303,23 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                   <div className="absolute right-0 top-12 z-10 bg-white p-4 rounded-xl shadow-xl border border-slate-200 w-64 animate-in fade-in zoom-in duration-200">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-bold text-sm">{t('plan.selectDate')}</h4>
-                      <button onClick={() => setShowDatePicker(null)} className="text-slate-400 hover:text-slate-600">
+                      <Button variant="ghost" size="sm" onClick={() => setShowDatePicker(null)} className="text-slate-400 hover:text-slate-600 p-1 h-auto">
                         <X size={16} />
-                      </button>
+                      </Button>
                     </div>
-                    <input
+                    <Input
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full p-2 border border-slate-200 rounded-lg mb-3 text-sm"
+                      containerClassName="mb-3"
                     />
-                    <button
+                    <Button
+                      variant="primary"
                       onClick={() => confirmSave(item)}
-                      className="w-full bg-emerald-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 border-none"
                     >
                       确认保存
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -353,20 +348,24 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                       <h4 className="font-bold text-slate-900">{plan.topic}</h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleGenerateContent(plan.topic)}
-                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        className="p-1 h-auto text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                         title="去生成内容"
                       >
                         <Sparkles size={18} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onDeletePlan(plan.id)}
-                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                        className="p-1 h-auto text-slate-400 hover:text-rose-500 hover:bg-rose-50"
                         title="删除计划"
                       >
                         <X size={18} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}

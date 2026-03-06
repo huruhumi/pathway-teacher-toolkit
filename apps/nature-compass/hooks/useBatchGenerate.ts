@@ -1,16 +1,15 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { CurriculumLesson, CurriculumParams, SavedLessonPlan, LessonPlanResponse } from '../types';
 import { mapLessonToInput } from '../utils/curriculumMapper';
 import { generateLessonPlanStreaming, generateLessonPlanStreamingCN, translateLessonPlan } from '../services/geminiService';
-
-export type BatchItemStatus = 'idle' | 'generating' | 'done' | 'error';
+import { useBatchGenerateState } from '@shared/hooks/useBatchGenerateState';
 
 export function useBatchGenerate() {
-    const [batchStatus, setBatchStatus] = useState<Record<number, BatchItemStatus>>({});
-    const [batchLessonMap, setBatchLessonMap] = useState<Record<number, string>>({});
-    const [batchRunning, setBatchRunning] = useState(false);
-    const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0, errors: 0 });
-    const batchCancelRef = useRef(false);
+    const {
+        batchStatus, batchLessonMap, batchRunning, batchProgress,
+        batchCancelRef, startBatch, setItemStatus, incrementDone, incrementError, finishBatch, resetBatch
+    } = useBatchGenerateState();
+
     const batchAbortRef = useRef<AbortController | null>(null);
 
     const handleBatchGenerate = async (
@@ -19,30 +18,24 @@ export function useBatchGenerate() {
         language: 'en' | 'zh',
         savePlan: (saved: SavedLessonPlan) => void
     ) => {
-        batchCancelRef.current = false;
-        setBatchRunning(true);
-        setBatchProgress({ done: 0, total: lessons.length, errors: 0 });
-        let doneCount = 0;
+        startBatch(lessons.length);
         let errorCount = 0;
 
         for (let i = 0; i < lessons.length; i++) {
             if (batchCancelRef.current) break;
 
-            // Skip already completed
             if (batchStatus[i] === 'done') {
-                doneCount++;
-                setBatchProgress(p => ({ ...p, done: doneCount }));
+                incrementDone(lessons.length, errorCount, i);
                 continue;
             }
 
-            setBatchStatus(prev => ({ ...prev, [i]: 'generating' }));
+            setItemStatus(i, 'generating');
 
             try {
                 const mappedInput = mapLessonToInput(lessons[i], params);
                 const controller = new AbortController();
                 batchAbortRef.current = controller;
 
-                // Generate lesson plan
                 const streamFn = language === 'zh'
                     ? generateLessonPlanStreamingCN
                     : generateLessonPlanStreaming;
@@ -53,7 +46,6 @@ export function useBatchGenerate() {
                     controller.signal,
                 );
 
-                // Auto-translate for EN kits
                 if (language === 'en') {
                     try {
                         const translated = await translateLessonPlan(result, 'Simplified Chinese', controller.signal);
@@ -63,7 +55,6 @@ export function useBatchGenerate() {
                     }
                 }
 
-                // Auto-save to Records
                 const newId = crypto.randomUUID();
                 const newSavedPlan: SavedLessonPlan = {
                     id: newId,
@@ -74,38 +65,25 @@ export function useBatchGenerate() {
                 };
                 savePlan(newSavedPlan);
 
-                setBatchStatus(prev => ({ ...prev, [i]: 'done' }));
-                setBatchLessonMap(prev => ({ ...prev, [i]: newId }));
-                doneCount++;
+                incrementDone(lessons.length, errorCount, i, newId);
             } catch (err: any) {
                 if (batchCancelRef.current) break;
                 console.error(`Batch generate lesson ${i + 1} failed:`, err);
-                setBatchStatus(prev => ({ ...prev, [i]: 'error' }));
                 errorCount++;
+                incrementError(lessons.length, batchProgress.done, i);
             }
-
-            setBatchProgress({ done: doneCount, total: lessons.length, errors: errorCount });
         }
 
         batchAbortRef.current = null;
-        setBatchRunning(false);
+        finishBatch();
     };
 
     const handleCancelBatch = () => {
         batchCancelRef.current = true;
-        // Abort the currently running API call
         if (batchAbortRef.current) {
             batchAbortRef.current.abort();
             batchAbortRef.current = null;
         }
-    };
-
-    const resetBatch = () => {
-        setBatchStatus({});
-        setBatchLessonMap({});
-        setBatchProgress({ done: 0, total: 0, errors: 0 });
-        setBatchRunning(false);
-        batchCancelRef.current = false;
     };
 
     return {

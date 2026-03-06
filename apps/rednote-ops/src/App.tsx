@@ -22,6 +22,8 @@ import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import AppFooter from '@shared/components/AppFooter';
 import ToastContainer from '@shared/components/ui/ToastContainer';
+import AppLayout from '@shared/components/AppLayout';
+import { RouteGuard } from '@shared/components/auth/RouteGuard';
 
 
 
@@ -157,59 +159,62 @@ function AppContent() {
   );
 
   return (
-    <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900'}`}>
+    <RouteGuard>
+      <AppLayout currentApp="rednote-ops" userName="Admin">
+        <div className={`min-h-screen h-full w-full overflow-y-auto font-sans flex flex-col ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900'}`}>
 
+          <AppHeader
+            appName="Rednote Ops"
+            logoIcon={<Library className="w-5 h-5" />}
+            brand={{
+              logoBg: 'bg-rose-500',
+              activeBg: 'bg-rose-50',
+              activeText: 'text-rose-600',
+            }}
+            tabs={NAV_TABS}
+            activeTab={activeTab}
+            onTabChange={(key) => setActiveTab(key as typeof activeTab)}
+            onLogoClick={() => {
+              setActiveTab('dashboard');
+              setCurrentPlan([]);
+              setSelectedTopic('');
+              setEditingSavedNote(undefined);
+            }}
+            rightContent={headerToggles}
+            signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+            homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
+          />
 
-      <AppHeader
-        appName="Rednote Ops"
-        logoIcon={<Library className="w-5 h-5" />}
-        brand={{
-          logoBg: 'bg-rose-500',
-          activeBg: 'bg-rose-50',
-          activeText: 'text-rose-600',
-        }}
-        tabs={NAV_TABS}
-        activeTab={activeTab}
-        onTabChange={(key) => setActiveTab(key as typeof activeTab)}
-        onLogoClick={() => {
-          setActiveTab('dashboard');
-          setCurrentPlan([]);
-          setSelectedTopic('');
-          setEditingSavedNote(undefined);
-        }}
-        rightContent={headerToggles}
-        signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-        homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
-      />
-
-      <PageLayout>
-        <HeroBanner
-          title={lang === 'zh' ? '小红书智能运营助手' : 'Rednote Content Operations'}
-          description={lang === 'zh'
-            ? '一站式管理品牌设定、内容日历和AI文案生成，高效打造专业小红书运营工作流。'
-            : 'Manage brand settings, content calendar, and AI copywriting in one place to streamline your Rednote operations workflow.'}
-          gradient="from-rose-600 via-pink-600 to-fuchsia-600"
-          tags={[
-            { label: lang === 'zh' ? '品牌管理' : 'Brand Management' },
-            { label: lang === 'zh' ? '内容日历' : 'Content Calendar' },
-            { label: lang === 'zh' ? 'AI 文案' : 'AI Copywriting' },
-          ]}
-        />
-        <BodyContainer>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
-              {renderContent()}
-            </Suspense>
-          </motion.div>
-        </BodyContainer>
-      </PageLayout>
-      <AppFooter appName="Academy Ops" />
-    </div>
+          <PageLayout>
+            <HeroBanner
+              title={lang === 'zh' ? '小红书智能运营助手' : 'Rednote Content Operations'}
+              description={lang === 'zh'
+                ? '一站式管理品牌设定、内容日历和AI文案生成，高效打造专业小红书运营工作流。'
+                : 'Manage brand settings, content calendar, and AI copywriting in one place to streamline your Rednote operations workflow.'}
+              gradient="from-rose-600 via-pink-600 to-fuchsia-600"
+              tags={[
+                { label: lang === 'zh' ? '品牌管理' : 'Brand Management' },
+                { label: lang === 'zh' ? '内容日历' : 'Content Calendar' },
+                { label: lang === 'zh' ? 'AI 文案' : 'AI Copywriting' },
+              ]}
+            />
+            <BodyContainer>
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+                  {renderContent()}
+                </Suspense>
+              </motion.div>
+            </BodyContainer>
+          </PageLayout>
+          <AppFooter appName="Academy Ops" />
+        </div>
+      </AppLayout>
+    </RouteGuard>
   );
 }
 

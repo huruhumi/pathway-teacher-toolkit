@@ -572,8 +572,9 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
     };
 
     const handleCopyAllPrompts = async () => {
-        const allPrompts = handbookPages.map((page, i) =>
-            `--- Page ${i + 1} ---\n[Visual] ${page.visualPrompt}\n[Content] ${page.contentPrompt}`
+        let allPrompts = `--- Global Style Prompt ---\n${plan.handbookStylePrompt}\n\n`;
+        allPrompts += handbookPages.map((page, i) =>
+            `--- Page ${i + 1}: ${page.title} (${page.section}) ---\n[Layout] ${page.layoutDescription}\n[Visual] ${page.visualPrompt}\n[Content] ${page.contentPrompt}`
         ).join('\n\n');
         await navigator.clipboard.writeText(allPrompts);
         setCopiedNotebook(true);

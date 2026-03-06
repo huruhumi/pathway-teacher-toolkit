@@ -9,6 +9,8 @@ import { HeaderToggles } from '@shared/components/HeaderToggles';
 import AppFooter from '@shared/components/AppFooter';
 import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import ToastContainer from '@shared/components/ui/ToastContainer';
+import AppLayout from '@shared/components/AppLayout';
+import { RouteGuard } from '@shared/components/auth/RouteGuard';
 import {
     LayoutDashboard, Users, School, CalendarDays, GraduationCap,
 } from 'lucide-react';
@@ -33,51 +35,53 @@ const AppContent: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
-            <AppHeader
-                appName="Edu Hub"
-                subtitle={lang === 'zh' ? '教育管理' : 'Education Management'}
-                logoIcon={<GraduationCap className="w-5 h-5" />}
-                brand={{
-                    logoBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
-                    logoText: 'text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600',
-                    activeBg: 'bg-amber-100',
-                    activeText: 'text-amber-700',
-                    badgeBg: 'bg-amber-200',
-                    badgeText: 'text-amber-700',
-                }}
-                tabs={NAV_TABS}
-                activeTab={view}
-                onTabChange={(key) => setView(key as View)}
-                onLogoClick={() => setView('dashboard')}
-                rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
-                signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-                homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
-            />
-
-            <PageLayout className="flex-1">
-                <HeroBanner
-                    title={t('hero.title')}
-                    description={t('hero.desc')}
-                    gradient="from-amber-500 via-orange-500 to-red-500"
-                    tags={[
-                        { label: t('nav.classes') as string },
-                        { label: t('nav.students') as string },
-                        { label: t('nav.assignments') as string },
-                        { label: t('nav.reading') as string },
-                    ]}
+        <AppLayout currentApp="edu-hub" userName="Admin">
+            <div className="min-h-screen h-full bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col w-full overflow-y-auto">
+                <AppHeader
+                    appName="Edu Hub"
+                    subtitle={lang === 'zh' ? '教育管理' : 'Education Management'}
+                    logoIcon={<GraduationCap className="w-5 h-5" />}
+                    brand={{
+                        logoBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+                        logoText: 'text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600',
+                        activeBg: 'bg-amber-100',
+                        activeText: 'text-amber-700',
+                        badgeBg: 'bg-amber-200',
+                        badgeText: 'text-amber-700',
+                    }}
+                    tabs={NAV_TABS}
+                    activeTab={view}
+                    onTabChange={(key) => setView(key as View)}
+                    onLogoClick={() => setView('dashboard')}
+                    rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
+                    signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
+                    homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
                 />
-                <React.Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" /></div>}>
-                    <BodyContainer>
-                        {view === 'dashboard' && <DashboardPage onNav={setView} />}
-                        {view === 'classes' && <ClassesPage />}
-                        {view === 'students' && <StudentsPage />}
-                        {view === 'calendar' && <CalendarPage />}
-                    </BodyContainer>
-                </React.Suspense>
-            </PageLayout>
-            <AppFooter appName="Edu Hub" />
-        </div>
+
+                <PageLayout className="flex-1">
+                    <HeroBanner
+                        title={t('hero.title')}
+                        description={t('hero.desc')}
+                        gradient="from-amber-500 via-orange-500 to-red-500"
+                        tags={[
+                            { label: t('nav.classes') as string },
+                            { label: t('nav.students') as string },
+                            { label: t('nav.assignments') as string },
+                            { label: t('nav.reading') as string },
+                        ]}
+                    />
+                    <React.Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" /></div>}>
+                        <BodyContainer>
+                            {view === 'dashboard' && <DashboardPage onNav={setView} />}
+                            {view === 'classes' && <RouteGuard><ClassesPage /></RouteGuard>}
+                            {view === 'students' && <RouteGuard><StudentsPage /></RouteGuard>}
+                            {view === 'calendar' && <RouteGuard><CalendarPage /></RouteGuard>}
+                        </BodyContainer>
+                    </React.Suspense>
+                </PageLayout>
+                <AppFooter appName="Edu Hub" />
+            </div>
+        </AppLayout>
     );
 };
 

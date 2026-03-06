@@ -1,4 +1,7 @@
+import { commonTranslations } from '@shared/i18n/commonTranslations';
+
 export const translations = {
+    ...commonTranslations,
     // Nav tabs
     'nav.home': { en: 'Correction', zh: '批改' },
     'nav.about': { en: 'Essays', zh: '范文' },

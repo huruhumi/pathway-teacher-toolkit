@@ -88,7 +88,7 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                                         onChange={(e) => handleArrayChange('grammarSentences', i, e.target.value)}
                                         className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 leading-relaxed font-medium"
                                     />
-                                    <button onClick={() => deleteArrayItem('grammarSentences', i)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => deleteArrayItem('grammarSentences', i)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Delete sentence" title="Delete sentence">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -109,11 +109,15 @@ export const GrammarTab: React.FC<GrammarTabProps> = ({
                                             value={v.word}
                                             readOnly
                                             className="w-full bg-transparent border-none outline-none text-sm font-black text-teal-900"
+                                            title="Vocabulary Word"
+                                            placeholder="Word"
                                         />
                                         <input
                                             value={v.definition}
                                             readOnly
                                             className="w-full bg-transparent border-none outline-none text-[11px] text-teal-600 italic"
+                                            title="Vocabulary Definition"
+                                            placeholder="Definition"
                                         />
                                     </div>
                                 </div>

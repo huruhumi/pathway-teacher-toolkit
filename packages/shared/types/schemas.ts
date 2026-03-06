@@ -186,7 +186,7 @@ export const VisualReferenceItemSchema = z.object({
 export const HandbookPageSchema = z.object({
     pageNumber: z.number(),
     title: z.string(),
-    section: z.enum(['Introduction', 'Safety', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Certificate']),
+    section: z.enum(['Introduction', 'Table of Contents', 'Safety', 'Prop Checklist', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Reflection', 'Certificate', 'Back Cover']),
     layoutDescription: z.string(),
     visualPrompt: z.string(),
     contentPrompt: z.string()

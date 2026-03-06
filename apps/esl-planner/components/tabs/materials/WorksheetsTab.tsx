@@ -507,6 +507,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   })
                 }
                 className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                aria-label="Select Focus Skill"
+                title="Select Focus Skill"
               >
                 {skills.map((s) => (
                   <option key={s} value={s}>
@@ -528,6 +530,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   })
                 }
                 className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                aria-label="Select Article Type"
+                title="Select Article Type"
               >
                 {articleTypes.map((at) => (
                   <option key={at} value={at}>
@@ -549,6 +553,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   })
                 }
                 className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                aria-label="Select CEFR Level"
+                title="Select CEFR Level"
               >
                 {Object.values(CEFRLevel).map((lvl) => (
                   <option key={lvl} value={lvl}>
@@ -567,6 +573,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   setQuickGenConfig({ ...quickGenConfig, type: e.target.value })
                 }
                 className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                aria-label="Select Question Type"
+                title="Select Question Type"
               >
                 {questionTypes.map((t) => (
                   <option key={t} value={t}>
@@ -591,6 +599,9 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                 className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 min="1"
                 max="20"
+                aria-label="Number of Questions"
+                title="Number of Questions"
+                placeholder="Count"
               />
             </div>
           </div>
@@ -713,6 +724,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                             )
                           }
                           className="text-[10px] font-bold bg-slate-50 border border-slate-100 rounded p-1 text-slate-500"
+                          aria-label="Select Section Layout"
+                          title="Select Section Layout"
                         >
                           <option value="standard">Standard</option>
                           <option value="matching">Matching</option>
@@ -738,6 +751,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                         <button
                           onClick={() => removeWorksheetSection(wsIdx, sIdx)}
                           className="p-1.5 text-red-400 hover:text-red-600"
+                          title="Remove Section"
+                          aria-label="Remove Section"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

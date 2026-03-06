@@ -47,7 +47,7 @@ export interface VisualReferenceItem {
 export interface HandbookPage {
   pageNumber: number;
   title: string;
-  section: 'Introduction' | 'Safety' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Certificate';
+  section: 'Introduction' | 'Table of Contents' | 'Safety' | 'Prop Checklist' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Reflection' | 'Certificate' | 'Back Cover';
   layoutDescription: string;
   visualPrompt: string;
   contentPrompt: string;

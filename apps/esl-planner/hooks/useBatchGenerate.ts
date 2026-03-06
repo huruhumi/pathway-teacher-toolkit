@@ -1,24 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import type { SavedLesson, CurriculumLesson, CurriculumParams, ESLCurriculum } from '../types';
 import { safeStorage } from '@shared/safeStorage';
 import { mapLessonToESLInput } from '../utils/curriculumMapper';
 import { generateLessonPlan } from '../services/geminiService';
-
-export interface BatchState {
-    status: Record<number, 'idle' | 'generating' | 'done' | 'error'>;
-    lessonMap: Record<number, string>;
-    running: boolean;
-    progress: { done: number; total: number; errors: number };
-}
+import { useBatchGenerateState } from '@shared/hooks/useBatchGenerateState';
 
 export function useBatchGenerate() {
-    const [batchState, setBatchState] = useState<BatchState>({
-        status: {},
-        lessonMap: {},
-        running: false,
-        progress: { done: 0, total: 0, errors: 0 }
-    });
-    const batchCancelRef = useRef(false);
+    const {
+        batchStatus, batchLessonMap, batchRunning, batchProgress,
+        batchCancelRef, startBatch, incrementDone, incrementError, finishBatch
+    } = useBatchGenerateState();
 
     const handleBatchGenerate = async (
         lessons: CurriculumLesson[],
@@ -27,32 +18,17 @@ export function useBatchGenerate() {
         curriculum?: ESLCurriculum | null,
         curriculumId?: string
     ) => {
-        batchCancelRef.current = false;
-        setBatchState(prev => ({
-            ...prev,
-            running: true,
-            progress: { done: 0, total: lessons.length, errors: 0 }
-        }));
-        let doneCount = 0;
+        startBatch(lessons.length);
         let errorCount = 0;
 
         for (let i = 0; i < lessons.length; i++) {
             if (batchCancelRef.current) break;
 
-            // Skip already generated
-            if (batchState.status[i] === 'done') {
-                doneCount++;
-                setBatchState(prev => ({
-                    ...prev,
-                    progress: { ...prev.progress, done: doneCount }
-                }));
+            if (batchStatus[i] === 'done') {
+                incrementDone(lessons.length, errorCount, i);
                 continue;
             }
 
-            setBatchState(prev => ({
-                ...prev,
-                status: { ...prev.status, [i]: 'generating' }
-            }));
             try {
                 const mapped = mapLessonToESLInput(lessons[i], params, curriculum);
                 const content = await generateLessonPlan(
@@ -60,7 +36,6 @@ export function useBatchGenerate() {
                     mapped.slideCount, mapped.duration, mapped.studentCount, mapped.lessonTitle
                 );
 
-                // Auto-save to Records
                 const id = Date.now().toString();
                 const newRecord: SavedLesson = {
                     id,
@@ -75,34 +50,25 @@ export function useBatchGenerate() {
                 };
                 saveLesson(newRecord);
 
-                doneCount++;
-                setBatchState(prev => ({
-                    ...prev,
-                    status: { ...prev.status, [i]: 'done' },
-                    lessonMap: { ...prev.lessonMap, [i]: id },
-                    progress: { done: doneCount, total: lessons.length, errors: errorCount }
-                }));
+                incrementDone(lessons.length, errorCount, i, id);
             } catch (err: any) {
                 console.error(`Batch generate lesson ${i + 1} failed: `, err);
                 errorCount++;
-                setBatchState(prev => ({
-                    ...prev,
-                    status: { ...prev.status, [i]: 'error' },
-                    progress: { done: doneCount, total: lessons.length, errors: errorCount }
-                }));
+                incrementError(lessons.length, batchProgress.done, i);
             }
         }
-        setBatchState(prev => ({ ...prev, running: false }));
+        finishBatch();
     };
 
     const handleCancelBatch = () => { batchCancelRef.current = true; };
 
     return {
-        batchStatus: batchState.status,
-        batchLessonMap: batchState.lessonMap,
-        batchRunning: batchState.running,
-        batchProgress: batchState.progress,
+        batchStatus,
+        batchLessonMap,
+        batchRunning,
+        batchProgress,
         handleBatchGenerate,
         handleCancelBatch,
     };
 }
+
