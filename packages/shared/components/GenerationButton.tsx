@@ -17,7 +17,7 @@ export interface GenerationButtonProps {
      * e.g., "emerald" for `from-emerald-600 to-teal-600`
      * or "indigo" for `from-indigo-600 to-violet-600`.
      */
-    theme?: 'emerald' | 'indigo' | 'violet' | 'teal';
+    theme?: 'emerald' | 'indigo' | 'violet' | 'teal' | 'navy' | 'fuchsia';
     /** Custom class names to override styles */
     className?: string;
     /** Custom icon to show next to the default text, defaults to ArrowRight */
@@ -49,6 +49,10 @@ export const GenerationButton: React.FC<GenerationButtonProps> = React.memo(({
                 return 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500';
             case 'teal':
                 return 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500';
+            case 'navy':
+                return 'bg-gradient-to-r from-[#1A2B58] to-[#2C3E7A] hover:from-[#0F1B3D] hover:to-[#1A2B58]';
+            case 'fuchsia':
+                return 'bg-gradient-to-r from-[#E91E63] to-[#C2185B] hover:from-[#C2185B] hover:to-[#880E4F]';
             case 'emerald':
             default:
                 return 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500';

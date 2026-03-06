@@ -4,7 +4,7 @@ export interface GenerationProgressProps {
     /** Status text displayed below the bar, e.g. "Analyzing textbook..." */
     statusText: string;
     /** Color theme for the gradient bar */
-    theme?: 'violet' | 'indigo' | 'red' | 'emerald';
+    theme?: 'violet' | 'indigo' | 'red' | 'emerald' | 'navy' | 'fuchsia';
 }
 
 const themeColors: Record<string, { bar: string; text: string }> = {
@@ -12,6 +12,8 @@ const themeColors: Record<string, { bar: string; text: string }> = {
     indigo: { bar: 'from-indigo-500 via-blue-400 to-indigo-500', text: 'text-indigo-500' },
     red: { bar: 'from-red-500 via-rose-400 to-red-500', text: 'text-rose-500' },
     emerald: { bar: 'from-emerald-500 via-teal-400 to-emerald-500', text: 'text-emerald-500' },
+    navy: { bar: 'from-[#1A2B58] via-[#2C3E7A] to-[#1A2B58]', text: 'text-[#1A2B58]' },
+    fuchsia: { bar: 'from-[#E91E63] via-[#F06292] to-[#E91E63]', text: 'text-[#E91E63]' },
 };
 
 export const GenerationProgress: React.FC<GenerationProgressProps> = ({

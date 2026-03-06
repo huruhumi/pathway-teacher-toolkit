@@ -5,8 +5,8 @@
 
 /* ── Edu Hub Brand Colors ── */
 @theme {
-    --color-brand: #f59e0b;
-    --color-brand-light: #fef3c7;
-    --color-brand-hover: #d97706;
-    --color-brand-dark: #b45309;
+    --color-brand: #FFC107;
+    --color-brand-light: #FFF8E1;
+    --color-brand-hover: #FFA000;
+    --color-brand-dark: #FF6F00;
 }

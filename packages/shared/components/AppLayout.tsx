@@ -10,12 +10,12 @@ export interface AppLayoutProps {
 }
 
 const apps = [
-    { id: 'edu-hub', name: 'Edu Hub', icon: GraduationCap, path: '/edu-hub', color: 'text-blue-500' },
-    { id: 'esl-planner', name: 'ESL Planner', icon: BookOpen, path: '/esl-planner', color: 'text-indigo-500' },
-    { id: 'essay-lab', name: 'Essay Lab', icon: PenTool, path: '/essay-lab', color: 'text-violet-500' },
+    { id: 'edu-hub', name: 'Edu Hub', icon: GraduationCap, path: '/edu-hub', color: 'text-amber-500' },
+    { id: 'esl-planner', name: 'ESL Planner', icon: BookOpen, path: '/esl-planner', color: 'text-[#1A2B58]' },
+    { id: 'essay-lab', name: 'Essay Lab', icon: PenTool, path: '/essay-lab', color: 'text-[#E91E63]' },
     { id: 'nature-compass', name: 'Nature Compass', icon: Compass, path: '/nature-compass', color: 'text-emerald-500' },
-    { id: 'rednote-ops', name: 'Rednote Ops', icon: BrainCircuit, path: '/rednote-ops', color: 'text-rose-500' },
-    { id: 'student-portal', name: 'Student Portal', icon: LayoutDashboard, path: '/student-portal', color: 'text-amber-500' },
+    { id: 'rednote-ops', name: 'Rednote Ops', icon: BrainCircuit, path: '/rednote-ops', color: 'text-[#E91E63]' },
+    { id: 'student-portal', name: 'Student Portal', icon: LayoutDashboard, path: '/student-portal', color: 'text-[#87CEEB]' },
 ];
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children, currentApp, userName = 'Teacher', onLogout }) => {

@@ -162,7 +162,7 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
                             <div className="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1 hidden sm:block" />
                             {user ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-500/20">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-pathway-navy)] dark:text-sky-300 bg-[var(--color-pathway-sky)]/15 dark:bg-sky-500/10 px-2.5 py-1.5 rounded-xl border border-[var(--color-pathway-sky)]/30 dark:border-sky-500/20">
                                         <Cloud size={14} />
                                         <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>
                                     </div>
@@ -177,7 +177,7 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
                             ) : !hideSignIn ? (
                                 <button
                                     onClick={() => setShowAuthModal(true)}
-                                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-[var(--color-pathway-navy)] dark:hover:text-sky-300 px-3 py-1.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
                                 >
                                     <User size={16} />
                                     <span className="hidden sm:inline">{signInLabel || 'Sign In'}</span>

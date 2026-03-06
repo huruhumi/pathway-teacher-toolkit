@@ -1,21 +1,21 @@
 :root {
-    /* Updated Brand Colors based on the Logo */
-    --brand-navy: #0B254E;
-    --brand-blue: #1A73E8;
-    --brand-cyan: #12B5CB;
+    /* Pathway Academy Brand Colors */
+    --brand-navy: #1A2B58;
+    --brand-blue: #1A2B58;
+    --brand-cyan: #87CEEB;
     --brand-pink: #E91E63;
-    --brand-yellow: #FBBC04;
+    --brand-yellow: #FFC107;
 
     --bg-main: #FAFCFF;
     --card-bg: rgba(255, 255, 255, 0.7);
-    --text-dark: #0B254E;
+    --text-dark: #1A2B58;
     --text-muted: #5F6368;
-    --border-color: rgba(26, 115, 232, 0.15);
+    --border-color: rgba(26, 43, 88, 0.15);
 
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    --shadow-sm: 0 4px 12px rgba(11, 37, 78, 0.05);
-    --shadow-md: 0 12px 24px rgba(11, 37, 78, 0.08);
-    --shadow-hover: 0 20px 40px rgba(11, 37, 78, 0.12);
+    --shadow-sm: 0 4px 12px rgba(26, 43, 88, 0.05);
+    --shadow-md: 0 12px 24px rgba(26, 43, 88, 0.08);
+    --shadow-hover: 0 20px 40px rgba(26, 43, 88, 0.12);
 }
 
 * {
@@ -45,9 +45,9 @@ body::before {
     inset: 0;
     z-index: -1;
     background:
-        radial-gradient(ellipse 70% 50% at 85% 10%, rgba(26, 115, 232, 0.12), transparent),
+        radial-gradient(ellipse 70% 50% at 85% 10%, rgba(26, 43, 88, 0.12), transparent),
         radial-gradient(ellipse 60% 50% at 10% 90%, rgba(233, 30, 99, 0.10), transparent),
-        radial-gradient(ellipse 50% 40% at 50% 40%, rgba(251, 188, 4, 0.08), transparent);
+        radial-gradient(ellipse 50% 40% at 50% 40%, rgba(255, 193, 7, 0.08), transparent);
     pointer-events: none;
 }
 
@@ -111,7 +111,7 @@ header {
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--brand-blue);
-    background: rgba(26, 115, 232, 0.1);
+    background: rgba(26, 43, 88, 0.1);
     padding: 0.4rem 1rem;
     border-radius: 999px;
     letter-spacing: 0.05em;
@@ -130,20 +130,20 @@ header {
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--brand-navy);
-    background: rgba(11, 37, 78, 0.08);
+    background: rgba(26, 43, 88, 0.08);
     padding: 0.4rem 1rem;
     border-radius: 999px;
     letter-spacing: 0.02em;
-    border: 1px solid rgba(11, 37, 78, 0.1);
+    border: 1px solid rgba(26, 43, 88, 0.1);
     cursor: pointer;
     transition: var(--transition);
     font-family: 'Outfit', sans-serif;
 }
 
 .lang-toggle:hover {
-    background: rgba(26, 115, 232, 0.12);
-    color: var(--brand-blue);
-    border-color: rgba(26, 115, 232, 0.25);
+    background: rgba(26, 43, 88, 0.12);
+    color: var(--brand-navy);
+    border-color: rgba(26, 43, 88, 0.25);
     transform: translateY(-1px);
 }
 
@@ -153,21 +153,21 @@ header {
     background-color: var(--brand-cyan);
     border-radius: 50%;
     display: inline-block;
-    box-shadow: 0 0 0 2px rgba(18, 181, 203, 0.2);
+    box-shadow: 0 0 0 2px rgba(135, 206, 235, 0.3);
     animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(18, 181, 203, 0.4);
+        box-shadow: 0 0 0 0 rgba(135, 206, 235, 0.4);
     }
 
     70% {
-        box-shadow: 0 0 0 6px rgba(18, 181, 203, 0);
+        box-shadow: 0 0 0 6px rgba(135, 206, 235, 0);
     }
 
     100% {
-        box-shadow: 0 0 0 0 rgba(18, 181, 203, 0);
+        box-shadow: 0 0 0 0 rgba(135, 206, 235, 0);
     }
 }
 
@@ -250,25 +250,25 @@ h1 {
 .btn-primary {
     background: linear-gradient(135deg, var(--brand-navy), var(--brand-blue));
     color: white;
-    box-shadow: 0 8px 20px rgba(26, 115, 232, 0.25);
+    box-shadow: 0 8px 20px rgba(26, 43, 88, 0.25);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(26, 115, 232, 0.35);
+    box-shadow: 0 12px 25px rgba(26, 43, 88, 0.35);
     background: linear-gradient(135deg, var(--brand-blue), var(--brand-cyan));
 }
 
 .btn-outline {
     background: transparent;
     color: var(--brand-navy);
-    border-color: rgba(11, 37, 78, 0.15);
+    border-color: rgba(26, 43, 88, 0.15);
 }
 
 .btn-outline:hover {
-    border-color: var(--brand-blue);
-    color: var(--brand-blue);
-    background: rgba(26, 115, 232, 0.05);
+    border-color: var(--brand-navy);
+    color: var(--brand-navy);
+    background: rgba(26, 43, 88, 0.05);
 }
 
 .arrow {
@@ -336,8 +336,8 @@ h1 {
 }
 
 .planner-icon {
-    background: rgba(26, 115, 232, 0.1);
-    color: var(--brand-blue);
+    background: rgba(26, 43, 88, 0.1);
+    color: var(--brand-navy);
 }
 
 .lab-icon {
@@ -346,17 +346,17 @@ h1 {
 }
 
 .nature-icon {
-    background: rgba(18, 181, 203, 0.1);
-    color: var(--brand-cyan);
+    background: rgba(135, 206, 235, 0.15);
+    color: #2980B9;
 }
 
 .steam-icon {
-    background: rgba(251, 188, 4, 0.15);
-    color: #D49A00;
+    background: rgba(255, 193, 7, 0.15);
+    color: #C79100;
 }
 
 .ops-icon {
-    background: rgba(11, 37, 78, 0.1);
+    background: rgba(26, 43, 88, 0.1);
     color: var(--brand-navy);
 }
 
@@ -365,9 +365,9 @@ h1 {
 }
 
 .tool-card:hover .planner-icon {
-    background: var(--brand-blue);
+    background: var(--brand-navy);
     color: white;
-    box-shadow: 0 8px 16px rgba(26, 115, 232, 0.3);
+    box-shadow: 0 8px 16px rgba(26, 43, 88, 0.3);
 }
 
 .tool-card:hover .lab-icon {
@@ -379,19 +379,19 @@ h1 {
 .tool-card:hover .nature-icon {
     background: var(--brand-cyan);
     color: white;
-    box-shadow: 0 8px 16px rgba(18, 181, 203, 0.3);
+    box-shadow: 0 8px 16px rgba(135, 206, 235, 0.3);
 }
 
 .tool-card:hover .steam-icon {
     background: var(--brand-yellow);
     color: white;
-    box-shadow: 0 8px 16px rgba(251, 188, 4, 0.3);
+    box-shadow: 0 8px 16px rgba(255, 193, 7, 0.3);
 }
 
 .tool-card:hover .ops-icon {
     background: var(--brand-navy);
     color: white;
-    box-shadow: 0 8px 16px rgba(11, 37, 78, 0.3);
+    box-shadow: 0 8px 16px rgba(26, 43, 88, 0.3);
 }
 
 h3 {
@@ -534,18 +534,18 @@ footer p {
 .auth-btn-primary {
     background: linear-gradient(135deg, var(--brand-navy), var(--brand-blue));
     color: white;
-    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.2);
+    box-shadow: 0 4px 12px rgba(26, 43, 88, 0.2);
 }
 
 .auth-btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.3);
+    box-shadow: 0 6px 16px rgba(26, 43, 88, 0.3);
 }
 
 .auth-btn-outline {
-    background: rgba(11, 37, 78, 0.08);
+    background: rgba(26, 43, 88, 0.08);
     color: var(--brand-navy);
-    border: 1px solid rgba(11, 37, 78, 0.12);
+    border: 1px solid rgba(26, 43, 88, 0.12);
 }
 
 .auth-btn-outline:hover {
@@ -588,7 +588,7 @@ footer p {
     position: fixed;
     inset: 0;
     z-index: 999;
-    background: rgba(11, 37, 78, 0.4);
+    background: rgba(26, 43, 88, 0.4);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -607,7 +607,7 @@ footer p {
     padding: 2.5rem;
     width: 400px;
     max-width: 92vw;
-    box-shadow: 0 24px 48px rgba(11, 37, 78, 0.2);
+    box-shadow: 0 24px 48px rgba(26, 43, 88, 0.2);
     position: relative;
     transform: translateY(10px);
     transition: transform 0.2s ease;
@@ -665,7 +665,7 @@ footer p {
     width: 100%;
     padding: 0.7rem 1rem;
     border-radius: 12px;
-    border: 1.5px solid rgba(11, 37, 78, 0.12);
+    border: 1.5px solid rgba(26, 43, 88, 0.12);
     font-family: 'Outfit', sans-serif;
     font-size: 0.95rem;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -673,8 +673,8 @@ footer p {
 }
 
 .auth-input:focus {
-    border-color: var(--brand-blue);
-    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+    border-color: var(--brand-navy);
+    box-shadow: 0 0 0 3px rgba(26, 43, 88, 0.1);
 }
 
 .auth-btn-full {

@@ -5,10 +5,10 @@
 
 /* ── Essay Lab Brand Colors ── */
 @theme {
-    --color-brand: #4f46e5;
-    --color-brand-light: #eef2ff;
-    --color-brand-hover: #4338ca;
-    --color-brand-dark: #3730a3;
+    --color-brand: #E91E63;
+    --color-brand-light: #FCE4EC;
+    --color-brand-hover: #C2185B;
+    --color-brand-dark: #880E4F;
 }
 
 /* ── Base Resets ── */

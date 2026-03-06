@@ -63,7 +63,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
                     </div>
                 )}
                 {successMsg && (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm rounded-lg border border-emerald-200 dark:border-emerald-500/20 flex items-start gap-2">
+                    <div className="p-3 bg-[var(--color-pathway-sky)]/10 dark:bg-sky-500/10 text-[var(--color-pathway-navy)] dark:text-sky-300 text-sm rounded-lg border border-[var(--color-pathway-sky)]/30 dark:border-sky-500/20 flex items-start gap-2">
                         <CheckCircle size={16} className="mt-0.5 shrink-0" />
                         <span>{successMsg}</span>
                     </div>
@@ -130,9 +130,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose }) => {
 
                 <div className="text-center text-sm text-slate-500">
                     {mode === 'login' ? (
-                        <>Don't have an account? <button type="button" onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }} className="text-emerald-600 font-semibold hover:underline">Sign Up</button></>
+                        <>Don't have an account? <button type="button" onClick={() => { setMode('signup'); setError(''); setSuccessMsg(''); }} className="text-[var(--color-pathway-fuchsia)] font-semibold hover:underline">Sign Up</button></>
                     ) : (
-                        <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }} className="text-emerald-600 font-semibold hover:underline">Sign In</button></>
+                        <>Already have an account? <button type="button" onClick={() => { setMode('login'); setError(''); setSuccessMsg(''); }} className="text-[var(--color-pathway-fuchsia)] font-semibold hover:underline">Sign In</button></>
                     )}
                 </div>
             </form>
