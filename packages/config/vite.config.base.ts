@@ -19,7 +19,7 @@ export function getBaseConfig(env: Record<string, string>): UserConfig {
             dedupe: ['react', 'react-dom'],
         },
         optimizeDeps: {
-            include: ['react', 'react-dom', 'lucide-react', 'react-markdown'],
+            include: ['react', 'react-dom', 'lucide-react'],
         },
         build: {
             rollupOptions: {

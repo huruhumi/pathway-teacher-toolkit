@@ -12,18 +12,23 @@ interface RouteGuardProps {
 export const RouteGuard: React.FC<RouteGuardProps> = ({
     children,
     requireAuth = true,
-    redirectTo = import.meta.env.VITE_PORTAL_URL || 'http://localhost:3000'
+    redirectTo = import.meta.env.VITE_PORTAL_URL || '/'
 }) => {
     const { isInitialized, user } = useAuthStore();
 
     useEffect(() => {
         if (isInitialized && requireAuth && !user) {
             // Prevent infinite redirect loop if we are already on the portal URL
-            const isPortal = window.location.origin === new URL(redirectTo).origin
-                && window.location.pathname === new URL(redirectTo).pathname;
+            try {
+                const target = new URL(redirectTo, window.location.origin);
+                const isPortal = window.location.origin === target.origin
+                    && window.location.pathname === target.pathname;
 
-            if (!isPortal) {
-                // Redirect to the centralized portal/login if not authenticated
+                if (!isPortal) {
+                    window.location.href = redirectTo;
+                }
+            } catch {
+                // If URL parsing fails, just redirect
                 window.location.href = redirectTo;
             }
         }
