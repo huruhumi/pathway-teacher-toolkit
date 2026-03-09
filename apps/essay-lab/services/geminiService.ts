@@ -1,8 +1,7 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
 import { CorrectionReport, Grade, StudentGrade, CEFRLevel } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+import { createAIClient } from '@shared/ai/client';
 
 const SYSTEM_INSTRUCTION = `你是一位专门指导中国 K12 (小学至高中) 学生的资深 ESL (英语作为第二语言) 专家。你拥有雅思/托福考官的专业眼光，同时具备极强的同理心。
 
@@ -187,9 +186,7 @@ export const analyzeEssay = async (
   if (typeof essayInput === 'string') parts.push({ text: `【作文】：\n${essayInput}` });
   else parts.push({ text: "【作文图片】：", inlineData: { data: essayInput.base64, mimeType: essayInput.mimeType } });
 
-  if (!import.meta.env.VITE_GEMINI_API_KEY) {
-    throw new Error("未检测到 API Key，请确保 Vercel 环境变量 VITE_GEMINI_API_KEY 已正确配置。");
-  }
+  const ai = createAIClient();
 
   const response: GenerateContentResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -216,9 +213,7 @@ export const generateAdditionalItem = async (
     languageEnhancement: { type: Type.OBJECT, properties: { original: { type: Type.STRING }, level2: { type: Type.STRING }, level3: { type: Type.STRING } }, required: ["original", "level2", "level3"] },
   };
 
-  if (!import.meta.env.VITE_GEMINI_API_KEY) {
-    throw new Error("未检测到 API Key，请确保 Vercel 环境变量 VITE_GEMINI_API_KEY 已正确配置。");
-  }
+  const ai = createAIClient();
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",

@@ -51,7 +51,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
     if (readOnly) return;
     setEditableReport(prev => ({
       ...prev,
-      [parent]: { ...(prev as any)[parent], [field]: value }
+      [parent]: { ...(prev as Record<string, unknown>)[parent] as Record<string, unknown>, [field]: value }
     }));
   }, [readOnly]);
 
@@ -89,7 +89,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
         editableReport[type as keyof CorrectionReport] as any[]
       );
       addArrayItem(type, newItem);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error(e);
       useToast.getState().error(t('report.aiFailed'));
     } finally {
@@ -163,8 +163,8 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
     const paragraphs = text.split('\n');
     let globalIndex = 0;
     const pClass = isLined
-      ? "indent-12 text-justify text-slate-700 tracking-wide mb-0"
-      : "mb-4 indent-8 leading-relaxed text-justify text-slate-700";
+      ? "indent-12 text-justify text-slate-700 dark:text-slate-400 tracking-wide mb-0"
+      : "mb-4 indent-8 leading-relaxed text-justify text-slate-700 dark:text-slate-400";
 
     if (!enableHighlights || showGolden) {
       return paragraphs.map((p, idx) => {
@@ -188,7 +188,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
           elements.push(<span key={`text-${mIdx}`}>{text.slice(currentIndex, match.start)}</span>);
         }
         elements.push(
-          <span key={`match-${match.id}`} className="relative inline bg-rose-100/80 decoration-rose-400 decoration-wavy underline text-slate-900 rounded-sm mx-0.5 px-0.5 box-decoration-clone" id={`error-highlight-${match.id}`}>
+          <span key={`match-${match.id}`} className="relative inline bg-rose-100/80 decoration-rose-400 decoration-wavy underline text-slate-900 dark:text-slate-200 rounded-sm mx-0.5 px-0.5 box-decoration-clone" id={`error-highlight-${match.id}`}>
             <span className="absolute -top-3 -left-2 w-5 h-5 bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center rounded-full shadow-sm z-10 border-2 border-white select-none whitespace-nowrap">{match.id}</span>
             {match.text}
           </span>
@@ -208,7 +208,7 @@ const ReportDisplay: React.FC<ReportDisplayProps> = ({
     const parts = text.split('*');
     return parts.map((part, index) => {
       if (index % 2 === 1) {
-        return <span key={index} className={`font-bold ${colorClass} bg-white/60 px-1 rounded mx-0.5 box-decoration-clone`}>{part}</span>;
+        return <span key={index} className={`font-bold ${colorClass} bg-white dark:bg-slate-900/80/60 px-1 rounded mx-0.5 box-decoration-clone`}>{part}</span>;
       }
       return part;
     });

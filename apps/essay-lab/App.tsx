@@ -130,7 +130,6 @@ const AppContent: React.FC = () => {
               onLogoClick={() => { setViewMode('correction'); setReport(null); setIsPreviewing(false); }}
               rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
               signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-              homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
             />
           )}
 
@@ -175,7 +174,7 @@ const AppContent: React.FC = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-slate-800">{t('loading.title')}</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('loading.title')}</h3>
                       <p className="text-indigo-600 font-medium animate-pulse">{loadingMessage}</p>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ export default function ReportActions({
                     <button
                         type="button"
                         onClick={handleClosePreview}
-                        className="px-8 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                        className="px-8 py-4 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                         <Pen className="w-4 h-4" />
                         {t('report.backToEdit')}
@@ -26,7 +26,7 @@ export default function ReportActions({
                     <button
                         type="button"
                         onClick={onReset}
-                        className="px-8 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                        className="px-8 py-4 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-2xl font-bold hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         {t('report.startOver')}

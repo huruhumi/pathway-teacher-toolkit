@@ -25,14 +25,14 @@ export default function ReportHeader({ state: { editableReport, readOnly }, acti
                         <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center print:hidden shadow-sm shadow-indigo-200">
                             <GraduationCap className="w-4 h-4" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                        <h2 className="text-3xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
                             {t('report.title')} <span className="text-indigo-600">{t('report.titleAccent')}</span>
                         </h2>
                     </div>
                     <p className="text-slate-500 font-medium">{t('report.subtitle')}</p>
 
                     <div className="flex flex-wrap items-center gap-3 pt-2">
-                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">CEFR</span>
                             {readOnly ? (
                                 <span className="text-sm font-bold text-indigo-700">
@@ -46,7 +46,7 @@ export default function ReportHeader({ state: { editableReport, readOnly }, acti
                                 />
                             )}
                         </div>
-                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-white/5">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">CEQ</span>
                             {readOnly ? (
                                 <span className="text-sm font-bold text-emerald-700">
@@ -66,14 +66,14 @@ export default function ReportHeader({ state: { editableReport, readOnly }, acti
                     </div>
                 </div>
 
-                <div className="text-center bg-slate-50 p-4 rounded-2xl border border-slate-100 print:bg-transparent print:border-none print:p-0">
+                <div className="text-center bg-slate-50 p-4 rounded-2xl border border-slate-100 dark:border-white/5 print:bg-transparent print:border-none print:p-0">
                     <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Overall Grade</p>
                     {!readOnly && (
                         <div className="print:hidden mb-2">
                             <select
                                 value={editableReport.overallGrade}
                                 onChange={(e) => updateField('overallGrade', e.target.value as Grade)}
-                                className="bg-white border border-slate-200 rounded-lg px-3 py-1 text-slate-700 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500/20"
+                                className="bg-white border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1 text-slate-700 dark:text-slate-400 font-bold outline-none cursor-pointer focus:ring-2 focus:ring-indigo-500/20"
                             >
                                 {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
                             </select>

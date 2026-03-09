@@ -14,7 +14,7 @@ export default function EnhancementSection({
     return (
         <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
             <div className="flex items-center justify-between mb-8">
-                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm print:hidden">
                         <TrendingUp className="w-4 h-4" />
                     </span>
@@ -64,10 +64,10 @@ export default function EnhancementSection({
                         <div className="mb-2 relative pl-8">
                             <span className="absolute left-0 top-1 text-[10px] font-black text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">L2</span>
                             {readOnly ? (
-                                <div className="text-slate-700 text-sm font-medium">{renderWithHighlights(item.level2, 'text-indigo-600')}</div>
+                                <div className="text-slate-700 dark:text-slate-400 text-sm font-medium">{renderWithHighlights(item.level2, 'text-indigo-600')}</div>
                             ) : (
                                 <input
-                                    className="w-full text-slate-700 text-sm font-medium bg-slate-50/50 rounded px-2 py-1 outline-none border border-transparent hover:border-indigo-200"
+                                    className="w-full text-slate-700 dark:text-slate-400 text-sm font-medium bg-slate-50/50 rounded px-2 py-1 outline-none border border-transparent hover:border-indigo-200"
                                     value={item.level2}
                                     onChange={(e) => updateArrayItem('languageEnhancement', idx, { level2: e.target.value })}
                                 />
@@ -83,10 +83,10 @@ export default function EnhancementSection({
                         <div className="relative pl-8 bg-gradient-to-r from-violet-50 to-white p-3 rounded-xl border border-violet-100">
                             <span className="absolute left-3 top-4 text-[10px] font-black text-white bg-violet-500 px-1.5 py-0.5 rounded shadow-sm shadow-violet-200">L3</span>
                             {readOnly ? (
-                                <div className="text-slate-800 text-base font-bold pl-2">{renderWithHighlights(item.level3, 'text-violet-700')}</div>
+                                <div className="text-slate-800 dark:text-slate-200 text-base font-bold pl-2">{renderWithHighlights(item.level3, 'text-violet-700')}</div>
                             ) : (
                                 <input
-                                    className="w-full text-slate-800 text-base font-bold bg-white/50 rounded px-2 py-1 outline-none border border-transparent hover:border-violet-200 pl-2"
+                                    className="w-full text-slate-800 dark:text-slate-200 text-base font-bold bg-white/50 rounded px-2 py-1 outline-none border border-transparent hover:border-violet-200 pl-2"
                                     value={item.level3}
                                     onChange={(e) => updateArrayItem('languageEnhancement', idx, { level3: e.target.value })}
                                 />

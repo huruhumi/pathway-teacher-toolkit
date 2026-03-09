@@ -75,7 +75,7 @@ Write naturally — this should read like a genuine high-scoring student essay, 
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: responseSchema as any,
+            responseSchema: responseSchema,
             temperature: 0.8,
         },
     });

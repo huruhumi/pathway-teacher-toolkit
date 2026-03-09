@@ -10,7 +10,7 @@ export default function DetailedAnalysis({
 }: ReportSectionProps) {
     return (
         <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
-            <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-3">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-8 flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-sm print:hidden">
                     <Stethoscope className="w-4 h-4" />
                 </span>
@@ -20,17 +20,17 @@ export default function DetailedAnalysis({
             <div className="space-y-8">
                 {/* Mechanics */}
                 <div className="bg-slate-50/50 rounded-2xl p-6 border-l-4 border-blue-400 print:bg-white print:border-l-2 print:border-slate-300 print:p-0 print:pl-4">
-                    <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                         <PenLine className="w-3.5 h-3.5 text-blue-400 print:hidden" />
                         {t('report.mechanics')}
                     </h4>
                     {readOnly ? (
-                        <div className="text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">{editableReport.mechanicsAnalysis}</div>
+                        <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{editableReport.mechanicsAnalysis}</div>
                     ) : (
                         <textarea
                             value={editableReport.mechanicsAnalysis}
                             onChange={(e) => updateField('mechanicsAnalysis', e.target.value)}
-                            className="w-full bg-white p-3 rounded-lg border border-slate-200 text-sm leading-relaxed text-slate-600 focus:ring-1 focus:ring-blue-400 outline-none print:bg-white print:border-none print:p-0 print:h-auto"
+                            className="w-full bg-white p-3 rounded-lg border border-slate-200 dark:border-white/10 text-sm leading-relaxed text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-blue-400 outline-none print:bg-white print:border-none print:p-0 print:h-auto"
                         />
                     )}
                 </div>
@@ -38,7 +38,7 @@ export default function DetailedAnalysis({
                 {/* Collocation Check */}
                 {editableReport.collocationErrors && editableReport.collocationErrors.length > 0 && (
                     <div className="space-y-4">
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 border-l-4 border-purple-400 pl-4 py-1 print:border-slate-300 print:border-l-2">
+                        <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 border-l-4 border-purple-400 pl-4 py-1 print:border-slate-300 print:border-l-2">
                             {t('report.collocation')}
                         </h4>
                         <div className="grid md:grid-cols-2 gap-4">
@@ -73,8 +73,8 @@ export default function DetailedAnalysis({
 
                 {/* Idioms Section */}
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <h4 className="font-bold text-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider border-l-4 border-amber-400 pl-4 py-1">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2">
+                        <h4 className="font-bold text-slate-700 dark:text-slate-400 flex items-center gap-2 text-sm uppercase tracking-wider border-l-4 border-amber-400 pl-4 py-1">
                             Idioms & Phrasal Verbs
                         </h4>
                         {!readOnly && (
@@ -100,11 +100,11 @@ export default function DetailedAnalysis({
                                     )}
                                     <div className="mb-1 font-bold text-amber-700 text-sm">{item.expression}</div>
                                     <div className="text-xs text-slate-500 mb-2">{item.meaning}</div>
-                                    <div className="text-xs text-slate-600 italic border-l-2 border-amber-200 pl-2">"{item.usage || item.originalContext}"</div>
+                                    <div className="text-xs text-slate-600 dark:text-slate-400 italic border-l-2 border-amber-200 pl-2">"{item.usage || item.originalContext}"</div>
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-2 text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <div className="col-span-2 text-xs text-slate-400 italic text-center py-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 dark:border-white/10">
                                 No idioms detected.
                             </div>
                         )}

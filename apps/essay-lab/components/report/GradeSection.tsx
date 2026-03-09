@@ -8,20 +8,20 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
     return (
         <div className="grid lg:grid-cols-3 gap-6">
             <section className="lg:col-span-2 bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden print:shadow-none print:p-0 print:break-inside-avoid">
-                <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm print:hidden">
                         <BarChart3 className="w-4 h-4" />
                     </span>
                     <span className="print:text-lg">{t('report.gradeReport')}</span>
                 </h3>
 
-                <div className="overflow-hidden rounded-xl border border-slate-100 print:border-slate-200">
+                <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-white/5 print:border-slate-200">
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 print:bg-slate-100">
                             <tr>
-                                <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">{t('report.dimension')}</th>
-                                <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide w-24 text-center">{t('report.grade')}</th>
-                                <th className="py-4 px-6 font-bold text-slate-700 text-sm tracking-wide">{t('report.comment')}</th>
+                                <th className="py-4 px-6 font-bold text-slate-700 dark:text-slate-400 text-sm tracking-wide">{t('report.dimension')}</th>
+                                <th className="py-4 px-6 font-bold text-slate-700 dark:text-slate-400 text-sm tracking-wide w-24 text-center">{t('report.grade')}</th>
+                                <th className="py-4 px-6 font-bold text-slate-700 dark:text-slate-400 text-sm tracking-wide">{t('report.comment')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -29,10 +29,10 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
                                 <tr key={idx} className="hover:bg-slate-50/80 transition-colors print:hover:bg-transparent">
                                     <td className="py-3 px-6 align-top">
                                         {readOnly ? (
-                                            <div className="py-2 font-bold text-slate-800 text-sm">{item.dimension}</div>
+                                            <div className="py-2 font-bold text-slate-800 dark:text-slate-200 text-sm">{item.dimension}</div>
                                         ) : (
                                             <input
-                                                className="w-full bg-transparent py-2 rounded focus:bg-white focus:ring-1 focus:ring-indigo-100 outline-none font-bold text-slate-800 text-sm"
+                                                className="w-full bg-transparent py-2 rounded focus:bg-white focus:ring-1 focus:ring-indigo-100 outline-none font-bold text-slate-800 dark:text-slate-200 text-sm"
                                                 value={item.dimension}
                                                 onChange={(e) => updateArrayItem('grades', idx, { dimension: e.target.value })}
                                             />
@@ -56,10 +56,10 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
                                     </td>
                                     <td className="py-3 px-6 align-top">
                                         {readOnly ? (
-                                            <div className="py-2 text-slate-600 text-xs leading-relaxed whitespace-pre-wrap">{item.comment}</div>
+                                            <div className="py-2 text-slate-600 dark:text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{item.comment}</div>
                                         ) : (
                                             <textarea
-                                                className="w-full bg-transparent py-2 rounded focus:bg-white focus:ring-1 focus:ring-indigo-100 outline-none resize-none text-xs text-slate-600 leading-relaxed"
+                                                className="w-full bg-transparent py-2 rounded focus:bg-white focus:ring-1 focus:ring-indigo-100 outline-none resize-none text-xs text-slate-600 dark:text-slate-400 leading-relaxed"
                                                 rows={2}
                                                 value={item.comment}
                                                 onChange={(e) => updateArrayItem('grades', idx, { comment: e.target.value })}
@@ -75,13 +75,13 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
 
             {/* Sentence Variety Stats */}
             <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
-                <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                     <PieChart className="w-4 h-4 text-indigo-500 print:hidden" />
                     {t('report.sentenceVariety')}
                 </h3>
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <div className="flex justify-between text-xs font-bold text-slate-600">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                             <span>{t('report.simple')}</span>
                             <span>{editableReport.sentenceVariety?.simple || 0}%</span>
                         </div>
@@ -90,7 +90,7 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <div className="flex justify-between text-xs font-bold text-slate-600">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                             <span>{t('report.compound')}</span>
                             <span>{editableReport.sentenceVariety?.compound || 0}%</span>
                         </div>
@@ -99,7 +99,7 @@ export default function GradeSection({ state: { editableReport, readOnly }, acti
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <div className="flex justify-between text-xs font-bold text-slate-600">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                             <span>{t('report.complex')}</span>
                             <span>{editableReport.sentenceVariety?.complex || 0}%</span>
                         </div>

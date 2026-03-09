@@ -118,7 +118,7 @@ const CorrectionRecords: React.FC = () => {
     return (
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
                         <History className="w-5 h-5 text-indigo-600" />
                     </div>
@@ -190,7 +190,7 @@ const CorrectionRecords: React.FC = () => {
                                         </span>
                                     </div>
                                     {record.topicText && (
-                                        <p className="text-sm font-medium text-slate-700 mb-1 truncate">
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-400 mb-1 truncate">
                                             {record.topicText}
                                         </p>
                                     )}

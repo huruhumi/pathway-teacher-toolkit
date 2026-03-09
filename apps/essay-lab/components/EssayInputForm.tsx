@@ -74,7 +74,7 @@ export function EssayInputForm({ onSubmit, disabled }: EssayInputFormProps) {
     return (
         <div className="space-y-8">
             {/* Title */}
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-500" />
                 {t('input.submit')}
             </h2>

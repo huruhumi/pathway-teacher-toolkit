@@ -10,7 +10,7 @@ export default function TranscriptSection({
     return (
         <section className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 print:shadow-none print:p-0 print:break-inside-avoid">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-3">
                     <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm print:hidden">
                         <FileText className="w-4 h-4" />
                     </span>
@@ -38,9 +38,9 @@ export default function TranscriptSection({
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-0 border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+            <div className="grid lg:grid-cols-3 gap-0 border border-slate-100 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
                 {/* Left: Text Area */}
-                <div className="lg:col-span-2 relative bg-white border-r border-slate-100 p-8">
+                <div className="lg:col-span-2 relative bg-white border-r border-slate-100 dark:border-white/5 p-8">
                     <Quote className="absolute top-4 left-4 w-10 h-10 text-slate-50 -z-0 print:hidden" />
 
                     <div
@@ -59,9 +59,9 @@ export default function TranscriptSection({
                         )}
                     </div>
 
-                    <div className="hidden print:block mt-8 pt-6 border-t border-dashed border-slate-200">
-                        <h4 className="font-bold text-slate-800 mb-2 text-sm uppercase tracking-wider text-center">Golden Version (Rewrite)</h4>
-                        <div className="font-serif text-base text-slate-700 leading-relaxed text-justify">
+                    <div className="hidden print:block mt-8 pt-6 border-t border-dashed border-slate-200 dark:border-white/10">
+                        <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-2 text-sm uppercase tracking-wider text-center">Golden Version (Rewrite)</h4>
+                        <div className="font-serif text-base text-slate-700 dark:text-slate-400 leading-relaxed text-justify">
                             {renderParagraphs(editableReport.goldenVersion, false)}
                         </div>
                     </div>
@@ -75,14 +75,14 @@ export default function TranscriptSection({
                             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                                 <Check className="w-6 h-6 text-emerald-400" />
                             </div>
-                            <p className="font-bold text-slate-600">Golden Version</p>
+                            <p className="font-bold text-slate-600 dark:text-slate-400">Golden Version</p>
                             <p className="text-xs mt-2">Perfect native expression.</p>
                         </div>
                     ) : (
                         <div className="overflow-y-auto p-4 space-y-4 custom-scrollbar h-full">
                             {orderedMatches.length > 0 ? (
                                 orderedMatches.map((match) => (
-                                    <div key={match.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                    <div key={match.id} className="bg-white rounded-xl border border-slate-200 dark:border-white/10 p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                                         {/* Number Badge */}
                                         <div className="flex items-center gap-3 mb-3 border-b border-slate-50 pb-2">
                                             <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-sm flex-shrink-0 border-2 border-indigo-100">
@@ -113,7 +113,7 @@ export default function TranscriptSection({
                                         </div>
 
                                         {/* Reason */}
-                                        <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 leading-relaxed border border-slate-100 mb-2">
+                                        <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border border-slate-100 dark:border-white/5 mb-2">
                                             <div className="flex items-center gap-1.5 mb-1 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                                                 <Info className="w-3 h-3" /> Reason
                                             </div>

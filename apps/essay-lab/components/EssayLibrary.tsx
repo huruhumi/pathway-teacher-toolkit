@@ -43,7 +43,7 @@ const EssayLibrary: React.FC = () => {
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
-                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
                         <BookOpen className="w-5 h-5 text-indigo-600" />
                     </div>
@@ -62,7 +62,7 @@ const EssayLibrary: React.FC = () => {
             {/* Generator Panel */}
             {showGenerator && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-6 space-y-4">
-                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-indigo-600" />
                         {t('essays.generate')}
                     </h3>
@@ -99,7 +99,7 @@ const EssayLibrary: React.FC = () => {
                                 <PenTool className="w-3 h-3" /> {t('essays.genre')}
                             </label>
                             <select value={genGenre} onChange={e => setGenGenre(e.target.value as EssayGenre)} className="input-field w-full">
-                                {Object.values(EssayGenre).map(g => <option key={g} value={g}>{t(genreKeys[g] as any)}</option>)}
+                                {Object.values(EssayGenre).map(g => <option key={g} value={g}>{t(genreKeys[g])}</option>)}
                             </select>
                         </div>
                         <div className="space-y-1">
@@ -136,22 +136,22 @@ const EssayLibrary: React.FC = () => {
             {allEssays.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
                     <Filter className="w-4 h-4 text-slate-400" />
-                    <select value={filterSource} onChange={e => setFilterSource(e.target.value as any)} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <select value={filterSource} onChange={e => setFilterSource(e.target.value as 'all' | 'ai' | 'manual')} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 outline-none">
                         <option value="all">{t('records.filterAll')}</option>
                         <option value="generated">{t('essays.aiGenerated')}</option>
                         <option value="correction">{t('essays.fromCorrection')}</option>
                     </select>
-                    <select value={filterGrade} onChange={e => setFilterGrade(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <select value={filterGrade} onChange={e => setFilterGrade(e.target.value)} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-200 outline-none">
                         <option value="all">{t('records.filterAll')}</option>
                         {Object.values(StudentGrade).map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
-                    <select value={filterCefr} onChange={e => setFilterCefr(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <select value={filterCefr} onChange={e => setFilterCefr(e.target.value)} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-200 outline-none">
                         <option value="all">{t('records.filterAll')}</option>
                         {Object.values(CEFRLevel).map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    <select value={filterGenre} onChange={e => setFilterGenre(e.target.value)} className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <select value={filterGenre} onChange={e => setFilterGenre(e.target.value)} className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100 focus:ring-2 focus:ring-indigo-200 outline-none">
                         <option value="all">{t('records.filterAll')}</option>
-                        {Object.values(EssayGenre).map(g => <option key={g} value={g}>{t(genreKeys[g] as any)}</option>)}
+                        {Object.values(EssayGenre).map(g => <option key={g} value={g}>{t(genreKeys[g])}</option>)}
                     </select>
                     <div className="relative flex-1 min-w-[200px]">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -160,7 +160,7 @@ const EssayLibrary: React.FC = () => {
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Search..."
-                            className="w-full text-sm border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none"
+                            className="w-full text-sm border border-slate-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-1.5 bg-white focus:ring-2 focus:ring-indigo-200 outline-none"
                         />
                     </div>
                 </div>
@@ -205,14 +205,14 @@ const EssayLibrary: React.FC = () => {
                                                 </span>
                                                 {gen && (
                                                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md">
-                                                        <PenTool className="w-3 h-3" /> {t(genreKeys[gen.genre] as any)}
+                                                        <PenTool className="w-3 h-3" /> {t(genreKeys[gen.genre])}
                                                     </span>
                                                 )}
                                                 <span className="text-xs text-slate-400">
                                                     {essay.wordCount} {t('essays.words')} · {new Date(essay.timestamp).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <h3 className="text-base font-bold text-slate-800 mb-1">
+                                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1">
                                                 {gen?.title || essay.topic}
                                             </h3>
                                             {!isExpanded && (
@@ -246,10 +246,10 @@ const EssayLibrary: React.FC = () => {
 
                                 {/* Expanded Content */}
                                 {isExpanded && (
-                                    <div className="border-t border-slate-100 p-5 space-y-5">
+                                    <div className="border-t border-slate-100 dark:border-white/5 p-5 space-y-5">
                                         {/* Essay Content */}
                                         <div className="prose prose-sm max-w-none">
-                                            <div className="bg-slate-50 rounded-xl p-5 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap font-serif">
+                                            <div className="bg-slate-50 rounded-xl p-5 text-sm leading-relaxed text-slate-700 dark:text-slate-400 whitespace-pre-wrap font-serif">
                                                 {essay.content}
                                             </div>
                                         </div>
@@ -260,13 +260,13 @@ const EssayLibrary: React.FC = () => {
                                                 {/* Highlights */}
                                                 {gen.highlights.length > 0 && (
                                                     <div className="space-y-2">
-                                                        <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-400 flex items-center gap-2">
                                                             <Lightbulb className="w-4 h-4 text-amber-500" />
                                                             {t('essays.highlights')}
                                                         </h4>
                                                         <ul className="space-y-1">
                                                             {gen.highlights.map((h, i) => (
-                                                                <li key={i} className="text-sm text-slate-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 italic">
+                                                                <li key={i} className="text-sm text-slate-600 dark:text-slate-400 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 italic">
                                                                     "{h}"
                                                                 </li>
                                                             ))}
@@ -277,7 +277,7 @@ const EssayLibrary: React.FC = () => {
                                                 {/* Vocabulary */}
                                                 {gen.vocabulary.length > 0 && (
                                                     <div className="space-y-2">
-                                                        <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-400 flex items-center gap-2">
                                                             <BookMarked className="w-4 h-4 text-indigo-500" />
                                                             {t('essays.vocabulary')}
                                                         </h4>
@@ -295,26 +295,26 @@ const EssayLibrary: React.FC = () => {
 
                                                 {/* Structure */}
                                                 <div className="space-y-2">
-                                                    <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-400 flex items-center gap-2">
                                                         <Layers className="w-4 h-4 text-purple-500" />
                                                         {t('essays.structure')}
                                                     </h4>
-                                                    <p className="text-sm text-slate-600 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">{gen.structure}</p>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">{gen.structure}</p>
                                                 </div>
 
                                                 {/* Teacher Tip */}
                                                 <div className="space-y-2">
-                                                    <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                                    <h4 className="text-sm font-bold text-slate-700 dark:text-slate-400 flex items-center gap-2">
                                                         <Lightbulb className="w-4 h-4 text-emerald-500" />
                                                         {t('essays.teacherTip')}
                                                     </h4>
-                                                    <p className="text-sm text-slate-600 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">{gen.teacherTip}</p>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">{gen.teacherTip}</p>
                                                 </div>
                                             </>
                                         )}
 
                                         {/* Actions */}
-                                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                                        <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
                                             <button
                                                 onClick={() => handleCopy(essay.content, essay.id)}
                                                 className="text-sm text-slate-500 hover:text-indigo-600 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
