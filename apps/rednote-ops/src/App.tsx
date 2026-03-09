@@ -48,7 +48,7 @@ function AppContent() {
         if (plans) setSavedPlans(plans);
         const notes = await localforage.getItem<SavedNote[]>('pathway_savedNotes');
         if (notes) setSavedNotes(notes);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Failed to load data from storage", e);
       } finally {
         setIsLoaded(true);
@@ -161,7 +161,7 @@ function AppContent() {
   return (
     <RouteGuard>
       <AppLayout currentApp="rednote-ops" userName="Admin">
-        <div className={`min-h-screen h-full w-full overflow-y-auto font-sans flex flex-col ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`min-h-screen h-full w-full overflow-y-auto font-sans flex flex-col ${isDarkMode ? 'dark bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-900 dark:text-slate-200'}`}>
 
           <AppHeader
             appName="Rednote Ops"
@@ -182,7 +182,6 @@ function AppContent() {
             }}
             rightContent={headerToggles}
             signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-            homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
           />
 
           <PageLayout>

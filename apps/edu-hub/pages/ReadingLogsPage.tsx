@@ -76,7 +76,7 @@ const ReadingLogsPage: React.FC = () => {
                             onClick={() => setFilter(f)}
                             className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${filter === f
                                 ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'
                                 }`}
                         >
                             {f === 'all' && (lang === 'zh' ? '全部' : 'All')}

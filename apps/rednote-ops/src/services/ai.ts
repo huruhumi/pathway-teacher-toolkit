@@ -9,7 +9,7 @@ export { Type } from "@google/genai";
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
-export const generateContent = async (prompt: string, systemInstruction?: string, config: any = {}) => {
+export const generateContent = async (prompt: string, systemInstruction?: string, config: any = {}, signal?: AbortSignal) => {
   const model = "gemini-2.5-flash";
   const url = `${BASE_URL}/${model}:generateContent?key=${API_KEY}`;
 
@@ -36,6 +36,7 @@ export const generateContent = async (prompt: string, systemInstruction?: string
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal,
     });
 
     if (!response.ok) {

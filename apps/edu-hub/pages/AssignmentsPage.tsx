@@ -216,7 +216,7 @@ const AssignmentsPage: React.FC = () => {
                                                 <h4 className="font-bold text-slate-800 dark:text-white truncate">{a.title}</h4>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.content_type === 'worksheet' ? 'bg-violet-100 text-violet-700' :
                                                         a.content_type === 'companion' ? 'bg-teal-100 text-teal-700' :
-                                                            'bg-slate-100 text-slate-600'
+                                                            'bg-slate-100 text-slate-600 dark:text-slate-400'
                                                     }`}>{a.content_type}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-slate-400">
@@ -267,7 +267,7 @@ const AssignmentsPage: React.FC = () => {
                                                             <div className="flex items-center gap-2">
                                                                 <span className={`flex items-center gap-1 text-xs font-medium ${cfg.color}`}>
                                                                     <StatusIcon size={13} />
-                                                                    {t(`asg.${sub.status}` as any)}
+                                                                    {t(`asg.${sub.status}`)}
                                                                 </span>
                                                                 {sub.status === 'submitted' && (
                                                                     <button onClick={() => updateSubmissionStatus(sub, 'completed')}

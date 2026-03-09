@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useToast } from '@shared/stores/useToast';
 import { BrandData } from '../data/brandData';
 import { generateContent, Type } from '../services/ai';
@@ -31,6 +31,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<any[] | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Date Picker State
   const [showDatePicker, setShowDatePicker] = useState<number | null>(null); // Index of item being saved
@@ -89,6 +90,8 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
       return;
     }
     setIsGenerating(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const [year, monthNum] = month.split('-');
     const prompt = `
@@ -131,9 +134,9 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
               required: ["day", "theme", "topic", "format", "angle", "target_audience"]
             }
           }
-        }
+        },
+        controller.signal
       );
-
 
 
       let plan;
@@ -163,13 +166,14 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
       useToast.getState().error(`${t('plan.generateFailed')}: ${error.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">{t('plan.title')}</h2>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200">{t('plan.title')}</h2>
         <p className="text-slate-500 mt-1">{t('plan.desc')}</p>
       </div>
 
@@ -218,14 +222,28 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
         </div>
 
         <div className="flex justify-end">
-          <Button
-            variant="primary"
-            onClick={handleGeneratePlan}
-            isLoading={isGenerating}
-            leftIcon={!isGenerating && <CalendarIcon size={18} />}
-          >
-            {isGenerating ? t('plan.generating') : t('plan.generate')}
-          </Button>
+          {isGenerating ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = null;
+                setIsGenerating(false);
+              }}
+              leftIcon={<Loader2 className="animate-spin" size={18} />}
+              className="bg-gradient-to-r from-red-500 to-rose-500 border-none hover:from-red-600 hover:to-rose-600"
+            >
+              {lang === 'zh' ? '停止生成' : 'Stop'}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={handleGeneratePlan}
+              leftIcon={<CalendarIcon size={18} />}
+            >
+              {t('plan.generate')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -236,7 +254,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
           className="space-y-6"
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-slate-900">{t('plan.generatedTitle')}</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">{t('plan.generatedTitle')}</h3>
             <Button
               variant="ghost"
               size="sm"
@@ -257,7 +275,7 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md font-medium">{item.theme}</span>
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 dark:text-slate-400 text-xs rounded-md font-medium">{item.theme}</span>
                       <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-md font-medium">{item.format}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -290,17 +308,17 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
                       </Button>
                     </div>
                   </div>
-                  <h4 className="font-bold text-slate-900 text-lg">{item.topic}</h4>
+                  <h4 className="font-bold text-slate-900 dark:text-slate-200 text-lg">{item.topic}</h4>
                   <p className="text-slate-500 text-sm mt-1">{item.angle}</p>
                 </div>
                 <div className="flex-shrink-0 md:text-right">
                   <p className="text-xs text-slate-400 mb-2">{t('plan.targetAudience')}</p>
-                  <p className="text-sm font-medium text-slate-700">{item.target_audience}</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-400">{item.target_audience}</p>
                 </div>
 
                 {/* Date Picker Popover */}
                 {showDatePicker === index && (
-                  <div className="absolute right-0 top-12 z-10 bg-white p-4 rounded-xl shadow-xl border border-slate-200 w-64 animate-in fade-in zoom-in duration-200">
+                  <div className="absolute right-0 top-12 z-10 bg-white dark:bg-slate-900/80 p-4 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 w-64 animate-in fade-in zoom-in duration-200">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-bold text-sm">{t('plan.selectDate')}</h4>
                       <Button variant="ghost" size="sm" onClick={() => setShowDatePicker(null)} className="text-slate-400 hover:text-slate-600 p-1 h-auto">
@@ -328,24 +346,24 @@ export default function Planner({ brandData, onPlanGenerated, onNavigate, onSele
 
           {/* Saved Plans Section */}
           {savedPlans.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <div className="mt-12 pt-8 border-t border-slate-200 dark:border-white/10">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 mb-6 flex items-center gap-2">
                 <CalendarIcon className="text-emerald-500" />
                 {t('plan.savedSchedule')} ({savedPlans.length})
               </h3>
               <div className="space-y-4">
                 {savedPlans.map((plan, idx) => (
                   <div key={idx} className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex items-center gap-4">
-                    <div className="flex-shrink-0 w-16 text-center bg-white rounded-lg p-2 border border-emerald-100 shadow-sm">
+                    <div className="flex-shrink-0 w-16 text-center bg-white dark:bg-slate-900/80 rounded-lg p-2 border border-emerald-100 shadow-sm">
                       <div className="text-xs text-slate-500 uppercase">{new Date(plan.date).toLocaleString('default', { month: 'short' })}</div>
                       <div className="text-xl font-bold text-emerald-600">{new Date(plan.date).getDate()}</div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium px-2 py-0.5 bg-white text-emerald-600 rounded border border-emerald-100">{plan.theme}</span>
+                        <span className="text-xs font-medium px-2 py-0.5 bg-white dark:bg-slate-900/80 text-emerald-600 rounded border border-emerald-100">{plan.theme}</span>
                         <span className="text-xs text-slate-500">{plan.format}</span>
                       </div>
-                      <h4 className="font-bold text-slate-900">{plan.topic}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-slate-200">{plan.topic}</h4>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button

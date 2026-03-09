@@ -91,7 +91,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                                         <p className="font-semibold text-slate-800 dark:text-slate-200 mb-4 leading-relaxed">{item.question}</p>
 
                                                         {item.imageUrl && (
-                                                            <img src={item.imageUrl} alt="Question visual" className="max-w-xs rounded-xl border border-slate-200 shadow-sm mb-4" />
+                                                            <img src={item.imageUrl} alt="Question visual" className="max-w-xs rounded-xl border border-slate-200 dark:border-white/10 shadow-sm mb-4" />
                                                         )}
 
                                                         {section.layout === 'multiple-choice' && item.options ? (

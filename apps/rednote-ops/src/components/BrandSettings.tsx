@@ -30,7 +30,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">{t('settings.title')}</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200">{t('settings.title')}</h2>
           <p className="text-slate-500 mt-1">{t('settings.desc')}</p>
         </div>
         <button
@@ -61,14 +61,14 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
             onChange={(e) => handleChange('slogan', e.target.value)}
           />
           <div className="space-y-2 col-span-1 md:col-span-2">
-            <label className="text-sm font-medium text-slate-700">{t('settings.logo')}</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-400">{t('settings.logo')}</label>
             <div className="flex items-center gap-4">
               {formData.logoUrl && (
-                <div className="relative w-24 h-24 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center">
+                <div className="relative w-24 h-24 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-50 flex items-center justify-center">
                   <img src={formData.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain p-2" />
                   <button
                     onClick={() => handleChange('logoUrl', '')}
-                    className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-slate-500 hover:text-rose-500 transition-colors"
+                    className="absolute top-1 right-1 bg-white dark:bg-slate-900/80/80 p-1 rounded-full text-slate-500 hover:text-rose-500 transition-colors"
                   >
                     <X size={14} />
                   </button>
@@ -116,7 +116,7 @@ export default function BrandSettings({ brandData, onUpdate }: BrandSettingsProp
         />
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">{t('settings.coreValues')}</label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-400">{t('settings.coreValues')}</label>
           <div className="space-y-2">
             {formData.coreValues.map((val, idx) => (
               <Input

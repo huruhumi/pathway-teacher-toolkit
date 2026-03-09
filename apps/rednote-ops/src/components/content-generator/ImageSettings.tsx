@@ -7,14 +7,14 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
     return (
         <div className="card space-y-6">
             <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-slate-900 font-bold">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-slate-200 font-bold">
                     <ImageIcon size={20} className="text-purple-500" />
                     <h3>AI 配图生成 (NanoBanana)</h3>
                 </div>
                 <select
                     value={state.imageStyle}
                     onChange={(e) => actions.setImageStyle(e.target.value)}
-                    className="p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
+                    className="p-2 text-sm border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-50"
                 >
                     <option value="Photography, Realistic, High Quality">真实摄影</option>
                     <option value="Minimalist Illustration, Flat Design">扁平插画</option>
@@ -25,20 +25,20 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
 
             {/* Logo Settings UI */}
             {state.brandData.logoUrl && (
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-3">
-                    <div className="flex items-center gap-2 text-slate-700 font-medium text-sm">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 dark:border-white/10 space-y-3">
+                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-400 font-medium text-sm">
                         <ImageIcon size={14} className="text-rose-500" />
                         Logo 叠加设置
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-500">尺寸</label>
-                            <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                            <div className="flex bg-white dark:bg-slate-900/80 rounded-lg border border-slate-200 dark:border-white/10 p-1">
                                 {['小', '中', '大'].map(size => (
                                     <button
                                         key={size}
                                         onClick={() => actions.setLogoSize(size as any)}
-                                        className={`flex-1 py-1 text-xs rounded-md transition-colors ${state.logoSize === size ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                                        className={`flex-1 py-1 text-xs rounded-md transition-colors ${state.logoSize === size ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50'}`}
                                     >
                                         {size}
                                     </button>
@@ -50,7 +50,7 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
                             <select
                                 value={state.logoPosition}
                                 onChange={(e) => actions.setLogoPosition(e.target.value as any)}
-                                className="w-full p-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500/50 bg-white"
+                                className="w-full p-2 text-xs border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500/50 bg-white dark:bg-slate-900/80"
                             >
                                 <option value="左上">左上角</option>
                                 <option value="右上">右上角</option>
@@ -67,7 +67,7 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
             {state.imageState.prompts.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-slate-700">逐张配图 ({state.imageState.prompts.length} 张)</label>
+                        <label className="text-sm font-bold text-slate-700 dark:text-slate-400">逐张配图 ({state.imageState.prompts.length} 张)</label>
                         <button
                             onClick={() => {
                                 // Add a new empty prompt
@@ -81,9 +81,9 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
 
                     <div className="space-y-3">
                         {state.imageState.prompts.map((prompt, idx) => (
-                            <div key={idx} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                            <div key={idx} className="bg-slate-50 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                                 {/* Prompt Header */}
-                                <div className="flex items-center justify-between px-4 py-2 bg-slate-100/50 border-b border-slate-200">
+                                <div className="flex items-center justify-between px-4 py-2 bg-slate-100/50 border-b border-slate-200 dark:border-white/10">
                                     <span className="text-xs font-bold text-slate-500">
                                         {idx === 0 ? '🖼️ 封面图' : `📷 配图 ${idx + 1}`}
                                     </span>
@@ -97,7 +97,7 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
                                                         actions.setAddLogoIndices(prev => [...prev, idx]);
                                                     }
                                                 }}
-                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors border ${state.addLogoIndices.includes(idx) ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors border ${state.addLogoIndices.includes(idx) ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-white dark:bg-slate-900/80 text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50'}`}
                                             >
                                                 {state.addLogoIndices.includes(idx) ? '✓ Logo' : '+ Logo'}
                                             </button>
@@ -129,7 +129,7 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
                                             actions.setEditablePrompts(newPrompts);
                                         }}
                                         placeholder="在此编辑图片提示词 (Prompt)..."
-                                        className="w-full p-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white min-h-[80px] resize-y"
+                                        className="w-full p-3 text-sm border border-slate-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-white dark:bg-slate-900/80 min-h-[80px] resize-y"
                                     />
 
                                     <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
 
                                         {/* Show generated image thumbnail inline */}
                                         {state.imageState.images[idx] && (
-                                            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                                            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
                                                 <img src={state.imageState.images[idx]} alt={`配图 ${idx + 1}`} className="w-full h-full object-cover" />
                                             </div>
                                         )}
@@ -173,8 +173,8 @@ export default function ImageSettings({ state, actions }: ContentGeneratorChildP
                         onClick={actions.handleGenerateImages}
                         disabled={state.imageState.isGenerating || state.imageState.prompts.every(p => !p.trim())}
                         className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all border ${state.imageState.isGenerating
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200'
-                            : 'bg-white text-purple-600 hover:bg-purple-50 border-purple-200'
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200 dark:border-white/10'
+                            : 'bg-white dark:bg-slate-900/80 text-purple-600 hover:bg-purple-50 border-purple-200'
                             }`}
                     >
                         {state.imageState.isGenerating ? (

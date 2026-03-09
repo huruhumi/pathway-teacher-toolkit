@@ -120,7 +120,7 @@ const BooksPage: React.FC = () => {
                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === f
                                 ? (f === 'overdue' ? 'bg-red-500 text-white' : 'bg-amber-500 text-white shadow-md')
                                 : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:border-amber-300'}`}>
-                            {t(`bk.${f}` as any)}
+                            {t(`bk.${f}`)}
                         </button>
                     ))}
                 </div>

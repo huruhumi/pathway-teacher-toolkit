@@ -20,7 +20,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t('dash.welcome')}</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-200">{t('dash.welcome')}</h1>
           <p className="text-slate-500 mt-1">{lang === 'zh' ? `今天我们要为 ${brandData.name} 创造什么价值？` : `What value will we create for ${brandData.name} today?`}</p>
         </div>
         <button
@@ -41,7 +41,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           <div>
             <p className="text-sm font-medium text-slate-500">{t('dash.postsGenerated')}</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-slate-900">{savedNotes.length}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-200">{savedNotes.length}</h3>
               <span className="text-xs text-slate-400">{t('dash.unit.posts')}</span>
             </div>
           </div>
@@ -54,7 +54,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           <div>
             <p className="text-sm font-medium text-slate-500">{t('dash.scheduledPosts')}</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-slate-900">{upcomingNotesCount}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-200">{upcomingNotesCount}</h3>
               <span className="text-xs text-slate-400">{t('dash.unit.upcoming')}</span>
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
           <div>
             <p className="text-sm font-medium text-slate-500">{t('dash.archivedPlans')}</p>
             <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-slate-900">{savedPlans.length}</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-200">{savedPlans.length}</h3>
               <span className="text-xs text-slate-400">{t('dash.unit.plans')}</span>
             </div>
           </div>
@@ -97,10 +97,10 @@ export default function Dashboard({ brandData, onNavigate, savedNotes, savedPlan
 
         <div
           onClick={() => onNavigate('generator')}
-          className="group cursor-pointer bg-white border border-slate-200 p-8 rounded-3xl relative overflow-hidden hover:border-rose-200 transition-colors"
+          className="group cursor-pointer bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 p-8 rounded-3xl relative overflow-hidden hover:border-rose-200 transition-colors"
         >
           <div className="relative z-10">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">{t('dash.generatePost')}</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-200 mb-2">{t('dash.generatePost')}</h3>
             <p className="text-slate-500 mb-6 max-w-xs">
               {t('dash.generatePostDesc')}
             </p>

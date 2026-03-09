@@ -68,6 +68,7 @@ export interface ContentGeneratorActions {
     handleSaveToCalendar: () => void;
     handleGenerate: () => void;
     handleGenerateCustom: () => void;
+    handleStop: () => void;
     handleGenerateImages: () => void;
     handleGenerateSingleImage: (idx: number) => void;
     handleRefreshResourceImage: (idx: number) => void;

@@ -55,7 +55,6 @@ const AppContent: React.FC = () => {
                     onLogoClick={() => setView('dashboard')}
                     rightContent={<HeaderToggles lang={lang} onLangChange={setLang} />}
                     signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-                    homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
                 />
 
                 <PageLayout className="flex-1">

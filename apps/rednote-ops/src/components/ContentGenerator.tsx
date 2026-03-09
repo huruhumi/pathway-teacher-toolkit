@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { handleError } from '@shared/services/logger';
 import { useToast } from '@shared/stores/useToast';
 import { BrandData } from '../data/brandData';
 import { generateContent, generateImage, Type } from '../services/ai';
@@ -34,6 +35,7 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
   const [topic, setTopic] = useState(initialNote ? initialNote.topic : (initialTopic || ''));
   const [style, setStyle] = useState('专业干货 (Educational)');
   const [isGenerating, setIsGenerating] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [generatedContent, setGeneratedContent] = useState<any | null>(initialNote ? {
     titles: [initialNote.title],
     content: initialNote.content,
@@ -169,6 +171,8 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
     }
 
     setIsGenerating(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     // Save current content to history before generating new one
     if (generatedContent) {
       setContentHistory(prev => [generatedContent, ...prev].slice(0, 3));
@@ -229,12 +233,13 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
             },
             required: ["titles", "content", "tags"]
           }
-        }
+        },
+        controller.signal
       );
       const parsePostJSON = (text: string) => {
         try {
           return JSON.parse(text);
-        } catch (e) {
+        } catch (e: unknown) {
           try {
             let clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
             clean = clean.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']'); // remove trailing commas
@@ -333,12 +338,13 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
             },
             required: ["image_brief", "image_prompts", "resources"]
           }
-        }
+        },
+        controller.signal
       );
       const parseImageJSON = (text: string) => {
         try {
           return JSON.parse(text);
-        } catch (e) {
+        } catch (e: unknown) {
           try {
             let clean = text.replace(/```json/gi, '').replace(/```/g, '').trim();
             clean = clean.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
@@ -366,10 +372,12 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       setEditablePrompts(finalContent.image_prompts || []);
 
     } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error("Failed to generate content", error);
       useToast.getState().error("生成内容失败: " + (error.message || "未知错误"));
     } finally {
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -384,6 +392,8 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       return;
     }
     setIsGenerating(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setGeneratedContent(null);
     setGeneratedImages(prev => {
       return [];
@@ -437,13 +447,14 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
             },
             required: ["titles", "content", "tags"]
           }
-        }
+        },
+        controller.signal
       );
 
       const parseJSON = (text: string) => {
         try {
           return JSON.parse(text);
-        } catch (e) {
+        } catch (e: unknown) {
           const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
           return JSON.parse(clean);
         }
@@ -504,7 +515,8 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
             },
             required: ["image_brief", "image_prompts", "resources"]
           }
-        }
+        },
+        controller.signal
       );
 
       const imageContent = parseJSON(imageResult);
@@ -519,10 +531,12 @@ export default function ContentGenerator({ brandData, currentPlan, initialTopic,
       setTopic(customPrompt.substring(0, 50) + (customPrompt.length > 50 ? '...' : ''));
 
     } catch (error: any) {
+      if (error.name === 'AbortError') return;
       console.error("Failed to generate custom content", error);
       useToast.getState().error("生成自定义内容失败: " + (error.message || "未知错误"));
     } finally {
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -629,9 +643,9 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
       } else {
         useToast.getState().error("未能找到新的有效图片链接，请手动查找。");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      useToast.getState().error("刷新网络资源配图失败：" + (e.message || "未知错误"));
+      useToast.getState().error("刷新网络资源配图失败：" + handleError(e, "未知错误"));
     } finally {
       setIsRefreshingResource(prev => ({ ...prev, [index]: false }));
     }
@@ -652,13 +666,19 @@ Output ONLY a JSON object with a single string field "image_url". Return empty s
     brandData, currentPlan, savedNotes, PROMPT_FRAMEWORKS
   };
 
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsGenerating(false);
+  };
+
   const actions: ContentGeneratorActions = {
     setTopic, setStyle, setIsGenerating, setGeneratedContent, setCopiedField, setEditingNoteId,
     setShowCustomPrompt, setCustomPrompt, setShowSaveModal, setPublishDate, setCalendarMonth,
     setPreviewMode, setSelectedFramework, setContentHistory, setImageCount, setImageStyle,
     setIsGeneratingImages, setGeneratedImages, setEditablePrompts, setGeneratingImageIndices, setIsRefreshingResource,
     setAddLogoIndices, setLogoSize, setLogoPosition,
-    handleQuickSelect, handleSaveToCalendar, handleGenerate, handleGenerateCustom,
+    handleQuickSelect, handleSaveToCalendar, handleGenerate, handleGenerateCustom, handleStop,
     handleGenerateImages, handleGenerateSingleImage, handleRefreshResourceImage, copyToClipboard,
     handlePrevMonth, handleNextMonth, isDateOccupied, getFirstDayOfMonth, getDaysInMonth
   };

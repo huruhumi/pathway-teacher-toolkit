@@ -56,7 +56,7 @@ const DashboardPage: React.FC<{ onNav?: (tab: string) => void }> = ({ onNav }) =
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-slate-800 dark:text-white">{c.val}</div>
-                                <div className="text-xs text-slate-400 font-medium">{t(`dash.${c.key}` as any)}</div>
+                                <div className="text-xs text-slate-400 font-medium">{t(`dash.${c.key}`)}</div>
                             </div>
                         </div>
                     </button>

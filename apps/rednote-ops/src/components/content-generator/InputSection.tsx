@@ -1,4 +1,4 @@
-import { Sparkles, Loader2, PenTool, X } from 'lucide-react';
+import { Sparkles, Loader2, PenTool, X, Square } from 'lucide-react';
 import { ContentGeneratorChildProps } from './types';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { Select } from '@shared/components/ui/Select';
@@ -26,7 +26,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                                     size="sm"
                                     onClick={() => actions.handleQuickSelect(item.topic)}
                                     title={item.topic}
-                                    className="bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 hover:border-rose-200 text-left truncate max-w-[200px] h-auto py-2"
+                                    className="bg-slate-50 hover:bg-rose-50 text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:border-rose-200 text-left truncate max-w-[200px] h-auto py-2"
                                 >
                                     {item.topic}
                                 </Button>
@@ -52,7 +52,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                                 variant="outline"
                                 size="sm"
                                 onClick={() => actions.setSelectedFramework('')}
-                                className={`px-3 py-1.5 h-auto text-xs ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white border-slate-200 hover:border-rose-200 hover:text-rose-600 text-slate-600'}`}
+                                className={`px-3 py-1.5 h-auto text-xs ${!state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-white/10 hover:border-rose-200 hover:text-rose-600 text-slate-600 dark:text-slate-400'}`}
                             >
                                 默认
                             </Button>
@@ -63,7 +63,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                                     size="sm"
                                     onClick={() => actions.setSelectedFramework(fw.id === state.selectedFramework ? '' : fw.id)}
                                     title={fw.desc}
-                                    className={`px-3 py-1.5 h-auto text-xs ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white border-slate-200 hover:border-rose-200 hover:text-rose-600 text-slate-600'}`}
+                                    className={`px-3 py-1.5 h-auto text-xs ${fw.id === state.selectedFramework ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 hover:text-white' : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-white/10 hover:border-rose-200 hover:text-rose-600 text-slate-600 dark:text-slate-400'}`}
                                 >
                                     {fw.label}
                                 </Button>
@@ -89,19 +89,30 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                     </Select>
                 </div>
 
-                <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={actions.handleGenerate}
-                    isLoading={state.isGenerating}
-                    leftIcon={!state.isGenerating && <Sparkles size={24} />}
-                    className="w-full py-4 text-lg bg-gradient-to-r from-rose-500 to-orange-500 border-none transform hover:-translate-y-0.5"
-                >
-                    {state.isGenerating ? '正在撰写文案与构思配图...' : '生成笔记'}
-                </Button>
+                {state.isGenerating ? (
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={actions.handleStop}
+                        leftIcon={<Loader2 className="animate-spin" size={24} />}
+                        className="w-full py-4 text-lg bg-gradient-to-r from-red-500 to-rose-500 border-none transform hover:-translate-y-0.5 hover:from-red-600 hover:to-rose-600"
+                    >
+                        停止生成
+                    </Button>
+                ) : (
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={actions.handleGenerate}
+                        leftIcon={<Sparkles size={24} />}
+                        className="w-full py-4 text-lg bg-gradient-to-r from-rose-500 to-orange-500 border-none transform hover:-translate-y-0.5"
+                    >
+                        生成笔记
+                    </Button>
+                )}
 
                 {/* Custom Note Section */}
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                     {!state.showCustomPrompt ? (
                         <Button
                             variant="outline"
@@ -114,7 +125,7 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                     ) : (
                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                             <div className="flex items-center justify-between">
-                                <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-400 flex items-center gap-2">
                                     <PenTool size={16} className="text-rose-500" />
                                     自定义内容提示词
                                 </label>
@@ -128,15 +139,25 @@ export default function InputSection({ state, actions }: ContentGeneratorChildPr
                                 placeholder="在这里输入详细的提示词，例如：帮我写一篇关于如何为3岁孩子挑选英语启蒙绘本的笔记，语气要温柔，多用案例..."
                                 className="min-h-[120px] text-sm bg-rose-50/30 border-rose-200 focus:ring-rose-500/20 focus:border-rose-500"
                             />
-                            <Button
-                                variant="secondary"
-                                onClick={actions.handleGenerateCustom}
-                                isLoading={state.isGenerating}
-                                leftIcon={!state.isGenerating && <Sparkles size={18} />}
-                                className="w-full py-3 border-rose-200"
-                            >
-                                {state.isGenerating ? '正在撰写自定义笔记...' : '通过提示词生成笔记'}
-                            </Button>
+                            {state.isGenerating ? (
+                                <Button
+                                    variant="secondary"
+                                    onClick={actions.handleStop}
+                                    leftIcon={<Loader2 className="animate-spin" size={18} />}
+                                    className="w-full py-3 bg-gradient-to-r from-red-500 to-rose-500 text-white border-none hover:from-red-600 hover:to-rose-600"
+                                >
+                                    停止生成
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="secondary"
+                                    onClick={actions.handleGenerateCustom}
+                                    leftIcon={<Sparkles size={18} />}
+                                    className="w-full py-3 border-rose-200"
+                                >
+                                    通过提示词生成笔记
+                                </Button>
+                            )}
                         </div>
                     )}
                 </div>

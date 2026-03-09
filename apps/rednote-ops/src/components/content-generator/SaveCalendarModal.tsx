@@ -6,7 +6,7 @@ export default function SaveCalendarModal({ state, actions }: ContentGeneratorCh
     return (
         <Modal isOpen={state.showSaveModal} onClose={() => actions.setShowSaveModal(false)} maxWidth="max-w-md" className="p-6 space-y-6">
             <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">保存到运营日历</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">保存到运营日历</h3>
                 <button onClick={() => actions.setShowSaveModal(false)} className="text-slate-400 hover:text-slate-600">
                     <X size={24} />
                 </button>
@@ -14,13 +14,13 @@ export default function SaveCalendarModal({ state, actions }: ContentGeneratorCh
 
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">选择发布日期</label>
-                    <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-400">选择发布日期</label>
+                    <div className="border border-slate-200 dark:border-white/10 rounded-xl p-4 bg-slate-50">
                         <div className="flex items-center justify-between mb-4">
                             <button onClick={actions.handlePrevMonth} className="p-1 hover:bg-slate-200 rounded text-slate-500">
                                 <ChevronLeft size={20} />
                             </button>
-                            <span className="font-bold text-slate-700">
+                            <span className="font-bold text-slate-700 dark:text-slate-400">
                                 {state.calendarMonth.getFullYear()}年 {state.calendarMonth.getMonth() + 1}月
                             </span>
                             <button onClick={actions.handleNextMonth} className="p-1 hover:bg-slate-200 rounded text-slate-500">
@@ -50,7 +50,7 @@ export default function SaveCalendarModal({ state, actions }: ContentGeneratorCh
                         h-8 w-8 rounded-full flex items-center justify-center text-sm transition-all relative
                         ${isSelected
                                                 ? 'bg-rose-500 text-white font-bold shadow-md shadow-rose-200'
-                                                : 'hover:bg-white hover:shadow-sm text-slate-700'
+                                                : 'hover:bg-white hover:shadow-sm text-slate-700 dark:text-slate-400'
                                             }
                       `}
                                     >
@@ -75,8 +75,8 @@ export default function SaveCalendarModal({ state, actions }: ContentGeneratorCh
                     </div>
                 </div>
 
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <p className="text-sm font-medium text-slate-900 mb-1">笔记主题</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 dark:border-white/5">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-200 mb-1">笔记主题</p>
                     <p className="text-sm text-slate-500 truncate">{state.topic}</p>
                 </div>
             </div>
@@ -84,7 +84,7 @@ export default function SaveCalendarModal({ state, actions }: ContentGeneratorCh
             <div className="flex gap-3">
                 <button
                     onClick={() => actions.setShowSaveModal(false)}
-                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 dark:text-slate-400 rounded-xl font-medium hover:bg-slate-200 transition-colors"
                 >
                     取消
                 </button>

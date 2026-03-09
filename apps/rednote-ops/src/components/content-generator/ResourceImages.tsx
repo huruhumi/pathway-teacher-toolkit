@@ -5,8 +5,8 @@ export default function ResourceImages({ state, actions }: ContentGeneratorChild
     if (!state.generatedContent?.resources || state.generatedContent.resources.length === 0) return null;
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 border-blue-200 shadow-blue-50">
-            <div className="flex items-center gap-2 mb-2 text-slate-900 font-bold">
+        <div className="bg-white dark:bg-slate-900/80 p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm space-y-4 border-blue-200 shadow-blue-50">
+            <div className="flex items-center gap-2 mb-2 text-slate-900 dark:text-slate-200 font-bold">
                 <Globe size={20} className="text-blue-500" />
                 <h3>网络资源配图</h3>
             </div>
@@ -15,7 +15,7 @@ export default function ResourceImages({ state, actions }: ContentGeneratorChild
             </p>
             <div className="space-y-4">
                 {state.generatedContent.resources.map((resource: any, idx: number) => (
-                    <div key={idx} className="flex gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50 hover:bg-white hover:shadow-md transition-all">
+                    <div key={idx} className="flex gap-4 p-4 border border-slate-100 dark:border-white/5 rounded-xl bg-slate-50 hover:bg-white hover:shadow-md transition-all">
                         <div className="w-24 h-32 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden relative group">
                             {resource.image_url ? (
                                 <>
@@ -44,7 +44,7 @@ export default function ResourceImages({ state, actions }: ContentGeneratorChild
                                             href={resource.image_url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="p-2 bg-white rounded-full text-slate-900 hover:text-blue-500 transition-colors"
+                                            className="p-2 bg-white dark:bg-slate-900/80 rounded-full text-slate-900 dark:text-slate-200 hover:text-blue-500 transition-colors"
                                             title="新标签页打开图片以保存"
                                         >
                                             <Download size={16} />
@@ -60,12 +60,12 @@ export default function ResourceImages({ state, actions }: ContentGeneratorChild
                         </div>
                         <div className="flex flex-col flex-1 overflow-hidden space-y-2 relative">
                             <div className="flex justify-between items-start gap-2">
-                                <h4 className="font-bold text-slate-900 text-sm truncate pr-8">{resource.name}</h4>
+                                <h4 className="font-bold text-slate-900 dark:text-slate-200 text-sm truncate pr-8">{resource.name}</h4>
                                 <button
                                     onClick={() => actions.handleRefreshResourceImage(idx)}
                                     disabled={state.imageState.refreshingResource[idx]}
                                     title="重新搜索并替换配图"
-                                    className="absolute top-0 right-0 p-1.5 text-slate-400 hover:text-blue-500 bg-white rounded-md border border-slate-200 shadow-sm transition-all disabled:opacity-50"
+                                    className="absolute top-0 right-0 p-1.5 text-slate-400 hover:text-blue-500 bg-white dark:bg-slate-900/80 rounded-md border border-slate-200 dark:border-white/10 shadow-sm transition-all disabled:opacity-50"
                                 >
                                     <RefreshCw size={14} className={state.imageState.refreshingResource[idx] ? 'animate-spin text-blue-500' : ''} />
                                 </button>

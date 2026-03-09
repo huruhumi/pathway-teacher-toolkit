@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@shared/stores/useToast';
+import { downloadFile } from '@shared/utils/download';
 import { SavedNote } from '../types';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, FileText, Image as ImageIcon, Save, Copy, Check, Download, X, PenTool } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -43,12 +44,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
   };
 
   const handleDownload = (url: string, index: number) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `image-${index}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFile(url, `image-${index}.png`);
   };
 
   const getDaysInMonth = (date: Date) => {
@@ -79,7 +75,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
     const days = [];
     // Padding for previous month
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-32 bg-slate-50 border border-slate-100/50"></div>);
+      days.push(<div key={`empty-${i}`} className="h-32 bg-slate-50 border border-slate-100 dark:border-white/5/50"></div>);
     }
 
     // Days of current month
@@ -91,7 +87,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
       days.push(
         <div
           key={day}
-          className={`h-32 border border-slate-100 p-2 relative group transition-colors ${isToday ? 'bg-rose-50/30' : 'bg-white'
+          className={`h-32 border border-slate-100 dark:border-white/5 p-2 relative group transition-colors ${isToday ? 'bg-rose-50/30' : 'bg-white dark:bg-slate-900/80'
             } ${dropTargetDate === dateStr ? 'ring-2 ring-rose-400 bg-rose-50' : 'hover:bg-slate-50'
             }`}
           onDragOver={(e) => { e.preventDefault(); setDropTargetDate(dateStr); }}
@@ -149,24 +145,24 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">运营日历</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200">运营日历</h2>
           <p className="text-slate-500 mt-1">查看和管理您的内容发布计划。</p>
         </div>
-        <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-          <button onClick={handlePrevMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
+        <div className="flex items-center gap-4 bg-white dark:bg-slate-900/80 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+          <button onClick={handlePrevMonth} aria-label="上个月" className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 dark:text-slate-400 transition-colors">
             <ChevronLeft size={20} />
           </button>
-          <span className="text-lg font-bold text-slate-800 min-w-[120px] text-center">
+          <span className="text-lg font-bold text-slate-800 dark:text-slate-200 min-w-[120px] text-center">
             {currentDate.getFullYear()}年 {monthNames[currentDate.getMonth()]}
           </span>
-          <button onClick={handleNextMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
+          <button onClick={handleNextMonth} aria-label="下个月" className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 dark:text-slate-400 transition-colors">
             <ChevronRight size={20} />
           </button>
         </div>
       </div>
 
       <div className="card !p-0 overflow-hidden">
-        <div className="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
+        <div className="grid grid-cols-7 bg-slate-50 border-b border-slate-200 dark:border-white/10">
           {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map(day => (
             <div key={day} className="py-3 text-center text-sm font-medium text-slate-500">
               {day}
@@ -184,7 +180,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-white dark:bg-slate-900/80 rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-6 space-y-6">
@@ -194,11 +190,11 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
                     <CalendarIcon size={14} />
                     <span>发布日期: {editingNote.date}</span>
                   </div>
-                  <input
+                  <input aria-label="主题"
                     type="text"
                     value={editingNote.topic}
                     onChange={(e) => setEditingNote({ ...editingNote, topic: e.target.value })}
-                    className="text-xl font-bold text-slate-900 w-full border-b border-transparent hover:border-slate-200 focus:border-rose-500 focus:outline-none bg-transparent transition-colors py-1"
+                    className="text-xl font-bold text-slate-900 dark:text-slate-200 w-full border-b border-transparent hover:border-slate-200 focus:border-rose-500 focus:outline-none bg-transparent transition-colors py-1"
                   />
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -222,7 +218,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
                     <Save size={16} />
                     保存
                   </button>
-                  <button onClick={() => setSelectedNote(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                  <button onClick={() => setSelectedNote(null)} aria-label="关闭" className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
                     <X size={24} />
                   </button>
                 </div>
@@ -231,12 +227,12 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
               {editingNote.images.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {editingNote.images.map((img, idx) => (
-                    <div key={idx} className="relative group aspect-[3/4] rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                    <div key={idx} className="relative group aspect-[3/4] rounded-lg overflow-hidden bg-slate-100 border border-slate-200 dark:border-white/10">
                       <img src={img} alt={`配图 ${idx + 1}`} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button
                           onClick={() => handleDownload(img, idx)}
-                          className="p-2 bg-white rounded-full text-slate-900 hover:text-rose-500 transition-colors shadow-lg"
+                          className="p-2 bg-white dark:bg-slate-900/80 rounded-full text-slate-900 dark:text-slate-200 hover:text-rose-500 transition-colors shadow-lg"
                           title="下载图片"
                         >
                           <Download size={16} />
@@ -250,7 +246,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-slate-900">备选标题</h4>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">备选标题</h4>
                     <button
                       onClick={() => handleCopy(editingNote.title, 'title')}
                       className="text-slate-400 hover:text-rose-500 transition-colors p-1 hover:bg-rose-50 rounded"
@@ -259,16 +255,16 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
                       {copiedField === 'title' ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                   </div>
-                  <textarea
+                  <textarea aria-label="内容"
                     value={editingNote.title}
                     onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                    className="w-full bg-slate-50 p-3 rounded-lg text-slate-700 text-sm border border-transparent focus:border-rose-500 focus:outline-none resize-none transition-all focus:bg-white focus:shadow-sm"
+                    className="w-full bg-slate-50 p-3 rounded-lg text-slate-700 dark:text-slate-400 text-sm border border-transparent focus:border-rose-500 focus:outline-none resize-none transition-all focus:bg-white focus:shadow-sm"
                     rows={2}
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-slate-900">正文内容</h4>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200">正文内容</h4>
                     <button
                       onClick={() => handleCopy(editingNote.content, 'content')}
                       className="text-slate-400 hover:text-rose-500 transition-colors p-1 hover:bg-rose-50 rounded"
@@ -277,14 +273,14 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
                       {copiedField === 'content' ? <Check size={14} /> : <Copy size={14} />}
                     </button>
                   </div>
-                  <textarea
+                  <textarea aria-label="内容"
                     value={editingNote.content}
                     onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                    className="w-full bg-slate-50 p-4 rounded-lg text-slate-700 text-sm whitespace-pre-wrap leading-relaxed border border-transparent focus:border-rose-500 focus:outline-none min-h-[200px] transition-all focus:bg-white focus:shadow-sm"
+                    className="w-full bg-slate-50 p-4 rounded-lg text-slate-700 dark:text-slate-400 text-sm whitespace-pre-wrap leading-relaxed border border-transparent focus:border-rose-500 focus:outline-none min-h-[200px] transition-all focus:bg-white focus:shadow-sm"
                   />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 mb-2">标签</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-200 mb-2">标签</h4>
                   <div className="flex flex-wrap gap-2">
                     {editingNote.tags.map((tag, i) => (
                       <span key={i} className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded text-xs font-medium">

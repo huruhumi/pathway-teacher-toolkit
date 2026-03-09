@@ -304,7 +304,7 @@ const CalendarPage: React.FC = () => {
                                             </div>
                                             <div className={`flex items-center gap-1.5 ${STATUS_COLOR[status]}`}>
                                                 <StatusIcon size={18} />
-                                                <span className="text-sm font-medium capitalize">{t(`cal.${status}` as any)}</span>
+                                                <span className="text-sm font-medium capitalize">{t(`cal.${status}`)}</span>
                                             </div>
                                         </button>
                                     );

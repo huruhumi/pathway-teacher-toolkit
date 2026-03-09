@@ -28,7 +28,7 @@ const WelcomeBanner: React.FC = () => {
     return (
         <div className="bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 rounded-2xl p-6 text-white mb-6">
             <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-white dark:bg-slate-900/80/20 rounded-full flex items-center justify-center">
                     <User size={24} />
                 </div>
                 <div>
@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<string, { color: string; icon: React.FC<any>; label:
 const TYPE_BADGE: Record<string, { color: string }> = {
     worksheet: { color: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300' },
     companion: { color: 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300' },
-    custom: { color: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400' },
+    custom: { color: 'bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-700 dark:text-slate-400' },
 };
 
 const AssignmentsView: React.FC = () => {
@@ -114,7 +114,7 @@ const AssignmentsView: React.FC = () => {
                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === f
                             ? 'bg-sky-500 text-white shadow-md'
                             : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 hover:border-sky-300'}`}>
-                        {t(`asg.${f}` as any)}
+                        {t(`asg.${f}`)}
                     </button>
                 ))}
             </div>
@@ -142,7 +142,7 @@ const AssignmentsView: React.FC = () => {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h4 className="font-bold text-slate-800 dark:text-white truncate">{a.title}</h4>
                                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeBadge.color}`}>
-                                                {t(`asg.${a.content_type}` as any)}
+                                                {t(`asg.${a.content_type}`)}
                                             </span>
                                         </div>
                                         {a.description && <p className="text-sm text-slate-500 mb-2 line-clamp-2">{a.description}</p>}
@@ -159,10 +159,10 @@ const AssignmentsView: React.FC = () => {
                                     <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                                         <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${cfg.color}`}>
                                             <StatusIcon size={13} />
-                                            {t(cfg.label as any)}
+                                            {t(cfg.label)}
                                         </span>
                                         <button onClick={() => setSelectedAssignment(a)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-colors ${status === 'pending' ? 'bg-sky-500 hover:bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-colors ${status === 'pending' ? 'bg-sky-500 hover:bg-sky-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}>
                                             {status === 'pending' ? t('asg.submit') : (lang === 'en' ? 'Review' : '查看')}
                                         </button>
                                     </div>
@@ -237,7 +237,6 @@ const AppContent: React.FC = () => {
                             </button>
                         }
                         hideSignIn
-                        homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
                     />
 
                     <RouteGuard>
