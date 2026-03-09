@@ -1,0 +1,277 @@
+---
+description: Nature Compass content quality review — generate curricula and lesson kits across age groups, review from multiple perspectives, output improvement report
+---
+
+# Content Review Workflow v2
+
+// turbo-all
+
+Automated content quality review for Nature Compass. Generates curricula + lesson kits, reviews from multiple expert perspectives, and produces a consolidated improvement report with automated quality checks. ALL output as markdown — no web UI.
+
+## AUTOMATION RULES
+
+> **ZERO human interaction** during Steps 0-8. The entire workflow runs unattended.
+> Only the final report (Step 9) uses `notify_user`.
+> All generated content goes to `apps/nature-compass/.content-review/[timestamp]/`.
+> Track ALL errors encountered during execution — they become part of the final report.
+
+## Config
+
+```
+THEME: "城市湿地生态探索" (pick one that covers biology, ecology, engineering)
+CITY: "武汉"
+LESSON_COUNT: 4
+DURATION: "180 minutes"
+AGE_GROUPS: ["6-8", "10-12"]
+TARGET_HANDBOOK_PAGES: 15
+REVIEW_DIR: apps/nature-compass/.content-review/[YYYYMMDD-HHmm]/
+```
+
+## Steps
+
+### Step 0: Baseline Snapshot (optional)
+
+If this is a "before vs after" comparison run:
+
+1. Check if a previous review exists in `.content-review/` (look for the most recent `07-final-report/content-review-report.md`)
+2. If found, copy its scores summary to `00-baseline/baseline-scores.md`
+3. At the end (Step 9), generate a comparison table showing score deltas
+
+If no previous run exists, skip this step and mark it as "First run — no baseline".
+
+### Step 1: Setup
+
+Create directory structure:
+
+```
+[REVIEW_DIR]/
+├── 00-baseline/           # Step 0
+├── 01-curricula/          # Step 2
+├── 02-curriculum-review/  # Step 3
+├── 03-curriculum-fixes/   # Step 4
+├── 04-lesson-kits/        # Step 5
+├── 05-kit-review/         # Step 6
+├── 06-kit-fixes/          # Step 7
+├── 07-final-report/       # Step 8
+└── _errors.log            # Error log
+```
+
+Initialize `_errors.log` with timestamp header.
+Initialize `_timing.log` to track API call durations.
+
+### Step 2: Generate Curricula
+
+For EACH age group × 2 languages = 4 curricula total.
+
+Use a single Node.js `.mjs` script placed in `.content-review/` directory (for module resolution).
+Call Gemini API directly with the same prompt logic as `curriculumService.ts`.
+
+Output: `01-curricula/curriculum-[age]-[lang].json` + `.md`
+
+**Track**: response time per call, write to `_timing.log`.
+
+### Step 3: Review Curricula
+
+For EACH curriculum (4 total), use Gemini to review from TWO perspectives:
+
+1. **ESL Teacher** (EN only) / **STEAM Terminology Expert** (ZH)
+2. **Activity Planner / 研学设计师**
+
+Each review MUST produce a numeric score [1-10] per perspective.
+
+Output: `02-curriculum-review/review-[age]-[lang].md`
+
+### Step 4: Curriculum Optimization
+
+Synthesize all 4 reviews into one optimization plan.
+
+Output: `03-curriculum-fixes/optimization-plan.md`
+
+### Step 5: Generate Lesson Kits (OPTIMIZED)
+
+**KEY CHANGE**: Only generate 4 kits total (not 10):
+
+- For EACH age group, **randomly pick 1 lesson** from the 4-lesson curriculum
+- Generate **school mode** + **family mode** for that lesson
+- Total: 2 age groups × 2 modes = **4 kits**
+
+Each kit generates a full lesson plan with:
+
+- Mission Briefing, Vocabulary, Roadmap (5-7 phases), Supplies, Safety
+- Handbook (TARGET_HANDBOOK_PAGES pages)
+
+Use a SIMPLIFIED system prompt (not the full 200-line production prompt) to keep generation under 60s per kit.
+
+Output: `04-lesson-kits/lesson-[N]-[mode]-[age].json` + `.md`
+
+**Track**: response time, write to `_timing.log`.
+
+### Step 6: Review Lesson Kits + Automated Checks
+
+TWO parts: AI review + automated validation.
+
+#### Part A: AI Review (5 perspectives)
+
+For EACH kit (4 total), review from:
+
+1. **ESL Teacher** — vocabulary vs CEFR, scaffolding quality
+2. **Activity Planner** — 5E compliance, time realism, cross-curricular depth
+3. **Parent** (family mode only) — clarity, equipment realism, fun factor
+4. **Student/Child** (age-specific) — handbook readability, engagement, interaction balance
+5. **UI Designer** — visualPrompt specificity, layoutDescription clarity, visual-text balance
+
+Each perspective gives a score [1-10].
+
+#### Part B: Automated Validation (NO AI needed — pure code)
+
+Run these checks programmatically on the generated JSON:
+
+**B1. Handbook Page Count**
+
+```
+CHECK: handbook.length === TARGET_HANDBOOK_PAGES
+RESULT: PASS/FAIL + actual count
+```
+
+**B2. Reading Page Word Count by Age (EN = ESL, ZH = Native)**
+
+```
+For each handbook page where section === 'Reading':
+  EN: wordCount = contentPrompt.split(/\s+/).length
+  ZH: charCount = contentPrompt.replace(/[^\u4e00-\u9fff]/g, '').length
+
+  EN (ESL targets — students are Chinese, English is L2):
+  Age 6-8:  CHECK wordCount >= 15 AND <= 30
+  Age 10-12: CHECK wordCount >= 30 AND <= 50
+  Age 13-15: CHECK wordCount >= 50 AND <= 80
+  Age 16-18: CHECK wordCount >= 75 AND <= 110
+
+  ZH (Native targets — Chinese is L1, can handle more text):
+  Age 6-8:  CHECK charCount >= 50 AND <= 90
+  Age 10-12: CHECK charCount >= 100 AND <= 180
+  Age 13-15: CHECK charCount >= 180 AND <= 250
+  Age 16-18: CHECK charCount >= 250 AND <= 350
+
+RESULT: PASS/FAIL per page + actual word/char count + language
+```
+
+**B3. Age Differentiation Diff**
+
+```
+Compare handbook content between age 6-8 and age 10-12 (same mode):
+- Average sentence length
+- Vocabulary complexity (average word length)
+- Number of comprehension questions
+- Ratio of illustration instructions to text
+
+RESULT: Quantified diff table showing that older group gets more complex content
+```
+
+**B4. Mode Differentiation Diff**
+
+```
+Compare school vs family mode for the same age group:
+- Does family mode remove ESL scaffolding?
+- Does family mode simplify equipment list?
+- Does family mode use warmer/informal tone?
+- Are roadmap phases named differently?
+
+RESULT: Summary of mode differences found
+```
+
+Output: `05-kit-review/review-[N]-[mode]-[age].md` (AI reviews)
+Output: `05-kit-review/validation-checks.md` (automated checks)
+
+### Step 7: Lesson Kit Optimization
+
+Synthesize AI reviews + automated check results into optimization suggestions.
+
+Output: `06-kit-fixes/optimization-plan.md`
+
+### Step 8: Final Consolidated Report
+
+Merge all findings into one report.
+
+Output: `07-final-report/content-review-report.md`
+
+Structure:
+
+```markdown
+# Nature Compass Content Review Report
+Generated: [timestamp]
+Theme: [theme], City: [city], Age Groups: [groups]
+
+## Executive Summary
+[2-3 paragraph overview]
+
+## Scores Dashboard
+| Component | ESL | Planner | Parent | Student | UI | Avg |
+|-----------|-----|---------|--------|---------|-----|-----|
+(all components with scores)
+
+## Automated Validation Results
+| Check | 6-8 School | 6-8 Family | 10-12 School | 10-12 Family |
+|-------|-----------|-----------|-------------|-------------|
+| Page Count (=15) | ... |
+| Reading Word Count | ... |
+| Age Diff Score | ... |
+| Mode Diff Score | ... |
+
+## Baseline Comparison (if available)
+| Metric | Before | After | Delta |
+(score changes from Step 0 baseline)
+
+## Critical Findings
+### Curriculum Issues
+### Lesson Kit Issues
+### Handbook Content Issues
+### Code/Generation Errors Encountered
+[All errors from _errors.log with suggested code fixes]
+
+## Prompt Improvement Recommendations
+### P0 — Must Fix
+### P1 — Should Fix
+### P2 — Nice to Have
+
+## Performance Metrics
+[From _timing.log — average response time, total tokens estimated]
+```
+
+### Step 9: Architecture & UI/UX Pipeline Review
+
+Read the core service files (`curriculumService.ts`, `geminiService.ts`) and this workflow definition file.
+Feed them to Gemini to review the entire generation pipeline from the perspective of an AI Software Engineer and a UI/UX Designer.
+Append the review findings to `07-final-report/content-review-report.md`.
+
+Output: Appended report in `07-final-report/content-review-report.md`
+
+### Step 10: Report to User
+
+Use `notify_user` with:
+
+- Path to the final report
+- Score summary table
+- Top 3 critical findings
+- Baseline comparison (if applicable)
+
+## Error Handling
+
+- **On any API error**: Log to `_errors.log` with full context, continue to next item
+- **Rate limit (429)**: Wait 30s, retry up to 3 times
+- **Timeout (>120s)**: Kill and retry once with simpler prompt
+- **JSON parse failure**: Save raw response to `_errors.log`, skip this item
+- All errors become part of the final report with code fix suggestions
+
+## Estimated Time & Cost
+
+| Step | API Calls | Time |
+|------|-----------|------|
+| Curricula | 4 | ~2 min |
+| Curriculum Review | 4 + 1 | ~3 min |
+| Lesson Kits | **4** | ~4 min |
+| Kit Review | 4 + 1 | ~3 min |
+| Validation | 0 (code only) | ~5s |
+| Final Report | 1 | ~15s |
+| **Total** | **~19** | **~12-15 min** |
+
+Token estimate: ~250K total ≈ **$0.10-0.15**

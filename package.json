@@ -20,7 +20,7 @@
         "build:edu": "npm -w apps/edu-hub run build",
         "build:student": "npm -w apps/student-portal run build",
         "build:apps": "npm run build:planner && npm run build:essay && npm run build:nature && npm run build:ops && npm run build:edu && npm run build:student",
-        "build": "npm run build:apps && node scripts/build-landing.js"
+        "build": "cross-env NODE_OPTIONS=--max-old-space-size=512 npm run build:apps && node scripts/build-landing.js"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.2.1",

@@ -430,6 +430,36 @@ h3 {
     border-color: var(--brand-navy);
 }
 
+/* ── Locked Tool Card (not logged in) ── */
+.tool-card.locked {
+    opacity: 0.65;
+    filter: grayscale(30%);
+}
+
+.tool-card.locked:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-color);
+}
+
+.tool-card.locked .card-footer .btn {
+    background: rgba(26, 43, 88, 0.06);
+    color: var(--text-muted);
+    border-color: rgba(26, 43, 88, 0.1);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tool-card.locked:hover .card-footer .btn-outline {
+    background: rgba(233, 30, 99, 0.08);
+    color: var(--brand-pink);
+    border-color: rgba(233, 30, 99, 0.2);
+}
+
+.tool-card.locked:hover .tool-icon-wrapper {
+    transform: none;
+}
+
 /* Footer */
 footer {
     padding: 3rem 0;

@@ -81,9 +81,20 @@
             return;
         }
 
-        client.auth.getSession().then(({ data: { session } }) => {
-            currentSession = session;
-            updateHeader(session?.user ?? null);
+        client.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+                // Invalid refresh token — clear stale session
+                console.warn('Stale session detected, clearing:', error.message);
+                client.auth.signOut().catch(() => { });
+                currentSession = null;
+            } else {
+                currentSession = session;
+            }
+            updateHeader(currentSession?.user ?? null);
+            updateToolLinks();
+        }).catch(() => {
+            currentSession = null;
+            updateHeader(null);
             updateToolLinks();
         });
 
@@ -120,29 +131,74 @@
         }
     }
 
-    /** Rewrite links for dev mode and append auth tokens */
+    /** Rewrite links for dev mode and append auth tokens, lock/unlock cards */
     function updateToolLinks() {
-        document.querySelectorAll('.tool-card a.btn').forEach(link => {
-            let href = link.getAttribute('data-original-href') || link.getAttribute('href');
-            if (!href || href.startsWith('#')) return;
+        const isLoggedIn = !!currentSession?.access_token;
+        const lang = getLang();
 
-            // Store original href
+        document.querySelectorAll('.tool-card').forEach(card => {
+            const link = card.querySelector('a.btn');
+            if (!link) return;
+
+            let href = link.getAttribute('data-original-href') || link.getAttribute('href');
+            if (!href || href === '#') href = link.getAttribute('data-original-href');
+            if (!href) return;
+
+            // Store originals on first run
             if (!link.getAttribute('data-original-href')) {
                 link.setAttribute('data-original-href', href);
             }
-
-            // Dev mode: map to dev server ports
-            if (isDevMode && DEV_PORT_MAP[href]) {
-                href = DEV_PORT_MAP[href];
+            if (!link.getAttribute('data-original-i18n') && link.getAttribute('data-i18n')) {
+                link.setAttribute('data-original-i18n', link.getAttribute('data-i18n'));
             }
 
-            // Append auth tokens if logged in
-            if (currentSession?.access_token) {
+            if (isLoggedIn) {
+                // Unlock card
+                card.classList.remove('locked');
+                link.onclick = null;
+
+                // Restore href from original
+                href = link.getAttribute('data-original-href');
+
+                // Dev mode: map to dev server ports
+                if (isDevMode && DEV_PORT_MAP[href]) {
+                    href = DEV_PORT_MAP[href];
+                }
+
+                // Append auth tokens
                 const sep = href.includes('?') ? '&' : '?';
                 href = `${href}${sep}_token=${currentSession.access_token}&_refresh=${currentSession.refresh_token}`;
-            }
 
-            link.setAttribute('href', href);
+                link.setAttribute('href', href);
+                link.setAttribute('target', '_blank');
+
+                // Restore i18n key and reapply translations
+                const origI18n = link.getAttribute('data-original-i18n');
+                if (origI18n) {
+                    link.setAttribute('data-i18n', origI18n);
+                }
+                if (typeof pathwayI18n !== 'undefined') {
+                    pathwayI18n.apply(lang);
+                }
+            } else {
+                // Lock card
+                card.classList.add('locked');
+                link.setAttribute('href', '#');
+                link.removeAttribute('target');
+                // Remove data-i18n so i18n system won't overwrite our lock text
+                if (link.getAttribute('data-i18n')) {
+                    if (!link.getAttribute('data-original-i18n')) {
+                        link.setAttribute('data-original-i18n', link.getAttribute('data-i18n'));
+                    }
+                    link.removeAttribute('data-i18n');
+                }
+                link.textContent = lang === 'zh' ? '🔒 登录后访问' : '🔒 Sign In to Access';
+                link.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showModal('login');
+                };
+            }
         });
     }
 
