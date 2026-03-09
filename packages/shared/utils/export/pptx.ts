@@ -1,4 +1,4 @@
-import PptxGenJS from 'pptxgenjs';
+
 
 export interface BaseSlide {
     title?: string;
@@ -11,6 +11,7 @@ const INDIGO = '4F46E5';
 const LIGHT_BG = 'F5F3FF';
 
 export const exportSlidesToPptx = async (slides: BaseSlide[], topic: string) => {
+    const { default: PptxGenJS } = await import('pptxgenjs');
     const pptx = new PptxGenJS();
     pptx.layout = 'LAYOUT_WIDE';
     pptx.author = 'Pathway Academy';

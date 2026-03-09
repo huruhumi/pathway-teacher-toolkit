@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAuthStore } from '../../stores/useAuthStore';
+import { isSupabaseEnabled } from '../../services/supabaseClient';
 import { Loader2 } from 'lucide-react';
 
 interface RouteGuardProps {
@@ -16,8 +17,14 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
 }) => {
     const { isInitialized, user } = useAuthStore();
 
+    // If Supabase is not configured, skip auth entirely — render children immediately
+    const authEnabled = isSupabaseEnabled();
+    // In dev mode, never enforce auth redirects — avoids infinite redirect loops
+    // when session is expired or Supabase is unreachable from localhost
+    const shouldEnforceAuth = requireAuth && authEnabled && !import.meta.env.DEV;
+
     useEffect(() => {
-        if (isInitialized && requireAuth && !user) {
+        if (isInitialized && shouldEnforceAuth && !user) {
             // Prevent infinite redirect loop if we are already on the portal URL
             try {
                 const target = new URL(redirectTo, window.location.origin);
@@ -32,7 +39,12 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
                 window.location.href = redirectTo;
             }
         }
-    }, [isInitialized, user, requireAuth, redirectTo]);
+    }, [isInitialized, user, shouldEnforceAuth, redirectTo]);
+
+    // If auth is not enabled, render children immediately
+    if (!authEnabled) {
+        return <>{children}</>;
+    }
 
     // Show nothing (or a global loader) while auth state is initializing
     if (!isInitialized) {
@@ -44,7 +56,7 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     }
 
     // If requireAuth is true and there is no user, return null to avoid flashing secure content before redirect happens.
-    if (requireAuth && !user) {
+    if (shouldEnforceAuth && !user) {
         return null;
     }
 

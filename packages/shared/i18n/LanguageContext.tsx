@@ -6,7 +6,7 @@ type Lang = 'en' | 'zh';
 interface LanguageContextType<TKey extends string = string> {
     lang: Lang;
     setLang: (l: Lang) => void;
-    t: (key: TKey) => string;
+    t: (key: TKey | (string & {})) => string;
 }
 
 function getStoredLang(defaultLang: Lang = 'en'): Lang {
@@ -44,7 +44,12 @@ export function createLanguageContext<TKey extends string>(
         }, []);
 
         const t = useCallback(
-            (key: TKey): string => (translations as any)[key]?.[lang] ?? key,
+            (key: TKey | (string & {})): string => {
+                const entry = (translations as Record<string, Record<Lang, string | ((...args: any[]) => string)>>)[key];
+                if (!entry) return key;
+                const val = entry[lang];
+                return typeof val === 'string' ? val : key;
+            },
             [lang]
         );
 

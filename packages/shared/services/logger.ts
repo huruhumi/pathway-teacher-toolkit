@@ -78,6 +78,28 @@ export const logger = {
 };
 
 /**
+ * Safely extract a human-readable message from an unknown error.
+ * Use in catch blocks: `const msg = getErrorMessage(e, 'Something went wrong');`
+ */
+export function getErrorMessage(error: unknown, fallback = 'An unexpected error occurred'): string {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    return fallback;
+}
+
+/**
+ * Log an error and return its message string.
+ * Combines getErrorMessage + logger.error in one call.
+ *
+ * Usage: `setErrorMsg(handleError(e, 'Failed to generate', 'LessonPlanTab'));`
+ */
+export function handleError(error: unknown, fallback: string, context?: string): string {
+    const message = getErrorMessage(error, fallback);
+    logger.error(message, context, error);
+    return message;
+}
+
+/**
  * Global error handlers.
  * Call `installGlobalErrorHandlers()` once at app startup to catch
  * unhandled errors and promise rejections.

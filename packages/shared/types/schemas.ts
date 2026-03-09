@@ -186,7 +186,7 @@ export const VisualReferenceItemSchema = z.object({
 export const HandbookPageSchema = z.object({
     pageNumber: z.number(),
     title: z.string(),
-    section: z.enum(['Introduction', 'Table of Contents', 'Safety', 'Prop Checklist', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Reflection', 'Certificate', 'Back Cover']),
+    section: z.enum(['Cover', 'Introduction', 'Table of Contents', 'Safety', 'Prop Checklist', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Reflection', 'Certificate', 'Back Cover']),
     layoutDescription: z.string(),
     visualPrompt: z.string(),
     contentPrompt: z.string()
@@ -201,6 +201,7 @@ export const NatureLessonPlanResponseSchema = z.object({
         theme: z.string(),
         activityType: z.string(),
         targetAudience: z.string(),
+        location: z.string().optional().default(''),
         learningGoals: z.array(z.string())
     }),
     vocabulary: z.object({

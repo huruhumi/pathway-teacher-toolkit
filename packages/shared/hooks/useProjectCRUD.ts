@@ -1,5 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
-import { safeStorage } from '../safeStorage';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuthStore } from '../stores/useAuthStore';
 import {
     fetchCloudRecords,
@@ -15,123 +14,142 @@ export interface BaseRecord {
     [key: string]: any;
 }
 
-interface UseProjectCRUDOptions {
-    /** Supabase table name. If provided, CRUD auto-syncs to cloud for logged-in users. */
-    cloudTable?: string;
-    /** Column used for mapping from cloud row → local record. Default: pass-through. */
-    mapFromCloud?: (row: any) => any;
-    /** Column used for mapping from local record → cloud row. Default: pass-through. */
-    mapToCloud?: (record: any) => any;
+interface UseProjectCRUDOptions<T> {
+    /** Supabase table name (REQUIRED — all data lives in Supabase). */
+    cloudTable: string;
+    /** Map Supabase row → local record shape. */
+    mapFromCloud?: (row: any) => T;
+    /** Map local record → Supabase row shape. */
+    mapToCloud?: (record: T) => any;
+    /** Optional migration function applied to each record on load.
+     *  Use this to patch old schema records to the current shape. */
+    migrate?: (item: T) => T;
 }
 
+/**
+ * Pure Supabase CRUD hook.
+ * All data is stored in and fetched from Supabase.
+ * Requires an authenticated user — returns empty items if not logged in.
+ */
 export const useProjectCRUD = <T extends BaseRecord>(
-    storageKey: string,
+    _storageKey: string, // kept for call-site compatibility, not used
     limit: number = 50,
-    options: UseProjectCRUDOptions = {},
+    options: UseProjectCRUDOptions<T>,
 ) => {
-    const [items, setItems] = useState<T[]>(() => safeStorage.get<T[]>(storageKey, []));
+    const [items, setItems] = useState<T[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const user = useAuthStore((s) => s.user);
-    const { cloudTable, mapFromCloud = (r: any) => r, mapToCloud = (r: any) => r } = options;
+    const {
+        cloudTable,
+        mapFromCloud = (r: any) => r as T,
+        mapToCloud = (r: any) => r,
+        migrate,
+    } = options;
 
-    // ── Same-tab cross-instance sync via custom event ──
+    // Track if initial fetch has happened to avoid duplicate fetches
+    const hasFetched = useRef(false);
+
+    // ── Fetch from Supabase on mount / login ──
     useEffect(() => {
-        const handleSync = (e: Event) => {
-            const detail = (e as CustomEvent).detail;
-            if (detail === storageKey) {
-                setItems(safeStorage.get<T[]>(storageKey, []));
-            }
-        };
-        // Cross-tab sync via native storage event
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === storageKey) {
-                setItems(safeStorage.get<T[]>(storageKey, []));
-            }
-        };
-        window.addEventListener('storage-sync', handleSync);
-        window.addEventListener('storage', handleStorage);
-        return () => {
-            window.removeEventListener('storage-sync', handleSync);
-            window.removeEventListener('storage', handleStorage);
-        };
-    }, [storageKey]);
+        if (!user) {
+            setItems([]);
+            setIsLoading(false);
+            hasFetched.current = false;
+            return;
+        }
 
-    // ── Cloud sync on login ──
-    useEffect(() => {
-        if (!user || !cloudTable) return;
+        // Prevent duplicate fetch on re-render
+        if (hasFetched.current) return;
+        hasFetched.current = true;
 
-        fetchCloudRecords<any>(cloudTable, user.id).then((cloudRows) => {
-            if (cloudRows.length === 0) return;
-            setItems((prev) => {
-                const localIds = new Set(prev.map((p) => p.id));
-                const merged = [...prev];
-                for (const row of cloudRows) {
-                    const mapped = mapFromCloud(row);
-                    if (!localIds.has(mapped.id)) {
-                        merged.push(mapped as T);
-                    }
+        setIsLoading(true);
+        fetchCloudRecords<any>(cloudTable, user.id)
+            .then((rows) => {
+                let mapped = rows.map(mapFromCloud);
+                if (migrate) {
+                    mapped = mapped.map(migrate);
                 }
-                safeStorage.set(storageKey, merged);
-                setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
-                return merged;
+                setItems(mapped);
+            })
+            .catch((err) => {
+                console.error(`[useProjectCRUD] fetch ${cloudTable}:`, err);
+                setItems([]);
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
-        });
     }, [user, cloudTable]);
 
+    // ── Save (upsert) ──
     const saveItem = useCallback((item: T) => {
+        // Optimistic local update
         setItems((prev) => {
             const exists = prev.some((p) => p.id === item.id);
             let updated = exists
                 ? prev.map((p) => (p.id === item.id ? item : p))
                 : [item, ...prev];
             if (updated.length > limit) updated = updated.slice(0, limit);
-            safeStorage.set(storageKey, updated);
-            // Notify other hook instances in same tab
-            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
             return updated;
         });
 
-        // Cloud sync (fire-and-forget)
-        if (user && cloudTable) {
+        // Persist to Supabase
+        if (user) {
             upsertCloudRecord(cloudTable, user.id, mapToCloud(item));
         }
-    }, [storageKey, limit, user, cloudTable, mapToCloud]);
+    }, [limit, user, cloudTable, mapToCloud]);
 
+    // ── Delete ──
     const deleteItem = useCallback((id: string) => {
-        setItems((prev) => {
-            const updated = prev.filter((item) => item.id !== id);
-            safeStorage.set(storageKey, updated);
-            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
-            return updated;
-        });
+        // Optimistic local update
+        setItems((prev) => prev.filter((item) => item.id !== id));
 
-        if (user && cloudTable) {
+        // Persist to Supabase
+        if (user) {
             deleteCloudRecord(cloudTable, user.id, id);
         }
-    }, [storageKey, user, cloudTable]);
+    }, [user, cloudTable]);
 
+    // ── Rename ──
     const renameItem = useCallback((id: string, newName: string, nameField: keyof T = 'name' as keyof T) => {
-        setItems((prev) => {
-            const updated = prev.map((item) => {
-                if (item.id === id) {
-                    return { ...item, [nameField]: newName };
-                }
-                return item;
-            });
-            safeStorage.set(storageKey, updated);
-            setTimeout(() => window.dispatchEvent(new CustomEvent('storage-sync', { detail: storageKey })), 0);
-            return updated;
-        });
+        // Optimistic local update
+        setItems((prev) => prev.map((item) => {
+            if (item.id === id) {
+                return { ...item, [nameField]: newName };
+            }
+            return item;
+        }));
 
-        if (user && cloudTable) {
+        // Persist to Supabase
+        if (user) {
             renameCloudRecord(cloudTable, id, newName, nameField as string);
         }
-    }, [storageKey, user, cloudTable]);
+    }, [user, cloudTable]);
+
+    // ── Refresh (manual re-fetch from Supabase) ──
+    const refresh = useCallback(async () => {
+        if (!user) return;
+        setIsLoading(true);
+        try {
+            const rows = await fetchCloudRecords<any>(cloudTable, user.id);
+            let mapped = rows.map(mapFromCloud);
+            if (migrate) {
+                mapped = mapped.map(migrate);
+            }
+            setItems(mapped);
+        } catch (err) {
+            console.error(`[useProjectCRUD] refresh ${cloudTable}:`, err);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user, cloudTable, mapFromCloud, migrate]);
 
     return {
         items,
         setItems,
+        isLoading,
         saveItem,
         deleteItem,
-        renameItem
+        renameItem,
+        refresh,
     };
 };

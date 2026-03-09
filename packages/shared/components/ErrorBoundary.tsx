@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '../services/logger';
 
 interface ErrorBoundaryProps {
@@ -19,7 +19,15 @@ interface ErrorBoundaryState {
  * Prevents the entire app from crashing on an uncaught component error.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-    state: ErrorBoundaryState = { hasError: false, error: null };
+    declare props: Readonly<ErrorBoundaryProps>;
+    declare state: ErrorBoundaryState;
+    declare setState: Component<ErrorBoundaryProps, ErrorBoundaryState>['setState'];
+
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false, error: null };
+        this.handleReset = this.handleReset.bind(this);
+    }
 
     static getDerivedStateFromError(error: Error): ErrorBoundaryState {
         return { hasError: true, error };
@@ -30,9 +38,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         this.props.onError?.(error, errorInfo);
     }
 
-    handleReset = () => {
+    handleReset() {
         this.setState({ hasError: false, error: null });
-    };
+    }
 
     render() {
         if (this.state.hasError) {
@@ -71,3 +79,4 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.children;
     }
 }
+

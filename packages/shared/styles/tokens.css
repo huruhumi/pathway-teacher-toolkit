@@ -93,79 +93,8 @@
     background: #475569;
 }
 
-/* ══════════════════════════════════════════════════
-   GLOBAL DARK MODE OVERRIDES
-   These catch any inline bg-white / bg-gray-* / text-gray-*
-   that weren't individually converted, ensuring zero
-   white flash anywhere in the UI.
-   ══════════════════════════════════════════════════ */
-.dark [class*="bg-white"]:not([class*="text-white"]):not([class*="hover:bg-white"]):not(.no-dark-override) {
-    background-color: rgb(15 23 42 / 0.7) !important;
-    /* slate-950/70 */
-    border-color: rgb(255 255 255 / 0.06) !important;
-}
-
-.dark [class*="bg-gray-50"],
-.dark [class*="bg-gray-100"],
-.dark [class*="bg-slate-50"] {
-    background-color: rgb(15 23 42 / 0.5) !important;
-}
-
-.dark [class*="bg-gray-200"],
-.dark [class*="bg-gray-300"],
-.dark [class*="bg-gray-400"] {
-    background-color: rgb(30 41 59 / 0.8) !important;
-}
-
-.dark [class*="border-gray-100"],
-.dark [class*="border-gray-200"],
-.dark [class*="border-slate-100"] {
-    border-color: rgb(255 255 255 / 0.05) !important;
-}
-
-.dark [class*="text-gray-900"],
-.dark [class*="text-gray-800"] {
-    color: rgb(226 232 240) !important;
-    /* slate-200 */
-}
-
-.dark [class*="text-gray-700"],
-.dark [class*="text-gray-600"] {
-    color: rgb(148 163 184) !important;
-    /* slate-400 */
-}
-
-.dark [class*="text-gray-500"],
-.dark [class*="text-gray-400"] {
-    color: rgb(100 116 139) !important;
-    /* slate-500 */
-}
-
-.dark [class*="text-gray-300"] {
-    color: rgb(71 85 105) !important;
-    /* slate-600 */
-}
-
-.dark [class*="text-slate-900"],
-.dark [class*="text-slate-800"] {
-    color: rgb(226 232 240) !important;
-    /* slate-200 */
-}
-
-.dark [class*="text-slate-700"],
-.dark [class*="text-slate-600"] {
-    color: rgb(148 163 184) !important;
-    /* slate-400 */
-}
-
-/* Inputs without dark: classes */
-.dark input:not([class*="dark:"]),
-.dark textarea:not([class*="dark:"]),
-.dark select:not([class*="dark:"]) {
-    background-color: rgb(15 23 42 / 0.6) !important;
-    border-color: rgb(255 255 255 / 0.08) !important;
-    color: rgb(226 232 240) !important;
-}
+/* Dark mode: all components now use inline dark: variants.
+   Global overrides fully removed (R22). */
 
 /* ── Components ── */
 @layer components {
