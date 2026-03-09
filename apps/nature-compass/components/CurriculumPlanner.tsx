@@ -277,12 +277,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     </div>
 
                     {/* Row 2: Age, Level, Lessons, Duration */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <div className="space-y-2">
                             <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                 <Users size={16} /> {t('cp.ageGroup')}
                             </label>
-                            <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3" aria-label="Select Age Group" title="Age Group">
+                            <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3 h-[46px]" aria-label="Select Age Group" title="Age Group">
                                 {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}`)}</option>)}
                             </select>
                         </div>
@@ -290,7 +290,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                 <GraduationCap size={16} /> {t('cp.englishLevel')}
                             </label>
-                            <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3" aria-label="Select English Level" title="English Level">
+                            <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3 h-[46px]" aria-label="Select English Level" title="English Level">
                                 {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{t(`level.${lvl}`)}</option>)}
                             </select>
                         </div>
@@ -298,13 +298,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                 <BookOpen size={16} /> {t('cp.numLessons')}
                             </label>
-                            <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3" aria-label="Number of Lessons" title="Number of Lessons" placeholder="Number of lessons" />
+                            <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3 h-[46px]" aria-label="Number of Lessons" title="Number of Lessons" placeholder="Number of lessons" />
                         </div>
                         <div className="space-y-2">
                             <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                                 <Wind size={16} /> {t('cp.duration')}
                             </label>
-                            <input type="text" placeholder={t('cp.durationPlaceholder') as string} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3" aria-label="Lesson Duration" title="Lesson Duration" />
+                            <input type="text" placeholder={t('cp.durationPlaceholder') as string} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3 h-[46px]" aria-label="Lesson Duration" title="Lesson Duration" />
                         </div>
                     </div>
 
