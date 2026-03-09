@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoC
 
   return (
     <AppHeader
-      appName={t('app.name' as any)}
+      appName={t('app.name')}
       logoIcon={<Compass size={20} />}
       brand={{
         logoBg: 'bg-gradient-to-tr from-emerald-500 to-teal-400',
@@ -41,7 +41,6 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onLogoC
         </div>
       }
       signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-      homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
     />
   );
 };

@@ -3,10 +3,11 @@ import { RecordCard } from '@shared/components/RecordCard';
 import { EmptyState } from '@shared/components/EmptyState';
 import { FilterBar, FilterSelect } from '@shared/components/FilterBar';
 import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
+import { downloadBlob } from '@shared/utils/download';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
     Filter, ArrowUpDown, BookOpen, Languages,
-    MapPin, Users, GraduationCap, FileText, Compass
+    MapPin, Users, GraduationCap, FileText, Compass, School, Heart
 } from 'lucide-react';
 import { AGE_RANGES } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -54,10 +55,12 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
 
     // --- Lesson Kit filter state ---
     const [kSearch, setKSearch] = useState('');
+    const [kCity, setKCity] = useState('all');
     const [kLevel, setKLevel] = useState('All Levels');
     const [kActivity, setKActivity] = useState('all');
     const [kSort, setKSort] = useState('Newest First');
     const [kLang, setKLang] = useState<'all' | 'en' | 'zh'>('all');
+    const [kMode, setKMode] = useState<'all' | 'school' | 'family'>('all');
 
     // === Dynamic options ===
     const uniqueCities = useMemo(() =>
@@ -66,6 +69,10 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     );
     const uniqueActivities = useMemo(() =>
         Array.from(new Set(savedPlans.map(p => p.plan.basicInfo?.activityType).filter(Boolean))).sort(),
+        [savedPlans]
+    );
+    const uniqueKitCities = useMemo(() =>
+        Array.from(new Set(savedPlans.map(p => p.plan.basicInfo?.location).filter(Boolean))).sort(),
         [savedPlans]
     );
 
@@ -114,6 +121,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     const inMission = p.plan.missionBriefing?.title?.toLowerCase().includes(s);
                     if (!inName && !inTheme && !inMission) return false;
                 }
+                if (kCity !== 'all' && p.plan.basicInfo?.location !== kCity) return false;
                 if (kLevel !== 'All Levels') {
                     const audience = (p.plan.basicInfo?.targetAudience || '').toLowerCase();
                     if (kLevel === 'Beginner' && !/(beginner|a1|a2)/.test(audience)) return false;
@@ -122,10 +130,14 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                 }
                 if (kActivity !== 'all' && p.plan.basicInfo?.activityType !== kActivity) return false;
                 if (kLang !== 'all' && (p.language || 'en') !== kLang) return false;
+                if (kMode !== 'all') {
+                    const planMode = p.mode || 'school';
+                    if (planMode !== kMode) return false;
+                }
                 return true;
             })
             .sort((a, b) => kSort === 'Newest First' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
-    }, [savedPlans, kSearch, kLevel, kActivity, kSort, kLang]);
+    }, [savedPlans, kSearch, kCity, kLevel, kActivity, kSort, kLang, kMode]);
 
     // === Helpers ===
     const getLevelLabel = (audience: string) => {
@@ -141,8 +153,8 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
             {/* Tab Switcher */}
             <RecordsTabSwitcher
                 tabs={[
-                    { key: 'curricula', label: t('nav.curriculum' as any) || 'Curricula', icon: <FileText size={16} />, count: savedCurricula.length },
-                    { key: 'kits', label: t('nav.lessonKit' as any) || 'Lesson Kits', icon: <BookOpen size={16} />, count: savedPlans.length },
+                    { key: 'curricula', label: t('nav.curriculum') || 'Curricula', icon: <FileText size={16} />, count: savedCurricula.length },
+                    { key: 'kits', label: t('nav.lessonKit') || 'Lesson Kits', icon: <BookOpen size={16} />, count: savedPlans.length },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(key) => setActiveTab(key as 'curricula' | 'kits')}
@@ -155,38 +167,38 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     <FilterBar
                         search={cSearch}
                         onSearchChange={setCSearch}
-                        searchPlaceholder="Search by theme, lesson title, overview..."
+                        searchPlaceholder={t('saved.search')}
                         filters={
                             <>
                                 <FilterSelect value={cCity} onChange={setCCity} icon={MapPin}>
-                                    <option value="all">All Cities</option>
+                                    <option value="all">{t('saved.allCities')}</option>
                                     {uniqueCities.map(city => <option key={city} value={city}>{city}</option>)}
                                 </FilterSelect>
                                 <FilterSelect value={cAge} onChange={setCAge} icon={Users}>
-                                    <option value="all">All Ages</option>
+                                    <option value="all">{t('saved.allAges')}</option>
                                     {AGE_RANGES.map(age => {
                                         const short = age.split(' ')[0];
-                                        return <option key={age} value={short}>{t(`age.${age} ` as any)}</option>;
+                                        return <option key={age} value={short}>{t(`age.${age} `)}</option>;
                                     })}
                                 </FilterSelect>
                                 <FilterSelect value={cLevel} onChange={setCLevel} icon={GraduationCap}>
-                                    <option value="all">All Levels</option>
-                                    {ENGLISH_LEVELS.map(lv => <option key={lv} value={lv}>{t(`level.${lv} ` as any)}</option>)}
+                                    <option value="all">{t('saved.allLevels')}</option>
+                                    {ENGLISH_LEVELS.map(lv => <option key={lv} value={lv}>{t(`level.${lv} `)}</option>)}
                                 </FilterSelect>
                                 <FilterSelect value={cCount} onChange={setCCount} icon={BookOpen}>
-                                    <option value="all">Any Lesson Count</option>
+                                    <option value="all">{t('saved.anyCount')}</option>
                                     {LESSON_COUNT_RANGES.map(r => <option key={r.label} value={r.label}>{r.label}</option>)}
                                 </FilterSelect>
                                 <FilterSelect value={cSort} onChange={setCSort} icon={ArrowUpDown}>
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="lessons-desc">Lessons ↓</option>
-                                    <option value="lessons-asc">Lessons ↑</option>
+                                    <option value="newest">{t('saved.newestFirst')}</option>
+                                    <option value="oldest">{t('saved.oldestFirst')}</option>
+                                    <option value="lessons-desc">{t('saved.lessonsDesc')}</option>
+                                    <option value="lessons-asc">{t('saved.lessonsAsc')}</option>
                                 </FilterSelect>
-                                <FilterSelect value={cLang} onChange={(v) => setCLang(v as any)} icon={Languages}>
-                                    <option value="all">All Languages</option>
-                                    <option value="en">🇬🇧 English</option>
-                                    <option value="zh">🇨🇳 中文</option>
+                                <FilterSelect value={cLang} onChange={(v) => setCLang(v as 'all' | 'en' | 'zh')} icon={Languages}>
+                                    <option value="all">{t('saved.allLangs')}</option>
+                                    <option value="en">{t('saved.english')}</option>
+                                    <option value="zh">{t('saved.chinese')}</option>
                                 </FilterSelect>
                             </>
                         }
@@ -195,8 +207,8 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     {filteredCurricula.length === 0 ? (
                         <EmptyState
                             icon={FileText}
-                            title="No curricula found"
-                            description={savedCurricula.length > 0 ? 'Try adjusting your filters.' : 'Generate and save a curriculum to see it here.'}
+                            title={t('saved.noCurricula')}
+                            description={savedCurricula.length > 0 ? t('saved.adjustFilters') : t('saved.generateFirst')}
                         />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -209,20 +221,16 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                         { icon: <MapPin size={11} />, label: item.params.city },
                                         { icon: <Users size={11} />, label: item.params.ageGroup.split(' ')[0] },
                                         { icon: <GraduationCap size={11} />, label: item.params.englishLevel.split(' ')[0] },
-                                        { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} lessons`, accent: true },
-                                        { icon: null, label: item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                        { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} ${t('saved.lessons')}`, accent: true },
+                                        { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
                                     ]}
                                     timestamp={item.timestamp}
-                                    openLabel="Open Curriculum"
+                                    openLabel={t('saved.openCurriculum')}
                                     onOpen={() => onLoadCurriculum(item)}
                                     onDelete={() => onDeleteCurriculum(item.id)}
                                     onExport={() => {
                                         const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`;
-                                        a.click();
+                                        downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`);
                                     }}
                                     onRename={(newName) => onRenameCurriculum(item.id, newName)}
                                     accentColor="emerald"
@@ -239,29 +247,40 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     <FilterBar
                         search={kSearch}
                         onSearchChange={setKSearch}
-                        searchPlaceholder="Search by topic or title..."
+                        searchPlaceholder={t('saved.searchKits')}
                         filters={
                             <>
+                                {uniqueKitCities.length > 0 && (
+                                    <FilterSelect value={kCity} onChange={setKCity} icon={MapPin}>
+                                        <option value="all">{t('saved.allCities')}</option>
+                                        {uniqueKitCities.map(city => <option key={city} value={city}>{city}</option>)}
+                                    </FilterSelect>
+                                )}
                                 <FilterSelect value={kLevel} onChange={setKLevel} icon={Filter}>
-                                    <option>All Levels</option>
-                                    <option>Beginner</option>
-                                    <option>Intermediate</option>
-                                    <option>Advanced</option>
+                                    <option>{t('saved.allLevels')}</option>
+                                    <option>{t('saved.beginner')}</option>
+                                    <option>{t('saved.intermediate')}</option>
+                                    <option>{t('saved.advanced')}</option>
                                 </FilterSelect>
                                 {uniqueActivities.length > 0 && (
                                     <FilterSelect value={kActivity} onChange={setKActivity} icon={Compass}>
-                                        <option value="all">All Activities</option>
+                                        <option value="all">{t('saved.allActivities')}</option>
                                         {uniqueActivities.map(act => <option key={act} value={act}>{act}</option>)}
                                     </FilterSelect>
                                 )}
                                 <FilterSelect value={kSort} onChange={setKSort} icon={ArrowUpDown}>
-                                    <option>Newest First</option>
-                                    <option>Oldest First</option>
+                                    <option>{t('saved.newestFirst')}</option>
+                                    <option>{t('saved.oldestFirst')}</option>
                                 </FilterSelect>
-                                <FilterSelect value={kLang} onChange={(v) => setKLang(v as any)} icon={Languages}>
-                                    <option value="all">All Languages</option>
-                                    <option value="en">🇬🇧 English</option>
-                                    <option value="zh">🇨🇳 中文</option>
+                                <FilterSelect value={kLang} onChange={(v) => setKLang(v as 'all' | 'en' | 'zh')} icon={Languages}>
+                                    <option value="all">{t('saved.allLangs')}</option>
+                                    <option value="en">{t('saved.english')}</option>
+                                    <option value="zh">{t('saved.chinese')}</option>
+                                </FilterSelect>
+                                <FilterSelect value={kMode} onChange={(v) => setKMode(v as 'all' | 'school' | 'family')} icon={Users}>
+                                    <option value="all">{t('saved.allModes')}</option>
+                                    <option value="school">{t('saved.modeSchool')}</option>
+                                    <option value="family">{t('saved.modeFamily')}</option>
                                 </FilterSelect>
                             </>
                         }
@@ -272,8 +291,8 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             icon={BookOpen}
                             iconSize={48}
                             iconClassName="text-slate-300 w-12 h-12 bg-transparent dark:bg-transparent"
-                            title="No lesson kits found"
-                            description={savedPlans.length > 0 ? 'Try adjusting your filters.' : 'Generate and save a lesson kit to see it here.'}
+                            title={t('saved.noKits')}
+                            description={savedPlans.length > 0 ? t('saved.adjustFilters') : t('saved.generateKitFirst')}
                         />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -284,21 +303,19 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                     description={item.plan.missionBriefing?.title || item.plan.basicInfo?.theme || ''}
                                     tags={[
                                         { icon: <GraduationCap size={11} />, label: getLevelLabel(item.plan.basicInfo?.targetAudience || '') },
+                                        ...(item.plan.basicInfo?.location ? [{ icon: <MapPin size={11} />, label: item.plan.basicInfo.location }] : []),
                                         ...(item.plan.basicInfo?.activityType ? [{ icon: <Compass size={11} />, label: item.plan.basicInfo.activityType }] : []),
-                                        { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} activities`, accent: true },
-                                        { icon: null, label: item.language === 'zh' ? '🇨🇳 中文' : '🇬🇧 EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                        { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} ${item.language === 'zh' ? '个活动' : 'activities'}`, accent: true },
+                                        { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                        { icon: item.mode === 'family' ? <Heart size={11} /> : <School size={11} />, label: item.mode === 'family' ? (item.language === 'zh' ? '亲子' : 'Family') : (item.language === 'zh' ? '学校' : 'School'), className: item.mode === 'family' ? 'bg-pink-50 text-pink-600 font-bold' : 'bg-slate-50 text-slate-600 font-bold' },
                                     ]}
                                     timestamp={item.timestamp}
-                                    openLabel="Open Kit"
+                                    openLabel={t('saved.openKit')}
                                     onOpen={() => onLoad(item)}
                                     onDelete={() => onDelete(item.id)}
                                     onExport={() => {
                                         const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - LessonKit.json`;
-                                        a.click();
+                                        downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - LessonKit.json`);
                                     }}
                                     onRename={(newName) => onRename(item.id, newName)}
                                     accentColor="emerald"

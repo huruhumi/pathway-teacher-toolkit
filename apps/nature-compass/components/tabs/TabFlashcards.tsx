@@ -17,6 +17,18 @@ const ART_STYLES = [
     "Isometric View"
 ];
 
+const ART_STYLE_KEYS: Record<string, string> = {
+    'Realistic Photo': 'style.realisticPhoto',
+    'Watercolor': 'style.watercolor',
+    'Cartoon Line Art': 'style.cartoonLineArt',
+    '3D Render': 'style.3dRender',
+    'Pixel Art': 'style.pixelArt',
+    'Paper Cutout': 'style.paperCutout',
+    'Claymation': 'style.claymation',
+    'Technical Diagram': 'style.technicalDiagram',
+    'Isometric View': 'style.isometricView',
+};
+
 interface TabFlashcardsProps {
     vocabList: VocabularyItem[];
     generatedImages: Record<number, string>;
@@ -58,22 +70,22 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
     return (
         <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <BookOpen size={18} className="text-emerald-600" />
-                    Vocabulary Flashcards
+                    {t('fc.title')}
                 </h3>
                 <div className="flex gap-2">
                     <button
                         onClick={handleGenerateMissingImages}
                         className="text-xs font-bold px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2"
                     >
-                        <Sparkles size={14} /> Generate All Images
+                        <Sparkles size={14} /> {t('fc.genAllImages')}
                     </button>
                     <button
                         onClick={handleDownloadAllFlashcards}
-                        className="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-2"
+                        className="text-xs font-bold px-3 py-1.5 bg-slate-100 text-slate-600 dark:text-slate-400 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-2"
                     >
-                        <Download size={14} /> PDF
+                        <Download size={14} /> {t('fc.pdf')}
                     </button>
                 </div>
             </div>
@@ -94,7 +106,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                         <button
                                             onClick={() => downloadImage(generatedImages[idx], `${sanitizeFilename(basicInfo.theme)} - ${sanitizeFilename(item.word)}.png`)}
                                             className="p-1.5 bg-black/50 text-white rounded-md hover:bg-black/70 backdrop-blur-sm"
-                                            title="Download Image"
+                                            title={t('fc.downloadImage')}
                                         >
                                             <Download size={14} />
                                         </button>
@@ -105,7 +117,7 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                     {loadingImages.has(idx) ? (
                                         <div className="flex flex-col items-center gap-2 text-emerald-600">
                                             <Loader2 size={24} className="animate-spin" />
-                                            <span className="text-xs font-semibold">Generating...</span>
+                                            <span className="text-xs font-semibold">{t('fc.generating')}</span>
                                         </div>
                                     ) : (
                                         <>
@@ -113,19 +125,19 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                             <span className="text-xs text-slate-400 mb-4">{t('fc.noImage')}</span>
                                             <div className="flex flex-col gap-2 w-full">
                                                 <select
-                                                    className="text-xs bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:border-emerald-500"
+                                                    className="text-xs bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded px-2 py-1 outline-none focus:border-emerald-500"
                                                     value={artStyles[idx] || "Educational vector illustration"}
                                                     onChange={(e) => setArtStyles(prev => ({ ...prev, [idx]: e.target.value }))}
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <option value="Educational vector illustration">Vector Illustration</option>
-                                                    {ART_STYLES.map(style => <option key={style} value={style}>{style}</option>)}
+                                                    <option value="Educational vector illustration">{t('style.vectorIllustration')}</option>
+                                                    {ART_STYLES.map(style => <option key={style} value={style}>{t(ART_STYLE_KEYS[style] as any) || style}</option>)}
                                                 </select>
                                                 <button
                                                     onClick={() => handleGenerateSingleImage(idx)}
                                                     className="text-xs font-bold px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors flex items-center justify-center gap-1"
                                                 >
-                                                    <Sparkles size={12} /> Generate
+                                                    <Sparkles size={12} /> {t('vis.generate')}
                                                 </button>
                                             </div>
                                         </>
@@ -133,12 +145,12 @@ export const TabFlashcards: React.FC<TabFlashcardsProps> = ({
                                 </div>
                             )}
                         </div>
-                        <div className="p-3 border-t border-slate-100">
+                        <div className="p-3 border-t border-slate-100 dark:border-white/5">
                             <div className="flex justify-between items-start mb-2">
                                 <input
                                     value={item.word}
                                     onChange={(e) => updateVocab(idx, 'word', e.target.value)}
-                                    className="text-base font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full mr-2"
+                                    className="text-base font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full mr-2"
                                 />
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => handleDownloadFlashcard(idx)} className="text-slate-400 hover:text-emerald-600 p-1">

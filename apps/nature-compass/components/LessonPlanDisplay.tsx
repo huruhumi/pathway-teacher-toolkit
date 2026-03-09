@@ -159,7 +159,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             // Use user edited prompt directly
             const image = await generateImage(badgePrompt, "1:1");
             setBadgeImage(image);
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Badge generation failed", e);
         } finally {
             setLoadingBadge(false);
@@ -208,7 +208,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         try {
             const newItem = await generateRoadmapItem(basicInfo.theme, basicInfo.activityType, roadmap);
             setRoadmap(prev => [...prev, newItem]);
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setRoadmap(prev => [...prev, {
                 timeRange: "00-15m",
@@ -251,7 +251,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 };
                 return newRoadmap;
             });
-        } catch (e) {
+        } catch (e: unknown) {
             setRoadmap(prev => {
                 const newRoadmap = [...prev];
                 newRoadmap[roadmapIndex] = {
@@ -300,7 +300,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 };
                 return newRoadmap;
             });
-        } catch (e) {
+        } catch (e: unknown) {
             setRoadmap(prev => {
                 const newRoadmap = [...prev];
                 newRoadmap[roadmapIndex] = {
@@ -363,7 +363,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 };
                 return newRoadmap;
             });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
         } finally {
             setGeneratingStepFor(null);
@@ -468,7 +468,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const prompt = await generateImagePrompt(item.description, basicInfo.theme, basicInfo.activityType, style);
             const base64Image = await generateImage(prompt);
             setGeneratedVisuals(prev => ({ ...prev, [index]: base64Image }));
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Visual gen failed", e);
         } finally {
             setLoadingVisuals(prev => {
@@ -493,7 +493,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const existingLabels = visualRefs.map(r => r.label);
             const newVisual = await generateVisualReferenceItem(basicInfo.theme, basicInfo.activityType, existingLabels);
             setVisualRefs(prev => [...prev, newVisual]);
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setVisualRefs(prev => [...prev, { label: "New Visual", description: "Description", type: "Diagram" }]);
         } finally {
@@ -519,7 +519,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const existingWords = vocabList.map(v => v.word);
             const newVocab = await generateVocabularyItem(basicInfo.theme, existingWords);
             setVocabList(prev => [...prev, newVocab]);
-        } catch (e) {
+        } catch (e: unknown) {
             setVocabList(prev => [...prev, { word: "New Word", definition: "Definition" }]);
         } finally {
             setIsAddingWord(false);
@@ -534,7 +534,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             const prompt = await generateImagePrompt(item.word, basicInfo.theme, basicInfo.activityType, style);
             const base64 = await generateImage(prompt);
             setGeneratedImages(prev => ({ ...prev, [index]: base64 }));
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
         } finally {
             setLoadingImages(prev => {
@@ -699,7 +699,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
     return (
         <div className="w-full">
             {/* Unified Sticky Header - Always Stacked */}
-            <div className="flex flex-col gap-3 sticky top-6 z-40 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-sm mx-4 mt-4 no-print mb-6">
+            <div className="flex flex-col gap-3 sticky top-6 z-40 bg-white dark:bg-slate-900/80/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm mx-4 mt-4 no-print mb-6">
                 {/* Tabs Group */}
                 <div className="flex flex-nowrap overflow-x-auto pb-1 gap-2 items-center hide-scrollbar w-full">
                     {[
@@ -717,7 +717,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                                 onClick={() => setActiveTab(tab.id as Tab)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id
                                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 translate-y-[-1px]'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                             >
                                 <Icon className="w-3.5 h-3.5" />
@@ -728,33 +728,40 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                 </div>
 
                 {/* Actions Group */}
-                <div className="no-print flex items-center justify-between md:justify-end gap-3 w-full pt-2 border-t border-slate-100">
+                <div className="no-print flex items-center justify-between md:justify-end gap-3 w-full pt-2 border-t border-slate-100 dark:border-white/5">
                     <button
                         onClick={handleLanguageToggle}
                         className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap border ${displayLanguage === 'zh'
                             ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            : 'bg-white dark:bg-slate-900/80 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50'
                             }`}
-                        title={lang === 'zh' ? '切换到英文' : 'Translate to Chinese'}
+                        title={t('lp.translateTitle')}
                     >
                         <Languages className={`w-4 h-4 ${displayLanguage === 'zh' ? 'text-blue-600' : 'text-slate-500'}`} />
                         <span className="hidden md:inline">{displayLanguage === 'zh' ? t('lp.langToggle') : 'EN / 中'}</span>
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="flex items-center justify-center gap-2 px-5 py-2 bg-slate-100 text-slate-700 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap text-sm font-bold"
+                        className="flex items-center justify-center gap-2 px-5 py-2 bg-slate-100 text-slate-700 dark:text-slate-400 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap text-sm font-bold"
                     >
                         <Printer className="w-4 h-4" />
-                        <span className="hidden md:inline">Print View</span>
+                        <span className="hidden md:inline">{t('lp.printView')}</span>
                     </button>
+                    {activeTab === 'handbook' && (
+                        <button
+                            onClick={handleCopyAllPrompts}
+                            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap border ${copiedNotebook
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-white dark:bg-slate-900/80 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50'
+                                }`}
+                            title={t('lp.exportTitle')}
+                        >
+                            {copiedNotebook ? <Check className="w-4 h-4 text-emerald-600" /> : <Clipboard className="w-4 h-4" />}
+                            <span className="hidden md:inline">{copiedNotebook ? t('lp.copied') : t('lp.export')}</span>
+                        </button>
+                    )}
                     {onSave && (
                         <>
-                            {saveStatus !== 'saved' && (
-                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${saveStatus === 'saving' ? 'text-amber-600 bg-amber-50' : 'text-slate-400 bg-slate-100'
-                                    }`}>
-                                    {saveStatus === 'saving' ? '⏳ Saving...' : '● Unsaved'}
-                                </span>
-                            )}
                             <button
                                 onClick={handleSaveClick}
                                 disabled={isSaved}

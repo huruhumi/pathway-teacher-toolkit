@@ -5,12 +5,15 @@ import { Curriculum } from "../types";
 import { createAIClient } from '@shared/ai/client';
 import { retryOperation } from './geminiService';
 
-export const suggestLocations = async (city: string): Promise<string[]> => {
+export const suggestLocations = async (city: string, theme?: string): Promise<string[]> => {
     const ai = createAIClient();
+    const themeContext = theme
+        ? `The workshop theme is "${theme}". Prioritize locations that are especially relevant to this theme (e.g., ecology/nature → parks, botanical gardens, wetlands; history → museums, historic sites; space/science → science museums, planetariums; water → rivers, lakes, aquariums). Still include a mix of general outdoor STEAM locations.`
+        : '';
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: `List 8-10 well-known outdoor locations in ${city} that are suitable for STEAM education activities with K-12 students. Include parks, lakes, botanical gardens, science museums, nature reserves, wetlands, riverside areas, etc. Only return locations that actually exist in ${city}. Use the local language name for each location.`,
+            contents: `List 10 well-known outdoor locations in ${city} that are suitable for STEAM education activities with K-12 students. ${themeContext} Include parks, lakes, botanical gardens, science museums, nature reserves, wetlands, riverside areas, etc. Only return locations that actually exist in ${city}. Use the local language name for each location.`,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -67,10 +70,10 @@ export const generateCurriculum = async (
     Requirements:
     1. ${truncatedPdf ? 'The curriculum MUST be based on the uploaded reference document above.' : `The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".`}
     2. It should have exactly ${lessonCount} progressive lessons.
-    3. Locations must be specific, well-known, and accessible outdoor spots in ${city}. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
-    4. Each lesson must include a specific interdisciplinary focus (e.g., Biology & Ecology, Physics & Forces, Chemistry & Matter, Engineering & Design, Earth & Space, Math & Logic, Visual Arts, Theater & Drama, Music & Sound, Social Science, Economy & Trade, History & Culture, etc. Do not limit to just traditional STEAM).
+    3. Locations must be real, well-known, and accessible urban wetlands/parks in ${city}. Avoid remote areas to minimize travel time for a single-day trip. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
+    4. Each lesson must include a specific interdisciplinary focus. You MUST explicitly embed Technology (e.g., citizen science apps, digital sensors) and Mathematics (e.g., measuring, estimating, data charting) into the activities alongside other disciplines.
     5. Each lesson must include a specific, explicit, and actionable ESL focus.
-    6. Each lesson must have a specific "Rainy Day" indoor alternative activity.
+    6. Each lesson must have a specific "Rainy Day" indoor alternative activity that maintains the same learning objectives and provides equivalent immersive hands-on value.
     7. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot.
     8. English vocabulary and concepts should be integrated based on the provided level.
     9. The tone should be professional, educational, and inspiring.`,
@@ -148,9 +151,9 @@ export const generateCurriculumCN = async (
     要求:
     1. ${truncatedPdf ? '课程必须基于上述参考文档内容设计。' : `课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。`}
     2. 必须包含恰好${lessonCount}节循序渐进的课。
-    3. 地点必须是${city}具体的、知名的、方便到达的户外地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
-    4. 每节课必须包含具体的跨学科焦点元素（例如：生物与生态、物理与力学、化学与物质、工程与设计、地球与空间、数学与逻辑、视觉艺术、戏剧与表演、音乐与声音、社会科学、经济与经贸、历史与文化等，不要仅局限于传统的STEAM五项）。
-    5. 每节课必须有具体的、可执行的"雨天室内替代活动"。
+    3. 地点必须是${city}真实存在的、知名的且交通便利的城市湿地/公园。避免推荐地理位置过于偏远、往返交通时间过长的地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
+    4. 每节课必须包含具体的跨学科焦点元素。你必须**显性且具体地融入科技（Technology，如智能识别工具、数据记录）和数学（Mathematics，如尺寸估算、面积计算、数据分析）元素**到活动中，并结合其他学科。
+    5. 每节课必须有具体的、可执行的"雨天室内替代活动"。该室内方案必须在学习目标和概念上与户外活动保持高度一致，并提供同等的沉浸式和动手实践价值。
     6. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。
     7. 语气应专业、教育性强、鼓舞人心。
     8. 所有内容必须用中文书写。

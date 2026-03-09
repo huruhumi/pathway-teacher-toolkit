@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2 } from 'lucide-react';
+import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2, Palette, Sparkles, Users, FileText } from 'lucide-react';
 import { RichTextEditor } from '../RichTextEditor';
 import { RoadmapItem } from '../../types';
 import { BasicInfoState } from '../../stores/useLessonStore';
@@ -76,66 +76,63 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
     return (
         <div className="space-y-5 animate-fade-in">
             <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
-                <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                     <Info size={18} className="text-emerald-600" />
                     {t('road.workshopDetails')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.theme')}</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Palette size={12} />{t('road.theme')}</label>
                         <input
                             value={basicInfo.theme}
                             onChange={(e) => handleBasicInfoChange('theme', e.target.value)}
-                            className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            className="w-full font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-white/10 focus:border-emerald-500 outline-none py-1 bg-transparent"
                             aria-label="Workshop Theme"
                             title="Workshop Theme"
                             placeholder="Theme"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.activityType')}</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Sparkles size={12} />{t('road.activityType')}</label>
                         <input
                             value={basicInfo.activityType}
                             onChange={(e) => handleBasicInfoChange('activityType', e.target.value)}
-                            className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            className="w-full font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-white/10 focus:border-emerald-500 outline-none py-1 bg-transparent"
                             aria-label="Activity Type"
                             title="Activity Type"
                             placeholder="Activity Type"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.targetAudience')}</label>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><Users size={12} />{t('road.targetAudience')}</label>
                         <input
                             value={basicInfo.targetAudience}
                             onChange={(e) => handleBasicInfoChange('targetAudience', e.target.value)}
-                            className="w-full font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            className="w-full font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-white/10 focus:border-emerald-500 outline-none py-1 bg-transparent"
                             aria-label="Target Audience"
                             title="Target Audience"
                             placeholder="Target Audience"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.location')}</label>
-                        <div className="flex items-center gap-2">
-                            <MapPin size={16} className="text-emerald-500" />
-                            <input
-                                value={basicInfo.location || ''}
-                                onChange={(e) => handleBasicInfoChange('location', e.target.value)}
-                                className="flex-1 font-semibold text-slate-800 border-b border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
-                                aria-label="Location"
-                                title="Location"
-                                placeholder="Location"
-                            />
-                        </div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><MapPin size={12} />{t('road.location')}</label>
+                        <input
+                            value={basicInfo.location || ''}
+                            onChange={(e) => handleBasicInfoChange('location', e.target.value)}
+                            className="w-full font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-white/10 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                            aria-label="Location"
+                            title="Location"
+                            placeholder="Location"
+                        />
                     </div>
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.introContext')}</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center gap-1"><FileText size={12} />{t('road.introContext')}</label>
                     <RichTextEditor
                         value={missionBriefing.narrative}
                         onChange={(html) => (setMissionBriefing as any)(prev => ({ ...prev, narrative: html }))}
                         placeholder="Enter mission briefing narrative..."
-                        className="font-medium text-slate-700 border-b border-slate-200 py-1 bg-transparent"
+                        className="font-medium text-slate-700 dark:text-slate-400 border-b border-slate-200 dark:border-white/10 py-1 bg-transparent"
                         rows={2}
                     />
                 </div>
@@ -149,7 +146,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 <input
                                     value={goal}
                                     onChange={(e) => handleGoalChange(i, e.target.value)}
-                                    className="flex-1 text-sm text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                                    className="flex-1 text-sm text-slate-700 dark:text-slate-400 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
                                     aria-label="Learning Goal"
                                     title="Learning Goal"
                                     placeholder="Enter learning goal"
@@ -175,7 +172,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                         onDrop={(e) => handleRoadmapDrop(e, idx)}
                         className={`bg-white dark:bg-slate-900/80 rounded-xl border transition-all ${draggedRoadmapIndex === idx ? 'border-emerald-400 shadow-lg opacity-50' : 'border-slate-200 dark:border-white/5 hover:border-emerald-300 shadow-sm'}`}
                     >
-                        <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
+                        <div className="p-3 bg-slate-50 border-b border-slate-100 dark:border-white/5 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
                             <div className="mt-1 text-slate-400 group-hover:text-slate-600">
                                 <GripVertical size={16} />
                             </div>
@@ -196,7 +193,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     <input
                                         value={item.phase}
                                         onChange={(e) => handleRoadmapChange(idx, 'phase', e.target.value)}
-                                        className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
+                                        className="w-full font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
                                         aria-label="Phase"
                                         title="Phase"
                                         placeholder="Phase"
@@ -207,7 +204,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     <input
                                         value={item.activity}
                                         onChange={(e) => handleRoadmapChange(idx, 'activity', e.target.value)}
-                                        className="w-full font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
+                                        className="w-full font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
                                         aria-label="Activity Name"
                                         title="Activity Name"
                                         placeholder="Activity Name"
@@ -227,7 +224,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         value={item.description}
                                         onChange={(e) => handleRoadmapChange(idx, 'description', e.target.value)}
                                         rows={2}
-                                        className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                                        className="w-full text-sm text-slate-600 dark:text-slate-400 bg-slate-50 border border-slate-200 dark:border-white/10 rounded-lg p-3 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                                         aria-label="Description"
                                         title="Description"
                                         placeholder="Description"
@@ -240,7 +237,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                             <input
                                                 value={item.activityType}
                                                 onChange={(e) => handleRoadmapChange(idx, 'activityType', e.target.value)}
-                                                className="w-full text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                                                className="w-full text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 border border-slate-200 dark:border-white/10 rounded px-2 py-1"
                                                 aria-label="Activity Type"
                                                 title="Activity Type"
                                                 placeholder="Activity Type"
@@ -251,7 +248,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                             <input
                                                 value={item.location}
                                                 onChange={(e) => handleRoadmapChange(idx, 'location', e.target.value)}
-                                                className="w-full text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1"
+                                                className="w-full text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-50 border border-slate-200 dark:border-white/10 rounded px-2 py-1"
                                                 aria-label="Location"
                                                 title="Location"
                                                 placeholder="Location"
@@ -263,7 +260,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                         <input
                                             value={item.learningObjective}
                                             onChange={(e) => handleRoadmapChange(idx, 'learningObjective', e.target.value)}
-                                            className="w-full text-xs italic text-slate-500 border-b border-slate-200 focus:border-emerald-500 outline-none pb-1 bg-transparent"
+                                            className="w-full text-xs italic text-slate-500 border-b border-slate-200 dark:border-white/10 focus:border-emerald-500 outline-none pb-1 bg-transparent"
                                             aria-label="Learning Objective"
                                             title="Learning Objective"
                                             placeholder="Learning Objective"
@@ -366,7 +363,7 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                     value={step}
                                                     onChange={(e) => handleStepChange(idx, sIdx, e.target.value)}
                                                     rows={1}
-                                                    className="w-full text-sm text-slate-700 bg-transparent border-none outline-none resize-none overflow-hidden focus:ring-0 p-0"
+                                                    className="w-full text-sm text-slate-700 dark:text-slate-400 bg-transparent border-none outline-none resize-none overflow-hidden focus:ring-0 p-0"
                                                     style={{ minHeight: '1.5em', height: 'auto' }}
                                                     onInput={(e) => {
                                                         e.currentTarget.style.height = 'auto';

@@ -16,6 +16,7 @@ export const ACTIVITY_FOCUS_OPTIONS = [
 ];
 
 export const AGE_RANGES = [
+  "3-5 Years (Preschool)",
   "6-9 Years (Primary Lower)",
   "10-12 Years (Primary Upper)",
   "13-15 Years (Middle School)",

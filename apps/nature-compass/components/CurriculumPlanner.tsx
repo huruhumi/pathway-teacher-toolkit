@@ -8,6 +8,7 @@ import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../s
 import { Curriculum, CurriculumParams } from '../types';
 import { AGE_RANGES, CEFR_LEVELS } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
+import { handleError } from '@shared/services/logger';
 import { safeStorage } from '@shared/safeStorage';
 import { extractPdfText as extractPdfTextShared } from '@shared/utils/pdf';
 import { GenerationButton } from '@shared/components/GenerationButton';
@@ -116,9 +117,9 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const handleConfirmCity = async () => {
         setLoadingLocations(true);
         try {
-            const locations = await suggestLocations(effectiveCity);
+            const locations = await suggestLocations(effectiveCity, customTheme.trim() || undefined);
             setSuggestedLocations(locations);
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
         } finally {
             setLoadingLocations(false);
@@ -209,8 +210,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             safeStorage.set(STORAGE_KEY, { en: curriculumEN, cn: curriculumCN, lang: 'en', params });
 
             onCurriculumGenerated({ curriculumEN, curriculumCN, params, activeLanguage: 'en' });
-        } catch (e: any) {
-            setErrorMsg(e.message || 'Generation failed');
+        } catch (e: unknown) {
+            setErrorMsg(handleError(e, 'Generation failed', 'CurriculumPlanner'));
         } finally {
             setLoading(false);
         }
@@ -219,7 +220,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-200 mb-6 flex items-center gap-2">
                     <Compass size={22} className="text-teal-600" />
                     {t('cp.title')}
                 </h2>
@@ -246,7 +247,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             <div className="flex items-center gap-3">
                                 <FileText size={20} className="text-teal-600" />
                                 <div>
-                                    <p className="text-sm font-medium text-slate-700">{pdfFile.name}</p>
+                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-400">{pdfFile.name}</p>
                                     <p className="text-xs text-slate-500">
                                         {extracting ? (
                                             <span className="flex items-center gap-1 text-teal-600">
@@ -265,36 +266,50 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* === Unified Config Block === */}
+                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-5 space-y-5 bg-white dark:bg-slate-900/50">
+                    {/* Row 1: Theme (full width) */}
                     <div className="space-y-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <Users size={16} /> {t('cp.ageGroup')}
+                            <Sparkles size={16} /> {t('cp.customTheme')}
                         </label>
-                        <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3" aria-label="Select Age Group" title="Age Group">
-                            {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}` as any)}</option>)}
-                        </select>
+                        <input type="text" placeholder={t('cp.themePlaceholder')} value={customTheme} onChange={(e) => setCustomTheme(e.target.value)} className="input-field py-3" />
                     </div>
+
+                    {/* Row 2: Age, Level, Lessons, Duration */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                                <Users size={16} /> {t('cp.ageGroup')}
+                            </label>
+                            <select value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} className="input-field py-3" aria-label="Select Age Group" title="Age Group">
+                                {AGE_RANGES.map(age => <option key={age} value={age}>{t(`age.${age}`)}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                                <GraduationCap size={16} /> {t('cp.englishLevel')}
+                            </label>
+                            <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3" aria-label="Select English Level" title="English Level">
+                                {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{t(`level.${lvl}`)}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                                <BookOpen size={16} /> {t('cp.numLessons')}
+                            </label>
+                            <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3" aria-label="Number of Lessons" title="Number of Lessons" placeholder="Number of lessons" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                                <Wind size={16} /> {t('cp.duration')}
+                            </label>
+                            <input type="text" placeholder={t('cp.durationPlaceholder') as string} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3" aria-label="Lesson Duration" title="Lesson Duration" />
+                        </div>
+                    </div>
+
+                    {/* Row 3: City + Confirm */}
                     <div className="space-y-2">
-                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <GraduationCap size={16} /> {t('cp.englishLevel')}
-                        </label>
-                        <select value={englishLevel} onChange={(e) => setEnglishLevel(e.target.value)} className="input-field py-3" aria-label="Select English Level" title="English Level">
-                            {ENGLISH_LEVELS.map(lvl => <option key={lvl} value={lvl}>{t(`level.${lvl}` as any)}</option>)}
-                        </select>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <BookOpen size={16} /> {t('cp.numLessons')}
-                        </label>
-                        <input type="number" min={1} max={12} value={lessonCount} onChange={(e) => setLessonCount(parseInt(e.target.value) || 4)} className="input-field py-3" aria-label="Number of Lessons" title="Number of Lessons" placeholder="Number of lessons" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <Wind size={16} /> {t('cp.duration')}
-                        </label>
-                        <input type="text" placeholder={t('cp.durationPlaceholder') as string} value={duration} onChange={(e) => setDuration(e.target.value)} className="input-field py-3" aria-label="Lesson Duration" title="Lesson Duration" />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
                             <MapPin size={16} /> {t('cp.city')}
                         </label>
@@ -305,67 +320,67 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             </button>
                         </div>
                     </div>
-                    {suggestedLocations.length > 0 && (
-                        <div className="space-y-3 md:col-span-2 p-4 border border-teal-100 bg-teal-50/30 rounded-xl">
-                            <label className="input-label flex items-center gap-2 uppercase tracking-wider text-teal-700">
-                                <Compass size={16} /> {t('cp.suggestedLocations')} ({effectiveCity})
-                            </label>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {suggestedLocations.map((loc, i) => {
-                                    const isSelected = selectedLocations.includes(loc);
-                                    return (
-                                        <button
-                                            key={`sugg-${i}`}
-                                            onClick={() => toggleLocation(loc)}
-                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isSelected
-                                                ? 'bg-teal-600 text-white shadow-md shadow-teal-200'
-                                                : 'bg-white text-slate-600 border border-slate-200 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50'
-                                                }`}
-                                        >
-                                            {loc}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <MapPin size={16} /> {t('cp.customLocation')}
+                </div>
+
+                {/* Location suggestions (appear after confirm) */}
+                {suggestedLocations.length > 0 && (
+                    <div className="space-y-3 p-4 border border-teal-100 bg-teal-50/30 rounded-xl mt-4">
+                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-teal-700">
+                            <Compass size={16} /> {t('cp.suggestedLocations')} ({effectiveCity})
                         </label>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                placeholder={t('cp.locationPlaceholder')}
-                                value={customLocation}
-                                onChange={(e) => setCustomLocation(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustomLocation(); }}
-                                className="input-field flex-1 py-3"
-                            />
-                            <button
-                                onClick={handleAddCustomLocation}
-                                disabled={!customLocation.trim()}
-                                className="bg-teal-50 text-teal-600 rounded-xl px-4 hover:bg-teal-100 hover:text-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-teal-200"
-                                title="Add custom location"
-                            >
-                                <Plus size={20} />
-                            </button>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {suggestedLocations.map((loc, i) => {
+                                const isSelected = selectedLocations.includes(loc);
+                                return (
+                                    <button
+                                        key={`sugg-${i}`}
+                                        onClick={() => toggleLocation(loc)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isSelected
+                                            ? 'bg-teal-600 text-white shadow-md shadow-teal-200'
+                                            : 'bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:border-teal-300 hover:text-teal-700 hover:bg-teal-50'
+                                            }`}
+                                    >
+                                        {loc}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
-                    <div className="space-y-2 md:col-span-2">
-                        <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
-                            <Sparkles size={16} /> {t('cp.customTheme')}
-                        </label>
-                        <input type="text" placeholder={t('cp.themePlaceholder')} value={customTheme} onChange={(e) => setCustomTheme(e.target.value)} className="input-field py-3" />
-                    </div>
-                    <div className="md:col-span-2 lg:col-span-3 pt-2">
-                        <GenerationButton
-                            loading={loading}
-                            onClick={handleGenerate}
-                            defaultText={pdfText ? t('cp.generateFromPdf') : t('cp.generate')}
-                            theme="emerald"
+                )}
+
+                {/* Custom location — only show after suggestions are generated */}
+                {suggestedLocations.length > 0 && <div className="space-y-2 mt-4">
+                    <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
+                        <MapPin size={16} /> {t('cp.customLocation')}
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder={t('cp.locationPlaceholder')}
+                            value={customLocation}
+                            onChange={(e) => setCustomLocation(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustomLocation(); }}
+                            className="input-field flex-1 py-3"
                         />
+                        <button
+                            onClick={handleAddCustomLocation}
+                            disabled={!customLocation.trim()}
+                            className="bg-teal-50 text-teal-600 rounded-xl px-4 hover:bg-teal-100 hover:text-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-teal-200"
+                            title="Add custom location"
+                        >
+                            <Plus size={20} />
+                        </button>
                     </div>
+                </div>}
+
+                {/* Generate button */}
+                <div className="pt-4">
+                    <GenerationButton
+                        loading={loading}
+                        onClick={handleGenerate}
+                        defaultText={pdfText ? t('cp.generateFromPdf') : t('cp.generate')}
+                        theme="emerald"
+                    />
                 </div>
             </div>
 

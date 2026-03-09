@@ -28,7 +28,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
     return (
         <div className="space-y-5 animate-fade-in">
             <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
-                <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                     <Box size={18} className="text-emerald-600" />
                     {t('sup.supplyList')}
                 </h3>
@@ -44,7 +44,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                                     <input
                                         value={item}
                                         onChange={(e) => handleSupplyChange('permanent', idx, e.target.value)}
-                                        className="flex-1 text-sm text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                                        className="flex-1 text-sm text-slate-700 dark:text-slate-400 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
                                     />
                                     <button onClick={() => removeSupplyItem('permanent', idx)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity">
                                         <X size={14} />
@@ -67,7 +67,7 @@ export const TabSupplies: React.FC<TabSuppliesProps> = ({
                                     <input
                                         value={item}
                                         onChange={(e) => handleSupplyChange('consumables', idx, e.target.value)}
-                                        className="flex-1 text-sm text-slate-700 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
+                                        className="flex-1 text-sm text-slate-700 dark:text-slate-400 border-b border-transparent hover:border-slate-200 focus:border-emerald-500 outline-none py-1 bg-transparent"
                                     />
                                     <button onClick={() => removeSupplyItem('consumables', idx)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity">
                                         <X size={14} />

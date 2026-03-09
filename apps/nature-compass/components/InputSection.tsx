@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { LessonInput, UploadedFile } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
-import { Sun, CloudRain, Shuffle, Loader2 } from 'lucide-react';
+import { Sun, CloudRain, Shuffle, Loader2, School, Heart } from 'lucide-react';
 import { generateRandomTheme } from '../services/geminiService';
 import { useToast } from '@shared/stores/useToast';
 import { useLanguage, TranslationKey } from '../i18n/LanguageContext';
@@ -10,6 +10,7 @@ import { Input } from '@shared/components/ui/Input';
 import { Select } from '@shared/components/ui/Select';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { Button } from '@shared/components/ui/Button';
+import { HandbookPageSelector } from './HandbookPageSelector';
 
 interface InputSectionProps {
   input: LessonInput;
@@ -20,7 +21,7 @@ interface InputSectionProps {
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onSubmit, onStop, isLoading }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
 
@@ -103,8 +104,52 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
     }));
   };
 
+  const isFamily = input.mode === 'family';
+
   return (
     <div className="space-y-8">
+
+      {/* Mode Toggle: School vs Family */}
+      <div>
+        <label className="input-label">{t('input.modeLabel' as TranslationKey)}</label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setInput(prev => ({ ...prev, mode: 'school', familyEslEnabled: false, studentCount: 12 }))}
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-sm font-semibold transition-all ${!isFamily
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm'
+              : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-500'
+              }`}
+          >
+            <School size={20} className={!isFamily ? 'text-emerald-600' : 'text-slate-400'} />
+            {t('input.modeSchool' as TranslationKey)}
+          </button>
+          <button
+            onClick={() => setInput(prev => ({ ...prev, mode: 'family', studentCount: 2 }))}
+            className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-sm font-semibold transition-all ${isFamily
+              ? 'border-pink-500 bg-pink-50 text-pink-800 shadow-sm'
+              : 'border-slate-200 hover:border-pink-200 hover:bg-slate-50 text-slate-500'
+              }`}
+          >
+            <Heart size={20} className={isFamily ? 'text-pink-500' : 'text-slate-400'} />
+            {t('input.modeFamily' as TranslationKey)}
+          </button>
+        </div>
+
+        {/* Family sub-option: ESL toggle */}
+        {isFamily && (
+          <div className="mt-3 flex items-center gap-3 px-4 py-3 bg-pink-50/50 border border-pink-100 rounded-xl">
+            <span className="text-sm text-pink-700 font-medium">{t('input.familyEslOff' as TranslationKey)}</span>
+            <button
+              onClick={() => setInput(prev => ({ ...prev, familyEslEnabled: !prev.familyEslEnabled }))}
+              className={`relative w-11 h-6 rounded-full transition-colors ${input.familyEslEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}
+              title={t('input.familyEslToggle' as TranslationKey)}
+            >
+              <span className={`block w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${input.familyEslEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+            </button>
+            <span className="text-sm text-indigo-700 font-medium">{t('input.familyEslOn' as TranslationKey)}</span>
+          </div>
+        )}
+      </div>
 
       {/* Environmental Context: Weather & Season */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -115,7 +160,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             <button
               onClick={() => setInput({ ...input, weather: 'Sunny' })}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Sunny'
-                ? 'bg-white text-amber-600 shadow-sm'
+                ? 'bg-white dark:bg-slate-900/80 text-amber-600 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
@@ -124,7 +169,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
             <button
               onClick={() => setInput({ ...input, weather: 'Rainy' })}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${input.weather === 'Rainy'
-                ? 'bg-white text-indigo-600 shadow-sm'
+                ? 'bg-white dark:bg-slate-900/80 text-indigo-600 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
@@ -142,7 +187,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 key={s}
                 onClick={() => setInput({ ...input, season: s })}
                 className={`flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-all ${input.season === s
-                  ? 'bg-white text-emerald-600 shadow-sm font-bold'
+                  ? 'bg-white dark:bg-slate-900/80 text-emerald-600 shadow-sm font-bold'
                   : 'text-slate-500 hover:text-slate-700'
                   }`}
               >{t(`season.${s}` as TranslationKey)}</button>
@@ -164,7 +209,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
                 onClick={() => handleFocusChange(opt.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${isSelected
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                  : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-600'
+                  : 'border-slate-200 dark:border-white/10 hover:border-emerald-200 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
                   }`}
               >
                 <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
@@ -180,20 +225,22 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
           value={input.studentAge}
           onChange={(e) => setInput({ ...input, studentAge: e.target.value })}
           className="py-3"
-          options={AGE_RANGES.map(age => ({ label: t(`age.${age}` as any), value: age }))}
+          options={AGE_RANGES.map(age => ({ label: t(`age.${age}`), value: age }))}
         />
-        <Input
-          label={t('input.studentsLabel')}
-          type="number"
-          min={1}
-          max={50}
-          value={input.studentCount}
-          onChange={(e) => setInput({ ...input, studentCount: parseInt(e.target.value) || 0 })}
-          className="py-3"
-        />
+        {!isFamily && (
+          <Input
+            label={t('input.studentsLabel')}
+            type="number"
+            min={1}
+            max={50}
+            value={input.studentCount}
+            onChange={(e) => setInput({ ...input, studentCount: parseInt(e.target.value) || 0 })}
+            className="py-3"
+          />
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
           label={t('input.durationLabel')}
           type="number"
@@ -203,24 +250,30 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
           onChange={(e) => setInput({ ...input, duration: parseInt(e.target.value) || 0 })}
           className="py-3"
         />
-        <Select
-          label={t('input.cefrLabel')}
-          value={input.cefrLevel}
-          onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
-          className="py-3"
-          options={CEFR_LEVELS.map(level => ({ label: t(`cefr.${level}` as any), value: level }))}
-        />
-        <Input
-          label={t('input.handbookLabel')}
-          type="number"
-          min={1}
-          max={20}
-          value={input.handbookPages}
-          onChange={(e) => setInput({ ...input, handbookPages: parseInt(e.target.value) || 0 })}
-          className="py-3"
-          placeholder="e.g. 5"
-        />
+        {(!isFamily || input.familyEslEnabled) && (
+          <Select
+            label={t('input.cefrLabel')}
+            value={input.cefrLevel}
+            onChange={(e) => setInput({ ...input, cefrLevel: e.target.value })}
+            className="py-3"
+            options={CEFR_LEVELS.map(level => ({ label: t(`cefr.${level}`), value: level }))}
+          />
+        )}
       </div>
+
+      {/* Handbook Page Configuration */}
+      <HandbookPageSelector
+        mode={input.handbookMode}
+        preset={input.handbookPreset}
+        config={input.handbookPageConfig}
+        autoPageTarget={input.autoPageTarget}
+        duration={input.duration}
+        onModeChange={(m) => setInput(prev => ({ ...prev, handbookMode: m }))}
+        onPresetChange={(p) => setInput(prev => ({ ...prev, handbookPreset: p }))}
+        onConfigChange={(c) => setInput(prev => ({ ...prev, handbookPageConfig: c }))}
+        onAutoPageTargetChange={(t) => setInput(prev => ({ ...prev, autoPageTarget: t }))}
+        lang={lang}
+      />
 
       <div>
         <label className="input-label">
@@ -273,19 +326,26 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
 
       {/* Sticky CTA */}
       <div className="sticky bottom-4 z-10 pt-2">
-        <Button
-          onClick={isLoading ? () => { } : onSubmit}
-          disabled={isLoading || (!input.theme && input.uploadedFiles.length === 0)}
-          className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${isLoading
-            ? 'bg-slate-400 cursor-wait'
-            : (!input.theme && input.uploadedFiles.length === 0)
+        {isLoading ? (
+          <Button
+            onClick={onStop}
+            className="w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600"
+          >
+            <Loader2 className="animate-spin" size={20} />
+            {t('input.stopGeneration' as TranslationKey) || 'Stop Generation'}
+          </Button>
+        ) : (
+          <Button
+            onClick={onSubmit}
+            disabled={!input.theme && input.uploadedFiles.length === 0}
+            className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3 ${(!input.theme && input.uploadedFiles.length === 0)
               ? 'bg-slate-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-emerald-600 to-teal-600'
-            }`}
-          leftIcon={isLoading ? <Loader2 className="animate-spin" size={20} /> : undefined}
-        >
-          {isLoading ? (t('input.generatingKit' as TranslationKey) || 'Generating...') : t('input.generateKit')}
-        </Button>
+              }`}
+          >
+            {t('input.generateKit')}
+          </Button>
+        )}
       </div>
     </div>
   );

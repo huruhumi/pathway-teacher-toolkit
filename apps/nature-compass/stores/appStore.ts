@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { LessonPlanResponse, Curriculum, CurriculumParams, SavedLessonPlan, SavedCurriculum, LessonInput } from '../types';
+import { getDefaultPageConfig } from '../constants/handbookDefaults';
 
 interface SessionState {
     lessonPlan: LessonPlanResponse | null;
@@ -62,10 +63,12 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
     input: {
+        mode: 'school', familyEslEnabled: false,
         theme: '', topicIntroduction: '', activityFocus: [],
         weather: 'Sunny', season: 'Spring',
         studentAge: '6-8 years (Early Primary)', studentCount: 12,
-        duration: 180, cefrLevel: 'A1 (Beginner)', handbookPages: 15,
+        duration: 180, cefrLevel: 'A1 (Beginner)',
+        handbookMode: 'auto', handbookPreset: 'deep', handbookPageConfig: getDefaultPageConfig(),
         uploadedFiles: [],
     },
     setInput: (input) => set({

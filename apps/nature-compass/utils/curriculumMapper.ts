@@ -1,5 +1,6 @@
 import { CurriculumLesson, CurriculumParams, LessonInput } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, CEFR_LEVELS, AGE_RANGES } from '../constants';
+import { getDefaultPageConfig } from '../constants/handbookDefaults';
 
 /** Map STEAM Designer english levels to CEFR levels */
 function mapEnglishLevel(steamLevel: string): string {
@@ -62,9 +63,14 @@ export function mapLessonToInput(
     lesson: CurriculumLesson,
     params: CurriculumParams
 ): LessonInput {
+    // Inject location into context so AI generates correct basicInfo.location
+    const locationContext = lesson.location ? `\n[Location: ${lesson.location}]` : '';
+    const paramsLocation = params.preferredLocation ? `\n[Preferred Location: ${params.preferredLocation}]` : '';
+
     return {
+        mode: 'school',
         theme: lesson.title,
-        topicIntroduction: lesson.description,
+        topicIntroduction: `${lesson.description}${locationContext}${paramsLocation}`,
         activityFocus: parseActivityFocus(lesson.steam_focus),
         weather: 'Sunny', // default — user can change
         season: 'Spring', // default — user can change
@@ -72,7 +78,7 @@ export function mapLessonToInput(
         studentCount: 12,
         duration: parseDuration(params.duration),
         cefrLevel: mapEnglishLevel(params.englishLevel),
-        handbookPages: 15,
+        handbookMode: 'auto', handbookPreset: 'standard', handbookPageConfig: getDefaultPageConfig(),
         uploadedFiles: [],
     };
 }

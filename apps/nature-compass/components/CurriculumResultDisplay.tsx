@@ -69,7 +69,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                         onClick={() => setActiveLanguage('en')}
                         disabled={!curriculumEN}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeLanguage === 'en'
-                            ? 'bg-white text-emerald-700 shadow-sm'
+                            ? 'bg-white dark:bg-slate-900/80 text-emerald-700 shadow-sm'
                             : curriculumEN
                                 ? 'text-slate-500 hover:text-slate-700'
                                 : 'text-slate-300 cursor-not-allowed'
@@ -81,7 +81,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                         onClick={() => setActiveLanguage('zh')}
                         disabled={!curriculumCN}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeLanguage === 'zh'
-                            ? 'bg-white text-emerald-700 shadow-sm'
+                            ? 'bg-white dark:bg-slate-900/80 text-emerald-700 shadow-sm'
                             : curriculumCN
                                 ? 'text-slate-500 hover:text-slate-700'
                                 : 'text-slate-300 cursor-not-allowed'
@@ -105,7 +105,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                 {batchProgress && (
                                     <span className="text-sm text-slate-500 font-medium">
                                         {batchProgress.done}/{batchProgress.total} {t('cp.batchProgress')}
-                                        {batchProgress.errors > 0 && <span className="text-red-400 ml-1">({batchProgress.errors} errors)</span>}
+                                        {batchProgress.errors > 0 && <span className="text-red-400 ml-1">({batchProgress.errors} {t('cp.errors')})</span>}
                                     </span>
                                 )}
                             </>
@@ -138,7 +138,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                     {/* New */}
                     <button
                         onClick={onNew}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
+                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
                     >
                         <ArrowLeft size={15} />
                         {t('cp.new')}
@@ -148,8 +148,8 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
 
             {/* Overview */}
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.theme}</h2>
-                <p className="text-slate-600 leading-relaxed">{curriculum.overview}</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200 mb-2">{curriculum.theme}</h2>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{curriculum.overview}</p>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><MapPin size={14} /> {savedParams?.city}</span>
                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams?.ageGroup}</span>
@@ -163,7 +163,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                 return (
                     <div
                         key={index}
-                        className="rounded-xl border border-slate-100 overflow-hidden"
+                        className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden"
                     >
                         {/* Header — always visible, click to toggle */}
                         <div
@@ -176,7 +176,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                         {String(index + 1).padStart(2, '0')}
                                     </span>
                                     <div className="min-w-0">
-                                        <h3 className="text-lg font-bold text-slate-900 truncate">{lesson.title}</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200 truncate">{lesson.title}</h3>
                                         {lesson.location && <p className="text-sm text-slate-500 truncate">{lesson.location}</p>}
                                     </div>
                                 </div>
@@ -191,8 +191,8 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
 
                         {/* Expanded content */}
                         {isExpanded && (
-                            <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
-                                <p className="text-slate-600 leading-relaxed">{lesson.description}</p>
+                            <div className="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-white/5 pt-4">
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{lesson.description}</p>
 
                                 {/* Detail Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -200,7 +200,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                         <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                             <Sparkles size={12} /> {t('cp.steamFocus')}
                                         </span>
-                                        <div className="font-medium text-slate-700 mt-1 space-y-1">
+                                        <div className="font-medium text-slate-700 dark:text-slate-400 mt-1 space-y-1">
                                             {lesson.steam_focus.split(/(?=[STEAM]:)/).filter(Boolean).map((seg, i) => (
                                                 <p key={i}>{seg.trim().replace(/\*\*/g, '')}</p>
                                             ))}
@@ -211,7 +211,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                             <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                                 <GraduationCap size={12} /> {t('cp.eslFocus')}
                                             </span>
-                                            <div className="font-medium text-slate-700 mt-1 space-y-1">
+                                            <div className="font-medium text-slate-700 dark:text-slate-400 mt-1 space-y-1">
                                                 {lesson.esl_focus.split(/(?<=\.)\s+/).filter(Boolean).map((seg, i) => (
                                                     <p key={i}>{seg.trim().replace(/\*\*/g, '')}</p>
                                                 ))}
@@ -222,17 +222,17 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                         <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                             <MapPin size={12} /> {t('cp.location')}
                                         </span>
-                                        <p className="font-medium text-slate-700 mt-1">{lesson.location}</p>
+                                        <p className="font-medium text-slate-700 dark:text-slate-400 mt-1">{lesson.location}</p>
                                     </div>
                                 </div>
 
                                 {/* Activities */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-white/5">
                                     <div className="flex items-start gap-2">
                                         <Trees size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
                                         <div>
                                             <span className="text-xs font-bold text-slate-400 uppercase">{t('cp.outdoor')}</span>
-                                            <div className="text-sm text-slate-600 mt-1 space-y-1.5">
+                                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 space-y-1.5">
                                                 {lesson.outdoor_activity.split(/(?=\d+\.\s)/).filter(Boolean).map((step, i) => (
                                                     <p key={i}>{step.trim().replace(/\*\*/g, '')}</p>
                                                 ))}
@@ -243,7 +243,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                         <CloudRain size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
                                         <div>
                                             <span className="text-xs font-bold text-slate-400 uppercase">{t('cp.indoor')}</span>
-                                            <div className="text-sm text-slate-600 mt-1 space-y-1.5">
+                                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 space-y-1.5">
                                                 {lesson.indoor_alternative.split(/(?=\d+\.\s)/).filter(Boolean).map((step, i) => (
                                                     <p key={i}>{step.trim().replace(/\*\*/g, '')}</p>
                                                 ))}
@@ -289,7 +289,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                 ) : (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onGenerateKit(lesson, savedParams!, activeLanguage); }}
-                                        className="w-full mt-2 py-3 bg-slate-50 text-slate-700 border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
+                                        className="w-full mt-2 py-3 bg-slate-50 text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <FileText size={18} />
                                         {t('cp.genKit')}

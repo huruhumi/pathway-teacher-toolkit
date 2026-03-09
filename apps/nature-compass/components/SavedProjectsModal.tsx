@@ -21,9 +21,9 @@ export const SavedProjectsModal: React.FC<SavedProjectsModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-2xl" className="rounded-2xl max-h-[80vh]">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">My Saved Projects</h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">My Saved Projects</h2>
           <p className="text-sm text-slate-500">Resume editing your previous lesson kits.</p>
         </div>
         <button
@@ -48,11 +48,11 @@ export const SavedProjectsModal: React.FC<SavedProjectsModalProps> = ({
           savedPlans.sort((a, b) => b.timestamp - a.timestamp).map((item) => (
             <div
               key={item.id}
-              className="group flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer"
+              className="group flex items-center justify-between p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer"
               onClick={() => onLoad(item)}
             >
               <div className="flex-1">
-                <h3 className="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                <h3 className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 transition-colors">
                   {item.name}
                 </h3>
                 <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
@@ -75,7 +75,7 @@ export const SavedProjectsModal: React.FC<SavedProjectsModalProps> = ({
                   <Trash2 size={18} />
                 </button>
                 <button
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 group-hover:bg-emerald-600 group-hover:text-white rounded-lg font-semibold text-sm transition-all"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 dark:text-slate-400 group-hover:bg-emerald-600 group-hover:text-white rounded-lg font-semibold text-sm transition-all"
                 >
                   Load
                   <ArrowRight size={16} />

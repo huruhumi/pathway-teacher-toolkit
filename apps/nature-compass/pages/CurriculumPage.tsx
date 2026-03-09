@@ -4,6 +4,7 @@ import { CurriculumResultDisplay } from '../components/CurriculumResultDisplay';
 import type { Curriculum, CurriculumParams, CurriculumLesson, SavedLessonPlan } from '../types';
 import { useSessionStore, useAppStore } from '../stores/appStore';
 import { useBatchGenerate } from '../hooks/useBatchGenerate';
+import { safeStorage } from '@shared/safeStorage';
 
 export interface CurriculumPageProps {
     onSaveCurriculum: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void;
@@ -16,7 +17,7 @@ export interface CurriculumPageProps {
 export const CurriculumPage: React.FC<CurriculumPageProps> = ({
     onSaveCurriculum, onGenerateLessonKit, onNavigate, savedPlans, savePlanDb
 }) => {
-    const { curriculumResult, setCurriculumResult, externalCurriculum } = useSessionStore();
+    const { curriculumResult, setCurriculumResult, externalCurriculum, setExternalCurriculum } = useSessionStore();
     const { setLessonPlan } = useSessionStore();
     const { setCurrentPlanId } = useAppStore();
     const {
@@ -45,12 +46,17 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
     };
 
     const handleBackToConfig = () => {
+        setExternalCurriculum(null);
         setCurriculumResult(null);
+        // Clear cached curriculum so CurriculumPlanner doesn't auto-restore on mount
+        safeStorage.remove('nature-compass-curriculum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleNewCurriculum = () => {
+        setExternalCurriculum(null);
         setCurriculumResult(null);
+        safeStorage.remove('nature-compass-curriculum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

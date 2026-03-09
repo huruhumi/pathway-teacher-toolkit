@@ -7,6 +7,7 @@ const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ 
 import { LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { mapLessonToInput } from './utils/curriculumMapper';
+import { migrateSavedPlan, migrateSavedCurriculum } from './utils/schemaMigration';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { imageStore } from '@shared/imageStore';
 import { HeroBanner } from '@shared/components/HeroBanner';
@@ -63,18 +64,20 @@ export const App: React.FC = () => {
   const { clearSessionState, setLessonPlan, setExternalCurriculum } = useSessionStore();
   const {
     currentPlanId, setCurrentPlanId, currentKitLanguage, setCurrentKitLanguage,
-    setInput
+    setInput, input
   } = useAppStore();
 
   const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
     cloudTable: 'lesson_plans',
-    mapToCloud: (p: SavedLessonPlan) => ({ id: p.id, name: p.name, plan_data: p.plan, cover_image: p.coverImage || null }),
-    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), plan: row.plan_data, coverImage: row.cover_image || undefined } as SavedLessonPlan),
+    mapToCloud: (p: SavedLessonPlan) => ({ id: p.id, name: p.name, plan_data: p.plan, cover_image: p.coverImage || null, mode: p.mode || 'school' }),
+    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), plan: row.plan_data, coverImage: row.cover_image || undefined, mode: row.mode || 'school' } as SavedLessonPlan),
+    migrate: migrateSavedPlan,
   });
   const { items: savedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50, {
     cloudTable: 'curricula',
     mapToCloud: (c: SavedCurriculum) => ({ id: c.id, name: c.name, curriculum_data: c.curriculum, params_data: c.params, language: c.language }),
     mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), curriculum: row.curriculum_data, params: row.params_data, language: row.language, description: row.description || '' } as SavedCurriculum),
+    migrate: migrateSavedCurriculum,
   });
 
   // Clear session on fresh landing
@@ -105,7 +108,14 @@ export const App: React.FC = () => {
   // =========== CRUD Handlers ===========
 
   const handleSavePlan = async (planToSave: LessonPlanResponse, coverImage?: string | null) => {
-    const planId = currentPlanId || crypto.randomUUID();
+    // Find existing plan by current ID or by matching title (overwrite same-title plans)
+    const existingById = currentPlanId ? savedPlans.find(p => p.id === currentPlanId) : null;
+    const existingByTitle = !existingById
+      ? savedPlans.find(p => p.plan.missionBriefing?.title === planToSave.missionBriefing?.title && p.plan.missionBriefing?.title)
+      : null;
+    const existing = existingById || existingByTitle;
+    const planId = existing?.id || crypto.randomUUID();
+
     let coverRef: string | undefined;
     if (coverImage) {
       const imgKey = `nc-${planId}-cover`;
@@ -113,13 +123,12 @@ export const App: React.FC = () => {
       coverRef = imgKey;
     }
 
-    const existing = savedPlans.find(p => p.id === planId);
-
     const newSavedPlan: SavedLessonPlan = {
       id: planId, timestamp: Date.now(),
       name: existing?.name || planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
       description: existing?.description || generateNCKitDescription(planToSave),
       plan: planToSave, language: currentKitLanguage,
+      mode: input.mode,
       ...((coverRef || existing?.coverImage) ? { coverImage: coverRef || existing?.coverImage } : {}),
     };
 

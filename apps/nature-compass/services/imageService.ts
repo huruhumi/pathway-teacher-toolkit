@@ -57,7 +57,7 @@ export const generateImage = async (prompt: string, aspectRatio: string = "4:3")
             }
             throw new Error("No image generated");
         });
-    } catch (e) {
+    } catch (e: unknown) {
         console.error("Image generation failed", e);
         return "";
     }

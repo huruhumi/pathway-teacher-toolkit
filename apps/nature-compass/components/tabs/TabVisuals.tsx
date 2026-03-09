@@ -15,6 +15,18 @@ const ART_STYLES = [
     "Isometric View"
 ];
 
+const ART_STYLE_KEYS: Record<string, string> = {
+    'Realistic Photo': 'style.realisticPhoto',
+    'Watercolor': 'style.watercolor',
+    'Cartoon Line Art': 'style.cartoonLineArt',
+    '3D Render': 'style.3dRender',
+    'Pixel Art': 'style.pixelArt',
+    'Paper Cutout': 'style.paperCutout',
+    'Claymation': 'style.claymation',
+    'Technical Diagram': 'style.technicalDiagram',
+    'Isometric View': 'style.isometricView',
+};
+
 interface TabVisualsProps {
     visualRefs: VisualReferenceItem[];
     generatedVisuals: Record<number, string>;
@@ -47,13 +59,13 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
     const { t } = useLanguage();
     return (
         <div className="space-y-5 animate-fade-in">
-            <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                 <ImageIcon size={18} className="text-emerald-600" />
                 {t('vis.title')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {visualRefs.map((item, idx) => (
-                    <div key={idx} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex gap-4 group hover:border-emerald-300 transition-all">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-4 flex gap-4 group hover:border-emerald-300 transition-all">
                         <div className="w-1/3 aspect-square bg-slate-100 rounded-lg flex-shrink-0 relative overflow-hidden">
                             {generatedVisuals[idx] ? (
                                 <img
@@ -71,17 +83,17 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
                                             <ImageIcon size={20} className="text-slate-300" />
                                             <div className="flex flex-col gap-1 w-full">
                                                 <select
-                                                    className="text-[10px] bg-white border border-slate-200 rounded px-1 py-0.5 outline-none focus:border-emerald-500"
+                                                    className="text-[10px] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded px-1 py-0.5 outline-none focus:border-emerald-500"
                                                     value={visualStyles[idx] || "Realistic Photo"}
                                                     onChange={(e) => setVisualStyles(prev => ({ ...prev, [idx]: e.target.value }))}
                                                 >
-                                                    {ART_STYLES.map(style => <option key={style} value={style}>{style}</option>)}
+                                                    {ART_STYLES.map(style => <option key={style} value={style}>{t(ART_STYLE_KEYS[style] as any) || style}</option>)}
                                                 </select>
                                                 <button
                                                     onClick={() => handleGenerateVisual(idx)}
                                                     className="text-[10px] font-bold px-2 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded transition-colors"
                                                 >
-                                                    Generate
+                                                    {t('vis.generate')}
                                                 </button>
                                             </div>
                                         </div>
@@ -97,7 +109,7 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
                                 <input
                                     value={item.label}
                                     onChange={(e) => handleVisualRefChange(idx, 'label', e.target.value)}
-                                    className="font-bold text-slate-800 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full"
+                                    className="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent focus:border-emerald-500 outline-none w-full"
                                 />
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => setVisualRefs(prev => (prev as VisualReferenceItem[]).filter((_, i) => i !== idx))} className="text-slate-400 hover:text-red-500 p-1">
@@ -115,7 +127,7 @@ export const TabVisuals: React.FC<TabVisualsProps> = ({
                             <textarea
                                 value={item.description}
                                 onChange={(e) => handleVisualRefChange(idx, 'description', e.target.value)}
-                                className="text-sm text-slate-600 w-full bg-transparent border-none outline-none resize-none h-20"
+                                className="text-sm text-slate-600 dark:text-slate-400 w-full bg-transparent border-none outline-none resize-none h-20"
                             />
                         </div>
                     </div>

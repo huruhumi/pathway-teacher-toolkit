@@ -29,15 +29,15 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
     return (
         <div className="space-y-5 animate-fade-in">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <FileText size={18} className="text-emerald-600" />
-                    Student Handbook Plan
+                    {t('hb.title')}
                 </h3>
                 <button
                     onClick={handleCopyAllPrompts}
                     className="text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
                 >
-                    <Clipboard size={14} /> Copy All Prompts
+                    <Clipboard size={14} /> {t('hb.copyAllPrompts')}
                 </button>
             </div>
 
@@ -45,7 +45,7 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-4 shadow-sm">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="text-sm font-bold text-indigo-800 flex items-center gap-2">
-                            <ImageIcon size={16} /> Global Style Prompt
+                            <ImageIcon size={16} /> {t('hb.globalStyle')}
                         </h4>
                         <button
                             onClick={() => {
@@ -55,19 +55,19 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                             }}
                             className={`text-xs font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${copiedStylePrompt
                                 ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-white text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
+                                : 'bg-white dark:bg-slate-900/80 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
                                 }`}
                         >
                             {copiedStylePrompt ? <Check size={14} /> : <Clipboard size={14} />}
-                            {copiedStylePrompt ? 'Copied!' : 'Copy Style'}
+                            {copiedStylePrompt ? t('hb.copiedStyle') : t('hb.copyStyle')}
                         </button>
                     </div>
-                    <p className="text-sm text-slate-600 font-mono italic leading-relaxed">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono italic leading-relaxed">
                         {plan.handbookStylePrompt}
                     </p>
                     <div className="mt-2 text-xs text-emerald-500 font-medium">
                         <Info size={12} className="inline ml-1 mb-0.5" />
-                        Paste this into NotebookLM as a global instruction to ensure all generated handbook pages share the same aesthetic.
+                        {t('hb.styleHint')}
                     </div>
                 </div>
             )}
@@ -75,11 +75,11 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
             <div className="space-y-4">
                 {handbookPages.map((page, idx) => (
                     <div key={idx} className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm group relative">
-                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100">
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100 dark:border-white/5">
                             <div>
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Page {page.pageNumber}</span>
-                                <h4 className="text-base font-bold text-slate-800 mt-1">{page.title}</h4>
-                                <span className="inline-block mt-2 px-2 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded">{page.section}</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('hb.page')} {page.pageNumber}</span>
+                                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mt-1">{page.title}</h4>
+                                <span className="inline-block mt-2 px-2 py-1 bg-slate-100 text-slate-600 dark:text-slate-400 text-xs font-semibold rounded">{page.section}</span>
                             </div>
                             <div className="max-w-xs text-right">
                                 <textarea
@@ -93,38 +93,38 @@ export const TabHandbook: React.FC<TabHandbookProps> = ({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 dark:border-white/5 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
-                                    <ImageIcon size={12} /> Visual Prompt
+                                    <ImageIcon size={12} /> {t('hb.visualPrompt')}
                                 </label>
                                 <textarea
                                     value={page.visualPrompt}
                                     onChange={(e) => handleHandbookPageChange(idx, 'visualPrompt', e.target.value)}
-                                    className="w-full text-sm text-slate-700 font-mono leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    className="w-full text-sm text-slate-700 dark:text-slate-400 font-mono leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
                                     rows={3}
                                     onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
                                 />
                                 <button
                                     onClick={() => copyToClipboard(page.visualPrompt, 'image', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
+                                    className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-900/80 text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
                                 >
                                     {copiedImagePrompt === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 dark:border-white/5 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
-                                    <FileText size={12} /> Content Prompt
+                                    <FileText size={12} /> {t('hb.contentPrompt')}
                                 </label>
                                 <RichTextEditor
                                     value={page.contentPrompt}
                                     onChange={(html) => handleHandbookPageChange(idx, 'contentPrompt', html)}
-                                    placeholder="Enter content prompt..."
-                                    className="text-sm text-slate-700 leading-relaxed bg-transparent p-0"
+                                    placeholder={t('hb.contentPromptPlaceholder')}
+                                    className="text-sm text-slate-700 dark:text-slate-400 leading-relaxed bg-transparent p-0"
                                     rows={3}
                                 />
                                 <button
                                     onClick={() => copyToClipboard(page.contentPrompt, 'content', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
+                                    className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-900/80 text-slate-400 hover:text-emerald-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all"
                                 >
                                     {copiedContentPrompt === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>

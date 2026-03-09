@@ -1,17 +1,53 @@
 import { UploadedFile } from '@shared/types';
 export type { UploadedFile };
 
+// --- Handbook Section Types ---
+
+export type HandbookSectionType =
+  | 'Cover'
+  | 'Table of Contents'
+  | 'Safety'
+  | 'Prop Checklist'
+  | 'Background Knowledge'
+  | 'Activity/Worksheet'
+  | 'Reading'
+  | 'Reflection'
+  | 'Certificate'
+  | 'Back Cover';
+
+export interface HandbookPageConfig {
+  section: HandbookSectionType;
+  count: number;
+  enabled: boolean;
+}
+
+export interface SectionMeta {
+  type: HandbookSectionType;
+  label: string;
+  labelEn: string;
+  icon: string;
+  min: number;
+  max: number;
+  default: number;
+  required?: boolean;
+}
+
 export interface LessonInput {
+  mode: 'school' | 'family';
+  familyEslEnabled?: boolean;
   theme: string;
-  topicIntroduction: string; // New field for context/narrative
+  topicIntroduction: string;
   activityFocus: string[];
   weather: 'Sunny' | 'Rainy';
   season: string;
   studentAge: string;
   studentCount: number;
-  duration: number; // in minutes
+  duration: number;
   cefrLevel: string;
-  handbookPages: number;
+  handbookMode: 'auto' | 'preset' | 'custom';
+  handbookPreset: 'light' | 'standard' | 'full' | 'deep';
+  handbookPageConfig: HandbookPageConfig[];
+  autoPageTarget?: number;
   uploadedFiles: UploadedFile[];
 }
 
@@ -24,13 +60,13 @@ export interface RoadmapItem {
   timeRange: string;
   phase: string;
   activity: string;
-  activityType: string; // e.g. "Science", "Art", "Game"
-  location: string; // New field: e.g. "Classroom Rug", "School Garden"
+  activityType: string;
+  location: string;
   description: string;
   learningObjective: string;
-  steps: string[]; // Detailed breakdown
-  backgroundInfo: string[]; // Background knowledge
-  teachingTips: string[]; // Specific teaching methodology tips
+  steps: string[];
+  backgroundInfo: string[];
+  teachingTips: string[];
 }
 
 export interface SupplyList {
@@ -41,13 +77,13 @@ export interface SupplyList {
 export interface VisualReferenceItem {
   label: string;
   description: string;
-  type: string; // e.g. "Diagram", "Photo", "Illustration"
+  type: string;
 }
 
 export interface HandbookPage {
   pageNumber: number;
   title: string;
-  section: 'Introduction' | 'Table of Contents' | 'Safety' | 'Prop Checklist' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Reflection' | 'Certificate' | 'Back Cover';
+  section: 'Introduction' | 'Cover' | 'Table of Contents' | 'Safety' | 'Prop Checklist' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Reflection' | 'Certificate' | 'Back Cover';
   layoutDescription: string;
   visualPrompt: string;
   contentPrompt: string;
@@ -62,6 +98,7 @@ export interface LessonPlanResponse {
     theme: string;
     activityType: string;
     targetAudience: string;
+    location: string;
     learningGoals: string[];
   };
   vocabulary: {
@@ -70,13 +107,14 @@ export interface LessonPlanResponse {
   };
   roadmap: RoadmapItem[];
   supplies: SupplyList;
-  safetyProtocol: string[]; // Changed to array for better formatting
+  safetyProtocol: string[];
   visualReferences: VisualReferenceItem[];
-  handbookStylePrompt: string; // Global style guide for handbook generation
-  handbook: HandbookPage[]; // New structured handbook
-  notebookLMPrompt: string; // Kept for backward compatibility/summary
+  handbookStylePrompt: string;
+  handbookStructurePlan?: string;
+  handbook: HandbookPage[];
+  notebookLMPrompt: string;
   imagePrompts: string[];
-  translatedPlan?: any; // Bundled Chinese translation of the plan
+  translatedPlan?: any;
 }
 
 export interface SavedLessonPlan {
@@ -87,6 +125,7 @@ export interface SavedLessonPlan {
   plan: LessonPlanResponse;
   coverImage?: string; // Optional badge image for projects
   language?: 'en' | 'zh';
+  mode?: 'school' | 'family';
 }
 
 // --- Curriculum Planning Types (from STEAM Designer) ---

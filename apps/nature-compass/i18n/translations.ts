@@ -66,6 +66,7 @@ export const translations = {
     'input.generatingKit': { en: 'Generating Whole Kit...', zh: '正在生成完整资料包...' },
 
     // Dropdown display text (value stays English for AI)
+    'age.3-5 Years (Preschool)': { en: '3-5 Years (Preschool)', zh: '3-5岁（学龄前）' },
     'age.6-9 Years (Primary Lower)': { en: '6-9 Years (Primary Lower)', zh: '6-9岁（小学低段）' },
     'age.10-12 Years (Primary Upper)': { en: '10-12 Years (Primary Upper)', zh: '10-12岁（小学高段）' },
     'age.13-15 Years (Middle School)': { en: '13-15 Years (Middle School)', zh: '13-15岁（初中）' },
@@ -250,6 +251,15 @@ export const translations = {
     'input.handbookLabel': { en: 'Handbook Pages', zh: '手册页数' },
     'input.cefrPlaceholder': { en: 'A2 (Elementary)', zh: 'A2 (初级)' },
 
+    // Mode Toggle
+    'input.modeLabel': { en: 'Mode', zh: '模式' },
+    'input.modeSchool': { en: 'School / Institution', zh: '学校 / 机构' },
+    'input.modeFamily': { en: 'Parent-Child', zh: '亲子模式' },
+    'input.familyEslToggle': { en: 'English Immersion', zh: '英语浸入' },
+    'input.familyEslOn': { en: 'English Exploration', zh: '亲子英语探索' },
+    'input.familyEslOff': { en: 'STEAM Exploration', zh: '亲子研学' },
+    'input.parentChildCount': { en: 'Family Size (1 parent + kids)', zh: '家庭人数（1家长+孩子）' },
+
     // Seasons
     'season.Spring': { en: 'Spring', zh: '春季' },
     'season.Summer': { en: 'Summer', zh: '夏季' },
@@ -269,6 +279,53 @@ export const translations = {
     'focus.Social Science': { en: 'Social Science', zh: '社会科学' },
     'focus.Economy & Trade': { en: 'Economy & Trade', zh: '经济与贸易' },
     'focus.History & Culture': { en: 'History & Culture', zh: '历史与文化' },
+
+    // Extra SavedProjectsPage
+    'saved.openCurriculum': { en: 'Open Curriculum →', zh: '打开课程 →' },
+    'saved.openKit': { en: 'Open Kit →', zh: '打开课件 →' },
+    'saved.allModes': { en: 'All Modes', zh: '所有模式' },
+    'saved.modeSchool': { en: 'School', zh: '学校' },
+    'saved.modeFamily': { en: 'Family', zh: '亲子' },
+    'saved.english': { en: '🇬🇧 English', zh: '🇬🇧 English' },
+    'saved.chinese': { en: '🇨🇳 中文', zh: '🇨🇳 中文' },
+
+    // Extra LessonPlanDisplay
+    'lp.printView': { en: 'Print View', zh: '打印预览' },
+    'lp.exportTitle': { en: 'Copy all prompts to clipboard for NotebookLM', zh: '复制所有 Prompt 到剪贴板' },
+    'lp.copied': { en: 'Copied!', zh: '已复制' },
+    'lp.export': { en: 'Export', zh: '导出' },
+
+    // CurriculumResultDisplay
+    'cp.errors': { en: 'errors', zh: '个错误' },
+
+    // TabFlashcards extras
+    'fc.title': { en: 'Vocabulary Flashcards', zh: '词汇闪卡' },
+    'fc.genAllImages': { en: 'Generate All Images', zh: '生成全部图片' },
+    'fc.pdf': { en: 'PDF', zh: 'PDF' },
+    'fc.generating': { en: 'Generating...', zh: '生成中...' },
+    'fc.downloadImage': { en: 'Download Image', zh: '下载图片' },
+
+
+    // TabHandbook extras
+    'hb.title': { en: 'Student Handbook Plan', zh: '学生手册计划' },
+    'hb.copyAllPrompts': { en: 'Copy All Prompts', zh: '复制全部提示词' },
+    'hb.globalStyle': { en: 'Global Style Prompt', zh: '全局样式提示词' },
+    'hb.copyStyle': { en: 'Copy Style', zh: '复制样式' },
+    'hb.copiedStyle': { en: 'Copied!', zh: '已复制！' },
+    'hb.styleHint': { en: 'Paste this into NotebookLM as a global instruction to ensure all generated handbook pages share the same aesthetic.', zh: '将此粘贴到 NotebookLM 作为全局指令，确保所有生成的手册页面保持统一风格。' },
+    'hb.contentPromptPlaceholder': { en: 'Enter content prompt...', zh: '输入内容提示词...' },
+
+    // Art styles
+    'style.vectorIllustration': { en: 'Vector Illustration', zh: '矢量插画' },
+    'style.realisticPhoto': { en: 'Realistic Photo', zh: '写实照片' },
+    'style.watercolor': { en: 'Watercolor', zh: '水彩画' },
+    'style.cartoonLineArt': { en: 'Cartoon Line Art', zh: '卡通线稿' },
+    'style.3dRender': { en: '3D Render', zh: '3D 渲染' },
+    'style.pixelArt': { en: 'Pixel Art', zh: '像素风格' },
+    'style.paperCutout': { en: 'Paper Cutout', zh: '剪纸风格' },
+    'style.claymation': { en: 'Claymation', zh: '黏土动画' },
+    'style.technicalDiagram': { en: 'Technical Diagram', zh: '技术图表' },
+    'style.isometricView': { en: 'Isometric View', zh: '等距视图' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
