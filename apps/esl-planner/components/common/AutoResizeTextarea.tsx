@@ -1,21 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 
-export interface AutoResizeTextareaProps {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    className?: string;
-    placeholder?: string;
+export interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     minRows?: number;
     maxHeight?: string;
 }
 
 export const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
-    value,
-    onChange,
-    className,
-    placeholder,
     minRows = 1,
-    maxHeight
+    maxHeight,
+    className,
+    ...props
 }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -32,16 +26,14 @@ export const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
                 textareaRef.current.style.overflowY = 'hidden';
             }
         }
-    }, [value, maxHeight]);
+    }, [props.value, maxHeight]);
 
     return (
         <textarea
             ref={textareaRef}
-            value={value}
-            onChange={onChange}
-            className={`${className} resize-none box-border block`}
             rows={minRows}
-            placeholder={placeholder}
+            className={`resize-none overflow-hidden ${className || ''}`}
+            {...props}
         />
     );
 };

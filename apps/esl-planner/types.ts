@@ -118,6 +118,8 @@ export interface PhonicsContent {
   keyPoints: string[];
   decodableTexts: string[];
   decodableTextPrompts: string[];
+  /** @deprecated Old format – present in stored lessons created before v2 */
+  decodableText?: string;
 }
 
 export interface GeneratedContent {

@@ -12,7 +12,7 @@ export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, e
         contents: `Generate a new target vocabulary flashcard for Level: ${level}, Topic: ${topic}. Avoid: ${existingWords.join(", ")}. Return JSON.`,
         config: {
             responseMimeType: "application/json",
-            responseSchema: (RESPONSE_SCHEMA.properties.flashcards as any).items
+            responseSchema: RESPONSE_SCHEMA.properties!.flashcards!.items
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -59,7 +59,7 @@ export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: 
                     solution: { type: Type.STRING }
                 },
                 required: ["problem", "solution"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -79,7 +79,7 @@ export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, e
                     definition: { type: Type.STRING }
                 },
                 required: ["word", "definition"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -92,7 +92,7 @@ export const generateSingleStage = async (level: CEFRLevel, topic: string, exist
         contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. IMPORTANT: The "interaction" field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. Return JSON.`,
         config: {
             responseMimeType: "application/json",
-            responseSchema: (RESPONSE_SCHEMA.properties.structuredLessonPlan.properties.stages as any).items
+            responseSchema: RESPONSE_SCHEMA.properties!.structuredLessonPlan!.properties!.stages!.items
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -136,7 +136,7 @@ Also provide a simple visual prompt describing the scene for an AI image generat
                     visualPrompt: { type: Type.STRING }
                 },
                 required: ["text", "visualPrompt"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");

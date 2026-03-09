@@ -76,7 +76,7 @@ CRITICAL INSTRUCTIONS:
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: CURRICULUM_SCHEMA as any,
+            responseSchema: CURRICULUM_SCHEMA,
         }
     }), 5, 3000, signal);
 

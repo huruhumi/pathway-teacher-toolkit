@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, BookOpen, GraduationCap, Download, Layers, FileText, ChevronRight, FolderOpen, Library, Hash } from 'lucide-react';
+import { Sparkles, BookOpen, GraduationCap, Download, Layers, FileText, ChevronRight, FolderOpen, Library, Hash, CheckSquare, Square, FolderPlus, X } from 'lucide-react';
 import { RecordCard } from '@shared/components/RecordCard';
 import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
 import { FilterBar } from '../components/FilterBar';
 import { EmptyState } from '@shared/components/EmptyState';
 import { handleDownloadZip } from '../utils/exportUtils';
 import { useLanguage } from '../i18n/LanguageContext';
-import JSZip from 'jszip';
+
 import type { SavedLesson, SavedCurriculum, CurriculumLesson } from '../types';
 
 import { useLessonHistory } from '../hooks/useLessonHistory';
@@ -35,6 +35,38 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     const [isExportingCur, setIsExportingCur] = useState<string | null>(null);
     const [selectedTextbook, setSelectedTextbook] = useState<string | null>(null);
     const [selectedUnit, setSelectedUnit] = useState<number | null>(null);
+
+    // --- Kit Selection for batch assign ---
+    const [selectedKitIds, setSelectedKitIds] = useState<Set<string>>(new Set());
+    const [showAssignPicker, setShowAssignPicker] = useState(false);
+    const [assignTextbook, setAssignTextbook] = useState<string>('');
+    const [assignUnit, setAssignUnit] = useState<number | null>(null);
+
+    const toggleKitSelection = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedKitIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBatchAssign = () => {
+        if (!assignTextbook || assignUnit === null || selectedKitIds.size === 0) return;
+        const tb = textbookTree.find(t => t.name === assignTextbook);
+        if (!tb) return;
+        const curriculumId = [...tb.curriculumIds][0];
+        selectedKitIds.forEach(kitId => {
+            const lesson = savedLessons.find(l => l.id === kitId);
+            if (lesson) {
+                history.saveLessonDb({ ...lesson, curriculumId, unitNumber: assignUnit, lastModified: Date.now() });
+            }
+        });
+        setSelectedKitIds(new Set());
+        setShowAssignPicker(false);
+        setAssignTextbook('');
+        setAssignUnit(null);
+    };
 
     // --- Textbook Tree (for Lesson Kits index) ---
     const textbookTree = useMemo(() => {
@@ -120,9 +152,9 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                         dateRange={curDate} onDateRangeChange={setCurDate}
                         sort={curSort} onSortChange={setCurSort}
                         extraFilters={
-                            <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl">
                                 <Hash className="w-3.5 h-3.5 text-slate-400" />
-                                <select value={curLessonRange} onChange={(e) => setCurLessonRange(e.target.value)} className="bg-transparent text-sm text-slate-700 outline-none font-medium cursor-pointer">
+                                <select value={curLessonRange} onChange={(e) => setCurLessonRange(e.target.value)} className="bg-transparent text-sm text-slate-700 dark:text-slate-200 dark:bg-transparent outline-none font-medium cursor-pointer">
                                     <option value="all">All Counts</option>
                                     <option value="1-10">1-10</option>
                                     <option value="11-20">11-20</option>
@@ -142,7 +174,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             titleClassName="text-lg font-medium text-slate-900 dark:text-slate-100"
                             description={t('rec.noCurriculaHint')}
                             descriptionClassName="text-slate-500"
-                            className="bg-white/50 dark:bg-slate-900/50"
+                            className="bg-white dark:bg-slate-900/50"
                             actionLabel={t('rec.goDesign')}
                             onAction={onGoToCurriculum}
                             actionClassName="bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20"
@@ -169,6 +201,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                                 e.stopPropagation();
                                                 setIsExportingCur(sc.id);
                                                 try {
+                                                    const { default: JSZip } = await import('jszip');
                                                     const zip = new JSZip();
                                                     let md = `# ${sc.textbookTitle}\n\n**Level:** ${sc.targetLevel}\n**Total Lessons:** ${sc.totalLessons}\n\n## Overview\n\n${sc.curriculum.overview || ''}\n\n`;
                                                     sc.curriculum.lessons.forEach((l, i) => {
@@ -177,12 +210,8 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                                     zip.file('Curriculum_Overview.md', md);
                                                     zip.file('curriculum_data.json', JSON.stringify({ curriculum: sc.curriculum, params: sc.params }, null, 2));
                                                     const blob = await zip.generateAsync({ type: 'blob' });
-                                                    const url = URL.createObjectURL(blob);
-                                                    const a = document.createElement('a');
-                                                    a.href = url;
-                                                    a.download = `ESL_Curriculum_${sc.textbookTitle.replace(/[^a-z0-9]/gi, '_')}.zip`;
-                                                    a.click();
-                                                    URL.revokeObjectURL(url);
+                                                    const { downloadBlob } = await import('@shared/utils/download');
+                                                    downloadBlob(blob, `ESL_Curriculum_${sc.textbookTitle.replace(/[^a-z0-9]/gi, '_')}.zip`);
                                                 } catch (err) { console.error('Export failed', err); }
                                                 finally { setIsExportingCur(null); }
                                             }}
@@ -318,7 +347,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             titleClassName="text-lg font-medium text-slate-900 dark:text-slate-100"
                             description={selectedTextbook ? (lang === 'zh' ? '尝试选择其他单元或返回查看全部' : 'Try another unit or go back to view all') : t('rec.noKitsHint')}
                             descriptionClassName="text-slate-500"
-                            className="bg-white/50 dark:bg-slate-900/50"
+                            className="bg-white dark:bg-slate-900/50"
                             actionLabel={selectedTextbook ? (lang === 'zh' ? '返回全部' : 'View All') : t('rec.goCreate')}
                             onAction={selectedTextbook ? () => { setSelectedTextbook(null); setSelectedUnit(null); } : onGoToCreate}
                             actionClassName="bg-violet-600 hover:bg-violet-700 text-white shadow-violet-600/20"
@@ -336,42 +365,112 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             )}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {displayedKits.map((lesson) => (
-                                    <RecordCard
-                                        key={lesson.id}
-                                        title={lesson.topic}
-                                        description={lesson.description || ''}
-                                        timestamp={lesson.timestamp}
-                                        tags={[
-                                            { icon: <GraduationCap size={16} />, label: lesson.level },
-                                            ...(lesson.content?.structuredLessonPlan?.lessonDetails?.type
-                                                ? [{ icon: <Sparkles size={16} />, label: lesson.content.structuredLessonPlan.lessonDetails.type }]
-                                                : [{ icon: <Sparkles size={16} />, label: 'Lesson Kit' }]),
-                                            ...(lesson.content?.structuredLessonPlan?.stages?.length
-                                                ? [{ icon: <Layers size={16} />, label: `${lesson.content.structuredLessonPlan.stages.length} stages` }]
-                                                : []),
-                                        ]}
-                                        active={activeLessonId === lesson.id}
-                                        onOpen={() => handleLoadRecord(lesson)}
-                                        openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
+                                    <div key={lesson.id} className="relative">
+                                        {/* Selection checkbox */}
+                                        <button
+                                            onClick={(e) => toggleKitSelection(lesson.id, e)}
+                                            className={`absolute top-3 left-3 z-10 p-0.5 rounded-md transition-all ${selectedKitIds.has(lesson.id) ? 'text-violet-600' : 'text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100'}`}
+                                            style={{ opacity: selectedKitIds.has(lesson.id) || selectedKitIds.size > 0 ? 1 : undefined }}
+                                            title={lang === 'zh' ? '选择' : 'Select'}
+                                        >
+                                            {selectedKitIds.has(lesson.id) ? <CheckSquare size={20} /> : <Square size={20} />}
+                                        </button>
+                                        <RecordCard
+                                            title={lesson.topic}
+                                            description={lesson.description || ''}
+                                            timestamp={lesson.timestamp}
+                                            tags={[
+                                                { icon: <GraduationCap size={16} />, label: lesson.level },
+                                                ...(lesson.content?.structuredLessonPlan?.lessonDetails?.type
+                                                    ? [{ icon: <Sparkles size={16} />, label: lesson.content.structuredLessonPlan.lessonDetails.type }]
+                                                    : [{ icon: <Sparkles size={16} />, label: 'Lesson Kit' }]),
+                                                ...(lesson.content?.structuredLessonPlan?.stages?.length
+                                                    ? [{ icon: <Layers size={16} />, label: `${lesson.content.structuredLessonPlan.stages.length} stages` }]
+                                                    : []),
+                                            ]}
+                                            active={activeLessonId === lesson.id}
+                                            onOpen={() => handleLoadRecord(lesson)}
+                                            openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
 
-                                        onRename={(newName) => history.handleRenameLesson(lesson.id, newName)}
-                                        onDelete={() => history.handleDeleteRecord(lesson.id)}
-                                        customActions={(
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDownloadZip(lesson, setIsExporting);
-                                                }}
-                                                disabled={isExporting === lesson.id}
-                                                className={`p-2 rounded-lg transition-colors ${isExporting === lesson.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
-                                                title="Download/Export"
-                                            >
-                                                <Download size={16} className={isExporting === lesson.id ? "animate-pulse" : ""} />
-                                            </button>
-                                        )}
-                                    />
+                                            onRename={(newName) => history.handleRenameLesson(lesson.id, newName)}
+                                            onDelete={() => history.handleDeleteRecord(lesson.id)}
+                                            customActions={(
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDownloadZip(lesson, setIsExporting);
+                                                    }}
+                                                    disabled={isExporting === lesson.id}
+                                                    className={`p-2 rounded-lg transition-colors ${isExporting === lesson.id ? 'text-slate-300' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
+                                                    title="Download/Export"
+                                                >
+                                                    <Download size={16} className={isExporting === lesson.id ? "animate-pulse" : ""} />
+                                                </button>
+                                            )}
+                                        />
+                                    </div>
                                 ))}
                             </div>
+
+                            {/* Floating batch action bar */}
+                            {selectedKitIds.size > 0 && (
+                                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-4 animate-fade-in-up">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                        {selectedKitIds.size} {lang === 'zh' ? '个已选' : 'selected'}
+                                    </span>
+                                    {!showAssignPicker ? (
+                                        <>
+                                            <button
+                                                onClick={() => setShowAssignPicker(true)}
+                                                disabled={textbookTree.length === 0}
+                                                className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50"
+                                            >
+                                                <FolderPlus size={16} />
+                                                {lang === 'zh' ? '添加到课本单元' : 'Assign to Unit'}
+                                            </button>
+                                            <button onClick={() => setSelectedKitIds(new Set())} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg" title="Clear">
+                                                <X size={16} />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                value={assignTextbook}
+                                                onChange={(e) => { setAssignTextbook(e.target.value); setAssignUnit(null); }}
+                                                className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 dark:text-slate-200"
+                                            >
+                                                <option value="">{lang === 'zh' ? '选择课本' : 'Select Textbook'}</option>
+                                                {textbookTree.map(tb => <option key={tb.name} value={tb.name}>{tb.name}</option>)}
+                                            </select>
+                                            {assignTextbook && (() => {
+                                                const tb = textbookTree.find(t => t.name === assignTextbook);
+                                                if (!tb) return null;
+                                                const units = [...tb.units.keys()].sort((a, b) => a - b);
+                                                return (
+                                                    <select
+                                                        value={assignUnit ?? ''}
+                                                        onChange={(e) => setAssignUnit(Number(e.target.value))}
+                                                        className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 dark:text-slate-200"
+                                                    >
+                                                        <option value="">{lang === 'zh' ? '选择单元' : 'Select Unit'}</option>
+                                                        {units.map(u => <option key={u} value={u}>Unit {u}</option>)}
+                                                    </select>
+                                                );
+                                            })()}
+                                            <button
+                                                onClick={handleBatchAssign}
+                                                disabled={!assignTextbook || assignUnit === null}
+                                                className="px-4 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                {lang === 'zh' ? '确认' : 'Confirm'}
+                                            </button>
+                                            <button onClick={() => { setShowAssignPicker(false); setAssignTextbook(''); setAssignUnit(null); }} className="p-1.5 text-slate-400 hover:text-slate-600">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </>
                     ) : null}
                 </div>

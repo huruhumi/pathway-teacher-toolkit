@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { GeneratedContent, SavedLesson, SavedCurriculum, ESLCurriculum, CurriculumParams } from '../types';
-import { safeStorage } from '@shared/safeStorage';
+
 import { imageStore } from '@shared/imageStore';
 import { isToday, isThisWeek, isThisMonth } from '../utils/dateHelpers';
 import { useAppStore } from '../stores/appStore';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
+import { migrateSavedLesson, migrateSavedCurriculum } from '../utils/schemaMigration';
 
 /** Check if a string looks like a base64 data URI (not an IndexedDB key reference) */
 const isBase64 = (s?: string) => s?.startsWith('data:');
@@ -166,28 +167,28 @@ export function useLessonHistory() {
         cloudTable: 'esl_lessons',
         mapToCloud: (l: SavedLesson) => ({ id: l.id, name: l.topic, level: l.level, description: l.description, content_data: l.content }),
         mapFromCloud: (row: any) => ({ id: row.id, timestamp: new Date(row.updated_at || row.created_at).getTime(), topic: row.name || 'Untitled', level: row.level, description: row.description || '', content: row.content_data } as SavedLesson),
+        migrate: migrateSavedLesson,
     });
     const { items: savedCurricula, setItems: setSavedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb } = useProjectCRUD<SavedCurriculum>('esl_planner_curricula', 50, {
         cloudTable: 'esl_curricula',
         mapToCloud: (c: SavedCurriculum) => ({ id: c.id, name: c.textbookTitle, level: c.targetLevel, total_lessons: c.totalLessons, description: c.description, curriculum_data: c.curriculum, params_data: c.params }),
         mapFromCloud: (row: any) => ({ id: row.id, timestamp: new Date(row.updated_at || row.created_at).getTime(), textbookTitle: row.name, targetLevel: row.level, totalLessons: row.total_lessons, description: row.description || '', curriculum: row.curriculum_data, params: row.params_data } as SavedCurriculum),
+        migrate: migrateSavedCurriculum,
     });
 
     // Title editing state (still local because transient UI state)
     const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
 
-    // Load saved data on mount + hydrate images from IndexedDB
+    // Hydrate images from IndexedDB whenever savedLessons changes
     useEffect(() => {
-        const raw: SavedLesson[] = safeStorage.get('esl_smart_planner_history', []);
-        // Hydrate images async
-        raw.forEach(lesson => {
+        savedLessons.forEach(lesson => {
             hydrateImages(lesson).then(hydrated => {
                 setSavedLessons(prev => prev.map(l => l.id === hydrated.id ? hydrated : l));
             });
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [savedLessons.length]);
 
     // --- Filtered Curricula ---
     const filteredCurricula = useMemo(() => {

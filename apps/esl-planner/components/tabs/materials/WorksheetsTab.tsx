@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import {
   ExternalLink,
   Sparkles,
@@ -16,42 +16,29 @@ import {
   Settings2,
   ChevronUp,
   ChevronDown,
+  RotateCcw,
   RefreshCw,
-  FileCheck as AnswerKeyIcon,
   BookOpen,
-  Layers,
   X,
-  Image as LucideImage,
-  Check,
-  Info,
-  PencilLine,
+  Layers,
   AlertCircle,
+  FileCheck as AnswerKeyIcon,
+  Wand2,
+  Check,
 } from "lucide-react";
-import {
-  Worksheet,
-  WorksheetSection,
-  WorksheetItem,
-  StructuredLessonPlan,
-  CEFRLevel,
-} from "../../../types";
+import { Worksheet, StructuredLessonPlan, CEFRLevel } from "../../../types";
+import { useLanguage } from "../../../i18n/LanguageContext";
+import { AssignModal } from "../../AssignModal";
 import { AutoResizeTextarea } from "../../common/AutoResizeTextarea";
-import { useLanguage } from '../../../i18n/LanguageContext';
-import { AssignModal } from '../../AssignModal';
-import * as edu from '@shared/services/educationService';
-import { useAuthStore } from '@shared/stores/useAuthStore';
-import {
-  generateWorksheet,
-  generateLessonImage,
-  generateReadingPassage,
-} from "../../../services/geminiService";
 import {
   MatchingLayout,
   MultipleChoiceLayout,
   ErrorCorrectionLayout,
   EssayLayout,
   StandardLayout,
-  WorksheetLayoutActions,
 } from "./layouts";
+import { useWorksheetHandlers } from "./useWorksheetHandlers";
+import { WORKSHEET_SKILLS, QUESTION_TYPES, ARTICLE_TYPES } from "./worksheetConstants";
 
 export interface WorksheetsTabProps {
   worksheets: Worksheet[];
@@ -61,419 +48,39 @@ export interface WorksheetsTabProps {
 
 const INDIGO_COLOR = "#4f46e5";
 
-
-export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
+export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
   worksheets,
   setWorksheets,
   editablePlan,
 }) => {
   const { t } = useLanguage();
-  const [regeneratingSectionId, setRegeneratingSectionId] = useState<
-    string | null
-  >(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // Assigning state
-  const [isAssignOpen, setIsAssignOpen] = useState(false);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [assignError, setAssignError] = useState('');
-  const [assignSuccess, setAssignSuccess] = useState('');
-
-  const teacherId = useAuthStore(s => s.user?.id);
-  const [isGeneratingPassageId, setIsGeneratingPassageId] = useState<
-    string | null
-  >(null);
-
-  // Worksheet Image Generation State
-  const [generatingWsImageKey, setGeneratingWsImageKey] = useState<
-    string | null
-  >(null);
-
-  // New Section Generator State
-  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
-  const [quickGenConfig, setQuickGenConfig] = useState({
-    skill: "Vocabulary",
-    type: "Random",
-    level: editablePlan?.classInformation.level || CEFRLevel.A1,
-    articleType: "",
-    description: "",
-    count: 5,
-  });
-
-  const skills = [
-    "Random",
-    "Vocabulary",
-    "Grammar",
-    "Phonics",
-    "Reading",
-    "Listening",
-    "Speaking",
-    "Writing",
-    "Pronunciation",
-    "Critical Thinking",
-    "Idioms & Slang",
-    "Presentation Skills",
-    "Culture & Etiquette",
-    "Problem Solving",
-    "Social English",
-  ];
-
-  const questionTypes = [
-    "Random",
-    "Multiple Choice",
-    "Fill in the blanks",
-    "Cloze Test",
-    "Error Correction",
-    "Matching",
-    "Open Question",
-    "True/False",
-    "Sentence Unscramble",
-    "Error Correction",
-    "Picture Description",
-    "Translation",
-    "Essay",
-    "Categorization",
-    "Synonyms/Antonyms",
-  ];
-
-  const articleTypes = [
-    "",
-    "Random",
-    "Short Story",
-    "News Article",
-    "Dialogue/Conversation",
-    "Informational Text",
-    "Email/Letter",
-    "Opinion Piece",
-    "Scientific Report",
-    "Instructions/Manual",
-    "Advertisement",
-  ];
-
-  const handleWorksheetItemChange = (
-    wsIdx: number,
-    sIdx: number,
-    itemIdx: number,
-    field: keyof WorksheetItem,
-    value: any,
-  ) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (!ws.sections) return;
-    const section = { ...ws.sections[sIdx] };
-    const items = [...section.items];
-    items[itemIdx] = { ...items[itemIdx], [field]: value };
-    section.items = items;
-    ws.sections[sIdx] = section;
-    newWorksheets[wsIdx] = ws;
-    setWorksheets(newWorksheets);
-  };
-
-  const addWorksheetItem = (wsIdx: number, sIdx: number) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (!ws.sections) return;
-    const section = { ...ws.sections[sIdx] };
-    const newItem: WorksheetItem = {
-      question: "New Question",
-      answer: "",
-      visualPrompt: "",
-    };
-    if (section.layout === "multiple-choice") {
-      newItem.options = ["Option A", "Option B", "Option C", "Option D"];
-    }
-    if (section.layout === "essay") {
-      newItem.wordCount = 50;
-    }
-    section.items = [...section.items, newItem];
-    ws.sections[sIdx] = section;
-    newWorksheets[wsIdx] = ws;
-    setWorksheets(newWorksheets);
-  };
-
-  const removeWorksheetItem = (
-    wsIdx: number,
-    sIdx: number,
-    itemIdx: number,
-  ) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (!ws.sections) return;
-    const section = { ...ws.sections[sIdx] };
-    section.items = section.items.filter((_, i) => i !== itemIdx);
-    ws.sections[sIdx] = section;
-    newWorksheets[wsIdx] = ws;
-    setWorksheets(newWorksheets);
-  };
-
-  const moveWorksheetItem = (
-    wsIdx: number,
-    sIdx: number,
-    itemIdx: number,
-    direction: "up" | "down",
-  ) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (!ws.sections) return;
-    const section = { ...ws.sections[sIdx] };
-    const items = [...section.items];
-    const targetIdx = direction === "up" ? itemIdx - 1 : itemIdx + 1;
-    if (targetIdx < 0 || targetIdx >= items.length) return;
-    [items[itemIdx], items[targetIdx]] = [items[targetIdx], items[itemIdx]];
-    section.items = items;
-    ws.sections[sIdx] = section;
-    newWorksheets[wsIdx] = ws;
-    setWorksheets(newWorksheets);
-  };
-
-  const addWorksheetSection = (wsIdx: number) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    const newSection: WorksheetSection = {
-      title: "New Section",
-      description: "Section instructions...",
-      layout: "standard",
-      items: [{ question: "Question 1", answer: "", visualPrompt: "" }],
-    };
-    ws.sections = [...(ws.sections || []), newSection];
-    newWorksheets[wsIdx] = ws;
-    setWorksheets(newWorksheets);
-  };
-
-  const removeWorksheetSection = (wsIdx: number, sIdx: number) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (ws.sections) {
-      ws.sections = ws.sections.filter((_, i) => i !== sIdx);
-      newWorksheets[wsIdx] = ws;
-      setWorksheets(newWorksheets);
-    }
-  };
-
-  const handleWorksheetSectionLayoutChange = (
-    wsIdx: number,
-    sIdx: number,
-    layout: any,
-  ) => {
-    const newWorksheets = [...worksheets];
-    const ws = { ...newWorksheets[wsIdx] };
-    if (ws.sections) {
-      const section = ws.sections[sIdx];
-      section.layout = layout;
-      // If switching to multiple choice and options don't exist, init them
-      if (layout === "multiple-choice") {
-        section.items = section.items.map((item) => ({
-          ...item,
-          options: item.options || [
-            "Choice 1",
-            "Choice 2",
-            "Choice 3",
-            "Choice 4",
-          ],
-        }));
-      }
-      if (layout === "essay") {
-        section.items = section.items.map((item) => ({
-          ...item,
-          wordCount: item.wordCount || 50,
-        }));
-      }
-      newWorksheets[wsIdx] = ws;
-      setWorksheets(newWorksheets);
-    }
-  };
-
-  const handleRegenerateWorksheetSection = async (
-    wsIdx: number,
-    sIdx: number,
-  ) => {
-    if (!editablePlan || regeneratingSectionId) return;
-    const ws = worksheets[wsIdx];
-    if (!ws.sections) return;
-    const section = ws.sections[sIdx];
-
-    setRegeneratingSectionId(`${wsIdx}-${sIdx}`);
-    try {
-      let skill = "Mixed";
-      if (section.title.toLowerCase().includes("vocabulary"))
-        skill = "Vocabulary";
-      else if (section.title.toLowerCase().includes("grammar"))
-        skill = "Grammar";
-      else if (section.title.toLowerCase().includes("reading"))
-        skill = "Reading Comprehension";
-      else if (section.title.toLowerCase().includes("listening"))
-        skill = "Listening Comprehension";
-
-      const typeStr =
-        section.layout === "multiple-choice"
-          ? "Multiple Choice"
-          : section.layout === "matching"
-            ? "Matching"
-            : "Mixed";
-
-      const newWs = await generateWorksheet(
-        editablePlan.classInformation.level as CEFRLevel,
-        editablePlan.classInformation.topic,
-        [{ skill, type: typeStr, count: section.items.length || 5 }],
-      );
-
-      if (newWs.sections && newWs.sections.length > 0) {
-        const newWorksheets = [...worksheets];
-        const targetWs = { ...newWorksheets[wsIdx] };
-        if (targetWs.sections) {
-          targetWs.sections[sIdx] = newWs.sections[0];
-          newWorksheets[wsIdx] = targetWs;
-          setWorksheets(newWorksheets);
-        }
-      }
-    } catch (e) {
-      console.error("Regeneration failed", e);
-    } finally {
-      setRegeneratingSectionId(null);
-    }
-  };
-
-  const handleQuickGenerateSection = async () => {
-    if (!editablePlan || isQuickGenerating) return;
-    setIsQuickGenerating(true);
-    try {
-      // Enforce Multiple Choice layout for Cloze Test
-      const config = { ...quickGenConfig };
-
-      // AUTO-FORCE Essay Layout for Picture Description
-      if (config.type === "Picture Description") {
-        config.type = "Picture Description";
-        // Layout handled by result in geminiService
-      }
-
-      const newWs = await generateWorksheet(
-        quickGenConfig.level as CEFRLevel,
-        editablePlan.classInformation.topic,
-        [{ ...config }],
-      );
-
-      if (newWs.sections && newWs.sections.length > 0) {
-        const newWorksheets = [...worksheets];
-        // If no worksheets exist, create a shell
-        if (newWorksheets.length === 0) {
-          newWorksheets.push({
-            title: "Generated Worksheet",
-            type: "Review",
-            instructions: "Please complete the following exercises.",
-            sections: [newWs.sections[0]],
-          });
-        } else {
-          // Append to first worksheet
-          const ws = { ...newWorksheets[0] };
-          ws.sections = [...(ws.sections || []), newWs.sections[0]];
-          newWorksheets[0] = ws;
-        }
-        setWorksheets(newWorksheets);
-      }
-    } catch (e) {
-      console.error("Quick Gen failed", e);
-    } finally {
-      setIsQuickGenerating(false);
-    }
-  };
-  const handleGenerateWorksheetImage = async (
-    wsIdx: number,
-    sIdx: number,
-    itemIdx: number,
-    promptText: string,
-  ) => {
-    const key = `${wsIdx}-${sIdx}-${itemIdx}`;
-    if (generatingWsImageKey) return;
-    setGeneratingWsImageKey(key);
-    try {
-      // Descriptive prompt prefix to help model avoid safety blocks or vague failures
-      const safePrompt = promptText.trim() || "educational illustration";
-      const enhancedPrompt = `A simple, clear educational illustration of "${safePrompt}" for an English student's worksheet. Clean white background, no text, professional line-art or 2D vector style.`;
-      const imageUrl = await generateLessonImage(enhancedPrompt, "4:3"); // Optimized for worksheets
-      handleWorksheetItemChange(wsIdx, sIdx, itemIdx, "imageUrl", imageUrl);
-    } catch (e) {
-      console.error("Worksheet image generation failed", e);
-    } finally {
-      setGeneratingWsImageKey(null);
-    }
-  };
-  const handleGeneratePassage = async (wsIdx: number, sIdx: number) => {
-    if (!editablePlan || isGeneratingPassageId) return;
-    setIsGeneratingPassageId(`${wsIdx}-${sIdx}`);
-    try {
-      const vocab = editablePlan.lessonDetails.targetVocab.map((v) => v.word);
-      const result = await generateReadingPassage(
-        editablePlan.classInformation.level,
-        editablePlan.classInformation.topic,
-        vocab,
-      );
-      const newWorksheets = [...worksheets];
-      if (newWorksheets[wsIdx].sections) {
-        newWorksheets[wsIdx].sections[sIdx].passage = result.text;
-        newWorksheets[wsIdx].sections[sIdx].passageTitle = result.title;
-      }
-      setWorksheets(newWorksheets);
-    } catch (e) {
-      console.error("Passage generation failed", e);
-    } finally {
-      setIsGeneratingPassageId(null);
-    }
-  };
-  const actions: WorksheetLayoutActions = {
+  const {
+    regeneratingSectionId,
+    selectedId, setSelectedId,
+    isAssignOpen, setIsAssignOpen,
+    isAssigning, assignError, assignSuccess,
+    isGeneratingPassageId,
+    generatingWsImageKey,
+    isQuickGenerating,
+    quickGenConfig, setQuickGenConfig,
     handleWorksheetItemChange,
-    handleGenerateWorksheetImage,
-    moveWorksheetItem,
-    removeWorksheetItem,
-    addWorksheetItem,
-    handleGeneratePassage,
-  };
+    addWorksheetItem, removeWorksheetItem, moveWorksheetItem,
+    addWorksheetSection, removeWorksheetSection,
+    handleWorksheetSectionLayoutChange,
+    handleRegenerateWorksheetSection,
+    handleQuickGenerateSection,
+    handleAssign,
+    actions,
+  } = useWorksheetHandlers({ worksheets, setWorksheets, editablePlan });
 
-  const handleAssign = async (classId: string, dueDate: string) => {
-    if (!teacherId || !editablePlan || worksheets.length === 0) return; // Ensure there's at least one worksheet to assign
-    setIsAssigning(true);
-    setAssignError('');
-    setAssignSuccess('');
-
-    try {
-      // For assignment, we'll use the first worksheet in the array as the primary content
-      const dataToAssign = worksheets[0];
-
-      const assignment = await edu.upsertAssignment({
-        teacher_id: teacherId,
-        title: dataToAssign.title || editablePlan.classInformation.topic || 'Worksheet',
-        description: dataToAssign.instructions || `A ${editablePlan.classInformation.level || ''} level worksheet about ${editablePlan.classInformation.topic || 'English'}.`,
-        class_id: classId,
-        content_type: 'worksheet',
-        content_data: dataToAssign, // JSON payload of the first worksheet
-        due_date: dueDate || null
-      } as any);
-
-      if (assignment) {
-        // Determine class students
-        const clsStudents = await edu.fetchClassStudents(classId);
-        const sids = clsStudents.map(cs => cs.student_id);
-        await edu.createSubmissionsForClass(assignment.id, sids);
-
-        setAssignSuccess(t('assign.success') as string);
-        setTimeout(() => {
-          setIsAssignOpen(false);
-          setAssignSuccess('');
-        }, 2000);
-      } else {
-        setAssignError(t('assign.error') as string);
-      }
-    } catch (e: any) {
-      console.error("Assignment failed:", e);
-      setAssignError(e.message || t('assign.error'));
-    } finally {
-      setIsAssigning(false);
-    }
-  };
+  const skills = WORKSHEET_SKILLS;
+  const questionTypes = QUESTION_TYPES;
+  const articleTypes = ARTICLE_TYPES;
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-        <h3 className="text-lg font-bold text-slate-800">Custom Worksheets</h3>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Custom Worksheets</h3>
         <div className="flex gap-2">
           <button
             onClick={() => setIsAssignOpen(true)}
@@ -506,7 +113,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                     skill: e.target.value,
                   })
                 }
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 aria-label="Select Focus Skill"
                 title="Select Focus Skill"
               >
@@ -529,7 +136,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                     articleType: e.target.value,
                   })
                 }
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 aria-label="Select Article Type"
                 title="Select Article Type"
               >
@@ -552,7 +159,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                     level: e.target.value as CEFRLevel,
                   })
                 }
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 aria-label="Select CEFR Level"
                 title="Select CEFR Level"
               >
@@ -572,7 +179,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                 onChange={(e) =>
                   setQuickGenConfig({ ...quickGenConfig, type: e.target.value })
                 }
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 aria-label="Select Question Type"
                 title="Select Question Type"
               >
@@ -596,7 +203,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                     count: Number(e.target.value),
                   })
                 }
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 min="1"
                 max="20"
                 aria-label="Number of Questions"
@@ -619,7 +226,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   })
                 }
                 placeholder="Customize content (e.g. 'about space exploration', 'focus on present perfect')..."
-                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div className="flex items-end lg:w-48">
@@ -643,7 +250,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
       <div className="space-y-16">
         {worksheets.map((ws, wsIdx) => (
           <div key={wsIdx} className="space-y-12">
-            <div className="text-center border-b border-dashed border-slate-200 pb-12">
+            <div className="text-center border-b border-dashed border-slate-200 dark:border-white/10 pb-12">
               <AutoResizeTextarea
                 value={ws.title}
                 onChange={(e) => {
@@ -723,7 +330,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                               e.target.value,
                             )
                           }
-                          className="text-[10px] font-bold bg-slate-50 border border-slate-100 rounded p-1 text-slate-500"
+                          className="text-[10px] font-bold bg-slate-50 border border-slate-100 dark:border-white/5 rounded p-1 text-slate-500"
                           aria-label="Select Section Layout"
                           title="Select Section Layout"
                         >
@@ -788,7 +395,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                   setWorksheets(newWs);
                                 }}
                                 placeholder="Enter reading passage content..."
-                                className="w-full text-base text-slate-700 leading-[1.6] bg-transparent border-none outline-none italic whitespace-pre-wrap"
+                                className="w-full text-base text-slate-700 dark:text-slate-400 leading-[1.6] bg-transparent border-none outline-none italic whitespace-pre-wrap"
                                 minRows={3}
                               />
                             </div>
@@ -802,7 +409,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                                 }
                                 setWorksheets(newWs);
                               }}
-                              className="absolute -top-2 -right-2 p-1.5 bg-white border border-slate-100 rounded-full text-slate-300 hover:text-red-500 shadow-xs opacity-0 group-hover/passage:opacity-100 transition-all no-print"
+                              className="absolute -top-2 -right-2 p-1.5 bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded-full text-slate-300 hover:text-red-500 shadow-xs opacity-0 group-hover/passage:opacity-100 transition-all no-print"
                               title="Remove Passage"
                             >
                               <X className="w-3 h-3" />
@@ -812,7 +419,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
 
                       {!sec.passage && !sec.passageTitle && (
                         <button
-                          onClick={() => handleGeneratePassage(wsIdx, sIdx)}
+                          onClick={() => actions.handleGeneratePassage(wsIdx, sIdx)}
                           disabled={isGeneratingPassageId === `${wsIdx}-${sIdx}`}
                           className="mb-6 text-[10px] font-black text-indigo-400 hover:text-indigo-600 uppercase tracking-widest flex items-center gap-1 no-print transition-colors"
                         >
@@ -888,7 +495,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
                   return (
                     <div
                       key={sIdx}
-                      className="bg-white/60 p-5 rounded-2xl border border-indigo-50"
+                      className="bg-white dark:bg-slate-900/80/60 p-5 rounded-2xl border border-indigo-50"
                     >
                       <h5 className="font-bold text-indigo-800 mb-4 flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black">
@@ -965,4 +572,4 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = ({
       )}
     </div>
   );
-};
+});

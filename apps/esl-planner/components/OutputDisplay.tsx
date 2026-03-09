@@ -80,7 +80,6 @@ import {
   generateReadingPassage,
   translateLessonKit,
 } from "../services/geminiService";
-import JSZip from "jszip";
 import { useExportUtils } from "../hooks/useExportUtils";
 import { useAutoSave } from "@shared/hooks/useAutoSave";
 import { LessonPlanTab } from "./tabs/LessonPlanTab";
@@ -111,7 +110,7 @@ const INDIGO_COLOR = "#4f46e5";
 
 // Component for Correction Legend
 const CorrectionLegend = () => (
-  <div className="bg-white border-2 border-indigo-100 rounded-2xl p-4 shadow-sm viewer-correction-legend">
+  <div className="bg-white dark:bg-slate-900/80 border-2 border-indigo-100 rounded-2xl p-4 shadow-sm viewer-correction-legend">
     <h5 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-3 flex items-center gap-2">
       <Info className="w-3 h-3 text-indigo-500" />
       Proofreading Marks Reference / 修改符号参�?    </h5>
@@ -120,7 +119,7 @@ const CorrectionLegend = () => (
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           ^
         </span>
-        <span className="text-[10px] font-medium text-slate-600">
+        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
           Insert / 插入
         </span>
       </div>
@@ -128,14 +127,14 @@ const CorrectionLegend = () => (
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           /
         </span>
-        <span className="text-[10px] font-medium text-slate-600">
+        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
           Delete / 删除
         </span>
       </div>
       <div className="flex items-center gap-2">
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           �?        </span>
-        <span className="text-[10px] font-medium text-slate-600">
+        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
           Replace / 替换
         </span>
       </div>
@@ -143,7 +142,7 @@ const CorrectionLegend = () => (
         <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
           ~
         </span>
-        <span className="text-[10px] font-medium text-slate-600">
+        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
           Spelling / 拼写
         </span>
       </div>
@@ -203,7 +202,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
       return { keyPoints: [], decodableTexts: [], decodableTextPrompts: [] };
     const texts =
       raw.decodableTexts ||
-      ((raw as any).decodableText ? [(raw as any).decodableText] : []);
+      (raw.decodableText ? [raw.decodableText] : []);
     const prompts = raw.decodableTextPrompts || texts.map(() => "");
     return { ...raw, decodableTexts: texts, decodableTextPrompts: prompts };
   }, [content.phonics]);
@@ -269,8 +268,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     };
     const texts =
       rawPhonics.decodableTexts ||
-      ((rawPhonics as any).decodableText
-        ? [(rawPhonics as any).decodableText]
+      (rawPhonics.decodableText
+        ? [rawPhonics.decodableText]
         : []);
     const prompts = rawPhonics.decodableTextPrompts || texts.map(() => "");
     setPhonicsContent({
@@ -332,7 +331,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         ...editablePlan[section as keyof StructuredLessonPlan],
         [field]: value,
       },
-    } as any);
+    } as StructuredLessonPlan);
   };
 
   const handleArrayChange = (
@@ -412,7 +411,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         existingWords,
       );
       setLocalFlashcards([...localFlashcards, newCard]);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to generate flashcard", e);
       // Fallback to manual if API fails
       const manualCard: Flashcard = {
@@ -556,7 +555,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
       const imageUrl = await generateLessonImage(prompt, "3:4");
       setGrammarInfographicUrl(imageUrl);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Infographic generation failed", e);
     } finally {
       setIsGeneratingGrammar(false);
@@ -586,7 +585,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
       const imageUrl = await generateLessonImage(prompt, "16:9");
       setBlackboardImageUrl(imageUrl);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Whiteboard generation failed", e);
     } finally {
       setIsGeneratingWhiteboard(false);
@@ -615,7 +614,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
           },
         });
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to generate grammar point", e);
     } finally {
       setIsGeneratingSingleGrammar(false);
@@ -639,7 +638,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
           keyPoints: [...phonicsContent.keyPoints, newPoint],
         });
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to generate phonics point", e);
       setPhonicsContent({
         ...phonicsContent,
@@ -671,7 +670,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
           ],
         });
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error("Failed to generate decodable text", e);
       setPhonicsContent({
         ...phonicsContent,
@@ -720,17 +719,17 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   return (
     <div className="overflow-hidden flex flex-col">
       {/* Unified Sticky Header - Always Stacked */}
-      <div className="flex flex-col gap-3 sticky top-6 z-40 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-sm mx-4 mt-4 no-print">
+      <div className="flex flex-col gap-3 sticky top-6 z-40 bg-white dark:bg-slate-900/80/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm mx-4 mt-4 no-print">
         {/* Tabs Group */}
         <div className="flex flex-nowrap overflow-x-auto pb-1 gap-2 items-center hide-scrollbar w-full">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap flex-shrink-0
                 ${activeTab === tab.id
                   ? "bg-brand text-white shadow-md shadow-brand/30 translate-y-[-1px]"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 hover:text-slate-900"}`}
             >
               <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
@@ -739,10 +738,10 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         </div>
 
         {/* Actions Group */}
-        <div className="no-print flex items-center justify-end gap-3 w-full pt-3 border-t border-slate-100">
+        <div className="no-print flex items-center justify-end gap-3 w-full pt-3 border-t border-slate-100 dark:border-white/5">
           <button
             onClick={() => openViewer(activeTab as string, activeTab === 'materials' ? materialTab : undefined)}
-            className="flex items-center justify-center gap-2 px-5 py-2 bg-slate-100 text-slate-700 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap text-sm font-bold"
+            className="flex items-center justify-center gap-2 px-5 py-2 bg-slate-100 text-slate-700 dark:text-slate-400 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap text-sm font-bold"
           >
             <Printer className="w-4 h-4" />
             <span className="hidden md:inline">Print View</span>
@@ -787,7 +786,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
         {activeTab === "materials" && (
           <div className="space-y-6">
-            <div className="flex border-b border-slate-200 mb-6 overflow-x-auto no-print scrollbar-hide">
+            <div className="flex border-b border-slate-200 dark:border-white/10 mb-6 overflow-x-auto no-print scrollbar-hide">
               {[
                 { id: "flashcards", label: "Flashcards", icon: ImageIcon },
                 { id: "worksheets", label: "Worksheets", icon: FileText },
@@ -797,7 +796,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setMaterialTab(tab.id as any)}
+                  onClick={() => setMaterialTab(tab.id as typeof materialTab)}
                   className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${materialTab === tab.id ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}
                 >
                   <tab.icon className="w-3.5 h-3.5" />

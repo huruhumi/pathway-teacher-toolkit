@@ -17,7 +17,7 @@ export const StandardLayout = ({
             {section.items.map((item, itemIdx) => (
                 <div
                     key={itemIdx}
-                    className="bg-white border border-slate-100 rounded-2xl p-5 shadow-xs relative group/item"
+                    className="bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded-2xl p-5 shadow-xs relative group/item"
                 >
                     <div className="flex gap-4">
                         <div className="flex-1 space-y-4">
@@ -36,7 +36,7 @@ export const StandardLayout = ({
                                             e.target.value,
                                         )
                                     }
-                                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
+                                    className="flex-1 text-base font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
                                 />
                             </div>
                             <div className="flex gap-3 items-center">
@@ -58,7 +58,7 @@ export const StandardLayout = ({
                                 />
                             </div>
                         </div>
-                        <div className="w-32 h-24 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 relative group/img cursor-pointer cursor-pointer">
+                        <div className="w-32 h-24 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 dark:border-white/5 relative group/img cursor-pointer cursor-pointer">
                             {item.imageUrl ? (
                                 <img
                                     src={item.imageUrl}
@@ -105,7 +105,7 @@ export const StandardLayout = ({
                             onClick={() =>
                                 moveWorksheetItem(wsIdx, sIdx, itemIdx, "up")
                             }
-                            className="p-1 bg-white border border-slate-100 rounded text-slate-400 hover:text-indigo-600 shadow-xs"
+                            className="p-1 bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded text-slate-400 hover:text-indigo-600 shadow-xs"
                         >
                             <ChevronUp className="w-3 h-3" />
                         </button>
@@ -118,7 +118,7 @@ export const StandardLayout = ({
                                     "down",
                                 )
                             }
-                            className="p-1 bg-white border border-slate-100 rounded text-slate-400 hover:text-indigo-600 shadow-xs"
+                            className="p-1 bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded text-slate-400 hover:text-indigo-600 shadow-xs"
                         >
                             <ChevronDown className="w-3 h-3" />
                         </button>
@@ -126,7 +126,7 @@ export const StandardLayout = ({
                             onClick={() =>
                                 removeWorksheetItem(wsIdx, sIdx, itemIdx)
                             }
-                            className="p-1 bg-white border border-slate-100 rounded text-red-400 hover:text-red-600 shadow-xs"
+                            className="p-1 bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded text-red-400 hover:text-red-600 shadow-xs"
                         >
                             <Trash2 className="w-3 h-3" />
                         </button>
@@ -135,7 +135,7 @@ export const StandardLayout = ({
             ))}
             <button
                 onClick={() => addWorksheetItem(wsIdx, sIdx)}
-                className="w-full py-3 border-2 border-dashed border-slate-100 rounded-2xl text-slate-300 hover:text-indigo-400 hover:border-indigo-100 hover:bg-indigo-50/20 transition-all flex items-center justify-center gap-2 text-xs font-bold no-print"
+                className="w-full py-3 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-2xl text-slate-300 hover:text-indigo-400 hover:border-indigo-100 hover:bg-indigo-50/20 transition-all flex items-center justify-center gap-2 text-xs font-bold no-print"
             >
                 <Plus className="w-4 h-4" /> Add Item
             </button>

@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+
 import { useToast } from '@shared/stores/useToast';
 import React from 'react';
 import { SavedLesson } from '../types';
@@ -19,6 +19,7 @@ export const handleDownloadZip = async (
     e?.stopPropagation();
     setIsExporting(lesson.id);
     try {
+        const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
         const content = lesson.content;
         const topic = (content.structuredLessonPlan.classInformation.topic || lesson.topic).replace(/[^a-z0-9]/gi, '_').toLowerCase();

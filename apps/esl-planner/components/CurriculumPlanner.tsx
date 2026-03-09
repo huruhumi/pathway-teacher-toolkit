@@ -215,7 +215,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             {!curriculum && (
                 <>
                     <div className="space-y-6">
-                        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                             <BookOpen size={22} className="text-violet-600" />
                             {t('cp.title')}
                         </h2>
@@ -250,7 +250,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                             <FileText className="w-5 h-5 text-violet-600" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-slate-800 text-sm">{pdfFile.name}</p>
+                                            <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{pdfFile.name}</p>
                                             <p className="text-xs text-slate-500">
                                                 {extracting ? (
                                                     <span className="flex items-center gap-1 text-violet-600">
@@ -285,7 +285,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     max={20}
                                     value={lessonCount}
                                     onChange={(e) => setLessonCount(parseInt(e.target.value) || 6)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 />
                             </div>
 
@@ -297,10 +297,10 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 <select
                                     value={level}
                                     onChange={(e) => setLevel(e.target.value as CEFRLevel)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 >
                                     {Object.values(CEFRLevel).map(lvl => (
-                                        <option key={lvl} value={lvl}>{t(`cefr.${lvl}` as any)}</option>
+                                        <option key={lvl} value={lvl}>{t(`cefr.${lvl}`)}</option>
                                     ))}
                                 </select>
                             </div>
@@ -315,7 +315,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     placeholder="e.g., 90"
                                     value={duration}
                                     onChange={(e) => setDuration(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 />
                             </div>
 
@@ -329,7 +329,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     min={1}
                                     value={studentCount}
                                     onChange={(e) => setStudentCount(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 />
                             </div>
 
@@ -341,7 +341,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                 <select
                                     value={slideCount}
                                     onChange={(e) => setSlideCount(Number(e.target.value))}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                                 >
                                     {[5, 8, 10, 12, 15, 20, 25, 30].map(n => (
                                         <option key={n} value={n}>{n} {t('input.slidesUnit')}</option>
@@ -359,7 +359,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                     value={customInstructions}
                                     onChange={(e) => setCustomInstructions(e.target.value)}
                                     rows={2}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none"
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all resize-none"
                                 />
                             </div>
 
@@ -452,7 +452,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             )}
                             <button
                                 onClick={handleNewCurriculum}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 rounded-xl text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all"
                             >
                                 <ArrowLeft size={15} />
                                 {t('cp.newCurriculum')}
@@ -462,8 +462,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
                     {/* Overview */}
                     <div className="space-y-4">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">{curriculum.textbookTitle}</h2>
-                        <p className="text-slate-600 leading-relaxed">{curriculum.overview}</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200 mb-2">{curriculum.textbookTitle}</h2>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{curriculum.overview}</p>
                         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
                             <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-medium flex items-center gap-1.5"><FileText size={14} /> {curriculum.textbookTitle || curriculum.seriesName}</span>
                             <span className="px-3 py-1 bg-violet-50 text-violet-700 rounded-lg font-medium flex items-center gap-1.5"><BookOpen size={14} /> {curriculum.totalLessons} {t('cp.lessonsUnit')}</span>
@@ -483,7 +483,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         return (
                             <div
                                 key={index}
-                                className="rounded-xl border border-slate-100 overflow-hidden animate-fade-in-up"
+                                className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden animate-fade-in-up"
                                 style={{ animationDelay: `${index * 80}ms` }}
                             >
                                 {/* Header — always visible */}
@@ -500,7 +500,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                 {(() => {
                                                     const displayName = formatLessonDisplayName(lesson, curriculum);
                                                     return (
-                                                        <h3 className="text-lg font-bold text-slate-900 truncate" title={displayName}>
+                                                        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200 truncate" title={displayName}>
                                                             {displayName}
                                                         </h3>
                                                     );
@@ -527,8 +527,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
                                 {/* Expanded content */}
                                 {isExpanded && (
-                                    <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
-                                        <p className="text-slate-600 leading-relaxed">{lesson.description}</p>
+                                    <div className="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-white/5 pt-4">
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{lesson.description}</p>
 
                                         {/* Detail Grid */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -537,7 +537,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                 <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                                     <Target size={12} /> {t('cp.learningObjectives')}
                                                 </span>
-                                                <ul className="mt-1 space-y-1 text-slate-700">
+                                                <ul className="mt-1 space-y-1 text-slate-700 dark:text-slate-400">
                                                     {lesson.objectives.map((obj, i) => (
                                                         <li key={i} className="flex items-start gap-1.5">
                                                             <span className="text-violet-500 mt-0.5">•</span>
@@ -552,12 +552,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                                                 <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                                     <GraduationCap size={12} /> {t('cp.grammarFocus')}
                                                 </span>
-                                                <p className="font-medium text-slate-700 mt-1">{lesson.grammarFocus}</p>
+                                                <p className="font-medium text-slate-700 dark:text-slate-400 mt-1">{lesson.grammarFocus}</p>
 
                                                 <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 mt-3">
                                                     <Sparkles size={12} /> {t('cp.suggestedActivities')}
                                                 </span>
-                                                <ul className="mt-1 space-y-1 text-slate-700">
+                                                <ul className="mt-1 space-y-1 text-slate-700 dark:text-slate-400">
                                                     {lesson.suggestedActivities.map((act, i) => (
                                                         <li key={i} className="flex items-start gap-1.5">
                                                             <span className="text-purple-500 mt-0.5">▸</span>
@@ -641,9 +641,9 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
             {/* Batch progress bar */}
             {(batchRunning || (batchProgress.done > 0 && batchProgress.done < batchProgress.total)) && curriculum && (
-                <div className="mt-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                <div className="mt-6 bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-white/10 p-4 shadow-sm">
                     <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-slate-700 dark:text-slate-400">
                             {batchRunning ? t('cp.batchGenerating') : t('cp.batchPaused')}
                         </span>
                         <span className="text-slate-500">

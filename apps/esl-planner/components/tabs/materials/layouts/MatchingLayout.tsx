@@ -60,7 +60,7 @@ export const MatchingLayout = ({
                                 </div>
                                 {/* Anchor Point A */}
                                 <div className="hidden md:flex w-16 h-px bg-indigo-100 items-center justify-end">
-                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 bg-white shadow-xs"></div>
+                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 bg-white dark:bg-slate-900/80 shadow-xs"></div>
                                 </div>
                             </div>
 
@@ -71,9 +71,9 @@ export const MatchingLayout = ({
                             <div className="flex-1 flex items-center group relative z-10">
                                 {/* Anchor Point B */}
                                 <div className="hidden md:flex w-16 h-px bg-indigo-100 items-center justify-start">
-                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 bg-white shadow-xs"></div>
+                                    <div className="w-4 h-4 rounded-full border-2 border-indigo-400 bg-white dark:bg-slate-900/80 shadow-xs"></div>
                                 </div>
-                                <div className="flex-1 flex gap-4 items-center bg-white border-2 border-slate-100 p-4 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[100px] relative">
+                                <div className="flex-1 flex gap-4 items-center bg-white dark:bg-slate-900/80 border-2 border-slate-100 dark:border-white/5 p-4 rounded-[1.5rem] shadow-sm hover:border-indigo-300 transition-all min-h-[100px] relative">
                                     <span className="text-lg font-black text-slate-200 w-8">
                                         {String.fromCharCode(65 + idx)}.
                                     </span>
@@ -81,7 +81,7 @@ export const MatchingLayout = ({
                                     <div className="flex-1 flex items-center gap-6">
                                         {/* Larger Image Area - Referring to shuffled content */}
                                         <div
-                                            className="w-32 h-24 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center relative shrink-0 cursor-pointer group/gen"
+                                            className="w-32 h-24 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 flex items-center justify-center relative shrink-0 cursor-pointer group/gen"
                                             onClick={() =>
                                                 handleGenerateWorksheetImage(
                                                     wsIdx,
@@ -121,7 +121,7 @@ export const MatchingLayout = ({
                                                     e.target.value,
                                                 )
                                             }
-                                            className="flex-1 text-sm font-semibold text-slate-700 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
+                                            className="flex-1 text-sm font-semibold text-slate-700 dark:text-slate-400 bg-transparent border-none outline-none focus:bg-indigo-50/20 p-1 rounded"
                                             placeholder="Match description..."
                                         />
                                     </div>
@@ -131,7 +131,7 @@ export const MatchingLayout = ({
                                             onClick={() =>
                                                 removeWorksheetItem(wsIdx, sIdx, shuffledIdx)
                                             }
-                                            className="p-1.5 text-red-400 hover:text-red-600 bg-white rounded-full shadow-md border border-slate-100"
+                                            className="p-1.5 text-red-400 hover:text-red-600 bg-white dark:bg-slate-900/80 rounded-full shadow-md border border-slate-100 dark:border-white/5"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>

@@ -17,7 +17,7 @@ export const MultipleChoiceLayout = ({
             {section.items.map((item, itemIdx) => (
                 <div
                     key={itemIdx}
-                    className="bg-white/40 border border-slate-100 rounded-[2rem] p-5 shadow-sm group/mc relative"
+                    className="bg-white dark:bg-slate-900/80/40 border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm group/mc relative"
                 >
                     <div className="flex justify-between items-start gap-4 mb-5">
                         <div className="flex-1 flex gap-4">
@@ -36,7 +36,7 @@ export const MultipleChoiceLayout = ({
                                             e.target.value,
                                         )
                                     }
-                                    className="flex-1 text-base font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
+                                    className="flex-1 text-base font-bold text-slate-800 dark:text-slate-200 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
                                     placeholder="Multiple choice question..."
                                 />
                             </div>
@@ -50,7 +50,7 @@ export const MultipleChoiceLayout = ({
                                         item.visualPrompt || item.question,
                                     )
                                 }
-                                className="w-32 h-24 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex flex-col items-center justify-center relative shrink-0 cursor-pointer group/wsimg no-print"
+                                className="w-32 h-24 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 flex flex-col items-center justify-center relative shrink-0 cursor-pointer group/wsimg no-print"
                             >
                                 {item.imageUrl ? (
                                     <img
@@ -108,7 +108,7 @@ export const MultipleChoiceLayout = ({
                                 className={`flex items-center gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-200" : "bg-slate-50/50 border-transparent hover:border-slate-200"}`}
                             >
                                 <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white text-slate-400 border-slate-100"}`}
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all ${item.answer === opt && opt !== "" ? "bg-indigo-600 text-white border-indigo-600 shadow-md" : "bg-white dark:bg-slate-900/80 text-slate-400 border-slate-100 dark:border-white/5"}`}
                                 >
                                     {String.fromCharCode(65 + optIdx)}
                                 </div>
@@ -127,7 +127,7 @@ export const MultipleChoiceLayout = ({
                                         );
                                     }}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="flex-1 bg-transparent border-none text-sm font-bold text-slate-700 outline-none"
+                                    className="flex-1 bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-400 outline-none"
                                     placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
                                 />
                             </div>
@@ -137,7 +137,7 @@ export const MultipleChoiceLayout = ({
             ))}
             <button
                 onClick={() => addWorksheetItem(wsIdx, sIdx)}
-                className="w-full py-3 border-2 border-dashed border-slate-100 rounded-2xl text-slate-300 hover:text-indigo-400 hover:border-indigo-100 hover:bg-indigo-50/20 transition-all flex items-center justify-center gap-2 text-xs font-bold no-print"
+                className="w-full py-3 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-2xl text-slate-300 hover:text-indigo-400 hover:border-indigo-100 hover:bg-indigo-50/20 transition-all flex items-center justify-center gap-2 text-xs font-bold no-print"
             >
                 <Plus className="w-4 h-4" /> Add MC Question
             </button>

@@ -102,7 +102,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             value={level}
             onChange={(e) => setLevel(e.target.value as CEFRLevel)}
             className="py-3"
-            options={Object.values(CEFRLevel).map(lvl => ({ label: t(`cefr.${lvl}` as any) as string, value: lvl }))}
+            options={Object.values(CEFRLevel).map(lvl => ({ label: t(`cefr.${lvl}`) as string, value: lvl }))}
           />
           <Input
             label={t('input.classDuration')}

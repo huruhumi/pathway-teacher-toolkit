@@ -87,7 +87,6 @@ const AppContent: React.FC = () => {
                         onLogoClick={() => { setViewMode('curriculum'); clearSessionState(); setActiveLessonId(null); setPrefilledValues(null); }}
                         rightContent={<HeaderToggles lang={lang} onLangChange={setLang} isDark={isDarkMode} onDarkChange={setDarkMode} />}
                         signInLabel={lang === 'zh' ? '登录' : 'Sign In'}
-                        homeUrl={import.meta.env.DEV ? 'http://localhost:3000' : '/'}
                     />
 
                     <PageLayout>

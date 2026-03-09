@@ -14,7 +14,7 @@ export const CorrectionLegend = () => (
                 <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
                     ^
                 </span>
-                <span className="text-[10px] font-medium text-slate-600">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                     Insert / 插入
                 </span>
             </div>
@@ -22,7 +22,7 @@ export const CorrectionLegend = () => (
                 <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
                     /
                 </span>
-                <span className="text-[10px] font-medium text-slate-600">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                     Delete / 删除
                 </span>
             </div>
@@ -30,7 +30,7 @@ export const CorrectionLegend = () => (
                 <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
                     =
                 </span>
-                <span className="text-[10px] font-medium text-slate-600">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                     Replace / 替换
                 </span>
             </div>
@@ -38,7 +38,7 @@ export const CorrectionLegend = () => (
                 <span className="w-6 h-6 bg-indigo-50 rounded flex items-center justify-center font-bold text-indigo-600">
                     ~
                 </span>
-                <span className="text-[10px] font-medium text-slate-600">
+                <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                     Spelling / 拼写
                 </span>
             </div>
@@ -105,7 +105,7 @@ export const ErrorCorrectionLayout = ({
                         setWorksheets(newWs);
                     }}
                     placeholder="Enter passage text with errors..."
-                    className="w-full text-lg font-medium text-slate-800 leading-[2.5] bg-transparent border-none outline-none italic whitespace-pre-wrap"
+                    className="w-full text-lg font-medium text-slate-800 dark:text-slate-200 leading-[2.5] bg-transparent border-none outline-none italic whitespace-pre-wrap"
                     minRows={5}
                 />
                 <div className="mt-8 pt-8 border-t border-indigo-50">
@@ -121,7 +121,7 @@ export const ErrorCorrectionLayout = ({
                     {section.items.map((item, itemIdx) => (
                         <div
                             key={itemIdx}
-                            className="bg-white border border-slate-100 rounded-2xl p-4 shadow-xs flex gap-4 items-center group/err"
+                            className="bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-white/5 rounded-2xl p-4 shadow-xs flex gap-4 items-center group/err"
                         >
                             <div className="flex-1 space-y-2">
                                 <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export const ErrorCorrectionLayout = ({
                     ))}
                     <button
                         onClick={() => addWorksheetItem(wsIdx, sIdx)}
-                        className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-100 rounded-2xl p-4 text-slate-400 hover:border-indigo-200 hover:text-indigo-400 transition-all no-print"
+                        className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-2xl p-4 text-slate-400 hover:border-indigo-200 hover:text-indigo-400 transition-all no-print"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="text-xs font-bold uppercase">Add Error Entry</span>

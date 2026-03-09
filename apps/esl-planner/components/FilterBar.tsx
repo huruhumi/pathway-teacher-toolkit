@@ -27,7 +27,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({ search, onSearchChange, le
                 <>
                     <FilterSelect value={level} onChange={onLevelChange} icon={GraduationCap} aria-label="Select Level">
                         <option value="All Levels">All Levels</option>
-                        {Object.values(CEFRLevel).map(lvl => (<option key={lvl} value={lvl}>{t(`cefr.${lvl}` as any)}</option>))}
+                        {Object.values(CEFRLevel).map(lvl => (<option key={lvl} value={lvl}>{t(`cefr.${lvl}`)}</option>))}
                     </FilterSelect>
                     <FilterSelect value={dateRange} onChange={onDateRangeChange} icon={Calendar}>
                         <option value="all">All Time</option>

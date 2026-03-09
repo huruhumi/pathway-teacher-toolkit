@@ -32,7 +32,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
     return (
         <div className="space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-lg font-bold text-slate-800">Phonics & Decodable Practice</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Phonics & Decodable Practice</h3>
             </div>
 
             <div className="flex flex-col space-y-12">
@@ -81,7 +81,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                         <h4 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-4">Vocabulary Check</h4>
                         <div className="flex flex-wrap gap-2">
                             {editablePlan?.lessonDetails.targetVocab.map((v, i) => (
-                                <span key={i} className="text-[10px] font-bold px-2 py-1 bg-white text-indigo-600 rounded-md border border-indigo-100 shadow-xs">{v.word}</span>
+                                <span key={i} className="text-[10px] font-bold px-2 py-1 bg-white dark:bg-slate-900/80 text-indigo-600 rounded-md border border-indigo-100 shadow-xs">{v.word}</span>
                             ))}
                         </div>
                     </div>
@@ -113,7 +113,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                     <div
-                                        className="flex-1 w-full text-xl font-medium text-slate-800 leading-[2] italic whitespace-pre-wrap outline-none"
+                                        className="flex-1 w-full text-xl font-medium text-slate-800 dark:text-slate-200 leading-[2] italic whitespace-pre-wrap outline-none"
                                         contentEditable
                                         suppressContentEditableWarning
                                         onBlur={(e) => {
@@ -123,7 +123,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                         }}
                                         dangerouslySetInnerHTML={{ __html: text }}
                                     />
-                                    <div className="mt-6 flex flex-wrap gap-4 pt-4 border-t border-slate-100 no-print">
+                                    <div className="mt-6 flex flex-wrap gap-4 pt-4 border-t border-slate-100 dark:border-white/5 no-print">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#10b981]"></div> Phonics Extension</span>
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#eab308]"></div> Sight Words</span>
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#8b5cf6]"></div> Target Words</span>
@@ -136,14 +136,14 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             <img src={decodableTextImages[idx]} className="max-h-full max-w-full object-contain" alt="story illustration" />
                                         </div>
                                     ) : (
-                                        <div className="h-full rounded-[2.5rem] bg-slate-50 border-2 border-dashed border-slate-100 flex items-center justify-center">
+                                        <div className="h-full rounded-[2.5rem] bg-slate-50 border-2 border-dashed border-slate-100 dark:border-white/5 flex items-center justify-center">
                                             <ImageIcon className="w-12 h-12 text-slate-200" />
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="bg-white/50 border border-slate-100 rounded-2xl p-6 flex justify-between items-center no-print">
+                            <div className="bg-white dark:bg-slate-900/80/50 border border-slate-100 dark:border-white/5 rounded-2xl p-6 flex justify-between items-center no-print">
                                 <div className="flex-1 mr-6">
                                     <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">Visual Illustration Prompt</label>
                                     <input
@@ -154,7 +154,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             setPhonicsContent({ ...phonicsContent, decodableTexts: phonicsContent.decodableTexts, decodableTextPrompts: newPrompts });
                                         }}
                                         placeholder="Describe the scene for AI illustration..."
-                                        className="w-full text-sm text-slate-600 italic bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-100 rounded p-1"
+                                        className="w-full text-sm text-slate-600 dark:text-slate-400 italic bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-100 rounded p-1"
                                     />
                                 </div>
                                 <button
@@ -168,7 +168,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                 </button>
                             </div>
 
-                            {idx < phonicsContent.decodableTexts.length - 1 && <div className="border-b border-slate-100 opacity-50 my-16"></div>}
+                            {idx < phonicsContent.decodableTexts.length - 1 && <div className="border-b border-slate-100 dark:border-white/5 opacity-50 my-16"></div>}
                         </div>
                     ))}
                 </div>

@@ -37,7 +37,7 @@ export const EssayLayout = ({
                                             e.target.value,
                                         )
                                     }
-                                    className="flex-1 text-base font-bold text-slate-800 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
+                                    className="flex-1 text-base font-bold text-slate-800 dark:text-slate-200 bg-transparent border-none focus:bg-indigo-50/30 p-1 rounded outline-none"
                                     placeholder="Writing prompt or essay question..."
                                 />
                             </div>
@@ -76,7 +76,7 @@ export const EssayLayout = ({
                                     </button>
                                     <button
                                         onClick={() => removeWorksheetItem(wsIdx, sIdx, idx)}
-                                        className="p-1 text-red-400 hover:text-red-600 bg-white rounded shadow-xs"
+                                        className="p-1 text-red-400 hover:text-red-600 bg-white dark:bg-slate-900/80 rounded shadow-xs"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -84,7 +84,7 @@ export const EssayLayout = ({
                             </div>
                         </div>
 
-                        <div className="hidden print:flex justify-between items-center font-bold text-slate-800 text-lg mb-2">
+                        <div className="hidden print:flex justify-between items-center font-bold text-slate-800 dark:text-slate-200 text-lg mb-2">
                             <div className="flex-1">
                                 <span className="text-indigo-400 mr-2">{idx + 1}.</span>{" "}
                                 {item.question}
@@ -114,7 +114,7 @@ export const EssayLayout = ({
                                                     item.visualPrompt || item.question,
                                                 )
                                             }
-                                            className="bg-white text-indigo-600 px-6 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg"
+                                            className="bg-white dark:bg-slate-900/80 text-indigo-600 px-6 py-2 rounded-xl font-bold flex items-center gap-2 shadow-lg"
                                         >
                                             <Sparkles className="w-4 h-4" /> Regenerate Visual
                                         </button>
@@ -130,7 +130,7 @@ export const EssayLayout = ({
                                             item.visualPrompt || item.question,
                                         )
                                     }
-                                    className="w-full max-w-xl h-48 bg-slate-50/50 border-4 border-dashed border-slate-100 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-50 transition-all no-print"
+                                    className="w-full max-w-xl h-48 bg-slate-50/50 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-50 transition-all no-print"
                                 >
                                     {generatingWsImageKey === `${wsIdx}-${sIdx}-${idx}` ? (
                                         <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
@@ -166,11 +166,11 @@ export const EssayLayout = ({
                             />
                         </div>
 
-                        <div className="bg-white/30 rounded-2xl p-8 space-y-4 viewer-writing-area">
+                        <div className="bg-white dark:bg-slate-900/80/30 rounded-2xl p-8 space-y-4 viewer-writing-area">
                             {Array.from({ length: lineCount }).map((_, li) => (
                                 <div
                                     key={li}
-                                    className="border-b-2 border-slate-100 h-12 w-full flex items-end"
+                                    className="border-b-2 border-slate-100 dark:border-white/5 h-12 w-full flex items-end"
                                 >
                                     <span className="hidden print:block text-[8px] text-slate-200 font-bold opacity-30 select-none mr-2">
                                         LINE {li + 1}

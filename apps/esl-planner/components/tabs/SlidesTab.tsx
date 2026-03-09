@@ -56,7 +56,7 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
     return (
         <div className="space-y-5">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <FileText size={18} className="text-indigo-600" />
                     Presentation Slides Outline
                 </h3>
@@ -80,14 +80,14 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
                             onClick={() => copyToClipboard(notebookLMPrompt, 'prompt')}
                             className={`text-xs font-semibold px-2.5 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${copiedPrompt
                                 ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-white text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
+                                : 'bg-white dark:bg-slate-900/80 text-indigo-600 hover:bg-indigo-100 border border-indigo-200'
                                 }`}
                         >
                             {copiedPrompt ? <Check size={14} /> : <Clipboard size={14} />}
                             {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
                         </button>
                     </div>
-                    <p className="text-sm text-slate-600 font-mono italic leading-relaxed line-clamp-3">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono italic leading-relaxed line-clamp-3">
                         {notebookLMPrompt}
                     </p>
                     <div className="mt-2 text-xs text-indigo-500 font-medium">
@@ -99,18 +99,18 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
 
             <div className="space-y-4">
                 {editableSlides.map((slide, idx) => (
-                    <div key={idx} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm group relative">
+                    <div key={idx} className="bg-white dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-white/10 p-4 shadow-sm group relative">
                         <button onClick={() => handleDeleteSlide(idx)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all no-print">
                             <Trash2 size={16} />
                         </button>
 
-                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100">
+                        <div className="flex justify-between items-start mb-3 pb-3 border-b border-slate-100 dark:border-white/5">
                             <div>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Slide {idx + 1}</span>
                                 <input
                                     value={slide.title}
                                     onChange={(e) => handleSlideChange(idx, 'title', e.target.value)}
-                                    className="text-base font-bold text-slate-800 mt-1 bg-transparent border-b border-transparent focus:border-indigo-500 outline-none w-full block"
+                                    className="text-base font-bold text-slate-800 dark:text-slate-200 mt-1 bg-transparent border-b border-transparent focus:border-indigo-500 outline-none w-full block"
                                     placeholder="Slide title..."
                                 />
                             </div>
@@ -127,40 +127,40 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 dark:border-white/5 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
                                     <ImageIcon size={12} /> Visual Instruction
                                 </label>
                                 <textarea
                                     value={slide.visual}
                                     onChange={(e) => handleSlideChange(idx, 'visual', e.target.value)}
-                                    className="w-full text-sm text-slate-700 font-mono leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    className="w-full text-sm text-slate-700 dark:text-slate-400 font-mono leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
                                     rows={3}
                                     onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
                                     placeholder="Describe visual elements..."
                                 />
                                 <button
                                     onClick={() => copyToClipboard(slide.visual, 'visual', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
+                                    className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-900/80 text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
                                 >
                                     {copiedVisual === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>
                             </div>
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 relative group/block">
+                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 dark:border-white/5 relative group/block">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-1">
                                     <FileText size={12} /> Slide Content
                                 </label>
                                 <textarea
                                     value={slide.content}
                                     onChange={(e) => handleSlideChange(idx, 'content', e.target.value)}
-                                    className="w-full text-sm text-slate-700 leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
+                                    className="w-full text-sm text-slate-700 dark:text-slate-400 leading-relaxed bg-transparent border-none outline-none resize-none focus:ring-0 p-0"
                                     rows={3}
                                     onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }}
                                     placeholder="Slide content text..."
                                 />
                                 <button
                                     onClick={() => copyToClipboard(slide.content, 'content', idx)}
-                                    className="absolute top-2 right-2 p-1.5 bg-white text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
+                                    className="absolute top-2 right-2 p-1.5 bg-white dark:bg-slate-900/80 text-slate-400 hover:text-indigo-600 rounded shadow-sm opacity-0 group-hover/block:opacity-100 transition-all no-print"
                                 >
                                     {copiedContent === idx ? <Check size={14} /> : <Clipboard size={14} />}
                                 </button>

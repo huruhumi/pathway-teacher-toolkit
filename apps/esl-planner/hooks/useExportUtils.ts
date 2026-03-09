@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
 import { StructuredLessonPlan, Slide, Flashcard, Game, ReadingCompanionContent, Worksheet, PhonicsContent } from '../types';
 import { wrapViewerHtml } from './viewerShell';
+import { downloadBlob } from '@shared/utils/download';
 
 const INDIGO_COLOR = '#4f46e5';
 
@@ -785,14 +785,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
 
     const triggerDownloadMd = (content: string, filename: string) => {
         const blob = new Blob([content], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename.endsWith('.md') ? filename : `${filename}.md`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, filename.endsWith('.md') ? filename : `${filename}.md`);
     };
 
     const handleDownloadPlanMd = () => {
@@ -918,6 +911,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
 
     const handleDownloadWorksheetsMd = async () => {
         if (worksheets.length === 0) return;
+        const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
         const topic = editablePlan?.classInformation.topic || 'Lesson';
         const safeTopic = topic.replace(/\s+/g, '_');
@@ -929,14 +923,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         zip.file("Worksheet_Answer_Key.md", answersMd);
 
         const blob = await zip.generateAsync({ type: "blob" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Worksheets_${safeTopic}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `Worksheets_${safeTopic}.zip`);
     };
 
     const handleDownloadCompanionMd = () => {
@@ -1001,6 +988,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
     };
 
     const handleDownloadAllFlashcards = async () => {
+        const { default: JSZip } = await import('jszip');
         const zip = new JSZip();
         const folder = zip.folder("flashcards_bundle");
 

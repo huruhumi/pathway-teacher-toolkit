@@ -3,31 +3,8 @@ import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
 import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X } from 'lucide-react';
 import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/geminiService';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
-// We need a shared AutoResizeTextarea to avoid duplicating it everywhere.
-// Since it's currently inside OutputDisplay, we should probably extract it too, but for now we'll put a copy here or extract it later.
-interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    minRows?: number;
-}
-const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({ minRows = 1, className, ...props }) => {
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-
-    React.useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
-    }, [props.value]);
-
-    return (
-        <textarea
-            ref={textareaRef}
-            rows={minRows}
-            className={`resize-none overflow-hidden ${className || ''}`}
-            {...props}
-        />
-    );
-};
 
 
 interface LessonPlanTabProps {
@@ -35,7 +12,7 @@ interface LessonPlanTabProps {
     setEditablePlan: (plan: StructuredLessonPlan) => void;
 }
 
-export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
+export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     editablePlan,
     setEditablePlan,
 }) => {
@@ -53,7 +30,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
         setEditablePlan({
             ...editablePlan,
             [section]: {
-                ...(editablePlan[section as keyof typeof editablePlan] as any),
+                ...(editablePlan[section] as Record<string, unknown>),
                 [field]: value
             }
         });
@@ -153,7 +130,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], teachingTips: [...(newStages[stageIndex].teachingTips || []), newTip] };
             setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('Failed to generate teaching tip', e);
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], teachingTips: [...(newStages[stageIndex].teachingTips || []), 'New teaching tip'] };
@@ -176,7 +153,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], backgroundKnowledge: [...(newStages[stageIndex].backgroundKnowledge || []), newInfo] };
             setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('Failed to generate background knowledge', e);
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], backgroundKnowledge: [...(newStages[stageIndex].backgroundKnowledge || []), 'New background knowledge'] };
@@ -198,7 +175,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], fillerActivity: filler };
             setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('Failed to generate filler activity', e);
             const newStages = [...editablePlan.stages];
             newStages[stageIndex] = { ...newStages[stageIndex], fillerActivity: 'Quick review activity' };
@@ -250,7 +227,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             if (newObj) {
                 setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, objectives: [...editablePlan.lessonDetails.objectives, newObj] } });
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, objectives: [...editablePlan.lessonDetails.objectives, "New Learning Objective"] } });
         } finally {
@@ -270,7 +247,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             if (newMat) {
                 setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, materials: [...editablePlan.lessonDetails.materials, newMat] } });
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, materials: [...editablePlan.lessonDetails.materials, "New Material"] } });
         } finally {
@@ -291,7 +268,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             if (newV) {
                 setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: [...editablePlan.lessonDetails.targetVocab, newV] } });
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: [...editablePlan.lessonDetails.targetVocab, { word: "New Word", definition: "New Definition" }] } });
         } finally {
@@ -312,7 +289,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                 const newArray = [...editablePlan.lessonDetails.grammarSentences, newSentence];
                 setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, grammarSentences: newArray } });
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, grammarSentences: [...editablePlan.lessonDetails.grammarSentences, "New target sentence."] } });
         } finally {
@@ -333,7 +310,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             if (newP) {
                 setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, newP] } });
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, { problem: "Anticipated Problem", solution: "Suggested Solution" }] } });
         } finally {
@@ -357,7 +334,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                 newStages.push(newStage);
             }
             setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e);
             const fallbackStage: LessonStage = {
                 stage: "New Stage",
@@ -402,7 +379,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         <Info size={18} className="text-violet-600" />
                         Lesson Details
                     </h3>
-                    {/* Topic — own row */}
+                    {/* Topic �?own row */}
                     <div className="mb-4">
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">TOPIC</label>
                         <input
@@ -411,7 +388,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                             className="w-full font-semibold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 focus:border-violet-500 outline-none py-1 bg-transparent"
                         />
                     </div>
-                    {/* Level / Students / Date — 3 columns */}
+                    {/* Level / Students / Date �?3 columns */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         {[
                             { key: 'level', label: 'LEVEL' },
@@ -453,7 +430,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                             {(provided) => (
                                 <div className="space-y-2" ref={provided.innerRef} {...provided.droppableProps}>
                                     {editablePlan.lessonDetails.objectives.map((obj, i) => (
-                                        <Draggable key={`objective-${i}`} draggableId={`objective-${i}`} index={i}>
+                                        <Draggable draggableId={`objective-${i}`} index={i}>
                                             {(provided, snapshot) => (
                                                 <div
                                                     ref={provided.innerRef}
@@ -503,7 +480,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                             {(provided) => (
                                 <div className="divide-y divide-slate-100 dark:divide-white/5" ref={provided.innerRef} {...provided.droppableProps}>
                                     {editablePlan.lessonDetails.targetVocab.map((v, i) => (
-                                        <Draggable key={`vocab-${i}`} draggableId={`vocab-${i}`} index={i}>
+                                        <Draggable draggableId={`vocab-${i}`} index={i}>
                                             {(provided, snapshot) => (
                                                 <div ref={provided.innerRef} {...provided.draggableProps}
                                                     className={`p-3 flex gap-2 group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${snapshot.isDragging ? 'opacity-90 shadow-xl border border-teal-200 rounded-lg' : ''}`}>
@@ -541,7 +518,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                             {(provided) => (
                                 <div className="divide-y divide-slate-100 dark:divide-white/5" ref={provided.innerRef} {...provided.droppableProps}>
                                     {editablePlan.lessonDetails.grammarSentences.map((s, i) => (
-                                        <Draggable key={`sentence-${i}`} draggableId={`sentence-${i}`} index={i}>
+                                        <Draggable draggableId={`sentence-${i}`} index={i}>
                                             {(provided, snapshot) => (
                                                 <div ref={provided.innerRef} {...provided.draggableProps}
                                                     className={`flex gap-2 items-start p-3 group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors ${snapshot.isDragging ? 'opacity-90 shadow-xl border border-indigo-200 rounded-lg' : ''}`}>
@@ -576,7 +553,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         {(provided) => (
                             <div className="space-y-2" ref={provided.innerRef} {...provided.droppableProps}>
                                 {editablePlan.lessonDetails.materials.map((mat, i) => (
-                                    <Draggable key={`material-${i}`} draggableId={`material-${i}`} index={i}>
+                                    <Draggable draggableId={`material-${i}`} index={i}>
                                         {(provided, snapshot) => (
                                             <div ref={provided.innerRef} {...provided.draggableProps}
                                                 className={`flex items-start gap-2 group ${snapshot.isDragging ? 'opacity-90 shadow-lg bg-white dark:bg-slate-800 rounded-lg p-2 border border-violet-200' : ''}`}>
@@ -611,7 +588,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         {(provided) => (
                             <div className="space-y-3" ref={provided.innerRef} {...provided.droppableProps}>
                                 {editablePlan.lessonDetails.anticipatedProblems.map((p, i) => (
-                                    <Draggable key={`problem-${i}`} draggableId={`problem-${i}`} index={i}>
+                                    <Draggable draggableId={`problem-${i}`} index={i}>
                                         {(provided, snapshot) => (
                                             <div ref={provided.innerRef} {...provided.draggableProps}
                                                 className={`bg-white dark:bg-slate-900/60 rounded-lg border border-amber-200 dark:border-amber-800/30 p-3 group ${snapshot.isDragging ? 'shadow-xl opacity-90' : ''}`}>
@@ -649,7 +626,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
                         {(provided) => (
                             <div className="space-y-4" ref={provided.innerRef} {...provided.droppableProps}>
                                 {editablePlan.stages.map((stage, i) => (
-                                    <Draggable key={`stage-${i}`} draggableId={`stage-${i}`} index={i}>
+                                    <Draggable draggableId={`stage-${i}`} index={i}>
                                         {(provided, snapshot) => (
                                             <div
                                                 ref={provided.innerRef}
@@ -881,4 +858,4 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = ({
             </div>
         </DragDropContext>
     );
-};
+});

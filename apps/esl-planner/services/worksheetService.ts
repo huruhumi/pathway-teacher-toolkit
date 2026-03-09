@@ -63,7 +63,7 @@ export const generateWorksheet = async (level: CEFRLevel, topic: string, configs
                     }
                 },
                 required: ["title", "instructions", "sections"]
-            } as any
+            }
         }
     }));
 
@@ -87,7 +87,7 @@ export const generateSingleGame = async (level: CEFRLevel, topic: string, skill:
                     materials: { type: Type.ARRAY, items: { type: Type.STRING } }
                 },
                 required: ["name", "type", "interactionType", "instructions", "materials"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -108,7 +108,7 @@ export const generateReadingTask = async (level: CEFRLevel, topic: string, focus
                     isCompleted: { type: Type.BOOLEAN }
                 },
                 required: ["text", "text_cn"]
-            } as any
+            }
         }
     }));
     const data = JSON.parse(response.text || "{}");
@@ -132,7 +132,7 @@ export const generateWebResource = async (topic: string, focus: string): Promise
                     description_cn: { type: Type.STRING }
                 },
                 required: ["title", "title_cn", "url", "description", "description_cn"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -145,7 +145,7 @@ export const generateNewCompanionDay = async (level: CEFRLevel, topic: string, d
         contents: `Generate Day ${dayNum} of a 7-day review plan for Level: ${level}, Topic: ${topic}. Return JSON.`,
         config: {
             responseMimeType: "application/json",
-            responseSchema: (RESPONSE_SCHEMA.properties.readingCompanion.properties.days as any).items
+            responseSchema: RESPONSE_SCHEMA.properties!.readingCompanion!.properties!.days!.items
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -165,7 +165,7 @@ export const generateTrivia = async (topic: string, focus: string): Promise<{ en
                     cn: { type: Type.STRING }
                 },
                 required: ["en", "cn"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -185,7 +185,7 @@ export const generateReadingPassage = async (level: string, topic: string, vocab
                     text: { type: Type.STRING }
                 },
                 required: ["title", "text"]
-            } as any
+            }
         }
     }));
     return JSON.parse(response.text || "{}");

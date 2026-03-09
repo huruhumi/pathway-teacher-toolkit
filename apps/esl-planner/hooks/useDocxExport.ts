@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, BorderStyle, AlignmentType } from 'docx';
 import { GeneratedContent } from '../types';
 
 export const useDocxExport = () => {
 
     const exportLessonPlanDocx = useCallback(async (content: GeneratedContent) => {
+        const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel, BorderStyle, AlignmentType } = await import('docx');
         const { structuredLessonPlan: plan, games, readingCompanion, worksheets } = content;
         const { classInformation, lessonDetails, stages } = plan;
 
@@ -320,14 +320,8 @@ export const useDocxExport = () => {
         });
 
         const blob = await Packer.toBlob(doc);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${classInformation.topic || 'lesson-plan'}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const { downloadBlob } = await import('@shared/utils/download');
+        downloadBlob(blob, `${classInformation.topic || 'lesson-plan'}.docx`);
     }, []);
 
     return { exportLessonPlanDocx };

@@ -1,4 +1,4 @@
-import { Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse, Schema } from "@google/genai";
 import { GeneratedContent, CEFRLevel } from '../types';
 import { ESLGeneratedContentSchema } from '@shared/types/schemas';
 
@@ -228,7 +228,7 @@ export const RESPONSE_SCHEMA = {
     }
   },
   required: ["structuredLessonPlan", "lessonPlanMarkdown", "slides", "flashcards", "games", "readingCompanion", "notebookLMPrompt", "summary", "phonics"]
-};
+} satisfies Schema;
 
 // Utility to strip markdown bold prefixes (exported for sub-modules)
 export const cleanMarkdownPrefix = (s: string) => s.replace(/^\*\*.*?\*\*[:\s]*/, '').trim();
@@ -278,7 +278,7 @@ export const generateLessonPlan = async (
       contents: { parts },
       config: {
         responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA as any,
+        responseSchema: RESPONSE_SCHEMA,
       }
     });
 

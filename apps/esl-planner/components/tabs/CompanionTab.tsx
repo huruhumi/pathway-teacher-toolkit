@@ -2,23 +2,12 @@ import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/geminiService';
 import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, Target, List, AlertCircle } from 'lucide-react';
+import { handleError } from '@shared/services/logger';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { AssignModal } from '../AssignModal';
 import * as edu from '@shared/services/educationService';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    minRows?: number;
-}
-const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({ minRows = 1, className, ...props }) => {
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    React.useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
-    }, [props.value]);
-    return <textarea ref={textareaRef} rows={minRows} className={`resize-none overflow-hidden ${className || ''}`} {...props} />;
-};
+import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
 interface CompanionTabProps {
     editableReadingCompanion: ReadingCompanionContent;
@@ -26,7 +15,7 @@ interface CompanionTabProps {
     editablePlan: StructuredLessonPlan | null;
 }
 
-export const CompanionTab: React.FC<CompanionTabProps> = ({
+export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     editableReadingCompanion,
     setEditableReadingCompanion,
     editablePlan,
@@ -92,7 +81,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
             const newDays = [...editableReadingCompanion.days];
             newDays[dIdx] = { ...newDays[dIdx], trivia: newTrivia };
             setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Failed to regenerate trivia", e);
         } finally {
             setIsRegeneratingTriviaMap(prev => ({ ...prev, [dIdx]: false }));
@@ -111,7 +100,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 resources: [...(newDays[dIdx].resources || []), newResource]
             };
             setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Failed to generate resource", e);
         } finally {
             setAddingDayResourceIndex(null);
@@ -150,7 +139,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 tasks: [...(newDays[dIdx].tasks || []), newTask]
             };
             setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Failed to add task", e);
         } finally {
             setAddingTaskIndex(null);
@@ -171,7 +160,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                 ...editableReadingCompanion,
                 days: [...editableReadingCompanion.days, newDay]
             });
-        } catch (e) {
+        } catch (e: unknown) {
             console.error("Failed to add day", e);
         } finally {
             setIsAddingDay(false);
@@ -210,7 +199,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
             }
         } catch (e: any) {
             console.error("Assignment failed:", e);
-            setAssignError(e.message || t('assign.error'));
+            setAssignError(handleError(e, t('assign.error'), 'CompanionTab'));
         } finally {
             setIsAssigning(false);
         }
@@ -219,7 +208,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
     return (
         <div className="space-y-8 animate-fade-in relative">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                <h3 className="text-xl font-bold text-slate-800">7-Day Learning Companion</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">7-Day Learning Companion</h3>
                 <div className="flex gap-2 no-print">
                     <button
                         onClick={() => setIsAssignOpen(true)}
@@ -233,11 +222,11 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
 
             <div className="space-y-6">
                 {editableReadingCompanion.days.map((day, dIdx) => (
-                    <div key={dIdx} className="bg-white border rounded-xl overflow-hidden shadow-sm flex flex-col border-slate-200 print:break-inside-avoid print:shadow-none print:border-slate-300">
+                    <div key={dIdx} className="bg-white dark:bg-slate-900/80 border rounded-xl overflow-hidden shadow-sm flex flex-col border-slate-200 dark:border-white/10 print:break-inside-avoid print:shadow-none print:border-slate-300">
                         {/* Compact Top Header */}
-                        <div className="w-full bg-slate-50/80 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:bg-slate-50">
+                        <div className="w-full bg-slate-50/80 px-4 py-3 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:bg-slate-50">
                             <div className="flex items-center gap-3 w-full sm:w-auto flex-1 min-w-0">
-                                <div className="px-3 shrink-0 h-10 bg-white rounded-lg flex items-center justify-center text-violet-600 font-bold text-sm border border-slate-200 shadow-sm print:shadow-none whitespace-nowrap">
+                                <div className="px-3 shrink-0 h-10 bg-white dark:bg-slate-900/80 rounded-lg flex items-center justify-center text-violet-600 font-bold text-sm border border-slate-200 dark:border-white/10 shadow-sm print:shadow-none whitespace-nowrap">
                                     Day {day.day}
                                 </div>
                                 <div className="flex flex-col min-w-0 flex-1">
@@ -248,7 +237,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                             newDays[dIdx].focus = e.target.value;
                                             setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                         }}
-                                        className="text-base font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none w-full pb-0.5 transition-colors heading-font placeholder:text-slate-300 truncate"
+                                        className="text-base font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none w-full pb-0.5 transition-colors heading-font placeholder:text-slate-300 truncate"
                                         placeholder="Day Focus"
                                     />
                                     <input
@@ -264,11 +253,11 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end print:hidden">
-                                <button onClick={() => handleAddNewTask(dIdx)} disabled={addingTaskIndex === dIdx} className="px-3 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
+                                <button onClick={() => handleAddNewTask(dIdx)} disabled={addingTaskIndex === dIdx} className="px-3 py-1.5 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
                                     {addingTaskIndex === dIdx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Plus className="w-3.5 h-3.5" />}
                                     <span>Task</span>
                                 </button>
-                                <button onClick={() => handleAddDayResource(dIdx)} disabled={addingDayResourceIndex === dIdx} className="px-3 py-1.5 bg-white text-slate-600 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
+                                <button onClick={() => handleAddDayResource(dIdx)} disabled={addingDayResourceIndex === dIdx} className="px-3 py-1.5 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
                                     {addingDayResourceIndex === dIdx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Globe className="w-3.5 h-3.5" />}
                                     <span>Resource</span>
                                 </button>
@@ -279,7 +268,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                         <div className="p-4 flex flex-col lg:flex-row gap-5">
                             {/* Left Column: Core Task + Step-by-Step */}
                             <div className="flex-1 flex flex-col gap-4">
-                                <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 shadow-sm print:border-slate-200 print:shadow-none">
+                                <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm print:border-slate-200 print:shadow-none">
                                     <div className="flex items-center gap-1.5 mb-2">
                                         <div className="bg-blue-100 text-blue-600 p-1 rounded-md">
                                             <Target size={12} />
@@ -294,7 +283,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 newDays[dIdx].activity = e.target.value;
                                                 setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
                                             }}
-                                            className="w-full text-[13px] font-semibold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400 outline-none transition-colors leading-snug placeholder:text-slate-300"
+                                            className="w-full text-[13px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-400 outline-none transition-colors leading-snug placeholder:text-slate-300"
                                             minRows={1}
                                             placeholder="Core activity description (English)..."
                                         />
@@ -313,7 +302,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                 </div>
 
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                                    <div className="flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1.5">
                                         <div className="bg-emerald-100 text-emerald-600 p-1 rounded-md">
                                             <List size={12} />
                                         </div>
@@ -321,10 +310,10 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                     </div>
                                     <div className="space-y-2">
                                         {day.tasks?.map((task, tIdx) => (
-                                            <div key={tIdx} className="flex gap-2 items-start p-2 bg-slate-50/50 rounded-lg border border-slate-100/60 group hover:border-slate-300 transition-colors print:border-slate-200">
+                                            <div key={tIdx} className="flex gap-2 items-start p-2 bg-slate-50/50 rounded-lg border border-slate-100 dark:border-white/5/60 group hover:border-slate-300 transition-colors print:border-slate-200">
                                                 <button
                                                     onClick={() => handleTaskChange(dIdx, tIdx, 'isCompleted', !task.isCompleted)}
-                                                    className={`w-4 h-4 shrink-0 rounded border transition-all mt-0.5 flex items-center justify-center print:border-slate-400 ${task.isCompleted ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-300 hover:border-emerald-400'}`}
+                                                    className={`w-4 h-4 shrink-0 rounded border transition-all mt-0.5 flex items-center justify-center print:border-slate-400 ${task.isCompleted ? 'bg-emerald-500 border-emerald-500' : 'bg-white dark:bg-slate-900/80 border-slate-300 hover:border-emerald-400'}`}
                                                 >
                                                     {task.isCompleted && <Check className="w-2.5 h-2.5 text-white stroke-[3] print:text-black" />}
                                                 </button>
@@ -332,7 +321,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                     <input
                                                         value={task.text}
                                                         onChange={(e) => handleTaskChange(dIdx, tIdx, 'text', e.target.value)}
-                                                        className={`w-full text-xs font-medium bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-400 outline-none pb-0.5 transition-colors leading-tight ${task.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700'}`}
+                                                        className={`w-full text-xs font-medium bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-400 outline-none pb-0.5 transition-colors leading-tight ${task.isCompleted ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-400'}`}
                                                     />
                                                     <input
                                                         value={task.text_cn}
@@ -345,7 +334,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 </button>
                                             </div>
                                         ))}
-                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-[10px] text-slate-400 text-center py-3 bg-slate-50/50 rounded-lg border border-dashed border-slate-200 print:hidden">No tasks defined.</p>}
+                                        {(!day.tasks || day.tasks.length === 0) && <p className="text-[10px] text-slate-400 text-center py-3 bg-slate-50/50 rounded-lg border border-dashed border-slate-200 dark:border-white/10 print:hidden">No tasks defined.</p>}
                                     </div>
                                 </div>
                             </div>
@@ -393,7 +382,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                 )}
 
                                 <div className="space-y-2 relative">
-                                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                                    <div className="flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1.5">
                                         <div className="bg-orange-100 text-orange-600 p-1 rounded-md">
                                             <Globe size={12} />
                                         </div>
@@ -401,7 +390,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                     </div>
                                     <div className="space-y-2">
                                         {day.resources?.map((res, rIdx) => (
-                                            <div key={rIdx} className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100/60 shadow-sm relative group hover:border-slate-300 transition-colors print:border-slate-200 print:shadow-none">
+                                            <div key={rIdx} className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 dark:border-white/5/60 shadow-sm relative group hover:border-slate-300 transition-colors print:border-slate-200 print:shadow-none">
                                                 <button onClick={() => handleDeleteDayResource(dIdx, rIdx)} className="absolute top-2 right-2 p-0.5 text-slate-300 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded print:hidden">
                                                     <X className="w-3.5 h-3.5" />
                                                 </button>
@@ -409,7 +398,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                     <input
                                                         value={res.title}
                                                         onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'title', e.target.value)}
-                                                        className="flex-1 text-[11px] font-bold text-slate-800 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-orange-400 outline-none transition-colors truncate"
+                                                        className="flex-1 text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-orange-400 outline-none transition-colors truncate"
                                                     />
                                                     <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:text-orange-600 transition-colors ml-1.5 shrink-0 print:hidden" title="Open Link">
                                                         <ExternalLink className="w-3 h-3" />
@@ -424,13 +413,13 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                                                 <AutoResizeTextarea
                                                     value={res.description}
                                                     onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'description', e.target.value)}
-                                                    className="w-full text-[10px] font-medium text-slate-600 leading-snug bg-white border border-slate-200/60 hover:border-slate-300 focus:border-orange-300 rounded md p-1.5 outline-none transition-colors"
+                                                    className="w-full text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-snug bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10/60 hover:border-slate-300 focus:border-orange-300 rounded md p-1.5 outline-none transition-colors"
                                                     minRows={1}
                                                 />
                                             </div>
                                         ))}
                                         {(!day.resources || day.resources.length === 0) && (
-                                            <button onClick={() => handleManualAddDayResource(dIdx)} className="w-full py-3 border border-dashed border-slate-200 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50/50 hover:border-orange-300 transition-all flex items-center justify-center gap-1.5 bg-slate-50/50 print:hidden">
+                                            <button onClick={() => handleManualAddDayResource(dIdx)} className="w-full py-3 border border-dashed border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50/50 hover:border-orange-300 transition-all flex items-center justify-center gap-1.5 bg-slate-50/50 print:hidden">
                                                 <Globe className="w-3 h-3 opacity-70" />
                                                 <span className="text-[9px] font-bold uppercase tracking-wider">Add Manual Resource</span>
                                             </button>
@@ -442,7 +431,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
                     </div>
                 ))}
             </div>
-            <button onClick={handleAddNewDay} disabled={isAddingDay} className="w-full py-4 border border-dashed border-slate-300 rounded-2xl text-slate-500 hover:text-indigo-600 hover:bg-slate-50 hover:border-indigo-300 transition-all font-bold text-sm flex items-center justify-center gap-2 no-print bg-white shadow-sm hover:shadow-md">
+            <button onClick={handleAddNewDay} disabled={isAddingDay} className="w-full py-4 border border-dashed border-slate-300 rounded-2xl text-slate-500 hover:text-indigo-600 hover:bg-slate-50 hover:border-indigo-300 transition-all font-bold text-sm flex items-center justify-center gap-2 no-print bg-white dark:bg-slate-900/80 shadow-sm hover:shadow-md">
                 {isAddingDay ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                 {isAddingDay ? 'Planning Next Day...' : 'Extend Review Plan (Add Day)'}
             </button>
@@ -467,4 +456,4 @@ export const CompanionTab: React.FC<CompanionTabProps> = ({
             )}
         </div>
     );
-};
+});
