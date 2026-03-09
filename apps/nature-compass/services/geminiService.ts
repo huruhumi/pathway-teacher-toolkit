@@ -111,7 +111,7 @@ export const lessonPlanSchema: Schema = {
           teachingTips: {
             type: Type.ARRAY,
             items: { type: Type.STRING },
-            description: "2-3 specific teaching methodology tips (e.g. TPR, checking questions, safety reminders, differentiation)."
+            description: "3-5 specific tips covering: (1) ESL scaffolding (TPR, visual aids, sentence frames), (2) outdoor classroom management (attention signals like clapping patterns, boundary markers, buddy system, countdown timers), (3) group activity structure (clear role assignments like recorder/observer/collector, rotation protocols), (4) differentiation strategies."
           },
         },
         required: ["timeRange", "phase", "activity", "activityType", "location", "description", "learningObjective", "steps", "backgroundInfo", "teachingTips"],
@@ -128,7 +128,7 @@ export const lessonPlanSchema: Schema = {
     safetyProtocol: {
       type: Type.ARRAY,
       items: { type: Type.STRING },
-      description: "A list of 3-5 specific safety measures or risk mitigations."
+      description: "A comprehensive list of 6-10 specific safety measures covering: adult-child ratios, boundary rules, tool handling, biological contact, sun/bug protection, emergency procedures, weather-specific risks, and allergy awareness."
     },
     visualReferences: {
       type: Type.ARRAY,
@@ -240,6 +240,8 @@ function buildFamilyModeRules(input: LessonInput): string {
     6. SUPPLIES: Only include items a family would realistically bring on a weekend outing
        (magnifying glass, notebook, colored pencils, ziplock bags — NOT classroom supplies).
 
+        - [STEAM Integration] Each roadmap phase's 'activityType' MUST explicitly label which STEAM discipline(s) it covers (Science/Technology/Engineering/Art/Math). The overall lesson MUST include at least ONE activity that explicitly integrates Technology (e.g. digital identification tools, data recording apps, measurement devices) and at least ONE that integrates Mathematics (e.g. size estimation, area calculation, data graphing, counting/sorting). Do NOT let tech/math be implicit — name the specific tool or calculation.
+
     ${eslBlock}
 
     IMPORTANT: The handbook's visual style (handbookStylePrompt) MUST be IDENTICAL to school mode — same Pathway Academy brand colors, same white (#FFFFFF) page backgrounds, same age-appropriate illustration style and decorative motifs. Only the page CONTENT (contentPrompt) differs between modes.
@@ -287,26 +289,26 @@ function buildHandbookRules(input: LessonInput): string {
 
        [Ages 6-9 / A1 — Primary Lower]
        - Activity/Worksheet: 1-2 tasks per page. Short 3-5 word commands. Matching, drawing what they observe, simple fill-in-blanks with word banks, tick/cross exercises. Illustrations guide each step.
-       - Reading: Strict MAXIMUM of 80 words/字 per page. Use 1-2 very short paragraphs with controlled vocabulary (sight words + theme-specific words). Provide explicit language scaffolding (sentence frames, simple definitions) embedded in the text. Large font (18pt+). Picture support for key concepts. MUST include: 1 "Did You Know?" fun fact box with a surprising real-world detail, and 1 simple comprehension check question. Content must teach REAL subject knowledge — not filler sentences.
+       - Reading: EN version: 15-30 words per page (ESL A1). ZH version: 50-90 chars per page (native). Use/字 per page. Use 1-2 very short paragraphs with controlled vocabulary (sight words + theme-specific words). Provide explicit language scaffolding (sentence frames, simple definitions) embedded in the text. Large font (18pt+). Picture support for key concepts. MUST include: 1 "Did You Know?" fun fact box with a surprising real-world detail, and 1 simple comprehension check question. Content must teach REAL subject knowledge — not filler sentences.
        - Background Knowledge: "Did You Know?" format with 3-4 fun facts (not just 2). Each fact should be 2-3 sentences with specific numbers or names (e.g. "A butterfly has 12,000 eyes!" not "Butterflies have many eyes"). Paired with illustrations. Use speech bubbles from cartoon characters.
        - Reflection: Simple sentence starters ("Today I learned ___", "My favorite part was ___"). Draw + write 1 sentence.
        - Vocabulary: 6-8 words with pictures, simple 3-5 word definitions.
 
        [Ages 10-12 / A2 — Primary Upper]
        - Activity/Worksheet: Multi-step tasks okay. Simple data tables, observation logs, labeled diagrams to complete. Short paragraph instructions. Can include simple graphs to read.
-       - Reading: Strict MAXIMUM of 150 words/字 per page. 2-3 substantive paragraphs with cause-effect reasoning. Break text into small chunks with heavy visual support. MUST include explicit language scaffolding for new terminology. Include labeled diagrams or infographic elements. MUST include: vocabulary callouts (bold key terms with brief definitions), and 2-3 comprehension questions (mix of multiple choice + short answer). Reading content should provide enough background knowledge for the student to understand and complete the associated activity independently.
+       - Reading: EN version: 30-50 words per page (ESL A2). ZH version: 100-180 chars per page (native). 2-3/字 per page. 2-3 substantive paragraphs with cause-effect reasoning. Break text into small chunks with heavy visual support. MUST include explicit language scaffolding for new terminology. Include labeled diagrams or infographic elements. MUST include: vocabulary callouts (bold key terms with brief definitions), and 2-3 comprehension questions (mix of multiple choice + short answer). Reading content should provide enough background knowledge for the student to understand and complete the associated activity independently.
        - Background Knowledge: Infographic-style with labeled diagrams, comparison charts, and "Fast Facts" sidebars. 3-4 paragraphs MINIMUM with specific data points (measurements, dates, scientific names). Include at least one "Think About It" inquiry question.
        - Reflection: Guided journal prompts. "What surprised you? Why do you think...?" 3-4 sentence responses expected.
 
        [Ages 13-15 / B1 — Middle School]
        - Activity/Worksheet: Complex multi-step investigations. Data collection tables, graph plotting, hypothesis testing. Scientific method framework. Can include math calculations.
-       - Reading: Strict MAXIMUM of 300 words/字 per page. 4-6 substantive paragraphs with academic vocabulary, cross-references, and embedded critical thinking prompts. Can reference real research findings (simplified). Include annotation suggestions. MUST have 3-4 comprehension + analysis questions.
+       - Reading: EN version: 50-80 words per page (ESL B1). ZH version: 180-250 chars per page (native). 4-6/字 per page. 4-6 substantive paragraphs with academic vocabulary, cross-references, and embedded critical thinking prompts. Can reference real research findings (simplified). Include annotation suggestions. MUST have 3-4 comprehension + analysis questions.
        - Background Knowledge: Detailed explanations with cross-references and simplified scientific terminology. 4-5 paragraphs with data visualizations, process diagrams, or comparison tables. Include "Deep Dive" sidebars for advanced learners.
        - Reflection: Open-ended analytical questions. "Compare and contrast...", "What evidence supports...?" Extended writing expected.
 
        [Ages 16-18 / B2+ — High School]
        - Activity/Worksheet: Research-level tasks. Independent data analysis, experimental design, statistical reasoning. Professional lab report format.
-       - Reading: Strict MAXIMUM of 450 words/字 per page. Academic-level passages with citations to real sources. Include annotation prompts, margin notes, and Socratic discussion questions. Content should challenge assumptions and present multiple perspectives.
+       - Reading: EN version: 75-110 words per page (ESL B1-B2). ZH version: 250-350 chars per page (native). Academic/字 per page. Academic-level passages with citations to real sources. Include annotation prompts, margin notes, and Socratic discussion questions. Content should challenge assumptions and present multiple perspectives.
        - Background Knowledge: University-prep depth. 5-6 paragraphs with simplified research findings, methodology explanations, and connections to cutting-edge developments in the field.
        - Reflection: Essay-style reflection. Connect to broader concepts, propose extensions, evaluate methodology.
     6. PROMPT DETAIL:
@@ -434,14 +436,33 @@ export const generateLessonPlan = async (input: LessonInput, signal?: AbortSigna
 
     [Core Logic: Weather-Adaptive Strategy]
     - If "Sunny", prioritize high-engagement Outdoor exploration and data collection.
-    - [Safety & Risk Management] Provide detailed location-specific safety protocols, especially for water activities (adult-child ratios, safe zones, tool handling, sun/bug protection).
+    - [Safety & Risk Management] Provide COMPREHENSIVE safety protocols:
+      * Adult-to-child ratios (minimum 1:5 for water activities, 1:8 for land activities)
+      * Explicit safe-zone boundaries (e.g. "do NOT go past the marked rope/cone line")
+      * Tool handling rules (scissors, magnifying glasses, collection jars)
+      * Biological contact principles ("look but don't touch" for unknown species, hand-washing protocol)
+      * Sun/bug protection checklist (sunscreen, hats, insect repellent, long sleeves near water)
+      * Emergency response flow: injury → first aid kit location → emergency contact → nearest hospital
+      * Weather-specific risks: heat stroke signs (for sunny), slippery surfaces (for rainy)
+      * Allergy awareness: check for bee/pollen/plant allergies before nature walks
+    
+    - [Location & Transportation Constraints] The recommended outdoor venue MUST be:
+      * A REAL, existing location in or near the specified city
+      * Reachable within 30 minutes by public transport or school bus from the city center
+      * For single-session courses (≤ 180 min), NEVER recommend locations requiring > 1 hour round-trip travel
+      * If the location is remote, the course MUST include a detailed transportation plan and adjusted activity timing
     - [Duration Limits] If duration is <= 90 minutes, strictly limit to 1-2 major core activities to avoid rushing. Ensure ample time for setup, instruction, and student output.
     - If "Rainy", pivot to Indoor Maker/Lab scenarios using natural specimens, simulations, or indoor experiments.
+    - [Indoor Alternative Equivalence] When designing rainy-day indoor alternatives:
+      * The indoor activity MUST achieve the SAME learning objectives as the outdoor version
+      * Use real specimens, interactive multimedia, model-building, or role-play to maintain hands-on engagement
+      * Include explicit ESL scaffolding even in indoor mode (sentence frames, vocabulary walls, pair discussions)
+      * Avoid passive alternatives (just watching videos) — students must still DO something physical
 
     [Roadmap Requirements]
     - The Roadmap MUST have enough phases to support the handbook. For a ${handbookPageTarget}-page handbook, generate ${minRoadmapPhases}-${minRoadmapPhases + 2} phases.
     - If ${minRoadmapPhases} > 5, subdivide 5E stages into sub-phases (e.g. EXPLORE: Field Observation, EXPLORE: Specimen Collection, EXPLORE: Data Recording).
-    - Each phase must include detailed 'steps' (5-7 actionable steps, plus explicit classroom management/grouping tips for outdoor environments), 'backgroundInfo' (5-8 RICH factual points with specific data, names, numbers, cause-effect explanations — these are the PRIMARY source material for handbook Reading/Background Knowledge pages and MUST be substantive enough to fill full pages), and 'teachingTips' (ESL scaffolding like TPR, visual aids, or sentence frames).
+    - Each phase must include detailed 'steps' (5-7 actionable steps, plus explicit classroom management/grouping tips for outdoor environments), 'backgroundInfo' (5-8 RICH factual points with specific data, names, numbers, cause-effect explanations — these are the PRIMARY source material for handbook Reading/Background Knowledge pages and MUST be substantive enough to fill full pages), 'teachingTips' (ESL scaffolding, outdoor classroom management signals, group role assignments, and differentiation strategies).
     - Description for each phase MUST be 6-8 sentences minimum with concrete actions, scientific/historical/cultural facts, and specific details. This description serves as source material for handbook pages — vague summaries will produce thin, useless handbook content.
 
     ${buildHandbookRules(input)}
@@ -685,6 +706,11 @@ export const generateLessonPlanStreaming = async (
     ${eslBlock}
 
     ${familyMode}
+
+    - [Pre/Post Class Activities] The Roadmap SHOULD include:
+      * A brief pre-class preparation task that students/families can do 1-2 days before
+      * A post-class extension activity that continues learning after the session
+      * A simple assessment mechanism: observation checklist, portfolio show-and-tell, or peer sharing circle
 
     ${buildHandbookRules(input)}
 
