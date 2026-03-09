@@ -100,7 +100,7 @@ Each kit generates a full lesson plan with:
 - Mission Briefing, Vocabulary, Roadmap (5-7 phases), Supplies, Safety
 - Handbook (TARGET_HANDBOOK_PAGES pages)
 
-Use a SIMPLIFIED system prompt (not the full 200-line production prompt) to keep generation under 60s per kit.
+**CRITICAL (A11)**: Use the FULL PRODUCTION system prompt from `geminiService.ts` (`buildENSystemInstruction` function). Do NOT use a simplified prompt — review results must reflect actual production quality. If the multi-step pipeline is available, use it.
 
 Output: `04-lesson-kits/lesson-[N]-[mode]-[age].json` + `.md`
 
@@ -155,7 +155,48 @@ For each handbook page where section === 'Reading':
 RESULT: PASS/FAIL per page + actual word/char count + language
 ```
 
-**B3. Age Differentiation Diff**
+**B3. AI Reading Difficulty Assessment (A12)**
+
+```
+For each handbook page where section === 'Reading':
+  Extract the contentPrompt text.
+  Call Gemini Flash with a low-cost prompt:
+    "Assess this text's reading difficulty for a {ageGroup}-year-old {cefrLevel} ESL learner.
+     Rate 1-5 (1=too easy, 3=just right, 5=too hard).
+     Return JSON: { score: number, reason: string, suggestedCEFR: string }"
+
+RESULT: PASS if all scores are 2-4 (appropriate range). FAIL if any score is 1 or 5.
+```
+
+**B4. Cross-Reference Validation (A13)**
+
+```
+Deterministic code checks — NO AI needed:
+
+1. Vocabulary → Reading pages:
+   For each word in vocabulary.keywords:
+     CHECK at least one Reading page's contentPrompt contains that word (case-insensitive)
+   RESULT: % of vocabulary words referenced in reading content
+
+2. Supplies → Prop Checklist:
+   For each item in supplies.permanent + supplies.consumables:
+     CHECK the Prop Checklist page's contentPrompt mentions it
+   RESULT: % of supply items listed in prop checklist
+
+3. Roadmap phases → Activity pages:
+   For each roadmap phase.activity name:
+     CHECK at least one Activity/Worksheet page title or contentPrompt references it
+   RESULT: % of roadmap activities with matching handbook pages
+
+4. phaseSupplies → global supplies:
+   For each item in roadmap[*].phaseSupplies:
+     CHECK the item appears in either supplies.permanent or supplies.consumables
+   RESULT: % of phase supplies present in global supply list
+
+Overall RESULT: PASS if all percentages >= 80%
+```
+
+**B5. Age Differentiation Diff**
 
 ```
 Compare handbook content between age 6-8 and age 10-12 (same mode):
@@ -167,7 +208,7 @@ Compare handbook content between age 6-8 and age 10-12 (same mode):
 RESULT: Quantified diff table showing that older group gets more complex content
 ```
 
-**B4. Mode Differentiation Diff**
+**B6. Mode Differentiation Diff**
 
 ```
 Compare school vs family mode for the same age group:
@@ -237,7 +278,27 @@ Theme: [theme], City: [city], Age Groups: [groups]
 [From _timing.log — average response time, total tokens estimated]
 ```
 
-### Step 9: Architecture & UI/UX Pipeline Review
+### Step 9: Regression Testing (A14)
+
+If a previous review's `_errors.log` exists (from Step 0 baseline):
+
+1. Extract the failed/low-scoring cases from the previous run
+2. Re-generate ONLY those specific cases (same age, mode, lesson number) using the current prompt
+3. Compare: did the previously-failed case now succeed? Did the previously-low score improve?
+4. Output a regression table:
+
+```
+| Case | Previous Result | Current Result | Regression? |
+|------|----------------|----------------|-------------|
+| lesson-1-family-10-12 | FAILED (JSON parse) | ... | ... |
+| lesson-1-school-10-12 | 8/15 pages | ... | ... |
+```
+
+If no previous run exists, skip and note "No regression baseline available".
+
+Output: `07-final-report/regression-test.md`
+
+### Step 10: Architecture & UI/UX Pipeline Review
 
 Read the core service files (`curriculumService.ts`, `geminiService.ts`) and this workflow definition file.
 Feed them to Gemini to review the entire generation pipeline from the perspective of an AI Software Engineer and a UI/UX Designer.
@@ -245,7 +306,7 @@ Append the review findings to `07-final-report/content-review-report.md`.
 
 Output: Appended report in `07-final-report/content-review-report.md`
 
-### Step 10: Report to User
+### Step 11: Report to User
 
 Use `notify_user` with:
 
@@ -253,6 +314,7 @@ Use `notify_user` with:
 - Score summary table
 - Top 3 critical findings
 - Baseline comparison (if applicable)
+- Regression test results (if applicable)
 
 ## Error Handling
 
