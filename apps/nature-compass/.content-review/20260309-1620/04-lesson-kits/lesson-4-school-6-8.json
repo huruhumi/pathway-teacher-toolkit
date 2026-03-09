@@ -1,0 +1,217 @@
+{
+  "missionBriefing": "Welcome, Nature Rangers! 🌳💧 Today, we're on a top-secret mission to help our thirsty animal friends. The pond water looks a little yucky! Our mission: learn how nature cleans water and then build our very own super water filters to make it crystal clear. Let's use our science eyes and engineering hands to become water heroes! Ready? Let's go! 🎉",
+  "roadmap": [
+    {
+      "phase": "1. ENGAGE: The Thirsty Squirrel's Story",
+      "timeRange": "0-20 mins (20 mins total)"
+    },
+    {
+      "phase": "2. EXPLORE: Autumn Treasure Hunt",
+      "timeRange": "20-60 mins (40 mins total)"
+    },
+    {
+      "phase": "3. EXPLAIN: What's in the Water?",
+      "timeRange": "60-90 mins (30 mins total)"
+    },
+    {
+      "phase": "4. ELABORATE: DIY Nature Filter",
+      "timeRange": "90-140 mins (50 mins total)"
+    },
+    {
+      "phase": "5. EVALUATE: Show & Tell Circle",
+      "timeRange": "140-160 mins (20 mins total)"
+    },
+    {
+      "phase": "6. Post-Class Extension: Home Water Watchers",
+      "timeRange": "160-180 mins (20 mins total)"
+    }
+  ],
+  "handbook": [
+    {
+      "page": 1,
+      "section": "Cover",
+      "title": "My Nature Compass Adventure",
+      "visualPrompt": "A vibrant, cartoon-style cover featuring a diverse group of happy children (ages 6-8) wearing explorer vests and hats. They are gathered around a pond in an autumn park, looking through magnifying glasses at leaves and water. A friendly cartoon squirrel with a water bottle is waving at them. The title is in a fun, bold, handwritten font. The background shows colorful autumn trees (orange, red, yellow). Cheerful, bright, and inviting."
+    },
+    {
+      "page": 2,
+      "section": "Table of Contents",
+      "title": "What's Inside?",
+      "visualPrompt": "A simple, icon-based table of contents. Each section has a small, cute icon next to it: a safety shield for 'Safety Rules', a backpack for 'Your Gear', a storybook for 'Our Mission', a magnifying glass for 'Nature Detective', a water filter for 'Build a Filter', a data chart for 'Water Math', a journal for 'My Notes', and a medal for 'My Award'. The layout is clean with lots of white space."
+    },
+    {
+      "page": 3,
+      "section": "Safety",
+      "title": "Ranger Safety Rules!",
+      "visualPrompt": "A series of four simple, clear pictograms in separate boxes. 1) A hand with a 'stop' sign over a mushroom ('Look, Don't Touch'). 2) Two stick figures holding hands ('Stay with your Buddy'). 3) A sun and a hat icon ('Wear Your Hat'). 4) A hand under a tap ('Wash Hands After'). The title is in a friendly, bold font. The overall look is like a safety card."
+    },
+    {
+      "page": 4,
+      "section": "Prop Checklist",
+      "title": "My Explorer Gear",
+      "visualPrompt": "A checklist with cute cartoon illustrations of each item: a magnifying glass, a collection jar, a water bottle, a small notebook, a pencil, and a sun hat. Each item has a checkbox next to it for the child to tick. The layout is fun and interactive."
+    },
+    {
+      "page": 5,
+      "section": "Reading (Engage)",
+      "title": "Squeaky the Squirrel is Thirsty!",
+      "visualPrompt": "A full-page illustration of a sad-looking cartoon squirrel sitting by a murky pond. The pond has leaves and twigs floating in it. The sun is shining. The squirrel is looking at a single, dirty drop of water on a leaf. The art style is soft and emotional to create empathy."
+    },
+    {
+      "page": 6,
+      "section": "Activity (Explore)",
+      "title": "Nature Detective Hunt",
+      "visualPrompt": "A scavenger hunt checklist. The page is designed like a treasure map. It has small, outlined drawings of items to find: a red leaf, a smooth stone, a rough twig, a pinecone, and a patch of sand. Next to each drawing is a circle to check off. The background has a faint, parchment-like texture."
+    },
+    {
+      "page": 7,
+      "section": "Reading (Explain)",
+      "title": "What is a Filter?",
+      "visualPrompt": "A simple, clear infographic. On the left, a cartoon cloud rains dirty water (brown drops with specks) into a diagram of a filter (layers of stones, sand, cloth). On the right, clean, sparkling blue water drops come out. Arrows show the path of the water. The labels are very simple: 'Dirty Water', 'Filter', 'Clean Water'."
+    },
+    {
+      "page": 8,
+      "section": "Activity (Elaborate)",
+      "title": "Build Your Filter! Step 1",
+      "visualPrompt": "A three-panel comic strip showing the first steps of building a filter. Panel 1: A child's hands placing cotton balls at the bottom of a clear plastic bottle. Panel 2: The hands adding a layer of sand on top of the cotton. Panel 3: The hands adding a layer of small pebbles on top of the sand. Each panel is numbered clearly."
+    },
+    {
+      "page": 9,
+      "section": "Activity (Elaborate)",
+      "title": "Build Your Filter! Step 2",
+      "visualPrompt": "A continuation of the previous page. A two-panel comic strip. Panel 4: A child's hands adding a layer of larger stones on top of the small pebbles. Panel 5: The child is now pouring the collected 'murky pond water' into the top of the bottle filter, with a clean jar underneath to catch the filtered water. The visual style is consistent with page 8."
+    },
+    {
+      "page": 10,
+      "section": "Reading (Math)",
+      "title": "Counting Our Clean Drops",
+      "visualPrompt": "A large, friendly cartoon number '10' filled with sparkling blue water drops. Below it, there is a simple sentence. The page is very clean and focuses on the concept of counting. The background is a pale blue."
+    },
+    {
+      "page": 11,
+      "section": "Activity (Math)",
+      "title": "My Water Data",
+      "visualPrompt": "A simple bar chart template. The Y-axis is labeled 'How Clean?' with a sad face at the bottom and a smiley face at the top. The X-axis has two labels: 'Before Filter' and 'After Filter'. There are empty bars for the child to color in, showing their results. A small color key shows: Brown = Dirty, Yellow = A little clean, Blue = Very clean!"
+    },
+    {
+      "page": 12,
+      "section": "Reading (Art)",
+      "title": "Nature's Colors",
+      "visualPrompt": "A beautiful, textured illustration showing a close-up of different autumn leaves (red, orange, yellow, brown) and stones (grey, white, brown). The focus is on the variety of natural colors and textures. The style is slightly more realistic but still child-friendly."
+    },
+    {
+      "page": 13,
+      "section": "Activity (Evaluate)",
+      "title": "My Nature Journal",
+      "visualPrompt": "A page designed to look like a journal entry. There's a large blank box at the top with the heading 'Draw your filter!'. Below it, there are two simple sentence starters: 'Today I learned about...' and 'My favorite part was...'. The background has faint, light-green grid lines like notebook paper."
+    },
+    {
+      "page": 14,
+      "section": "Certificate",
+      "title": "Official Water Hero Award",
+      "visualPrompt": "A formal-looking but fun certificate. It has a border made of leaves and water drops. In the center, it says 'This certificate is awarded to...' with a blank line. Below that, it reads 'For outstanding work in science and engineering to help nature's friends!'. There are signature lines for the 'Lead Ranger' and the 'Date'. A gold-foil-effect seal is in the corner."
+    },
+    {
+      "page": 15,
+      "section": "Back Cover",
+      "title": "Keep Exploring!",
+      "visualPrompt": "A simple and clean back cover. In the center, a cartoon illustration of the Earth smiling and giving a thumbs-up. Below it, the text 'You are a friend to our planet!'. At the very bottom, a small logo for the 'Nature Compass Workshop'."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Filter (noun)"
+      },
+      {
+        "word": "Clean (adjective)"
+      },
+      {
+        "word": "Dirty (adjective)"
+      },
+      {
+        "word": "Pebbles (noun)"
+      },
+      {
+        "word": "Sand (noun)"
+      },
+      {
+        "word": "Leaf (noun)"
+      },
+      {
+        "word": "Collect (verb)"
+      },
+      {
+        "word": "Pour (verb)"
+      }
+    ],
+    "phrases": [
+      "Let's look closely.",
+      "What do you see?",
+      "I found a...",
+      "The water is dirty.",
+      "The water is clean now!",
+      "My filter is working."
+    ]
+  },
+  "supplies": {
+    "consumables": [
+      "Cotton balls",
+      "Paper towels",
+      "Non-toxic washable markers or crayons",
+      "Stickers (gold stars, smiley faces)",
+      "Bottled water for drinking",
+      "Hand sanitizer",
+      "Snacks (nut-free)"
+    ],
+    "permanent": [
+      "Clear plastic bottles (1 per child, top half cut off)",
+      "Clear plastic jars or cups (2 per child)",
+      "Magnifying glasses",
+      "Small buckets or containers for collecting materials",
+      "Trowels or scoops",
+      "A large jug for 'murky pond water' (pre-made with soil, leaves, twigs)",
+      "First aid kit",
+      "Whistle or attention-getting sound maker",
+      "Boundary markers (cones or bright rope)",
+      "Laminated vocabulary flashcards",
+      "Clipboards and pencils",
+      "Waterproof picnic blanket or tarp for sitting"
+    ]
+  },
+  "safetyProtocol": [
+    {
+      "risk": "Getting Lost / Wandering Off"
+    },
+    {
+      "risk": "Sun Exposure / Dehydration"
+    },
+    {
+      "risk": "Biological Contaminants"
+    },
+    {
+      "risk": "Allergic Reactions"
+    },
+    {
+      "risk": "Slips, Trips, and Falls"
+    },
+    {
+      "risk": "Tool Misuse"
+    },
+    {
+      "risk": "Emergency Situation (Injury)"
+    }
+  ],
+  "basicInfo": {
+    "location": "Hampstead Heath, London, UK (near one of the ponds)",
+    "theme": "Nature Compass: Water Filtration & Conservation"
+  },
+  "handbookStylePrompt": "Create a visually engaging and playful handbook for 6-8 year old ESL learners (CEFR A1). Use a scrapbook/nature journal aesthetic with a mix of cute, cartoon-style illustrations, simple infographics, and large, easy-to-read, rounded fonts. The color palette should be warm and autumnal (oranges, yellows, browns) with bright, clean blues for water elements. Ensure plenty of white space to avoid overwhelming the reader. All text should be minimal, direct, and supported by strong visual cues. Interactive elements like checkboxes and drawing spaces are essential.",
+  "notebookLMPrompt": "You are a 7-year-old nature explorer writing in your journal. Your language is simple, full of wonder, and uses basic vocabulary. You describe what you see and do with excitement. For example: 'Today we helped a squirrel! The water was yucky brown. We made a filter with rocks and sand. Wow! The water is clean now! I am a water hero.' You express simple emotions and observations directly.",
+  "visualReferences": [
+    "Illustrations in the style of the 'Magic School Bus' series (simple science diagrams, expressive characters).",
+    "Layouts from National Geographic Kids magazines (photo-heavy, fun fonts, lots of small, digestible info boxes).",
+    "Character designs similar to 'Hey Duggee' (simple shapes, bold outlines, friendly and appealing).",
+    "The aesthetic of a children's scrapbook with pasted-in elements, hand-drawn arrows, and textured backgrounds."
+  ]
+}

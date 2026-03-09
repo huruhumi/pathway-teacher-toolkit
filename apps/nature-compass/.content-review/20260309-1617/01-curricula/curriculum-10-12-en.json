@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "The Secret Life of Reeds",
+      "lessonNumber": 1,
+      "theme": "Wetland Biodiversity and Ecosystems",
+      "location": "Jiefang Park (解放公园) - Artificial Wetland Area",
+      "season": "Spring or Autumn",
+      "learningGoals": [
+        "Identify and name 5 common wetland plants and animals in English.",
+        "Understand the definition of an 'ecosystem' through direct observation.",
+        "Practice using descriptive adjectives to record nature findings in a field journal."
+      ],
+      "keyVocabulary": [
+        "wetland",
+        "ecosystem",
+        "habitat",
+        "biodiversity",
+        "reeds",
+        "dragonfly",
+        "observe"
+      ],
+      "activitySummary": "Students will go on a nature scavenger hunt to find specific wetland species and create a 'Habitat Map' of the park's pond area. They will use magnifying glasses to look at plant structures and present one 'discovery' to the group.",
+      "steamFocus": "Science, Arts",
+      "safetyNotes": "Stay behind the wooden railings near the water; watch for slippery moss on stones."
+    },
+    {
+      "lessonTitle": "Clear Water Quest",
+      "lessonNumber": 2,
+      "theme": "Water Quality and Natural Filtration",
+      "location": "East Lake (东湖) - Tingtao Scenic Area",
+      "season": "Summer or Autumn",
+      "learningGoals": [
+        "Explain how wetlands act as natural water filters using simple sequence connectors (first, then, finally).",
+        "Measure water transparency using a basic Secchi disk tool.",
+        "Compare 'muddy' vs 'filtered' water samples using comparative adjectives."
+      ],
+      "keyVocabulary": [
+        "filter",
+        "pollution",
+        "transparent",
+        "sediment",
+        "purify",
+        "pebbles",
+        "sand"
+      ],
+      "activitySummary": "After testing the clarity of East Lake's water, students will work in teams to build a DIY water filtration tower using sand, gravel, and charcoal. They will predict which materials clean the water most effectively.",
+      "steamFocus": "Science, Engineering, Math",
+      "safetyNotes": "Wear waterproof shoes; do not touch or drink the lake water samples."
+    },
+    {
+      "lessonTitle": "Feathered Friends of Wuhan",
+      "lessonNumber": 3,
+      "theme": "Ornithology and Bird Migration",
+      "location": "Moon Lake (月湖公园)",
+      "season": "Winter or Spring",
+      "learningGoals": [
+        "Identify 3 local bird species and describe their physical features (beaks, feathers, wings).",
+        "Understand the concept of migration and why birds choose Wuhan wetlands as a stopover.",
+        "Use binoculars correctly and record data in a bird-watching log."
+      ],
+      "keyVocabulary": [
+        "migration",
+        "binoculars",
+        "beak",
+        "feathers",
+        "species",
+        "flight",
+        "nest"
+      ],
+      "activitySummary": "Students will use binoculars to observe birds around Moon Lake and the nearby Hanyang cultural area. They will participate in a 'Beak Challenge' game to learn how different beak shapes are adapted for eating different foods.",
+      "steamFocus": "Science, Technology",
+      "safetyNotes": "Keep a safe distance from wild birds to avoid disturbing them; stay on designated walking paths."
+    },
+    {
+      "lessonTitle": "Future Wetland Architects",
+      "lessonNumber": 4,
+      "theme": "Urban Conservation and Sustainable Design",
+      "location": "Sha Lake Park (沙湖公园)",
+      "season": "All Seasons",
+      "learningGoals": [
+        "Identify human-made threats to wetlands like plastic waste and urban noise.",
+        "Propose a creative solution to protect the wetland using 'should' and 'must' for suggestions.",
+        "Design a 3D model of a 'Sustainable Wetland Park' using recycled and natural materials."
+      ],
+      "keyVocabulary": [
+        "conservation",
+        "protect",
+        "sustainable",
+        "infrastructure",
+        "environment",
+        "pollution",
+        "recycle"
+      ],
+      "activitySummary": "Students will conduct a mini 'Trash Audit' to see how humans affect Sha Lake. They will then work in groups to sketch and build a model of a wetland that includes features for both people and animals to coexist safely.",
+      "steamFocus": "Engineering, Arts, Science",
+      "safetyNotes": "Use gloves when picking up any trash for the audit; be careful with scissors and glue during the modeling phase."
+    }
+  ]
+}

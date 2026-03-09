@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Curriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
-import { BatchItemStatus } from '../hooks/useBatchGenerate';
+import { BatchItemStatus } from '@shared/hooks/useBatchGenerateState';
 
 interface CurriculumResultDisplayProps {
     curriculumEN: Curriculum | null;

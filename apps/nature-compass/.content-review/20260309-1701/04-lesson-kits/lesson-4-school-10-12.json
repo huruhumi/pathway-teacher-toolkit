@@ -1,0 +1,478 @@
+{
+  "missionBriefing": {
+    "title": "Nature Compass: The Autumn Expedition",
+    "narrative": "Welcome, Junior Ecologists! A strange signal has been detected in the park. It seems the local ecosystem is trying to send us a message about the changing season. Your mission is to become Nature Detectives, use scientific tools to explore the autumn environment, collect data, and create a special 'Nature Map' to decode the message of the forest. Are you ready to explore?"
+  },
+  "roadmap": [
+    {
+      "timeRange": "0-15 min",
+      "phase": "ENGAGE",
+      "activity": "Mission Briefing & Sensory Warm-up",
+      "activityType": "Science",
+      "location": "Designated meeting spot at the park entrance (e.g., near Pembroke Lodge, Richmond Park)",
+      "description": "To begin our expedition, we gather as a team of 'Nature Detectives'. The instructor presents the mission narrative, sparking curiosity about the 'secret message' of the autumn forest. This phase activates prior knowledge by asking students what they already know about autumn. We then engage our senses with a simple '5-4-3-2-1' warm-up: name five things you see, four things you can feel, three things you can hear, two things you can smell, and one thing you can imagine tasting. This primes their observation skills and introduces key sensory vocabulary in a low-pressure, interactive way.",
+      "learningObjective": "To activate prior knowledge about autumn and focus students' sensory awareness for observation.",
+      "steps": [
+        "Gather students in a circle and present the 'Nature Compass' mission narrative.",
+        "Ask open-ended questions: 'What happens to trees in autumn? What animals might we see today?'",
+        "Introduce the '5-4-3-2-1' sensory warm-up game. Model the first step clearly.",
+        "Guide students through the game, encouraging them to point to objects as they name them.",
+        "Introduce the concept of being a 'Nature Detective' and explain they will get a special handbook to record their findings.",
+        "Distribute handbooks and collection bags, building excitement for the exploration ahead.",
+        "Briefly review the primary safety rule: 'Stay within sight of the instructors at all times.'"
+      ],
+      "backgroundInfo": [
+        "Autumn, or Fall, is one of the four temperate seasons. It marks the transition from summer to winter.",
+        "The most noticeable sign of autumn is the changing color of leaves on deciduous trees.",
+        "This color change happens because trees stop producing chlorophyll, the green pigment used for photosynthesis.",
+        "As the green fades, other pigments like carotenoids (yellows, oranges) and anthocyanins (reds, purples) become visible.",
+        "Days become shorter in autumn, which is the primary trigger for trees to begin shutting down for winter.",
+        "Many animals, like squirrels, begin gathering and storing food for the winter, a behavior called 'caching'."
+      ],
+      "teachingTips": [
+        "Use expressive gestures and a mysterious tone of voice to deliver the mission narrative and hook the students.",
+        "For the sensory warm-up, provide sentence frames on a whiteboard: 'I can see a ____.', 'I can hear a ____.'",
+        "Pair students up to share their sensory observations before sharing with the whole group.",
+        "Use a special 'call and response' signal to get attention in the outdoor space, like 'Nature Detectives!' with the response 'On the case!'."
+      ],
+      "conversationStarters": [
+        "What is your favorite thing about autumn?",
+        "Why do you think leaves change color?",
+        "What sounds do you hear right now in the park?"
+      ],
+      "phaseSupplies": [
+        "Student handbooks",
+        "Pencils",
+        "Small collection bags",
+        "Portable whiteboard/chalkboard"
+      ]
+    },
+    {
+      "timeRange": "15-55 min",
+      "phase": "EXPLORE (Part 1)",
+      "activity": "Guided Nature Walk & Scavenger Hunt",
+      "activityType": "Science/Art",
+      "location": "A designated safe trail or area of the park with diverse natural features.",
+      "description": "Now that our senses are sharp, we embark on a guided walk. Students use a visual scavenger hunt list in their handbooks to find specific natural items: a rough piece of bark, a smooth stone, a fallen leaf with more than one color, a feather, and something a squirrel might eat. This is a hands-on, kinesthetic activity where students actively search and observe their surroundings. The focus is on exploration and discovery, not formal identification. They are encouraged to touch, smell (safely), and describe the textures and shapes they find, building a tactile connection to the environment.",
+      "learningObjective": "To observe and collect a variety of natural objects based on sensory characteristics (texture, color, shape).",
+      "steps": [
+        "Explain the rules of the scavenger hunt, pointing to the visual guide in their handbooks.",
+        "Define the physical boundaries for the hunt (e.g., 'Stay between this path and that large oak tree.').",
+        "Model finding the first item, thinking aloud: 'I am looking for rough bark. This tree feels bumpy and rough. I found it!'",
+        "Release students in pairs or small groups to search for the items.",
+        "Circulate among the groups, asking questions like 'How does that feel?' or 'What colors do you see on that leaf?'",
+        "Encourage students to place their found items gently into their collection bags.",
+        "Use the attention signal to gather the group periodically to share exciting finds."
+      ],
+      "backgroundInfo": [
+        "Tree bark has different textures for protection. Smooth bark is common on young trees like beech, while deeply grooved bark is found on older trees like oaks.",
+        "The items squirrels eat are often nuts and seeds, like acorns from oak trees or chestnuts. These are high in fat and energy.",
+        "Feathers have a complex structure with a central shaft (rachis) and barbs branching off, designed for flight and insulation.",
+        "Stones are smoothed by the action of water (in rivers) or wind over thousands of years, a process called erosion.",
+        "Leaf color variation can be caused by sun exposure, genetics, and the specific mix of pigments in the leaf."
+      ],
+      "teachingTips": [
+        "Pre-walk the area to ensure the scavenger hunt items are available and the area is safe.",
+        "Assign roles within groups: a 'Looker', a 'Collector', and a 'Reporter' who will share the findings.",
+        "Scaffold language by providing a word bank of textures: 'rough', 'smooth', 'bumpy', 'soft', 'hard'.",
+        "For students who find items quickly, provide an extension challenge: 'Can you find three different kinds of leaves?'"
+      ],
+      "conversationStarters": [
+        "Which item was the hardest to find? Why?",
+        "Describe the texture of the stone you found.",
+        "What do you think made this mark on the bark?"
+      ],
+      "phaseSupplies": [
+        "Student handbooks with scavenger hunt page",
+        "Collection bags",
+        "Magnifying glasses"
+      ]
+    },
+    {
+      "timeRange": "55-85 min",
+      "phase": "EXPLORE (Part 2)",
+      "activity": "Specimen Analysis & Digital Identification",
+      "activityType": "Science/Technology",
+      "location": "A seated area, like a clearing or picnic benches.",
+      "description": "In this phase, we transition from broad exploration to focused analysis. Students take out the leaves they collected and use magnifying glasses to observe the details, such as veins and edges. This is where we integrate technology. Using a tablet with a plant identification app (like 'Seek' by iNaturalist), the instructor helps students identify one or two common leaf types, such as Oak or Maple. This introduces them to how technology can assist scientific observation, bridging the gap between nature and the digital world. Students record the leaf name in their handbook next to a rubbing or drawing.",
+      "learningObjective": "To use observational tools (magnifying glass) and digital technology to identify common local plant species.",
+      "steps": [
+        "Gather students and have them lay out their collected leaves on a provided mat or cloth.",
+        "Distribute magnifying glasses and instruct students to look closely at the leaf veins and edges.",
+        "Introduce the plant identification app on a tablet. Explain that it's a 'digital field guide'.",
+        "Choose a common, easily identifiable leaf from a student's collection (e.g., an Oak leaf).",
+        "Hold the tablet and model how to use the app to scan and identify the leaf. Announce the result clearly.",
+        "Have students find a similar leaf in their collection and repeat the name: 'This is an Oak leaf.'",
+        "Guide students to the correct page in their handbook to record their finding by making a leaf rubbing or drawing.",
+        "Repeat the process for one other common leaf type if time allows."
+      ],
+      "backgroundInfo": [
+        "Plant identification apps use artificial intelligence and computer vision to analyze photos and match them against a database of species.",
+        "Leaf veins are like tiny pipes that transport water and nutrients. The pattern of veins (venation) is a key feature for identification.",
+        "Oak leaves are known for their lobed (rounded) edges, while Maple leaves have pointed lobes and a palmate shape (like a hand).",
+        "Richmond Park is famous for its ancient oak trees, some of which are over 750 years old.",
+        "Leaf rubbing is a simple scientific illustration technique that captures the texture and vein pattern of a specimen."
+      ],
+      "teachingTips": [
+        "Ensure the app is pre-loaded and tested in the park location, as connectivity can be an issue.",
+        "Focus on the process of using technology for discovery, not on identifying every single item.",
+        "Provide sentence frames for describing leaves: 'My leaf has ____ edges.' (e.g., 'pointy', 'rounded').",
+        "Have pre-printed labels with the names of common trees (Oak, Maple, Beech) for students who struggle with writing."
+      ],
+      "conversationStarters": [
+        "What did you see with the magnifying glass that you couldn't see before?",
+        "How is technology helpful for a scientist?",
+        "Are the veins on the leaf straight or branched?"
+      ],
+      "phaseSupplies": [
+        "Magnifying glasses",
+        "Collected leaves",
+        "Tablet with a pre-installed plant identification app (e.g., Seek by iNaturalist)",
+        "Paper and crayons for leaf rubbings",
+        "Ground mats or blankets"
+      ]
+    },
+    {
+      "timeRange": "85-110 min",
+      "phase": "EXPLAIN",
+      "activity": "Ecosystem Circle & Vocabulary Match",
+      "activityType": "Science",
+      "location": "Seated area.",
+      "description": "With concrete examples from their exploration, we now formalize the key concepts. The instructor leads a discussion to define the word 'ecosystem', explaining it as a community of living things (plants, animals) and non-living things (sun, soil, water) that work together. We introduce the roles within the ecosystem: producers (plants), consumers (animals), and decomposers (fungi, bacteria). Students participate in a vocabulary matching game, connecting pictures of their found items to these new terms. For example, a leaf connects to 'producer' and a worm or mushroom to 'decomposer'. This makes abstract scientific terms tangible and memorable.",
+      "learningObjective": "To define 'ecosystem' and identify the roles of producers, consumers, and decomposers using collected specimens as examples.",
+      "steps": [
+        "Gather students in a circle with their collection bags.",
+        "Introduce the word 'Ecosystem' [AUDIO_ICON] and provide a simple, A2-level definition.",
+        "Use a large diagram or felt board to show the sun, a plant (producer), an animal (consumer), and a mushroom (decomposer).",
+        "Explain each role simply: 'Producers make their own food. Consumers eat other things. Decomposers recycle dead things.'",
+        "Hold up examples from nature (a green leaf for producer, an acorn for consumer food).",
+        "Play the vocabulary match game: give students cards with the words 'Producer', 'Consumer', 'Decomposer' and have them place them next to a picture or real object.",
+        "Review the answers as a group, having students repeat the new vocabulary in a sentence: 'A tree is a producer.'"
+      ],
+      "backgroundInfo": [
+        "An ecosystem is a biological community of interacting organisms and their physical environment.",
+        "Producers, or autotrophs, create their own food, usually through photosynthesis. In this park, the main producers are trees, grasses, and shrubs.",
+        "Consumers, or heterotrophs, cannot make their own food and must eat other organisms. A deer eating grass is a primary consumer.",
+        "Decomposers, like fungi and bacteria, break down dead organic material, returning essential nutrients to the soil. They are nature's recycling team.",
+        "The energy in an ecosystem flows from the sun to producers, then to consumers. Decomposers complete the cycle.",
+        "Richmond Park is a vital ecosystem in London, designated as a National Nature Reserve and a Site of Special Scientific Interest."
+      ],
+      "teachingTips": [
+        "Use physical movements to represent the vocabulary: stretch arms up like a plant for 'producer', pretend to eat for 'consumer', and wiggle fingers on the ground for 'decomposer'.",
+        "Keep definitions short and clear. Use analogies, like 'Decomposers are like the clean-up crew of the forest.'",
+        "Use a 'Think-Pair-Share' strategy for the matching game to encourage peer learning and reduce anxiety.",
+        "Have a 'Vocabulary Wall' on a portable whiteboard with the new words and pictures."
+      ],
+      "conversationStarters": [
+        "Is a squirrel a producer or a consumer? Why?",
+        "What would happen if there were no decomposers?",
+        "Are humans part of an ecosystem?"
+      ],
+      "phaseSupplies": [
+        "Large diagram/felt board of an ecosystem",
+        "Vocabulary cards (Producer, Consumer, Decomposer)",
+        "Picture cards of plants, animals, fungi",
+        "Portable whiteboard and markers"
+      ]
+    },
+    {
+      "timeRange": "110-150 min",
+      "phase": "ELABORATE",
+      "activity": "Autumn Leaf Math & Nature Art",
+      "activityType": "Science/Math/Art",
+      "location": "Seated area.",
+      "description": "This phase challenges students to apply their knowledge creatively. First, we integrate mathematics. Students select three different leaves from their collection. They measure the length of each leaf using a simple ruler, ordering them from shortest to longest and recording the data. They then create a simple bar graph in their handbooks comparing the lengths. This activity reinforces measurement and data visualization skills. Following the math component, students use their collected leaves, twigs, and stones to create a temporary piece of 'Land Art' on a large sheet of paper, forming a picture of an animal or a pattern. This encourages creative expression using natural materials.",
+      "learningObjective": "To apply measurement and data representation skills to natural objects and create an artistic composition using collected items.",
+      "steps": [
+        "Introduce the 'Leaf Math' challenge. Distribute simple rulers.",
+        "Model how to measure a leaf from the tip to the bottom of the stem.",
+        "Instruct students to choose three leaves, measure them, and record the lengths in their handbook.",
+        "Show them how to fill in a simple bar graph to compare the sizes.",
+        "Circulate to assist with using the ruler and creating the graph.",
+        "Next, introduce the 'Nature Art' activity. Lay out large sheets of construction paper.",
+        "Encourage students to arrange their collected natural items on the paper to create a picture or pattern, without using glue, emphasizing that this art is temporary.",
+        "Allow time for creativity and then host a mini 'gallery walk' for students to see each other's artwork."
+      ],
+      "backgroundInfo": [
+        "Mathematics is a fundamental tool in biology. Scientists use it to measure growth, population sizes, and analyze data.",
+        "A bar graph is a chart that presents categorical data with rectangular bars with heights or lengths proportional to the values that they represent.",
+        "Leaf size (length and surface area) is related to a tree's strategy for capturing sunlight. Large leaves are common in shady understories, while small leaves are common in dry, sunny climates.",
+        "'Land Art' or 'Earth Art' is an art movement in which landscape and the work of art are inextricably linked. It often uses natural materials.",
+        "Artists like Andy Goldsworthy are famous for creating ephemeral sculptures from natural materials like leaves, stones, and ice.",
+        "This type of art fosters an appreciation for the beauty of natural forms and textures."
+      ],
+      "teachingTips": [
+        "Provide rulers with clear centimeter markings. Pre-teach or review numbers 1-20.",
+        "Use the sentence frame for the math activity: 'This leaf is ____ centimeters long.'",
+        "For the art activity, provide prompts if students are stuck, such as 'Can you make a spiral?' or 'Can you make the face of an animal?'",
+        "Take photos of the land art, as it is temporary. This can be shared with parents later.",
+        "Differentiation: For students needing support, provide pre-drawn axes for the graph. For advanced students, ask them to calculate the difference in length between the longest and shortest leaf."
+      ],
+      "phaseSupplies": [
+        "Collected leaves and other natural items",
+        "Rulers (cm)",
+        "Student handbooks with graphing page",
+        "Pencils",
+        "Large sheets of construction paper or cardboard"
+      ]
+    },
+    {
+      "timeRange": "150-180 min",
+      "phase": "EVALUATE",
+      "activity": "My Nature Map & Show-and-Tell",
+      "activityType": "Science/Art/Engineering",
+      "location": "Seated area and return to meeting spot.",
+      "description": "For the final phase, students synthesize their learning by creating a 'Nature Map'. This is not a geographical map, but a conceptual one. On a designated page in their handbook, they draw the key things they discovered: the oak tree where they found acorns, the area with the smoothest stones, and the different leaves they identified. They must label at least three items using the new vocabulary. The evaluation is a 'Show-and-Tell' circle where each student presents their map, explaining one thing they learned using a simple sentence frame. This serves as a portfolio assessment, celebrating their individual journey and reinforcing the day's concepts.",
+      "learningObjective": "To synthesize and communicate key observations and learning from the workshop by creating and presenting a personal 'Nature Map'.",
+      "steps": [
+        "Explain the final task: creating a 'Nature Map' of their scientific journey today.",
+        "Show a simple example of a map, with drawings of a tree, a leaf, and a stone, and labels.",
+        "Instruct students to draw at least three important things they saw or found and to label them.",
+        "Provide colored pencils or crayons for the drawing.",
+        "Circulate and help students with spelling and ideas for their maps.",
+        "Once maps are complete, gather the group in a final circle for the 'Show-and-Tell'.",
+        "Provide the sentence frame: 'On my map, I have a ____. I learned that it is a ____.' (e.g., '...an oak leaf. I learned that it is a producer.').",
+        "Give each student a chance to share one thing from their map, offering applause and positive reinforcement.",
+        "Conclude by awarding a 'Junior Ecologist' certificate and reviewing the 'secret message' of the forest: that everything is connected."
+      ],
+      "backgroundInfo": [
+        "Mapping is a core skill in many scientific fields, including ecology, geology, and cartography.",
+        "Conceptual maps, or mind maps, are diagrams used to visually organize information. They help in learning and memory recall.",
+        "Show-and-Tell is a common pedagogical tool that helps young learners practice public speaking, listening skills, and summarizing information.",
+        "Peer teaching and sharing reinforces learning for both the speaker and the audience.",
+        "Celebrating achievements with certificates builds confidence and provides a sense of accomplishment, positively concluding the learning experience."
+      ],
+      "teachingTips": [
+        "Manage time carefully to ensure everyone who wants to share has an opportunity.",
+        "Focus on effort and participation rather than artistic ability or perfect grammar.",
+        "Model the 'Show-and-Tell' sentence frame yourself first to show students what is expected.",
+        "This activity serves as a summative assessment. Use a simple checklist to note if students used key vocabulary and could recall a key concept.",
+        "End the workshop on a high note, praising their hard work as 'Nature Detectives'."
+      ],
+      "conversationStarters": [
+        "What was the most interesting thing you put on your map?",
+        "If you came back to the park tomorrow, what would you look for?",
+        "What is one new word you learned today?"
+      ],
+      "phaseSupplies": [
+        "Student handbooks with map page",
+        "Colored pencils or crayons",
+        "'Junior Ecologist' certificates"
+      ]
+    }
+  ],
+  "handbook": [
+    {
+      "pageNumber": 1,
+      "title": "Nature Compass",
+      "section": "Cover",
+      "contentPrompt": "# Nature Compass\n\n## The Autumn Expedition\n\nMy Name: [TEXT_INPUT: Write your name here]\n\nDate: [TEXT_INPUT: Write the date here]",
+      "visualPrompt": "A vibrant, cartoon-style illustration of diverse kids (a boy with glasses, a girl in a hijab, a child in a wheelchair) looking at a large, stylized compass. The compass points are labeled N, S, E, W, but the needle points to a large oak leaf. The background is a sunny autumn park with colorful trees.",
+      "layoutDescription": "Centered title and subtitle. Text input fields at the bottom. The illustration fills about 70% of the page. A clean, inviting layout."
+    },
+    {
+      "pageNumber": 2,
+      "title": "Your Mission!",
+      "section": "Table of Contents",
+      "contentPrompt": "# Your Mission!\n\n## Table of Contents\n\n**Safety First!** .......... Page 3\n\n**Your Tools** .............. Page 4\n\n**What is an Ecosystem?** ... Page 5\n\n**Scavenger Hunt** ........ Page 6\n\n**Autumn Leaves** ........... Page 7\n\n**My Leaf Collection** .... Page 8\n\n**The Clean-Up Crew** ..... Page 9\n\n**Leaf Math** ............... Page 10\n\n**My Nature Map** ........... Page 12\n\n**My Reflection** ........... Page 13",
+      "visualPrompt": "A simple icon next to each table of contents entry: a shield for safety, a magnifying glass for tools, a tree for ecosystem, a checklist for scavenger hunt, etc. The layout is clean and easy to read.",
+      "layoutDescription": "Left-aligned text with dot leaders connecting to page numbers. Small, simple icons add visual interest without cluttering the page."
+    },
+    {
+      "pageNumber": 3,
+      "title": "Safety First!",
+      "section": "Safety",
+      "contentPrompt": "# Safety First!\n\n## How to be a Safe Explorer\n\n1.  Always stay with the group. Never wander off alone.\n2.  Look, but don't touch unknown plants or animals.\n3.  Walk carefully. Watch for tree roots and slippery spots.\n4.  Wash your hands after exploring.",
+      "visualPrompt": "Four simple, clear icons in a row, corresponding to the four rules: 1) A group of stick figures holding hands. 2) A hand with a red 'X' over it next to a mushroom. 3) A 'slippery floor' warning sign icon. 4) A pair of hands under a water faucet.",
+      "layoutDescription": "Numbered list with short, simple sentences. Each rule is paired with a clear, universally understandable icon. Lots of white space."
+    },
+    {
+      "pageNumber": 4,
+      "title": "Prop Checklist",
+      "section": "Prop Checklist",
+      "contentPrompt": "# Your Tools\n\n## My Explorer Kit\n\nCheck the box when you have your tool!\n\n[ ] My Handbook\n\n[ ] A Pencil\n\n[ ] A Collection Bag\n\n[ ] A Magnifying Glass\n\n[ ] A Ruler",
+      "visualPrompt": "A cartoon drawing of a child's backpack with the listed items peeking out. Each item in the checklist has a small, simple drawing next to it: a book, a pencil, a bag, a magnifying glass, a ruler.",
+      "layoutDescription": "A checklist format with large, easy-to-tick boxes. The visual of the backpack makes the concept of a 'kit' more engaging."
+    },
+    {
+      "pageNumber": 5,
+      "title": "What is an Ecosystem?",
+      "section": "Reading",
+      "contentPrompt": "# What is an Ecosystem? [AUDIO_ICON]\n\nAn **ecosystem** is a home for many living and non-living things. Plants, animals, the sun, water, and soil all work together. It is a busy community! The park is a big ecosystem.\n\n> Did you know? Everything in an ecosystem is connected!",
+      "visualPrompt": "A simple, colorful diagram showing the sun shining on a large tree (producer). A deer (consumer) is eating grass next to the tree. A mushroom (decomposer) is at the base of the tree. Arrows connect them in a cycle.",
+      "layoutDescription": "A short paragraph of text at the top. A 'Did You Know?' box at the bottom. The central diagram is the main focus of the page."
+    },
+    {
+      "pageNumber": 6,
+      "title": "Sensory Scavenger Hunt",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Scavenger Hunt\n\n## Can you find these things?\n\nFind something...\n\n[ ] **Rough** (like bark)\n\n[ ] **Smooth** (like a stone)\n\n[ ] **Colorful** (like a leaf)\n\n[ ] **Light** (like a feather)\n\n[ ] **Crunchy** (like a dry leaf)",
+      "visualPrompt": "A checklist with a small, clear photo or realistic drawing next to each item: a close-up of tree bark, a smooth river stone, a red and yellow maple leaf, a small bird feather, and a dried, curled-up leaf.",
+      "layoutDescription": "A clear checklist format. The combination of text and visuals helps students with different learning styles and lower English proficiency."
+    },
+    {
+      "pageNumber": 7,
+      "title": "Autumn Leaves",
+      "section": "Reading",
+      "contentPrompt": "# Autumn Leaves\n\nIn autumn, trees stop making green **chlorophyll** [AUDIO_ICON]. This lets us see other beautiful colors. Yellow, orange, and red pigments were in the leaf all summer. Now it is their time to shine before the leaf falls to the ground for winter.",
+      "visualPrompt": "A sequence of three simple illustrations of the same leaf. The first is solid green (labeled 'Summer'). The second is yellow and orange (labeled 'Autumn'). The third is brown and on the ground (labeled 'Winter').",
+      "layoutDescription": "A short paragraph of text. The visual sequence clearly explains the concept of color change over time. Key vocabulary is bolded."
+    },
+    {
+      "pageNumber": 8,
+      "title": "My Leaf Collection",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# My Leaf Collection\n\n## What did you find?\n\nMake a rubbing of your favorite leaf here. What kind of tree is it from?\n\n[TEXT_INPUT: This leaf is from a(n) ______ tree.]",
+      "visualPrompt": "A large, blank rectangular frame in the center of the page, labeled 'Place your leaf under this page and rub with a crayon.' A small, friendly cartoon squirrel in the corner is holding up an acorn and pointing to the text input line.",
+      "layoutDescription": "Dominated by the large blank space for the activity. Instructions are simple and clear. The text input field is clearly marked."
+    },
+    {
+      "pageNumber": 9,
+      "title": "The Clean-Up Crew",
+      "section": "Background Knowledge",
+      "contentPrompt": "# The Clean-Up Crew\n\nMeet the **decomposers** [AUDIO_ICON]! Fungi, mushrooms, and tiny bacteria are nature's recyclers. They eat dead leaves and logs. This turns them back into healthy soil, which helps new plants grow. They are a very important part of the ecosystem.",
+      "visualPrompt": "A close-up, friendly cartoon illustration of the forest floor. A smiling mushroom, a friendly worm wearing a hard hat, and some sparkly dots representing bacteria are on a fallen log.",
+      "layoutDescription": "Short text paragraph at the top. The bottom two-thirds of the page is a large, engaging illustration that makes the concept of decomposers seem friendly and not scary."
+    },
+    {
+      "pageNumber": 10,
+      "title": "Leaf Math",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Leaf Math\n\n## How long are your leaves?\n\nMeasure three leaves. Write their lengths. Then, color the graph to show your data.\n\nLeaf 1: [TEXT_INPUT: ___ cm]\n\nLeaf 2: [TEXT_INPUT: ___ cm]\n\nLeaf 3: [TEXT_INPUT: ___ cm]",
+      "visualPrompt": "A simple, empty bar graph with the Y-axis labeled 'Length (cm)' and numbers 0-15. The X-axis has three labels: 'Leaf 1', 'Leaf 2', 'Leaf 3'. A cartoon caterpillar is shown crawling up the side of the Y-axis.",
+      "layoutDescription": "The page is split into two sections. The left side has the text input for measurements. The right side has the empty bar graph, ready to be filled in by the student."
+    },
+    {
+      "pageNumber": 11,
+      "title": "Making Your Nature Map",
+      "section": "Instructions",
+      "contentPrompt": "# Your Nature Map\n\n## Draw your adventure!\n\n1.  Think about your walk today.\n2.  Draw three special things you saw or found.\n3.  Label your drawings with the new words you learned.\n4.  Be ready to share your map!",
+      "visualPrompt": "A simple four-panel comic strip showing a child completing the steps: 1) A child with a thinking bubble. 2) The child drawing a tree. 3) The child writing the word 'Oak Tree' with an arrow. 4) The child holding up the finished map and smiling.",
+      "layoutDescription": "A numbered list with simple instructions. The comic strip provides a clear, visual guide to the process, making it easy to understand."
+    },
+    {
+      "pageNumber": 12,
+      "title": "My Nature Map",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# My Nature Map\n\n## My Scientific Journey",
+      "visualPrompt": "A large blank page with a simple border made of autumn leaves and acorns. In the corner, there is a small compass rose icon.",
+      "layoutDescription": "A full-page blank canvas for the student's drawing. The title is at the top, and the decorative border provides a theme without taking up too much drawing space."
+    },
+    {
+      "pageNumber": 13,
+      "title": "My Reflection",
+      "section": "Reflection",
+      "contentPrompt": "# My Reflection\n\n## What did I learn?\n\nToday, my favorite activity was:\n[TEXT_INPUT: Write your answer here.]\n\nOne new thing I learned is:\n[TEXT_INPUT: Write your answer here.]\n\nDraw your feeling about today:",
+      "visualPrompt": "Three empty circles at the bottom of the page, labeled 'Happy', 'Okay', and 'Excited', with corresponding simple smiley faces. Students can circle or color the one that matches their feeling.",
+      "layoutDescription": "Simple sentence starters with ample writing space. The final drawing/circling activity is a quick, non-verbal way for students to express their feelings about the workshop."
+    },
+    {
+      "pageNumber": 14,
+      "title": "Certificate",
+      "section": "Certificate",
+      "contentPrompt": "# Certificate of Achievement\n\nThis certifies that\n\n[TEXT_INPUT: ____________________]\n\nhas successfully completed the\n\n**Nature Compass Autumn Expedition**\n\nand is now an official\n\n## Junior Ecologist!",
+      "visualPrompt": "A formal-looking certificate border made of intertwined vines and leaves. In the bottom corner, there is a seal that says 'Official Nature Detective' with a magnifying glass in the center. A line at the bottom for the instructor's signature.",
+      "layoutDescription": "Classic certificate layout with centered text and a formal border. The text input line for the student's name is large and clear."
+    },
+    {
+      "pageNumber": 15,
+      "title": "Back Cover",
+      "section": "Back Cover",
+      "contentPrompt": "> The Earth has music for those who listen.\n\nKeep exploring!",
+      "visualPrompt": "A full-page, beautiful, minimalist illustration of a single, detailed oak leaf against a soft, out-of-focus autumn-colored background. The organization's logo could be placed discreetly at the bottom.",
+      "layoutDescription": "A visually appealing and calm closing page. The quote is centered in an elegant font. The main focus is the high-quality illustration, leaving a lasting impression."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Ecosystem",
+        "definition": "A community of living and non-living things that work together."
+      },
+      {
+        "word": "Producer",
+        "definition": "A living thing, like a plant, that makes its own food from sunlight."
+      },
+      {
+        "word": "Consumer",
+        "definition": "A living thing that eats other plants or animals."
+      },
+      {
+        "word": "Decomposer",
+        "definition": "A living thing, like a mushroom or bacteria, that breaks down dead things."
+      },
+      {
+        "word": "Chlorophyll",
+        "definition": "The green color in leaves that helps plants make food."
+      },
+      {
+        "word": "Texture",
+        "definition": "How something feels when you touch it (e.g., rough, smooth)."
+      },
+      {
+        "word": "Observation",
+        "definition": "Looking at something carefully to get information."
+      }
+    ],
+    "phrases": [
+      "I can see...",
+      "It feels...",
+      "This leaf is...",
+      "I learned that...",
+      "My favorite part was..."
+    ]
+  },
+  "supplies": {
+    "permanent": [
+      "Tablet with identification app",
+      "First aid kit",
+      "Portable whiteboard or large paper pad",
+      "Laminated vocabulary/picture cards",
+      "Rulers",
+      "Magnifying glasses",
+      "Clipboards",
+      "Ground mats or blankets"
+    ],
+    "consumables": [
+      "Student handbooks (1 per child)",
+      "Pencils",
+      "Crayons",
+      "Paper collection bags",
+      "Large construction paper",
+      "Certificates",
+      "Hand sanitizer",
+      "Sunscreen",
+      "Insect repellent"
+    ]
+  },
+  "safetyProtocol": [
+    "Adult-to-child ratio will be a minimum of 1:8 for all land-based activities.",
+    "Establish clear physical boundaries using landmarks or cones. The rule is 'You must always be able to see me, and I must always be able to see you.'",
+    "Tool Handling: Magnifying glasses are for looking, not for focusing sunlight. Hold them by the handle. Pencils are for writing and drawing only.",
+    "Biological Contact: Follow the 'Look, Don't Lick' and 'Careful Touch' rule. Never put any plant in your mouth. Do not touch mushrooms, fungi, or insects without instructor permission. Wash hands thoroughly after the session.",
+    "Sun/Bug Protection: All participants should apply sunscreen before the workshop. Hats are strongly recommended. Insect repellent should be applied as needed, away from food and eyes.",
+    "Emergency Response Plan: Instructors will have a fully stocked first aid kit, a list of emergency contacts, and the location of the nearest hospital (e.g., Kingston Hospital for Richmond Park). All instructors are trained in basic first aid.",
+    "Weather-Specific Risks (Sunny): Be aware of signs of heat exhaustion (dizziness, headache, excessive sweating). Ensure frequent water breaks in a shaded area.",
+    "Allergy Awareness: Check registration forms for any known allergies to pollen, plants, or bee stings. Participants with severe allergies must have their EpiPen with them, and instructors must know where it is."
+  ],
+  "basicInfo": {
+    "theme": "Nature Exploration",
+    "location": "Richmond Park, London, UK (or a similar large, accessible urban park)",
+    "activityType": "Outdoor STEAM Workshop",
+    "learningGoals": [
+      "Identify key components of a local ecosystem.",
+      "Use scientific tools for observation and data collection.",
+      "Apply basic math skills in a natural context.",
+      "Communicate scientific findings through drawing and speaking."
+    ],
+    "targetAudience": "ESL Students, Ages 10-12, CEFR Level A2"
+  },
+  "handbookStylePrompt": "Create a visual style that is a blend of a classic nature field guide and a fun, modern cartoon. Use a warm, autumnal color palette (oranges, browns, deep greens, soft yellows). Illustrations should be clear, simple, and friendly. The typography should be a clean, readable sans-serif font. Ensure plenty of white space to avoid a cluttered feel. Icons should be simple and universally understandable.",
+  "notebookLMPrompt": "Generate a lesson plan for a 180-minute outdoor nature workshop for 10-12 year old A2-level ESL students. The theme is 'Nature Compass', focusing on scientific observation in an autumn park setting. The plan must follow the 5E instructional model (Engage, Explore, Explain, Elaborate, Evaluate), with detailed steps, background information, and ESL-specific teaching tips for each phase. It must integrate Technology (e.g., a plant ID app) and Math (e.g., measurement, graphing). The plan must include a comprehensive safety protocol and specify a real, publicly accessible park location. The output should also include a 15-page student handbook with content derived from the lesson plan, adhering to A2 word count limits and including interactive elements.",
+  "visualReferences": [
+    "Illustrations by 'Brave the Woods' studio",
+    "Layout style of 'DK Findout!' books",
+    "Character design similar to the show 'Hilda'",
+    "Color palette of a Wes Anderson film set in autumn"
+  ]
+}

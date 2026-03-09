@@ -3,6 +3,10 @@ import { CurriculumLesson, CurriculumParams, SavedLessonPlan, LessonPlanResponse
 import { mapLessonToInput } from '../utils/curriculumMapper';
 import { generateLessonPlanStreaming, generateLessonPlanStreamingCN, translateLessonPlan } from '../services/geminiService';
 import { useBatchGenerateState } from '@shared/hooks/useBatchGenerateState';
+import { runWithConcurrency } from '@shared/utils/concurrency';
+
+/** Max simultaneous lesson kit generations */
+const BATCH_CONCURRENCY = 2;
 
 export function useBatchGenerate() {
     const {
@@ -10,7 +14,8 @@ export function useBatchGenerate() {
         batchCancelRef, startBatch, setItemStatus, incrementDone, incrementError, finishBatch, resetBatch
     } = useBatchGenerateState();
 
-    const batchAbortRef = useRef<AbortController | null>(null);
+    // Track all active AbortControllers so cancel can abort them all
+    const abortControllersRef = useRef<Map<number, AbortController>>(new Map());
 
     const handleBatchGenerate = async (
         lessons: CurriculumLesson[],
@@ -21,12 +26,15 @@ export function useBatchGenerate() {
         startBatch(lessons.length);
         let errorCount = 0;
 
-        for (let i = 0; i < lessons.length; i++) {
-            if (batchCancelRef.current) break;
+        // Collect background translation promises so we can await them before finishing
+        const pendingTranslations: Promise<void>[] = [];
+
+        const processLesson = async (_lesson: CurriculumLesson, i: number) => {
+            if (batchCancelRef.current) return;
 
             if (batchStatus[i] === 'done') {
                 incrementDone(lessons.length, errorCount, i);
-                continue;
+                return;
             }
 
             setItemStatus(i, 'generating');
@@ -34,9 +42,10 @@ export function useBatchGenerate() {
             try {
                 const mappedInput = mapLessonToInput(lessons[i], params);
                 const controller = new AbortController();
-                batchAbortRef.current = controller;
+                abortControllersRef.current.set(i, controller);
 
-                const streamFn = language === 'zh'
+                const isPureChineseRoute = language === 'zh' || (params.mode === 'family' && !params.familyEslEnabled);
+                const streamFn = isPureChineseRoute
                     ? generateLessonPlanStreamingCN
                     : generateLessonPlanStreaming;
 
@@ -46,15 +55,6 @@ export function useBatchGenerate() {
                     controller.signal,
                 );
 
-                if (language === 'en') {
-                    try {
-                        const translated = await translateLessonPlan(result, 'Simplified Chinese', controller.signal);
-                        result.translatedPlan = translated;
-                    } catch {
-                        console.warn(`Batch: translation failed for lesson ${i + 1}, skipping.`);
-                    }
-                }
-
                 const newId = crypto.randomUUID();
                 const newSavedPlan: SavedLessonPlan = {
                     id: newId,
@@ -63,27 +63,55 @@ export function useBatchGenerate() {
                     plan: result,
                     language,
                 };
-                savePlan(newSavedPlan);
 
+                if (!isPureChineseRoute) {
+                    // Fire off translation in background — don't block this slot
+                    const translationPromise = translateLessonPlan(result, 'Simplified Chinese', controller.signal)
+                        .then(translated => {
+                            result.translatedPlan = translated;
+                        })
+                        .catch(() => {
+                            console.warn(`Batch: translation failed for lesson ${i + 1}, skipping.`);
+                        })
+                        .finally(() => {
+                            // Save with whatever translation state we have (translated or not)
+                            savePlan(newSavedPlan);
+                        });
+                    pendingTranslations.push(translationPromise);
+                } else {
+                    savePlan(newSavedPlan);
+                }
+
+                abortControllersRef.current.delete(i);
                 incrementDone(lessons.length, errorCount, i, newId);
             } catch (err: any) {
-                if (batchCancelRef.current) break;
+                abortControllersRef.current.delete(i);
+                if (batchCancelRef.current) return;
                 console.error(`Batch generate lesson ${i + 1} failed:`, err);
                 errorCount++;
                 incrementError(lessons.length, batchProgress.done, i);
             }
-        }
+        };
 
-        batchAbortRef.current = null;
+        await runWithConcurrency(
+            lessons,
+            BATCH_CONCURRENCY,
+            processLesson,
+            () => batchCancelRef.current,
+        );
+
+        // Wait for any in-flight translations to finish before declaring batch complete
+        await Promise.allSettled(pendingTranslations);
+
+        abortControllersRef.current.clear();
         finishBatch();
     };
 
     const handleCancelBatch = () => {
         batchCancelRef.current = true;
-        if (batchAbortRef.current) {
-            batchAbortRef.current.abort();
-            batchAbortRef.current = null;
-        }
+        // Abort all active generation/translation requests
+        abortControllersRef.current.forEach(c => c.abort());
+        abortControllersRef.current.clear();
     };
 
     return {

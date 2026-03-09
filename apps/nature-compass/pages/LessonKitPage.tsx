@@ -64,7 +64,11 @@ export const LessonKitPage: React.FC<LessonKitPageProps> = ({
         abortControllerRef.current = controller;
 
         try {
-            const streamFn = currentKitLanguage === 'zh' ? generateLessonPlanStreamingCN : generateLessonPlanStreaming;
+            // Route to CN streaming if:
+            // 1. App language is explicitly Chinese
+            // 2. OR it's Family Mode with ESL *disabled* (meaning 100% Chinese pure exploration)
+            const isPureChineseRoute = currentKitLanguage === 'zh' || (input.mode === 'family' && !input.familyEslEnabled);
+            const streamFn = isPureChineseRoute ? generateLessonPlanStreamingCN : generateLessonPlanStreaming;
             const result = await streamFn(
                 input,
                 (partial, keys) => {
@@ -76,7 +80,7 @@ export const LessonKitPage: React.FC<LessonKitPageProps> = ({
                 controller.signal
             );
 
-            if (currentKitLanguage === 'en') {
+            if (!isPureChineseRoute) {
                 setLoadingStep(5);
                 try {
                     const translatedResult = await translateLessonPlan(result, 'Simplified Chinese', controller.signal);

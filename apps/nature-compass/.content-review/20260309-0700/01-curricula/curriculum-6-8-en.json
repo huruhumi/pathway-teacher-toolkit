@@ -1,0 +1,102 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "Water Wonders and Floating Plants",
+      "lessonNumber": 1,
+      "theme": "Wetland Plant Life",
+      "location": "East Lake (Donghu) Greenway - Wetland Section",
+      "season": "Spring",
+      "learningGoals": [
+        "Identify and name 3 common wetland plants in English.",
+        "Observe and record plant buoyancy in a field journal.",
+        "Practice using the sentence structure 'I see a [color] [plant].'"
+      ],
+      "keyVocabulary": [
+        "Water",
+        "Green",
+        "Leaf",
+        "Flower",
+        "Float",
+        "Lake",
+        "Plant"
+      ],
+      "activitySummary": "Students will go on a 'Plant Scavenger Hunt' along the East Lake shore to find floating and rooted plants. They will conduct a simple buoyancy experiment by placing different natural items in the water to see what floats.",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "Keep a 2-meter distance from the water's edge; wear life vests if approaching docks."
+    },
+    {
+      "lessonTitle": "Feathered Friends of Wuhan",
+      "lessonNumber": 2,
+      "theme": "Bird Observation and Habitats",
+      "location": "Jiefang Park Wetland Garden",
+      "season": "Winter",
+      "learningGoals": [
+        "Use binoculars to spot and count 3 different bird species.",
+        "Understand why birds need wetlands for food and shelter.",
+        "Use basic adjectives to describe bird movements (fast, slow, high, low)."
+      ],
+      "keyVocabulary": [
+        "Bird",
+        "Wing",
+        "Fly",
+        "Sky",
+        "Eat",
+        "Nest",
+        "Binoculars"
+      ],
+      "activitySummary": "Students will use binoculars to observe migratory birds and map out where they find 'homes' in the park. They will then sketch a bird nest using twigs and dried grass found on the ground.",
+      "steamFocus": "Science, Technology, Art",
+      "safetyNotes": "Avoid feeding the birds; stay on the designated wooden boardwalks to protect habitats."
+    },
+    {
+      "lessonTitle": "The Tiny World of Insects",
+      "lessonNumber": 3,
+      "theme": "Insects and Life Cycles",
+      "location": "Sha Lake (Shahu) Park",
+      "season": "Summer",
+      "learningGoals": [
+        "Discover and identify 3 types of wetland insects (e.g., dragonfly).",
+        "Compare the number of legs and wings on different bugs.",
+        "Learn the 'Head, Thorax, Abdomen' song in English."
+      ],
+      "keyVocabulary": [
+        "Bug",
+        "Small",
+        "Legs",
+        "Grass",
+        "Jump",
+        "Crawl",
+        "Dragonfly",
+        "Ant"
+      ],
+      "activitySummary": "Using magnifying glasses, students will explore the tall grass areas to find insects. They will act out the life cycle of a dragonfly from water-dweller to flyer through a movement-based game.",
+      "steamFocus": "Science, Engineering",
+      "safetyNotes": "Wear long pants to prevent bug bites; do not touch unknown insects; apply sunscreen."
+    },
+    {
+      "lessonTitle": "Muddy Engineers: Wetland Soil",
+      "lessonNumber": 4,
+      "theme": "Soil Filtration and Building",
+      "location": "Hankou Jiangtan Wetland Park",
+      "season": "Autumn",
+      "learningGoals": [
+        "Differentiate between dry sand and wet mud by touch and sight.",
+        "Build a simple 'mini-dam' to see how wetlands slow down water.",
+        "Use the verbs 'build', 'pour', and 'stop' in context."
+      ],
+      "keyVocabulary": [
+        "Mud",
+        "Sand",
+        "Rock",
+        "Build",
+        "Clean",
+        "Dirty",
+        "Hands",
+        "Earth"
+      ],
+      "activitySummary": "Students will participate in a 'Mud Kitchen' where they test how water moves through different soil types. They will work in teams to build a small barrier using rocks and mud to protect a toy animal's home.",
+      "steamFocus": "Engineering, Mathematics",
+      "safetyNotes": "Ensure all students wash hands thoroughly after touching soil; stay within the marked 'Discovery Zone'."
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+{
+  "missionBriefing": "Welcome, Nature Detectives! Today, we embark on a critical mission at Central Park. Our city's ponds and lakes are home to many creatures, but is the water healthy for them? Your task is to investigate the quality of the water, understand how nature keeps it clean, and then engineer your own filter to help protect our aquatic friends. Let's use our science skills to become guardians of the water!",
+  "roadmap": [
+    {
+      "phase": "ENGAGE: Mission Kick-off",
+      "timeRange": "0-25 mins (25 min.)"
+    },
+    {
+      "phase": "EXPLORE (Part 1): Field Observation & Collection",
+      "timeRange": "25-65 mins (40 min.)"
+    },
+    {
+      "phase": "EXPLORE (Part 2): Water Quality Testing",
+      "timeRange": "65-100 mins (35 min.)"
+    },
+    {
+      "phase": "EXPLAIN: Data Debrief & Concept Connection",
+      "timeRange": "100-120 mins (20 min.)"
+    },
+    {
+      "phase": "ELABORATE: Bio-Filter Engineering Challenge",
+      "timeRange": "120-160 mins (40 min.)"
+    },
+    {
+      "phase": "EVALUATE: Showcase & Reflection",
+      "timeRange": "160-180 mins (20 min.)"
+    }
+  ],
+  "handbook": [
+    {
+      "page": 1,
+      "section": "Cover",
+      "title": "Nature Compass: The Water Guardians",
+      "visualPrompt": "A vibrant, illustrated cover featuring two curious children (a boy and a girl of diverse ethnicity) wearing explorer vests. They are kneeling by a pond in a park, examining a water sample in a jar with a magnifying glass. In the background, autumn trees with orange and yellow leaves are visible. The title 'Nature Compass' is in a playful, bold font at the top, with 'The Water Guardians' as a subtitle below. The overall style is friendly and adventurous, like a field guide for kids."
+    },
+    {
+      "page": 2,
+      "section": "Introduction",
+      "title": "Table of Contents",
+      "visualPrompt": "A clean, two-column layout. On the left, a stylized illustration of a compass. On the right, the table of contents with clear headings and page numbers. Use small, simple icons (like a water drop, a leaf, a magnifying glass) next to each section title. The background has a faint, textured paper look."
+    },
+    {
+      "page": 3,
+      "section": "Preparation",
+      "title": "Safety First!",
+      "visualPrompt": "A series of four clear, simple icons in a grid, each with a short safety rule. Icon 1: A 'group' icon with an adult and children, labeled 'Stay with your group.' Icon 2: A hand with a 'stop' sign over a mushroom, labeled 'Look, don't touch.' Icon 3: A sun and a water bottle, labeled 'Stay hydrated.' Icon 4: A hand being washed, labeled 'Wash hands after exploring.' The style is minimalist and easy to understand."
+    },
+    {
+      "page": 4,
+      "section": "Preparation",
+      "title": "Your Explorer's Kit",
+      "visualPrompt": "A 'flat lay' illustration of all the tools in the explorer's kit. Each item (magnifying glass, collection jar, notebook, pencil, pH strips) is clearly drawn and labeled. The layout is organized and visually appealing, like an inventory screen in a video game. Use checkboxes next to each item."
+    },
+    {
+      "page": 5,
+      "section": "Reading",
+      "title": "What is a Watershed?",
+      "visualPrompt": "A simple, cartoon-style diagram of a landscape. It shows hills with rain clouds above them. Rain falls, and blue lines (rivers) flow from the hills down into a central lake. Arrows show the direction of water flow. The entire area of land that drains into the lake is lightly colored, showing the watershed."
+    },
+    {
+      "page": 6,
+      "section": "Activity",
+      "title": "Your Mission",
+      "visualPrompt": "A top-secret style mission file. A large magnifying glass graphic is centered, and inside it, the mission text is displayed. The page has a 'confidential' stamp in the corner. There are lines at the bottom for the student to write their name as 'Agent [TEXT_INPUT: Write your name here]'."
+    },
+    {
+      "page": 7,
+      "section": "Reading",
+      "title": "Looking at Water",
+      "visualPrompt": "A split image. The top half shows a cartoon drawing of very clear water in a glass, labeled 'High Clarity'. The bottom half shows murky, brown water in a glass, labeled 'Low Clarity' (or 'High Turbidity'). Simple happy and sad faces are drawn next to each glass to indicate good/bad quality."
+    },
+    {
+      "page": 8,
+      "section": "Activity",
+      "title": "Field Observation Sheet",
+      "visualPrompt": "A structured worksheet. On the left, a large box for drawing what they see at the water's edge, labeled 'Draw Your Observation Spot'. On the right, a checklist with simple questions: 'Is the water clear or cloudy?', 'What color is the water?', 'Do you see any plants?', 'Do you see any animals (bugs, fish)?'. Use checkboxes and simple text input fields."
+    },
+    {
+      "page": 9,
+      "section": "Reading",
+      "title": "What Makes Water Clean?",
+      "visualPrompt": "A simple infographic with three icons. Icon 1: A pH scale, simplified to show 'Acidic' (with a lemon), 'Neutral' (with a water drop), and 'Alkaline' (with soap). Icon 2: A thermometer showing a cool temperature. Icon 3: A water drop with a checkmark inside, labeled 'No pollution'."
+    },
+    {
+      "page": 10,
+      "section": "Activity",
+      "title": "Water Test Results",
+      "visualPrompt": "A science lab-style data table. There are three sections. Section 1: 'Turbidity Test' with a space to circle 'Clear' or 'Cloudy'. Section 2: 'Temperature Test' with a space to write the number '[TEXT_INPUT: Water Temperature (°C)]'. Section 3: 'pH Test' with a color chart for pH strips and a space to write the result '[TEXT_INPUT: pH Level]'. The layout is clean and organized."
+    },
+    {
+      "page": 11,
+      "section": "Reading",
+      "title": "Nature's Filter System",
+      "visualPrompt": "A cross-section diagram of soil layers next to a pond. It shows dirty water on top, seeping down through layers labeled 'Gravel', 'Sand', and 'Soil'. The water at the bottom is shown as clean. Arrows indicate the path of the water as it gets filtered."
+    },
+    {
+      "page": 12,
+      "section": "Activity",
+      "title": "Design Your Bio-Filter",
+      "visualPrompt": "A blueprint-style page. A large, empty outline of a plastic bottle is in the center. Dotted lines inside show where to cut. There are labeled boxes on the side with illustrations of 'Gravel', 'Sand', and 'Cotton Balls'. Arrows point to the bottle, inviting students to draw their design inside the bottle outline. Labeled 'My Filter Plan'."
+    },
+    {
+      "page": 13,
+      "section": "Reflection",
+      "title": "My Discoveries",
+      "visualPrompt": "A thought bubble graphic takes up most of the page. Inside, there are three simple prompts with lines for writing. 1. 'One new thing I learned today is... [TEXT_INPUT: Write your answer]'. 2. 'My favorite part was... [TEXT_INPUT: Write your answer]'. 3. 'I can help protect water by... [TEXT_INPUT: Write your answer]'."
+    },
+    {
+      "page": 14,
+      "section": "Conclusion",
+      "title": "Certificate of Achievement",
+      "visualPrompt": "A formal-looking certificate with an ornate border. It reads: 'This certifies that [TEXT_INPUT: Write your name here] has successfully completed the Nature Compass mission and is now an official Water Guardian.' There is a space for a signature and a gold seal graphic in the corner."
+    },
+    {
+      "page": 15,
+      "section": "Back Cover",
+      "title": "Explore More!",
+      "visualPrompt": "A simple, clean back cover. In the center, a logo for the 'Nature Compass' program. At the bottom, a QR code that could link to a website with more nature activities. The background is a solid, calming green color."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Filtration"
+      },
+      {
+        "word": "Turbidity"
+      },
+      {
+        "word": "pH Level"
+      },
+      {
+        "word": "Ecosystem"
+      },
+      {
+        "word": "Pollutant"
+      },
+      {
+        "word": "Sediment"
+      },
+      {
+        "word": "Observe"
+      },
+      {
+        "word": "Data"
+      }
+    ],
+    "phrases": [
+      "The water quality is...",
+      "I observe that...",
+      "My hypothesis is...",
+      "The filter is made of...",
+      "Let's collect a sample."
+    ]
+  },
+  "supplies": {
+    "consumables": [
+      "pH test strips (1 per team)",
+      "Coffee filters (1 per team)",
+      "Cotton balls (1 bag)",
+      "Activated charcoal (optional, 1 small bag)",
+      "Paper towels",
+      "Distilled water (for control test)",
+      "Pre-mixed 'dirty water' (soil, leaves, twigs in water)",
+      "Student handbooks and pencils"
+    ],
+    "permanent": [
+      "Clear plastic 2-liter bottles, cut in half (1 per team)",
+      "Small cups or beakers for testing (2-3 per team)",
+      "Collection jars with lids (1 per team)",
+      "Magnifying glasses (1 per student)",
+      "Digital thermometers (1 per team)",
+      "Trays or bins to contain spills",
+      "Safety scissors (1 pair per team)",
+      "First aid kit",
+      "Whistle or signal horn for attention",
+      "Boundary markers (cones or rope)"
+    ]
+  },
+  "safetyProtocol": [
+    {
+      "risk": "Getting lost or wandering off"
+    },
+    {
+      "risk": "Contact with harmful plants or insects"
+    },
+    {
+      "risk": "Slips, trips, and falls near water"
+    },
+    {
+      "risk": "Sun exposure and dehydration"
+    },
+    {
+      "risk": "Minor cuts or scrapes"
+    },
+    {
+      "risk": "Allergic reactions"
+    },
+    {
+      "risk": "Improper handling of tools"
+    }
+  ],
+  "basicInfo": {
+    "location": "Central Park, The Lake, New York City, USA",
+    "theme": "Nature Exploration: Water Quality and Natural Filtration"
+  },
+  "handbookStylePrompt": "Create a children's field guide that is both educational and adventurous. Use a mix of simple, friendly illustrations and clean diagrams. The color palette should be inspired by autumn in nature (oranges, yellows, browns, deep greens). Fonts should be clear and readable, with playful, bold headings. Ensure plenty of white space to avoid overwhelming young ESL learners. Interactive elements should be clearly marked and intuitive.",
+  "notebookLMPrompt": "Generate a lesson plan for a 180-minute outdoor science workshop for 10-12 year old A2-level ESL students. The topic is water quality and natural filtration. The plan must follow the 5E model (Engage, Explore, Explain, Elaborate, Evaluate) and be set in Central Park on a sunny autumn day. It must include detailed steps, rich scientific background info, specific ESL teaching tips for each phase, and explicit integration of Science, Technology, Engineering, and Math. Safety protocols must be comprehensive. The tone should be scientific and encourage inquiry.",
+  "visualReferences": [
+    "children's nature field guide illustration",
+    "DK eyewitness books for kids layout",
+    "simple science experiment diagrams for children",
+    "flat lay illustration of explorer kit",
+    "autumn in central park color palette",
+    "blueprint style diagram for kids project"
+  ]
+}

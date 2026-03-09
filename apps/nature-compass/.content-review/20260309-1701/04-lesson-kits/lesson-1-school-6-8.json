@@ -1,0 +1,195 @@
+{
+  "missionBriefing": "Welcome, Nature Explorers and families! Get ready for an exciting 180-minute adventure at a real wetland. Our mission is to become expert Bird Detectives! We will use special tools like binoculars to observe amazing birds, learn their secrets, and even build something special to help them. Let's put on our explorer hats, open our eyes and ears, and discover the wonders of our feathered friends in their autumn home. Are you ready? Let's go! 🦉☀️",
+  "roadmap": [
+    {
+      "phase": "1. ENGAGE",
+      "timeRange": "0-20 mins (20 mins total)"
+    },
+    {
+      "phase": "2. EXPLORE",
+      "timeRange": "20-65 mins (45 mins total)"
+    },
+    {
+      "phase": "3. EXPLAIN",
+      "timeRange": "65-95 mins (30 mins total)"
+    },
+    {
+      "phase": "4. ELABORATE",
+      "timeRange": "95-140 mins (45 mins total)"
+    },
+    {
+      "phase": "5. EVALUATE",
+      "timeRange": "140-180 mins (40 mins total)"
+    }
+  ],
+  "handbook": [
+    {
+      "page": 1,
+      "section": "Cover",
+      "title": "Nature Compass: Wetland Bird Adventure!",
+      "visualPrompt": "A vibrant, cartoon-style cover featuring a diverse group of smiling children (ages 6-8) looking through binoculars at a friendly cartoon Snowy Egret and a duck in a sunny wetland. The title is in a fun, bold font. A small compass logo is in the corner. The style is playful and inviting, like a children's storybook cover."
+    },
+    {
+      "page": 2,
+      "section": "Reference",
+      "title": "What's Inside?",
+      "visualPrompt": "A clean, minimalist page with a large magnifying glass graphic on the left. On the right, a simple table of contents with playful icons next to each entry: a safety shield for 'Safety First!', a backpack for 'Your Explorer Kit', a book for 'Reading', a crayon for 'Activity', etc."
+    },
+    {
+      "page": 3,
+      "section": "Reference",
+      "title": "Safety First, Explorers!",
+      "visualPrompt": "A series of simple, clear icons in circles, each illustrating a safety rule. 1) An icon of two stick figures holding hands (Stay with your grown-up). 2) An icon of an eye looking at a flower, with a 'no-touch' hand symbol over it (Look, don't touch). 3) A sun and a water bottle icon (Sun hat and water). 4) A hand washing icon (Wash hands after exploring)."
+    },
+    {
+      "page": 4,
+      "section": "Reference",
+      "title": "Your Explorer Kit",
+      "visualPrompt": "A fun, illustrated checklist. Each item is a cute cartoon drawing with a checkbox next to it: a backpack, a water bottle, a sun hat, a magnifying glass, binoculars, and the Nature Compass handbook. The layout is clean and easy for a child to follow."
+    },
+    {
+      "page": 5,
+      "section": "Reading",
+      "title": "Welcome, Explorer!",
+      "visualPrompt": "A full-page illustration of a friendly park ranger cartoon character waving hello at the entrance of a sunny wetland park. The path leads into a scene with cattails and calm water."
+    },
+    {
+      "page": 6,
+      "section": "Activity",
+      "title": "My Birdwatching Mission",
+      "visualPrompt": "A cartoon treasure map layout. In the center, there's a large box labeled 'I want to see...' with a dotted line for drawing. Around the box are smaller icons of things to find: a feather, a long-legged bird, a swimming bird, a flying bird."
+    },
+    {
+      "page": 7,
+      "section": "Reading",
+      "title": "What is a Wetland?",
+      "visualPrompt": "A simple, cross-section diagram of a wetland. It shows land, water, and plants like cattails. A friendly cartoon duck is swimming in the water, and a frog is on a lily pad. The style is educational but very simple and colorful."
+    },
+    {
+      "page": 8,
+      "section": "Activity",
+      "title": "Bird Detective Checklist",
+      "visualPrompt": "A grid-style checklist. Each row has a simple icon of a bird part or feature (e.g., long beak, short beak, long legs, webbed feet, colorful feathers). Next to each icon are five empty boxes for checkmarks or tally marks. A large magnifying glass graphic is in the corner."
+    },
+    {
+      "page": 9,
+      "section": "Reading",
+      "title": "Meet the Birds!",
+      "visualPrompt": "Two separate, beautifully illustrated cartoon birds native to the area (e.g., a graceful Snowy Egret with white feathers and a small, brown Sandpiper). Each bird is labeled with its name in a large, clear font."
+    },
+    {
+      "page": 10,
+      "section": "Activity",
+      "title": "My Favorite Bird",
+      "visualPrompt": "A large, empty picture frame made of illustrated twigs and leaves takes up most of the page. At the top, it says 'Draw your favorite bird here!'. Below the frame, there's a line for the bird's name: 'This is a [TEXT_INPUT: bird's name]'."
+    },
+    {
+      "page": 11,
+      "section": "Reading",
+      "title": "Helping Our Feathered Friends",
+      "visualPrompt": "A simple, heartwarming illustration of a child gently placing a pinecone bird feeder on a tree branch. A small, happy cartoon bird is flying towards it. The scene is sunny and positive."
+    },
+    {
+      "page": 12,
+      "section": "Activity",
+      "title": "Design Your Bird Feeder!",
+      "visualPrompt": "A 'blueprint' style page with a light blue grid background. There's a large blank space in the middle with the heading 'My Bird Feeder Design'. Around the space are small cartoon icons of materials: a pinecone, seeds, string, and a jar of soy butter."
+    },
+    {
+      "page": 13,
+      "section": "Reflection",
+      "title": "My Adventure Diary",
+      "visualPrompt": "A page designed to look like a diary entry. There are three simple prompts with space to draw or write: 1) 'Today I saw...' with a drawing box. 2) 'I learned...' with a drawing box. 3) 'I felt...' with three emoji faces (happy, excited, curious) to circle."
+    },
+    {
+      "page": 14,
+      "section": "Certificate",
+      "title": "Official Wetland Bird Explorer",
+      "visualPrompt": "A formal-looking but fun certificate with a fancy border made of leaves and feathers. In the center, it says 'This certifies that [TEXT_INPUT: child's name] is an Official Wetland Bird Explorer'. There are signature lines for the parent/teacher and the date. A gold seal graphic is in the corner."
+    },
+    {
+      "page": 15,
+      "section": "Back Cover",
+      "title": "See You Next Time!",
+      "visualPrompt": "A simple, clean back cover. It features the 'Nature Compass' logo in the center. At the bottom, a cartoon bird is waving goodbye. Below that, a simple text says 'Keep Exploring!'"
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Wetland"
+      },
+      {
+        "word": "Binoculars"
+      },
+      {
+        "word": "Observe"
+      },
+      {
+        "word": "Feathers"
+      },
+      {
+        "word": "Beak"
+      },
+      {
+        "word": "Migrate"
+      },
+      {
+        "word": "Habitat"
+      },
+      {
+        "word": "Species"
+      }
+    ]
+  },
+  "supplies": {
+    "consumables": [
+      "Biodegradable twine or string",
+      "Birdseed mix",
+      "Sun-safe seed butter (e.g., sunflower seed butter)",
+      "Paper towels and hand sanitizer",
+      "Crayons or colored pencils",
+      "Stickers of birds and nature items",
+      "Snacks and water for all participants"
+    ],
+    "permanent": [
+      "Child-safe binoculars (1 per child or pair)",
+      "Laminated bird identification guides/cards",
+      "Tablet with a bird identification app (e.g., Merlin Bird ID)",
+      "Large clipboard for the instructor",
+      "First aid kit",
+      "Whistle or chime for attention signal",
+      "Portable speaker for quiet background sounds or instructions",
+      "Collection jars with ventilated lids (for looking at leaves/twigs, not animals)",
+      "Magnifying glasses",
+      "Large pinecones (1 per child)",
+      "Popsicle sticks for spreading seed butter"
+    ]
+  },
+  "safetyProtocol": [
+    {
+      "risk": "Getting Lost / Wandering Off"
+    },
+    {
+      "risk": "Contact with Water"
+    },
+    {
+      "risk": "Handling Tools"
+    },
+    {
+      "risk": "Biological Contact"
+    },
+    {
+      "risk": "Sun and Insect Exposure"
+    },
+    {
+      "risk": "Allergic Reactions"
+    },
+    {
+      "risk": "Slips, Trips, and Falls"
+    },
+    {
+      "risk": "Medical Emergency"
+    }
+  ]
+}

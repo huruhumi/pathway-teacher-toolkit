@@ -1,0 +1,39 @@
+# Curriculum: 10-12 (ZH)
+
+Theme: 城市湿地生态探索
+City: 武汉
+Duration: 180min
+Lessons: 4
+
+## Lesson 1: 城市之肺：湿地层次大搜查
+- **Theme:** 湿地垂直结构与生物多样性
+- **Location:** 解放公园 (Jiefang Park) - 湿地科普区
+- **STEAM Focus:** Science, Art
+- **Goals:** 掌握湿地的基本定义及四大垂直分层（水下、水面、挺水、岸边）。; 使用英文记录至少5种不同层级的动植物名称及特征（ESL: Descriptive Adjectives）。; 通过实地取样，分析不同区域的生物分布差异（STEAM: Science）。
+- **Activities:** 学生将化身“生态普查员”，利用样方法（Quadrat sampling）对解放公园人工湿地区域进行分层观察。他们将绘制湿地剖面图，并使用英文图鉴识别并标注常见的菖蒲、睡莲等植物。
+- **Safety:** 注意水边防滑，严禁学生独自靠近深水区；佩戴防蚊液防止昆虫叮咬。
+
+## Lesson 2: 水质魔法师：天然过滤系统的奥秘
+- **Theme:** 水循环与天然净化工程
+- **Location:** 沙湖公园 (Shahu Park) - 生态净水口
+- **STEAM Focus:** Science, Engineering, Technology
+- **Goals:** 理解湿地作为“城市之肾”的物理与生物过滤原理。; 学习使用pH试纸和溶解氧测试工具进行初步水质分析（STEAM: Technology）。; 运用英文陈述水污染的来源及湿地净化的步骤（ESL: Sequence Words）。
+- **Activities:** 学生将采集沙湖不同区域的水样，进行理化指标测试。随后，利用现场收集的自然材料（沙子、石子、植物根系）动手搭建一个微型湿地过滤模型，验证其净化效果。
+- **Safety:** 实验过程中需佩戴手套，测试后的废液需统一回收处理，不可直接倒入湖中。
+
+## Lesson 3: 飞羽寻踪：湿地候鸟的生存智慧
+- **Theme:** 鸟类形态学与环境适应性
+- **Location:** 东湖落雁景区 (East Lake Luoyan Island) - 观鸟台
+- **STEAM Focus:** Science, Math, Art
+- **Goals:** 识别武汉常见的3-5种湿地候鸟（如鸬鹚、苍鹭）。; 分析鸟类喙部形状与食物来源之间的数学比例关系（STEAM: Math）。; 使用英文描述鸟类的迁徙行为与身体构造（ESL: Comparative Structures）。
+- **Activities:** 学生将使用专业望远镜在落雁岛观察候鸟动态，并填写“鸟类观察日志”。通过模拟不同形状的“鸟喙工具”夹取食物的竞赛，探讨进化与环境适应的关系。
+- **Safety:** 观鸟时保持安静，避免穿鲜艳颜色的衣服以防惊扰鸟类；注意防寒保暖。
+
+## Lesson 4: 守望江城：海绵城市的未来设计师
+- **Theme:** 城市规划与生态保护实践
+- **Location:** 汉口江滩 (Hankou Riverfront) - 芦苇荡及雨水花园
+- **STEAM Focus:** Engineering, Art, Science
+- **Goals:** 理解“海绵城市”概念及武汉防洪与湿地保护的关系。; 设计一份针对特定湿地区域的生态保护倡议书（ESL: Persuasive Writing）。; 综合运用前三课知识，设计一个能共存的城市景观模型（STEAM: Engineering/Art）。
+- **Activities:** 学生实地考察汉口江滩的芦苇防洪带，了解其对城市安全的意义。最后在户外草坪进行小组展示，利用可回收材料设计并推介他们的“未来湿地公园”蓝图。
+- **Safety:** 江滩风力较大，需注意防风；在芦苇丛附近活动需防止割伤，严格遵守江滩管理规定。
+

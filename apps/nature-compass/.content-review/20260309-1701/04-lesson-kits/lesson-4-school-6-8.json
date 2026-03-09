@@ -1,0 +1,479 @@
+{
+  "missionBriefing": {
+    "title": "Nature Compass: The Wetland Protectors",
+    "narrative": "Welcome, Junior Scientists! 🦆 The birds, fish, and plants of the Jamaica Bay Wetland need your help! A super important bird, the Piping Plover, is looking for the perfect home for the autumn. Your mission is to explore the wetland, discover what makes it a special home, and design a super-safe, super-cozy mini-wetland model to show everyone how to protect these amazing places. Are you ready to become a Wetland Protector? Let's go! 🌿"
+  },
+  "roadmap": [
+    {
+      "timeRange": "00:00 - 00:15",
+      "phase": "ENGAGE",
+      "activity": "Wetland Protectors Mission Briefing",
+      "activityType": "Science (Ecology), Art (Storytelling)",
+      "location": "Designated meeting spot near Jamaica Bay Wildlife Refuge Visitor Center",
+      "description": "Gather the young explorers for an exciting mission! 🚀 Start with a playful welcome song to build energy. Introduce the narrative of the 'Wetland Protectors' and their task to help the Piping Plover. Use a plush bird puppet to tell the story and show a picture of a real wetland. Ask simple questions like 'What is a home?' and 'What do animals need to live?' to activate their prior knowledge. This phase is all about creating excitement and a sense of purpose for the day's adventure, making them feel like real scientists on an important quest.",
+      "learningObjective": "Students will understand the workshop's mission and feel motivated to explore the wetland environment.",
+      "steps": [
+        "Greet students with a high-energy welcome song like 'The Wheels on the Bus' but with nature words ('The birds in the trees go tweet, tweet, tweet...').",
+        "Introduce the Piping Plover puppet and the mission narrative in simple, dramatic terms.",
+        "Show a large, colorful map of the Jamaica Bay Wildlife Refuge, pointing out 'You are here!'",
+        "Ask engaging questions: 'Who lives in the water? Who flies in the sky?' and praise all answers.",
+        "Hand out 'Wetland Protector' name tags to each student to create a sense of identity.",
+        "Clearly state the goal: 'Today, we will find clues in nature and build a new home!'",
+        "Do a final 'Protectors, assemble!' cheer to transition to the next phase."
+      ],
+      "backgroundInfo": [
+        "Wetlands are areas where water covers the soil, or is present either at or near the surface of the soil all year or for varying periods of time during the year.",
+        "Jamaica Bay Wildlife Refuge is a key stopover for migratory birds, with over 330 bird species recorded there.",
+        "The Piping Plover (Charadrius melodus) is a small, sand-colored shorebird that is listed as a threatened species. They need safe, open, sandy areas near water to nest and find food.",
+        "Wetlands act as natural filters, cleaning pollutants from water.",
+        "They also protect coastal areas from flooding during storms by absorbing excess water like a giant sponge.",
+        "Autumn is a crucial season for many animals in the wetland as they prepare for winter or migration.",
+        "The water in wetlands can be saltwater, freshwater, or brackish (a mix of both)."
+      ],
+      "teachingTips": [
+        "Use lots of gestures, facial expressions, and vocal variety to convey meaning for A1 learners.",
+        "Keep language extremely simple. Use Total Physical Response (TPR): 'Everybody, stand up! March like a scientist!'",
+        "Provide the sentence frame for answering questions: 'I think a ___ lives here.'",
+        "For differentiation, have advanced learners try to name an animal they already know that lives near water.",
+        "Use a clear signal, like a special hand clap or a bird call sound, to get everyone's attention."
+      ],
+      "phaseSupplies": [
+        "Piping Plover puppet",
+        "Large map of the park",
+        "Pre-made 'Wetland Protector' name tags",
+        "Portable speaker for music"
+      ]
+    },
+    {
+      "timeRange": "00:15 - 00:55",
+      "phase": "EXPLORE (Part 1)",
+      "activity": "Sensory Nature Walk & I-Spy",
+      "activityType": "Science (Observation, Biology), Math (Counting)",
+      "location": "Main trail of Jamaica Bay Wildlife Refuge (West Pond Trail)",
+      "description": "Let's go on an adventure! Lead the students on a guided walk along a safe, designated trail. This is not about speed; it's about discovery. Encourage them to use all their senses: 'What do you see? What do you hear? What do you smell?' Guide them to look for different colors, shapes, and textures in nature. They will use their 'I-Spy' checklist from the handbook to find and count items like yellow leaves, smooth stones, and tall grass. This phase focuses on hands-on, direct observation of the environment, connecting the abstract mission to the real world around them. Remember to enforce the 'look but don't touch' rule for unknown plants and animals.",
+      "learningObjective": "Students will use their senses to observe and identify key elements of the wetland ecosystem and practice basic counting.",
+      "steps": [
+        "Review safety rules before starting: 'Stay with the group! Walk, don't run! Look with your eyes!'",
+        "Hand out the 'Nature Walk I-Spy' page from their handbooks and a crayon.",
+        "Lead the group slowly down the trail, stopping frequently to point things out.",
+        "Model sensory observation: 'I see a red leaf! Let's count them. One, two, three!'",
+        "Use a 'listening minute' where everyone is silent for 60 seconds and then shares what they heard.",
+        "Encourage students to check off items on their I-Spy list as they find them.",
+        "Stay within the pre-defined safe zone, clearly marked for the children."
+      ],
+      "backgroundInfo": [
+        "Autumn leaves change color because trees stop producing chlorophyll (the green pigment) as days get shorter and colder.",
+        "The dominant trees at Jamaica Bay include cottonwoods and black cherries, which will have yellow and reddish leaves in autumn.",
+        "The tall grass often seen is Phragmites, an invasive species, but it provides cover for many birds.",
+        "You might hear the call of a Northern Flicker or the chatter of sparrows.",
+        "The air near a wetland often has an 'earthy' smell from decaying plant matter, which is a vital part of the nutrient cycle.",
+        "Smooth stones are created by the constant motion of water (erosion) over long periods.",
+        "Many insects, like dragonflies, are still active on sunny autumn days near the water."
+      ],
+      "teachingTips": [
+        "Use sentence frames for sharing: 'I see a ___.' 'I hear a ___.'",
+        "Pair up students to help each other find items on the checklist.",
+        "Use a group management technique like a 'train' where students hold onto a rope to stay together on the trail.",
+        "Carry a 'discovery bag' to show pre-collected, safe examples of what they might find.",
+        "Praise effort and excitement over accuracy. The goal is engagement, not a perfect score on the I-Spy sheet."
+      ],
+      "phaseSupplies": [
+        "Student handbooks",
+        "Crayons",
+        "First-aid kit",
+        "Long rope for the 'nature train'",
+        "Whistle or attention-getting sound maker"
+      ]
+    },
+    {
+      "timeRange": "00:55 - 01:25",
+      "phase": "EXPLORE (Part 2)",
+      "activity": "Nature Treasure Collection & Data Sorting",
+      "activityType": "Science (Classification), Math (Sorting, Graphing), Technology (Digital Photography)",
+      "location": "A designated safe, open area off the main trail",
+      "description": "Now it's time to become collectors! In a designated safe area, students will use collection jars to gather natural 'treasures' like fallen leaves, small twigs, and interesting pebbles. The rule is clear: only collect things that are already on the ground. After 10 minutes of collecting, bring everyone to a central spot with a large sorting mat. Students will empty their jars and work in small groups to sort their treasures by color, size, or type (leaves, stones, sticks). This phase introduces basic scientific classification and mathematical sorting in a tangible way. We will also use a tablet to take pictures of our collections, introducing a simple technology element.",
+      "learningObjective": "Students will collect natural items and classify them based on physical attributes, creating a simple data set.",
+      "steps": [
+        "Establish a clear boundary for the collection area using colorful cones or flags.",
+        "Give each student a collection jar and demonstrate how to safely pick up items from the ground.",
+        "Set a timer for 10 minutes of collection time. Give 5-minute and 1-minute warnings.",
+        "Gather students on a large ground tarp or mat.",
+        "Instruct them to empty their jars and, as a group, sort the items into piles: 'All the leaves here. All the stones here.'",
+        "Guide them to sub-sort one category, for example, sorting leaves by color (yellow, brown, green).",
+        "Use a tablet or phone to take a 'data photo' of the sorted piles. Let students take turns pressing the button.",
+        "Ensure everyone washes their hands with sanitizer after handling natural materials."
+      ],
+      "backgroundInfo": [
+        "Classification is a fundamental scientific skill used to organize and understand the natural world.",
+        "Sorting by attributes like color, shape, and texture are pre-mathematical skills that build a foundation for data analysis.",
+        "The items collected represent the 'detritus' layer of the ecosystem, which is dead organic material that decomposes to create new soil.",
+        "Even small pebbles can tell a story about the geology of the area; for example, quartz is common in this region.",
+        "Using digital photography to record data is a common practice in field biology.",
+        "This activity helps develop fine motor skills (picking up small objects) and teamwork (group sorting).",
+        "The variety of items found can spark discussions about biodiversity, even on a small scale."
+      ],
+      "teachingTips": [
+        "Model the sorting process clearly. Use simple labels for the sorting piles (pictures or words).",
+        "Use praise and encouragement constantly: 'Wow, what a beautiful yellow leaf you found!'",
+        "Assign roles in small groups: Sorter, Counter, Reporter.",
+        "For ESL learners, chant the names of the categories: 'Leaves, leaves, leaves! Stones, stones, stones!'",
+        "Use hand sanitizer immediately after the activity and before any snacks or moving to the next phase."
+      ],
+      "phaseSupplies": [
+        "Small collection jars or bags for each student",
+        "Large tarp or sorting mat",
+        "Colorful cones or flags for boundaries",
+        "Tablet or smartphone for photos",
+        "Hand sanitizer"
+      ]
+    },
+    {
+      "timeRange": "01:25 - 01:45",
+      "phase": "EXPLAIN",
+      "activity": "Nature's Clues & Vocabulary Circle",
+      "activityType": "Science (Ecology)",
+      "location": "A comfortable, shady spot on the grass",
+      "description": "Let's talk about what we found! Gather the students in a circle on the grass for a snack and a focused learning session. This is where we formally introduce the vocabulary words related to the wetland. Using the items they collected, you will name and explain key concepts. For example, hold up a leaf and say 'This is a **leaf**. It is food for tiny bugs.' Hold up a stone and say 'This is a **stone**. It can be a home for a little crab.' We connect their hands-on discoveries to scientific language in a simple, repetitive, and context-rich way. This phase solidifies their understanding and gives them the words to describe their experience.",
+      "learningObjective": "Students will learn and correctly use 3-5 key vocabulary words related to the wetland habitat.",
+      "steps": [
+        "Gather students in a circle and distribute water and a simple snack.",
+        "Use the collected 'treasures' as realia. Hold up one item at a time.",
+        "Introduce a new vocabulary word clearly: 'Leaf. Everybody say: leaf.'",
+        "Provide a simple, functional definition: 'A leaf helps the tree eat sunlight.'",
+        "Go around the circle and have each student point to or hold up the item you named.",
+        "Use vocabulary flashcards with pictures and words to reinforce the concepts.",
+        "Ask simple questions using the new words: 'Is this a leaf or a stone?'",
+        "Review all the new words at the end with a quick call-and-response game."
+      ],
+      "backgroundInfo": [
+        "The key vocabulary for this age group should be concrete nouns: wetland, leaf, stone, water, bird, home.",
+        "A habitat is a home that gives an animal everything it needs to survive: food, water, shelter, and space.",
+        "The concept of 'shelter' can be explained as a 'safe place' or 'house' for an animal.",
+        "Food chains in a wetland are complex. A simple explanation is: 'Big fish eat little fish. Birds eat big fish.'",
+        "Water is the most critical component of a wetland, defining the types of plants and animals that can live there.",
+        "Jamaica Bay is an estuary, where freshwater from streams mixes with saltwater from the Atlantic Ocean.",
+        "Decomposers (like bacteria and fungi) are nature's recyclers, breaking down dead leaves and animals to create nutrients for plants."
+      ],
+      "teachingTips": [
+        "Use repetition constantly. Have students say the new words at least 3-5 times.",
+        "Connect words to actions (TPR): 'Show me the water. Wiggle like a fish in the water.'",
+        "Use a puppet to 'ask' the questions, which can be less intimidating for shy students.",
+        "Keep the energy up with a cheerful tone and lots of positive reinforcement.",
+        "Display the vocabulary cards on a portable board or on the ground in the middle of the circle for constant visual reference."
+      ],
+      "phaseSupplies": [
+        "Water bottles and a simple, allergy-safe snack (e.g., apple slices)",
+        "Collected nature items",
+        "Large vocabulary flashcards with pictures",
+        "Puppet"
+      ]
+    },
+    {
+      "timeRange": "01:45 - 02:25",
+      "phase": "ELABORATE",
+      "activity": "Build a Mini-Wetland Model",
+      "activityType": "Engineering (Design), Art (Sculpture), Science (Ecology)",
+      "location": "Picnic tables or designated activity area",
+      "description": "Now you are the designers! It's time to use everything we learned to build a perfect home for our Piping Plover friend. Each student or small group will get a tray and various materials (clay, sand, blue paper for water, and their collected nature treasures). Their challenge is to design and build a miniature wetland model. Guide them with questions: 'Where will the bird find water? Where is a safe place to rest? What will it eat?' This creative, hands-on project allows them to apply their new knowledge and vocabulary in a meaningful engineering and artistic challenge, solidifying their understanding of what makes a healthy habitat.",
+      "learningObjective": "Students will apply their knowledge of wetland habitats to design and construct a 3D model.",
+      "steps": [
+        "Demonstrate how to create a simple model: lay down blue paper for water, use clay to make the land, add sand for a beach.",
+        "Distribute a tray and a kit of materials to each student or small group.",
+        "Encourage them to incorporate the 'treasures' they collected earlier (leaves, twigs, stones).",
+        "Circulate among the students, asking questions to prompt design thinking: 'Tell me about your wetland. What is this part?'",
+        "Provide small plastic animal figures (birds, fish, frogs) for them to place in their habitat.",
+        "Use the new vocabulary: 'I see you made a home with stones and leaves!'",
+        "Give a 5-minute warning for 'finishing touches' before cleanup."
+      ],
+      "backgroundInfo": [
+        "The design process (Ask, Imagine, Plan, Create, Improve) is a core component of engineering.",
+        "This activity encourages spatial reasoning and problem-solving.",
+        "Piping Plovers need wide, flat, sandy areas with little vegetation for nesting, so a good design would include a 'beach' area.",
+        "They eat insects and small invertebrates found along the shoreline, so the 'water's edge' is a key feature.",
+        "Adding twigs or small bits of grass provides shelter or camouflage for the bird.",
+        "Building a model helps students synthesize information from different sources (observation, direct instruction) into a single creative output.",
+        "This type of project-based learning is highly effective for language acquisition as it provides a clear, motivating context for communication."
+      ],
+      "teachingTips": [
+        "Focus on the process, not the final product. Praise creativity and effort.",
+        "Provide sentence frames for describing their work: 'This is the water. This is a home for the bird.'",
+        "For students who struggle with fine motor skills, provide larger materials or assist them in shaping the clay.",
+        "Play calming nature sounds in the background to create a focused, creative atmosphere.",
+        "Take a photo of each student with their creation."
+      ],
+      "phaseSupplies": [
+        "Individual trays (e.g., aluminum baking trays)",
+        "Modeling clay (brown and green)",
+        "Sand",
+        "Blue construction paper",
+        "Collected nature items",
+        "Small plastic animal figures (especially birds)",
+        "Wet wipes for cleanup"
+      ]
+    },
+    {
+      "timeRange": "02:25 - 03:00",
+      "phase": "EVALUATE & WRAP-UP",
+      "activity": "Wetland Gallery Walk & Certificate Ceremony",
+      "activityType": "Science (Communication), Art (Presentation)",
+      "location": "Picnic tables or activity area",
+      "description": "Let's celebrate our amazing work! Arrange the mini-wetland models on the tables to create a 'gallery.' Students will then do a 'gallery walk' to see everyone's creations. Each student gets a chance to present their model, using the vocabulary they learned. Ask them simple questions like 'What is your favorite part?' and 'What animal lives here?' This serves as an informal assessment of their understanding. To conclude, hold a special 'Wetland Protector' certificate ceremony. Call each student's name, present them with their certificate, and end with a final group cheer, celebrating their successful mission and reinforcing their new identity as protectors of nature.",
+      "learningObjective": "Students will share their learning with peers and reflect on the day's activities, demonstrating their understanding of a wetland habitat.",
+      "steps": [
+        "Arrange the models on tables for the gallery walk.",
+        "Lead the students from one model to the next, giving each creator a moment to shine.",
+        "Encourage peer feedback with simple prompts like 'Say something you like about your friend's wetland.'",
+        "Use an observational checklist to note which students are using the target vocabulary correctly.",
+        "Gather everyone for the certificate ceremony.",
+        "Call each student's name individually to receive their 'Official Wetland Protector' certificate.",
+        "Lead a final cheer: 'We are Wetland Protectors! Hooray!'",
+        "Briefly mention the post-class activity: 'At home, you can draw a picture of your favorite wetland animal!'"
+      ],
+      "backgroundInfo": [
+        "Peer-to-peer sharing (gallery walk) is a powerful tool for reinforcing learning and building communication confidence.",
+        "Presenting one's own work, even in simple terms, is a form of summative assessment.",
+        "Positive reinforcement through ceremonies and certificates builds self-esteem and a positive association with learning.",
+        "Reflection is a key part of the learning cycle, helping to transfer knowledge from short-term to long-term memory.",
+        "The post-class activity extends learning beyond the workshop and involves families.",
+        "This final phase provides closure and celebrates the students' accomplishments, making the experience memorable.",
+        "Conservation education aims to foster a sense of stewardship and responsibility for the environment from a young age."
+      ],
+      "teachingTips": [
+        "Provide students with the sentence frame for their presentation: 'This is my wetland. A (bird) lives here. It has (water) and a (home).'",
+        "Use a microphone (even a toy one) to make the presentations feel special and fun.",
+        "Ensure every single student is praised for their work and effort.",
+        "Have parents/guardians gather for the last 10 minutes to watch the certificate ceremony, fostering a strong home-school connection.",
+        "End on a high, positive note with music and cheering."
+      ],
+      "phaseSupplies": [
+        "Pre-printed 'Official Wetland Protector' certificates",
+        "Stickers or stamps for the certificates",
+        "Portable speaker for celebratory music",
+        "Observational assessment checklist for the teacher",
+        "Toy microphone (optional)"
+      ]
+    }
+  ],
+  "handbook": [
+    {
+      "pageNumber": 1,
+      "title": "Cover Page",
+      "section": "Cover",
+      "contentPrompt": "# Nature Compass\n\n## Wetland Adventure!",
+      "visualPrompt": "A vibrant, cartoon-style illustration of a sunny wetland. A friendly cartoon piping plover is waving from a sandy patch. In the background are cattails, blue water, and other happy animal characters like a frog and a dragonfly. The title is in a fun, bubbly font.",
+      "layoutDescription": "Full-page illustration with the title integrated into the top half of the image. Lots of bright, cheerful colors."
+    },
+    {
+      "pageNumber": 2,
+      "title": "Your Adventure Map",
+      "section": "Table of Contents",
+      "contentPrompt": "# What's Inside?\n\n## Our Plan!\n\n**Safety First!** .......... 3\n\n**Your Explorer Kit** ..... 4\n\n**What is a Wetland?** ... 5\n\n**Your Mission!** ........ 6\n\n**Nature I-Spy** ......... 7\n\n**Autumn Colors** ........ 8\n\n**Nature Count** ......... 9\n\n**Wetland Animals** ...... 10\n\n**Build a Wetland** ...... 11\n\n**My Design** ............ 12\n\n**My Discovery** ......... 13\n\n**My Certificate** ....... 14",
+      "visualPrompt": "A simple, cartoon map of a trail that winds past icons representing each section. For example, a magnifying glass icon next to 'Nature I-Spy' and a small animal icon next to 'Wetland Animals'.",
+      "layoutDescription": "Title at the top. The list of contents is on the left, taking up 60% of the page. The cartoon map visual is on the right."
+    },
+    {
+      "pageNumber": 3,
+      "title": "Safety First!",
+      "section": "Safety",
+      "contentPrompt": "# Be a Safe Explorer!\n\n## Our Rules\n\n1. **Stay with the group.**\n2. **Walk, don't run.**\n3. **Look with your eyes, not your hands.**\n4. **Listen to your teacher.**",
+      "visualPrompt": "Four simple, clear icons corresponding to each rule. 1) A group of smiling stick figures holding hands. 2) A 'no running' sign. 3) A large, friendly eye icon. 4) An ear icon.",
+      "layoutDescription": "Title at the top. The four rules are listed clearly with large numbers. Each rule has a corresponding icon next to it. Lots of white space."
+    },
+    {
+      "pageNumber": 4,
+      "title": "Your Explorer Kit",
+      "section": "Prop Checklist",
+      "contentPrompt": "# My Explorer Kit\n\n## What do I have?\n\n- My Handbook\n- My Crayon\n- My Collection Jar\n- My Name Tag\n\n> I am a Wetland Protector!",
+      "visualPrompt": "A cartoon drawing of a child's backpack with the checklist items peeking out. There are checkboxes next to each item for the student to tick.",
+      "layoutDescription": "Title at the top. A large, central illustration of the backpack. The checklist is listed to the side with interactive checkboxes. The quote is in a speech bubble at the bottom."
+    },
+    {
+      "pageNumber": 5,
+      "title": "What is a Wetland?",
+      "section": "Reading",
+      "contentPrompt": "# A Special Home\n\n## What is a **wetland**? [AUDIO_ICON]\n\nA wetland is a home where land and **water** [AUDIO_ICON] meet. Many animals and plants live here. It is a very important place!",
+      "visualPrompt": "A simple, cross-section illustration showing land on one side and water on the other, with a happy frog sitting right in the middle where they meet. Cattails are growing in the water.",
+      "layoutDescription": "A large, simple illustration takes up the top 70% of the page. The short text (26 words) is in a large, easy-to-read font at the bottom."
+    },
+    {
+      "pageNumber": 6,
+      "title": "Your Mission!",
+      "section": "Instructions",
+      "contentPrompt": "# Your Mission!\n\n## Help the Bird!\n\nA little **bird** [AUDIO_ICON] needs a safe home. Explore the wetland. Find clues. Then, build a new wetland **home** [AUDIO_ICON] for the bird. You can do it!",
+      "visualPrompt": "A cartoon Piping Plover looking hopeful, with a question mark in a thought bubble above its head. Next to it is an icon of a blueprint or a simple drawing of a house.",
+      "layoutDescription": "The title is prominent at the top. The text is on the left. The illustration of the bird is on the right, taking up half the page."
+    },
+    {
+      "pageNumber": 7,
+      "title": "Nature Walk I-Spy",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Nature I-Spy\n\n## What can you find?\n\nCircle what you see!\n\n- A yellow leaf\n- A smooth stone\n- A tall piece of grass\n- A flying bird\n- A little flower",
+      "visualPrompt": "A checklist with a simple, clear drawing of each item next to the text. For example, a yellow leaf, a grey stone, a blade of grass, a bird silhouette, and a small daisy.",
+      "layoutDescription": "Title at the top. The page is formatted as a checklist. Each item is on a new line with a large circle for the student to mark in, followed by the text and a small icon."
+    },
+    {
+      "pageNumber": 8,
+      "title": "Autumn Colors",
+      "section": "Reading",
+      "contentPrompt": "# Autumn Colors\n\n## Why do leaves change color?\n\nIn **autumn** [AUDIO_ICON], trees rest. They stop making green food. We can see the yellow and red colors that were hiding all summer. It's magic!",
+      "visualPrompt": "An illustration of a single tree branch. On one side, the leaves are all green (labeled 'Summer'). An arrow points to the other side, where the leaves are red, yellow, and brown (labeled 'Autumn').",
+      "layoutDescription": "The illustration is the main focus, spanning across the middle of the page. The text is split into two small paragraphs above and below the illustration. Word count: 28."
+    },
+    {
+      "pageNumber": 9,
+      "title": "Nature Count & Sort",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Nature Count & Sort\n\n## Let's use math!\n\nPut your treasures here. How many **leaves** [AUDIO_ICON]? How many **stones** [AUDIO_ICON]?\n\nLeaves: [TEXT_INPUT: Number]\n\nStones: [TEXT_INPUT: Number]",
+      "visualPrompt": "Two large, empty circles on the page. One is labeled with a picture of a leaf and the word 'LEAVES'. The other is labeled with a picture of a stone and the word 'STONES'.",
+      "layoutDescription": "A hands-on page. The two large circles are for students to physically place their collected items. Below the circles are the simple text input boxes for writing the numbers."
+    },
+    {
+      "pageNumber": 10,
+      "title": "Meet the Wetland Animals!",
+      "section": "Background Knowledge",
+      "contentPrompt": "# Wetland Friends\n\n## Who lives here?\n\n> Did you know? A wetland is like a busy city for animals! Many friends live, eat, and play in the water and plants.",
+      "visualPrompt": "A 'gallery' of four friendly cartoon animals found in a wetland: a Piping Plover on a beach, a frog on a lily pad, a dragonfly buzzing, and a small fish in the water. Each is labeled with its name.",
+      "layoutDescription": "The page is visually driven. The four animal illustrations are arranged in a 2x2 grid. The short text is in a box at the top of the page."
+    },
+    {
+      "pageNumber": 11,
+      "title": "Build a Mini-Wetland",
+      "section": "Instructions",
+      "contentPrompt": "# Build a Home!\n\n## You are a designer!\n\n1. Make the land and water.\n2. Add sand for a beach.\n3. Use your leaves and stones.\n4. Make a safe home for a bird!",
+      "visualPrompt": "A sequence of four simple, IKEA-style instruction icons. 1) A hand shaping clay. 2) A hand sprinkling sand. 3) A leaf and stone icon. 4) A small bird figure being placed on the model.",
+      "layoutDescription": "A clean, instructional layout. Title at the top. The four steps are listed down the left side, and the corresponding icon for each step is on the right."
+    },
+    {
+      "pageNumber": 12,
+      "title": "My Wetland Design",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# My Design\n\n## Draw your wetland!\n\n[TEXT_INPUT: Draw your amazing wetland model here. Don't forget the water, land, and a home for the bird!]",
+      "visualPrompt": "A large, empty frame that looks like a blueprint or a sketchpad page. In the corner, there is a small, encouraging cartoon pencil character giving a thumbs-up.",
+      "layoutDescription": "Almost the entire page is a blank space for drawing, defined by a decorative border. The title and prompt are at the very top, leaving maximum room for creativity."
+    },
+    {
+      "pageNumber": 13,
+      "title": "My Favorite Discovery",
+      "section": "Reflection",
+      "contentPrompt": "# What Did I Learn?\n\n## My favorite part was...\n\nDraw your favorite thing you saw today!\n\n[TEXT_INPUT: Draw your favorite discovery here! Was it a colorful leaf, a cool stone, or a flying bird?]",
+      "visualPrompt": "A large, empty thought bubble that covers most of the page, where the student can draw. A small cartoon head of a child is at the bottom, 'thinking' the bubble.",
+      "layoutDescription": "An engaging reflection page. The layout is dominated by the large thought bubble drawing area. The text prompts are simple and placed at the top."
+    },
+    {
+      "pageNumber": 14,
+      "title": "Certificate",
+      "section": "Certificate",
+      "contentPrompt": "# Official Wetland Protector\n\nThis certificate is awarded to\n\n[TEXT_INPUT: Student's Name]\n\nFor exploring and protecting the Jamaica Bay Wetland. You are a true Nature Hero!\n\nDate: [TEXT_INPUT: Date]",
+      "visualPrompt": "A formal-looking but fun certificate border made of illustrated leaves, waves, and birds. There is a large, golden seal in the corner that says 'Nature Compass Official'.",
+      "layoutDescription": "Classic certificate layout. The text is centered. There are lines for the student's name and the date. The decorative border frames the entire page."
+    },
+    {
+      "pageNumber": 15,
+      "title": "Back Cover",
+      "section": "Back Cover",
+      "contentPrompt": "## See you on our next adventure!\n\n> You are a scientist, an artist, and an engineer!",
+      "visualPrompt": "The Nature Compass logo (a compass where the needle is a leaf) in the center of the page. Below it, a small, happy Piping Plover waves goodbye.",
+      "layoutDescription": "A simple and clean back cover. The logo is the central element. The text is minimal and placed at the top and bottom of the page."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Wetland",
+        "definition": "A place where land and water meet. It is a home for many animals."
+      },
+      {
+        "word": "Leaf",
+        "definition": "Part of a tree. It helps the tree get food from the sun."
+      },
+      {
+        "word": "Stone",
+        "definition": "A small, hard piece of rock."
+      },
+      {
+        "word": "Home",
+        "definition": "A safe place for an animal to live."
+      },
+      {
+        "word": "Bird",
+        "definition": "An animal with feathers that can fly."
+      },
+      {
+        "word": "Water",
+        "definition": "The clear liquid in rivers, lakes, and oceans. All animals need it to live."
+      },
+      {
+        "word": "Autumn",
+        "definition": "The season after summer when leaves change color."
+      }
+    ],
+    "phrases": [
+      "I see a...",
+      "This is a...",
+      "Let's look for...",
+      "I found a...",
+      "The bird lives here."
+    ]
+  },
+  "supplies": {
+    "permanent": [
+      "First-aid kit",
+      "Portable speaker",
+      "Tablet or smartphone",
+      "Puppet",
+      "Large vocabulary flashcards",
+      "Large tarp or sorting mat",
+      "Colorful cones or flags",
+      "Toy microphone (optional)",
+      "Whistle or attention-getting sound maker",
+      "Long rope for 'nature train'"
+    ],
+    "consumables": [
+      "Pre-printed handbooks",
+      "Crayons",
+      "Pre-made name tags",
+      "Collection jars or bags",
+      "Hand sanitizer",
+      "Wet wipes",
+      "Water bottles",
+      "Allergy-safe snacks (e.g., apple slices)",
+      "Individual trays (e.g., aluminum baking trays)",
+      "Modeling clay (brown, green)",
+      "Sand",
+      "Blue construction paper",
+      "Small plastic animal figures",
+      "Pre-printed certificates",
+      "Stickers or stamps"
+    ]
+  },
+  "safetyProtocol": [
+    "Adult-to-child ratio will be a minimum of 1:5 near water and 1:8 on land trails.",
+    "Establish clear, visible boundaries for all activities using ropes or cones. Rule: 'You must always be able to see me!'",
+    "Tool Handling: No sharp tools. Students will be taught to handle collection jars carefully and not to throw any items.",
+    "Biological Contact: Enforce a 'look with your eyes, not your hands' rule for all living things (plants, fungi, animals, insects). Only collect items that are clearly non-living and on the ground. Mandatory hand washing/sanitizing after handling any natural materials.",
+    "Sun/Bug Protection: All participants (students and adults) must wear hats and have sunscreen applied before the workshop. Insect repellent is recommended, especially near standing water.",
+    "Emergency Response: Lead instructor will carry a first-aid kit and a list of emergency contacts. In case of serious injury, one adult will stay with the child, another will call emergency services (911), and the remaining staff will keep the other children calm and safe. The nearest hospital is St. John's Episcopal Hospital.",
+    "Weather-Specific Risks (Sunny): Monitor children for signs of heat exhaustion (dizziness, nausea). Ensure frequent water breaks in shady spots.",
+    "Allergy Awareness: Parents must provide information on any known allergies (especially to bee stings, pollen, or specific plants) prior to the workshop. Staff will carry necessary medication like EpiPens if provided by parents."
+  ],
+  "basicInfo": {
+    "theme": "Nature Exploration: Wetland Conservation",
+    "location": "Jamaica Bay Wildlife Refuge, New York City, NY",
+    "activityType": "Outdoor STEAM Workshop",
+    "learningGoals": [
+      "Identify key components of a wetland habitat.",
+      "Use 3-5 new English vocabulary words related to nature.",
+      "Practice scientific observation and classification skills.",
+      "Apply knowledge to design and build a model habitat."
+    ],
+    "targetAudience": "ESL Students, Ages 6-8, CEFR Level A1"
+  },
+  "handbookStylePrompt": "Create a visual style that is playful, bright, and encouraging, using a color palette of natural blues, greens, and browns, with pops of sunny yellow and red. Illustrations should be simple, friendly cartoons with clear outlines, resembling a high-quality children's nature show. The typography should be a rounded, sans-serif font that is very easy to read. The layout must be clean, with ample white space to avoid overwhelming young learners.",
+  "notebookLMPrompt": "Generate a reflection for a 7-year-old ESL student (A1 level) after a wetland exploration workshop. The tone should be simple, positive, and use the core vocabulary learned. The reflection should express excitement about the discoveries made and a sense of accomplishment in becoming a 'Wetland Protector.' It should mention finding leaves and stones, seeing a bird, and building a home. The sentences should be short and declarative. Example structure: 'Today was fun. I went to the wetland. I saw a bird. I found a yellow leaf. I built a home. I am a Wetland Protector!'",
+  "visualReferences": [
+    "Illustrations in the style of the 'Wild Kratts' animated series.",
+    "Layouts similar to National Geographic Kids 'Look and Learn' books.",
+    "Iconography inspired by simple, clear park signage.",
+    "Character design reminiscent of Oliver Jeffers' children's books."
+  ]
+}

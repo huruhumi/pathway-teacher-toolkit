@@ -1,9 +1,12 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import type { SavedLesson, CurriculumLesson, CurriculumParams, ESLCurriculum } from '../types';
-import { safeStorage } from '@shared/safeStorage';
 import { mapLessonToESLInput } from '../utils/curriculumMapper';
 import { generateLessonPlan } from '../services/geminiService';
 import { useBatchGenerateState } from '@shared/hooks/useBatchGenerateState';
+import { runWithConcurrency } from '@shared/utils/concurrency';
+
+/** Max simultaneous lesson plan generations */
+const BATCH_CONCURRENCY = 2;
 
 export function useBatchGenerate() {
     const {
@@ -21,12 +24,12 @@ export function useBatchGenerate() {
         startBatch(lessons.length);
         let errorCount = 0;
 
-        for (let i = 0; i < lessons.length; i++) {
-            if (batchCancelRef.current) break;
+        const processLesson = async (_lesson: CurriculumLesson, i: number) => {
+            if (batchCancelRef.current) return;
 
             if (batchStatus[i] === 'done') {
                 incrementDone(lessons.length, errorCount, i);
-                continue;
+                return;
             }
 
             try {
@@ -36,7 +39,7 @@ export function useBatchGenerate() {
                     mapped.slideCount, mapped.duration, mapped.studentCount, mapped.lessonTitle
                 );
 
-                const id = Date.now().toString();
+                const id = Date.now().toString() + '-' + i;
                 const newRecord: SavedLesson = {
                     id,
                     timestamp: Date.now(),
@@ -56,7 +59,15 @@ export function useBatchGenerate() {
                 errorCount++;
                 incrementError(lessons.length, batchProgress.done, i);
             }
-        }
+        };
+
+        await runWithConcurrency(
+            lessons,
+            BATCH_CONCURRENCY,
+            processLesson,
+            () => batchCancelRef.current,
+        );
+
         finishBatch();
     };
 
@@ -71,4 +82,3 @@ export function useBatchGenerate() {
         handleCancelBatch,
     };
 }
-

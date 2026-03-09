@@ -100,7 +100,7 @@ Each kit generates a full lesson plan with:
 - Mission Briefing, Vocabulary, Roadmap (5-7 phases), Supplies, Safety
 - Handbook (TARGET_HANDBOOK_PAGES pages)
 
-**CRITICAL (A11)**: Use the FULL PRODUCTION system prompt from `geminiService.ts` (`buildENSystemInstruction` function). Do NOT use a simplified prompt — review results must reflect actual production quality. If the multi-step pipeline is available, use it.
+**CRITICAL (A11)**: Use the FULL PRODUCTION system prompt from `geminiService.ts` (`buildENSystemInstruction` function). Do NOT use a simplified prompt — review results must reflect actual production quality. If the multi-step pipeline is available, use it. **Execute these generations SEQUENTIALLY (one by one, awaiting each) to prevent Gemini API rate limits and timeouts.**
 
 Output: `04-lesson-kits/lesson-[N]-[mode]-[age].json` + `.md`
 
@@ -306,11 +306,18 @@ Append the review findings to `07-final-report/content-review-report.md`.
 
 Output: Appended report in `07-final-report/content-review-report.md`
 
-### Step 11: Report to User
+### Step 11: Generate Implementation Plan
+
+Based on the optimization suggestions from Step 4 and Step 7, and the findings in the Final Report, generate a concrete, multi-stage implementation plan.
+Ensure the plan evaluates feasibility and safety, clearly detailing how prompt changes or UI code changes should be applied globally across the codebase.
+
+Output: `08-implementation-plan/implementation_plan.md`
+
+### Step 12: Report to User
 
 Use `notify_user` with:
 
-- Path to the final report
+- Path to the final report and implementation plan
 - Score summary table
 - Top 3 critical findings
 - Baseline comparison (if applicable)

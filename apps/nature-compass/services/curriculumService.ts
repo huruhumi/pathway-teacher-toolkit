@@ -70,13 +70,14 @@ export const generateCurriculum = async (
     Requirements:
     1. ${truncatedPdf ? 'The curriculum MUST be based on the uploaded reference document above.' : `The curriculum should be strictly centered around the theme: "${customTheme || "General STEAM Exploration"}".`}
     2. It should have exactly ${lessonCount} progressive lessons.
-    3. Locations must be real, well-known, and accessible urban wetlands/parks in ${city}. Avoid remote areas to minimize travel time for a single-day trip. ${preferredLocation ? `Try to focus on or include activities near ${preferredLocation}.` : ''}
-    4. Each lesson must include a specific interdisciplinary focus. You MUST explicitly embed Technology (e.g., citizen science apps, digital sensors) and Mathematics (e.g., measuring, estimating, data charting) into the activities alongside other disciplines.
-    5. Each lesson must include a specific, explicit, and actionable ESL focus.
-    6. Each lesson must have a specific "Rainy Day" indoor alternative activity that maintains the same learning objectives and provides equivalent immersive hands-on value.
-    7. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot.
-    8. English vocabulary and concepts should be integrated based on the provided level.
-    9. The tone should be professional, educational, and inspiring.`,
+    3. Locations must be real, well-known urban wetlands/parks in ${city}. Suggest incorporating local ${city} culture, wetland facts, or ecological characteristics where relevant.
+    4. Each lesson must explicitly embed Technology (e.g., citizen science apps, digital sensors, GIS) and Mathematics (e.g., measuring, estimating, data charting). For ages 10-12, heavily emphasize student-led inquiry, problem-solving, and deep integration of digital technology.
+    5. Each lesson must explicitly balance Art integration (aesthetics, design) within the STEAM framework.
+    6. Each lesson must include a specific, explicit, and actionable ESL focus. Strictly control vocabulary difficulty according to the ${englishLevel} CEFR level, ensuring adequate language scaffolds.
+    7. Each lesson must have a complete "Rainy Day" indoor alternative. This alternative MUST retain the identical learning goals and STEAM principles as the outdoor version, using indoor experiments, models, or natural specimens.
+    8. Activities should be rich and detailed, specifically designed to fill the ${duration} time slot. If duration is 180 minutes or longer, explicitly include break times, team-building warm-ups, and clear segmenting to avoid cognitive overload, especially for ages 6-8.
+    9. Each lesson should suggest a pre-class warm-up activity and a post-class extension activity.
+    10. The tone should be professional, educational, and inspiring.`,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -151,13 +152,14 @@ export const generateCurriculumCN = async (
     要求:
     1. ${truncatedPdf ? '课程必须基于上述参考文档内容设计。' : `课程必须严格围绕主题"${customTheme || "综合STEAM探索"}"展开。`}
     2. 必须包含恰好${lessonCount}节循序渐进的课。
-    3. 地点必须是${city}真实存在的、知名的且交通便利的城市湿地/公园。避免推荐地理位置过于偏远、往返交通时间过长的地点。${preferredLocation ? `尽量围绕${preferredLocation}设计活动。` : ''}
-    4. 每节课必须包含具体的跨学科焦点元素。你必须**显性且具体地融入科技（Technology，如智能识别工具、数据记录）和数学（Mathematics，如尺寸估算、面积计算、数据分析）元素**到活动中，并结合其他学科。
-    5. 每节课必须有具体的、可执行的"雨天室内替代活动"。该室内方案必须在学习目标和概念上与户外活动保持高度一致，并提供同等的沉浸式和动手实践价值。
-    6. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。
-    7. 语气应专业、教育性强、鼓舞人心。
-    8. 所有内容必须用中文书写。
-    9. esl_focus字段请填写空字符串""，english_vocabulary请填写空数组[]。`,
+    3. 地点必须是${city}真实存在的、知名的且交通便利的城市湿地/公园。建议视情况融入${city}当地文化、湿地特色或地方生态特征。
+    4. 每节课必须显性且具体地融入科技（Technology，如智能识别工具、数字传感器、GIS）和数学（Mathematics，如尺寸估算、面积计算、数据分析）。针对10-12岁，需重度融合数字科技应用及以学生为主导的探究式问题解决环节。
+    5. 每节课必须在STEAM框架下明确且平衡地融入艺术（Art，审美与设计）元素。
+    6. 必须提供具体、可执行的“雨天室内替代活动”。该方案必须保留与户外活动完全相同的学习目标和STEAM核心原则（可通过室内实验、模型制作或标本观察实现）。
+    7. 活动内容要丰富详细，专门设计以填满${duration}的时间安排。若时长达到180分钟及以上，必须明确划分环节、包含课前破冰和中场休息时间，以降低认知负荷（特别是针对6-8岁）。
+    8. 每节课应设计课前预热活动和课后延伸探索任务。
+    9. 语气应专业、教育性强、鼓舞人心。所有内容必须用纯中文书写，绝不能包含任何英语教学目标或英文要求。
+    10. esl_focus字段请填写空字符串""，english_vocabulary请填写空数组[]。`,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {

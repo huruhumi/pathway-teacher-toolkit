@@ -1,0 +1,217 @@
+{
+  "missionBriefing": "Welcome, Eco-Explorers! Today, we embark on a mission to become 'Nature Detectives' for our local waterways. Our goal is to investigate the health of a pond by observing its clarity, discovering the tiny creatures that live within it, and understanding how nature keeps water clean. We will use scientific tools to collect data, engineer our own water filters, and present our findings. Are you ready to uncover the secrets of water quality?",
+  "roadmap": [
+    {
+      "phase": "ENGAGE: The Murky Mystery",
+      "timeRange": "0-20 mins (20 mins total)"
+    },
+    {
+      "phase": "EXPLORE: Field Observation & Collection",
+      "timeRange": "20-60 mins (40 mins total)"
+    },
+    {
+      "phase": "EXPLAIN: The Science of Clean Water",
+      "timeRange": "60-90 mins (30 mins total)"
+    },
+    {
+      "phase": "ELABORATE: The Filtration Challenge",
+      "timeRange": "90-150 mins (60 mins total)"
+    },
+    {
+      "phase": "EVALUATE: Eco-Explorer Showcase",
+      "timeRange": "150-180 mins (30 mins total)"
+    }
+  ],
+  "handbook": [
+    {
+      "page": 1,
+      "section": "Cover",
+      "title": "Nature Compass: The Water Quality Mission",
+      "visualPrompt": "A vibrant, illustrated cover featuring diverse children in explorer vests looking at a pond with magnifying glasses. A large compass graphic is in the center. The style is friendly, educational, and inspired by nature field guides. Autumn leaves frame the scene. The title is in a bold, playful font."
+    },
+    {
+      "page": 2,
+      "section": "Introduction",
+      "title": "Table of Contents",
+      "visualPrompt": "A clean, two-column layout. On the left, a list of sections with page numbers. On the right, a vertical illustration of a water filtration column with layers (gravel, sand, cotton) corresponding to different sections of the handbook."
+    },
+    {
+      "page": 3,
+      "section": "Preparation",
+      "title": "Safety First, Explorer!",
+      "visualPrompt": "A series of friendly icons in a grid format. Each icon represents a safety rule: a 'stop' hand for 'look but don't touch', a sun for sunscreen, a water bottle for hydration, a 'group of people' icon for staying with the group, and a 'hand washing' icon."
+    },
+    {
+      "page": 4,
+      "section": "Preparation",
+      "title": "Your Explorer Kit",
+      "visualPrompt": "A checklist-style page with illustrations of each item: a magnifying glass, a collection jar, a notebook, a pencil, a water bottle, and a hat. Each item has a checkbox next to it for students to tick off."
+    },
+    {
+      "page": 5,
+      "section": "Reading",
+      "title": "What is Water Quality?",
+      "visualPrompt": "A split image. The top half shows a clear, sparkling pond with fish and green plants. The bottom half shows a cloudy, murky pond with no visible life. An arrow points from the top to a smiling emoji and from the bottom to a sad emoji."
+    },
+    {
+      "page": 6,
+      "section": "Activity",
+      "title": "Water Detective: First Look",
+      "visualPrompt": "A large drawing of a magnifying glass focusing on a drop of water. Inside the magnified circle, there are lines for students to write or draw. A simple color chart (from clear to brown) is on the side for them to circle their observation."
+    },
+    {
+      "page": 7,
+      "section": "Reading",
+      "title": "Tiny Water Helpers",
+      "visualPrompt": "Cute, cartoon-style illustrations of a mayfly nymph, a caddisfly larva, and a water snail. Each creature is labeled with its name and a small green checkmark, indicating they are signs of good water quality."
+    },
+    {
+      "page": 8,
+      "section": "Activity",
+      "title": "My Water Data Sheet",
+      "visualPrompt": "A worksheet formatted like a scientist's clipboard. It has three sections with icons: a thermometer for 'Temperature', a 'pH' scale for 'Acidity', and a 'magnifying glass' for 'Creatures Found'. There are boxes for students to write their measurements and draw the creatures."
+    },
+    {
+      "page": 9,
+      "section": "Reading",
+      "title": "How Does Nature Clean Water?",
+      "visualPrompt": "A simple cross-section diagram of soil layers next to a river. Arrows show water seeping through layers labeled 'Gravel', 'Sand', and 'Silt', with the water becoming clearer as it goes down. Each layer acts as a natural filter."
+    },
+    {
+      "page": 10,
+      "section": "Activity",
+      "title": "Design Your Filter!",
+      "visualPrompt": "A large, empty outline of a plastic bottle. Below it are drawings of different filter materials (cotton balls, sand, gravel, charcoal). Arrows point to the bottle, inviting students to draw their design inside the bottle outline."
+    },
+    {
+      "page": 11,
+      "section": "Activity",
+      "title": "Build Your Filter!",
+      "visualPrompt": "A sequence of four simple, numbered illustrations showing the steps to build the filter: 1. Cut the bottle. 2. Add cotton. 3. Add sand. 4. Add gravel. The style is like a simple instruction manual."
+    },
+    {
+      "page": 12,
+      "section": "Reading",
+      "title": "Testing Our Filters",
+      "visualPrompt": "A 'before' and 'after' illustration. The 'before' picture shows murky water being poured into the top of the student-made filter. The 'after' picture shows clearer water dripping out of the bottom into a clean jar."
+    },
+    {
+      "page": 13,
+      "section": "Reflection",
+      "title": "My Mission Summary",
+      "visualPrompt": "A page with three prompt boxes. The first has a lightbulb icon ('One thing I learned...'). The second has a star icon ('My favorite part was...'). The third has a question mark icon ('I still wonder about...')."
+    },
+    {
+      "page": 14,
+      "section": "Conclusion",
+      "title": "Certificate of Achievement",
+      "visualPrompt": "A formal-looking certificate with a decorative border of leaves and water droplets. It reads: 'This certifies that [TEXT_INPUT: Your Name Here] has successfully completed the Nature Compass Water Quality Mission.' There is a space for a signature and a gold seal illustration."
+    },
+    {
+      "page": 15,
+      "section": "Back Cover",
+      "title": "Keep Exploring!",
+      "visualPrompt": "A simple, clean back cover. In the center, a compass logo with the words 'Nature Compass' and a small credit line for the program. The background is a solid, calming green color."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Filtration"
+      },
+      {
+        "word": "Pollution"
+      },
+      {
+        "word": "Turbidity"
+      },
+      {
+        "word": "pH Scale"
+      },
+      {
+        "word": "Macroinvertebrate"
+      },
+      {
+        "word": "Ecosystem"
+      },
+      {
+        "word": "Observe"
+      },
+      {
+        "word": "Data"
+      }
+    ],
+    "phrases": [
+      "The water is clear.",
+      "The water is murky.",
+      "I found a small creature.",
+      "Let's test the water quality.",
+      "My filter has three layers.",
+      "This is my hypothesis."
+    ]
+  },
+  "supplies": {
+    "consumables": [
+      "Paper towels",
+      "Distilled water for cleaning",
+      "pH testing strips",
+      "Cotton balls",
+      "Activated charcoal (aquarium grade)",
+      "Clean sand",
+      "Small gravel/pebbles",
+      "Coffee filters",
+      "Student handbooks and pencils",
+      "Markers or colored pencils"
+    ],
+    "permanent": [
+      "Clear plastic bottles (2-liter, one per group)",
+      "Scissors (teacher use only)",
+      "Clear collection jars with lids (2 per group)",
+      "Magnifying glasses (1 per student)",
+      "Safety goggles (1 per student)",
+      "Small nets or strainers",
+      "Trays or shallow bins for specimen observation",
+      "Digital pH meter (optional, 1 for demo)",
+      "First aid kit",
+      "Whistle or attention signal",
+      "Boundary markers (cones or rope)"
+    ]
+  },
+  "safetyProtocol": [
+    {
+      "risk": "Students wandering off or entering water"
+    },
+    {
+      "risk": "Handling unknown plants or animals"
+    },
+    {
+      "risk": "Tool misuse (scissors, glass jars)"
+    },
+    {
+      "risk": "Sun and insect exposure"
+    },
+    {
+      "risk": "Allergic reactions (pollen, insect stings)"
+    },
+    {
+      "risk": "Slips, trips, and falls near water"
+    },
+    {
+      "risk": "Minor injuries (cuts, scrapes)"
+    },
+    {
+      "risk": "Heat-related illness"
+    }
+  ],
+  "basicInfo": {
+    "location": "Hyde Park, near The Serpentine, London, UK. (Accessible via multiple tube lines to Hyde Park Corner, Marble Arch, or Knightsbridge stations, all within a 15-minute walk from the activity area.)",
+    "theme": "Nature Exploration: Water Quality and Filtration"
+  },
+  "handbookStylePrompt": "An educational and engaging field guide for young explorers (ages 10-12). The style should be a mix of scientific illustration and friendly, cartoon-like characters. Use a clear, readable font. The color palette should be inspired by autumn nature: greens, browns, oranges, and blues. Layouts must be clean with plenty of white space to avoid overwhelming ESL learners. Include interactive elements like checklists, drawing spaces, and fill-in-the-blanks.",
+  "notebookLMPrompt": "Generate a student-facing science notebook for a 10-12 year old ESL student (CEFR A2) about a water quality workshop. The notebook should have a cover, a safety rules page with icons, a checklist for supplies, and several activity pages. Activity pages should guide students to record observations about water (color, clarity), draw tiny creatures they find, record data (pH, temperature), and design their own water filter by drawing the layers in a bottle. Use simple language, clear headings, and a mix of text prompts and drawing spaces. The tone should be encouraging and scientific.",
+  "visualReferences": [
+    "https://www.pinterest.com/pin/5443209596000000/",
+    "https://www.pinterest.com/pin/5443209596000001/",
+    "https://www.pinterest.com/pin/5443209596000002/"
+  ]
+}

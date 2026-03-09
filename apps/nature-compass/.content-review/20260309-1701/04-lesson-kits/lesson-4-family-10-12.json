@@ -1,0 +1,474 @@
+{
+  "missionBriefing": {
+    "title": "Nature Compass: An Autumn Explorer's Mission",
+    "narrative": "Welcome, Junior Environmental Scientists! Today, our mission is to become Nature Navigators. The autumn forest is full of secrets, and it uses a special code of colors, shapes, and textures to tell its story. We will learn to read these natural clues, map our environment, and build our very own compass using nothing but the treasures we find on the ground. Are you ready to unlock the secrets of the season?"
+  },
+  "roadmap": [
+    {
+      "timeRange": "0-20 min",
+      "phase": "ENGAGE",
+      "activity": "Mission Briefing & Map Skills",
+      "activityType": "Science/Technology/Math",
+      "location": "High Line Park - Entrance/Gathering Area (e.g., Gansevoort St. entrance)",
+      "description": "Begin your adventure by becoming official Nature Navigators. In this first phase, you and your child will receive your mission briefing and a map of High Line Park. The goal is to spark curiosity about navigation and mapping in a natural context. You'll work together to identify key landmarks on the map, such as specific art installations or garden zones. Then, you'll introduce a simple compass—either a real one or a smartphone app—to find North. This initial activity connects the abstract concept of a map to the physical world around you, setting the stage for a day of directed exploration and observation.",
+      "learningObjective": "To understand basic map reading skills and how a compass works to determine cardinal directions.",
+      "steps": [
+        "Gather in a circle and present the 'Mission Briefing' to the children, building excitement for being 'Nature Navigators'.",
+        "Distribute the park map and the 'Explorer Kit' to each family.",
+        "Guide your child to find your current location ('You Are Here') on the map. Point to a destination for your next activity.",
+        "Introduce the compass. If using a smartphone app, open it together. Explain that the red arrow always points North.",
+        "Help your child turn their body and the map so they are both facing North. This is called 'orienting the map'.",
+        "Practice finding North, South, East, and West in your immediate surroundings.",
+        "Ask your child to predict which direction you will walk to get to the first exploration spot."
+      ],
+      "backgroundInfo": [
+        "A compass works because of Earth's magnetism. The Earth acts like a giant bar magnet with a North and South pole.",
+        "The needle of a compass is a lightweight magnet. The Earth's magnetic field pulls on the needle, causing it to align with the North-South line.",
+        "Before compasses, sailors navigated using the sun's position (it rises in the East and sets in the West) and stars, like the North Star (Polaris).",
+        "The High Line is a 1.45-mile-long elevated park built on a former New York Central Railroad spur. It's an example of 'rewilding' an urban structure.",
+        "Maps use a 'scale' to represent large distances in a small space. For example, one inch on the map might equal 100 feet in the park.",
+        "Cardinal directions (North, East, South, West) are the four main points of a compass. Intermediate directions (like Northeast) are between them."
+      ],
+      "teachingTips": [
+        "For Parents: Use simple analogies. Explain Earth's magnetism like two magnets snapping together. 'The Earth has a big invisible magnet inside, and our little compass needle wants to point to it!'",
+        "ESL Scaffolding: Use the sentence frame: 'I see the [landmark] on the map. It is to the [direction].' Point and repeat the words 'North', 'South', 'East', 'West' clearly.",
+        "Outdoor Management: Establish a 'home base' spot. Use a simple call-and-response signal (e.g., Parent: 'Nature Navigators!', Child: 'Ready to Explore!') to get attention.",
+        "Differentiation: For children who grasp it quickly, ask them to find intermediate directions like Northwest. For those who need support, focus only on finding North."
+      ],
+      "conversationStarters": [
+        "If we didn't have a map or a compass, how else could we find our way?",
+        "What do you think the different colors and symbols on the map mean?",
+        "Why do you think it's important for the compass needle to always point North?"
+      ],
+      "phaseSupplies": [
+        "Printed map of High Line Park",
+        "Magnetic compass or smartphone with a compass app",
+        "Explorer Handbook"
+      ]
+    },
+    {
+      "timeRange": "20-60 min",
+      "phase": "EXPLORE (Part 1)",
+      "activity": "Autumn Leaf Collection & Analysis",
+      "activityType": "Science/Art/Math",
+      "location": "A designated leafy area of High Line Park (e.g., The Woodland Flyover)",
+      "description": "Now that you're oriented, it's time for hands-on science. This phase is a sensory exploration of autumn's most visible sign: changing leaves. Guide your child on a 'leaf hunt' to find as many different shapes, colors, and sizes as they can. This is not just about collecting; it's about careful observation. Encourage them to use their magnifying glass to look at the veins and textures. They will use their handbook's checklist to categorize what they find, turning a simple walk into a data collection exercise. This activity hones observation skills and introduces basic botanical concepts in a tangible way.",
+      "learningObjective": "To observe, collect, and classify different types of autumn leaves based on color, shape, and size.",
+      "steps": [
+        "Lead the group to a safe, designated area with plenty of fallen leaves.",
+        "Explain the 'look but don't pick' rule for leaves still on trees. We are only collecting leaves that have already fallen.",
+        "Give your child a collection bag and a magnifying glass. Challenge them to find at least five different kinds of leaves.",
+        "As they find leaves, encourage them to describe what they see. 'Look at this one! It's bright red and has pointy edges.'",
+        "Use the 'Leaf Detective Checklist' in the handbook. Help them identify the shape (e.g., oval, star, needle) and color.",
+        "Use a small ruler or their hand to measure/estimate the size of their favorite leaf and record it.",
+        "Group Management: Remind children to stay within the designated rope/cone boundaries and always be able to see their parent."
+      ],
+      "backgroundInfo": [
+        "Leaves get their green color from a chemical called chlorophyll. Chlorophyll helps plants make food using sunlight (photosynthesis).",
+        "In autumn, as days get shorter and colder, trees stop making food. The chlorophyll breaks down, revealing other colors that were there all along, like yellow (xanthophyll) and orange (carotene).",
+        "Red and purple colors are often caused by anthocyanins, pigments that are produced in the autumn in response to bright light and cold temperatures.",
+        "The veins in a leaf are like tiny pipes that carry water from the stem to the rest of the leaf.",
+        "The shape of a leaf helps us identify the tree. For example, Maple leaves are star-shaped, while Oak leaves have rounded lobes.",
+        "Trees drop their leaves in winter to conserve water and energy. Without leaves, they don't lose as much water to the dry winter air."
+      ],
+      "teachingTips": [
+        "For Parents: Explain chlorophyll like a green mask. 'In summer, the leaf wears a green mask called chlorophyll. In autumn, it takes the mask off, and we see its true yellow and orange face!'",
+        "ESL Scaffolding: Provide sentence frames: 'I found a ____ (color) leaf.' 'This leaf is ____ (shape/size).' Use gestures to explain words like 'pointy,' 'smooth,' and 'bumpy.'",
+        "Tool Handling: Show your child how to hold the magnifying glass close to their eye and move the leaf back and forth to get it in focus.",
+        "Differentiation: Challenge advanced learners to find leaves with signs of insect activity (like chewed holes). Support others by focusing on just finding two different colors."
+      ],
+      "conversationStarters": [
+        "Why do you think all the leaves aren't the same shape?",
+        "What does this leaf feel like? How is it different from that one?",
+        "I wonder what this leaf looked like in the summer."
+      ],
+      "phaseSupplies": [
+        "Collection bag (reusable cloth or paper)",
+        "Magnifying glass",
+        "Explorer Handbook and pencil",
+        "Small ruler"
+      ]
+    },
+    {
+      "timeRange": "60-90 min",
+      "phase": "EXPLORE (Part 2)",
+      "activity": "The Soil Story",
+      "activityType": "Science",
+      "location": "A designated garden bed or natural area in High Line Park",
+      "description": "After looking up at the trees, it's time to look down at the ground beneath our feet. In this phase, you and your child will become 'Soil Scientists.' You'll find a safe spot to examine the soil up close. Using a spoon or a stick, you will gently scoop a small sample onto a paper plate to observe. What is it made of? With a magnifying glass, you can discover a hidden world of tiny pebbles, decaying leaves (humus), and maybe even a wiggly worm or a tiny insect. This activity reveals that soil is not just 'dirt,' but a complex, living ecosystem essential for the plants you've been admiring.",
+      "learningObjective": "To observe and identify the different components of soil, understanding it as a habitat.",
+      "steps": [
+        "Find a designated soil exploration area. Remind your child we are just looking and will return the soil when we are done.",
+        "Lay down a piece of paper or a paper plate to create a 'lab station'.",
+        "Using a craft stick or spoon, guide your child to scoop a small amount of topsoil onto the plate.",
+        "Ask: 'What do you see?' Encourage them to use the magnifying glass to look for different components.",
+        "Help them sort the soil into piles: tiny rocks, dark soft bits (humus), sticks, and leaves.",
+        "If you find any living creatures like worms or beetles, observe them gently and talk about their role in the soil.",
+        "Before leaving, carefully return the soil sample to where you found it and wash hands thoroughly with sanitizer."
+      ],
+      "backgroundInfo": [
+        "Soil is made of four main ingredients: minerals (from broken-down rock), organic matter (decaying plants and animals, called humus), water, and air.",
+        "Humus is the dark, nutrient-rich part of soil that acts like a sponge, holding water and providing food for plants.",
+        "A single teaspoon of healthy soil can contain billions of microscopic organisms like bacteria and fungi.",
+        "Earthworms are 'soil engineers.' As they burrow, they create tunnels that let air and water in, and their castings (poop) enrich the soil.",
+        "Soil forms in layers called 'horizons.' The topsoil (the 'A horizon') is the darkest and has the most life and nutrients.",
+        "The texture of soil depends on the size of its mineral particles: sand (largest), silt (medium), and clay (smallest)."
+      ],
+      "teachingTips": [
+        "For Parents: Explain soil components like a cake recipe. 'Soil is like a cake! It needs flour (minerals), sugar and eggs (organic matter), and milk (water) to be good for the plants.'",
+        "ESL Scaffolding: Use simple, descriptive words. 'The rock is hard.' 'The soil is soft.' 'The worm is wiggly.' Use the sentence frame: 'In the soil, I see ____.'",
+        "Safety: Emphasize the 'look but don't touch' rule for unknown insects and the importance of hand washing after handling soil. Ensure no one puts their hands near their mouth.",
+        "Differentiation: For older children, ask them to draw the different components they see in their handbook. For younger children, focus on the tactile experience of feeling the different textures."
+      ],
+      "conversationStarters": [
+        "Why do you think soil is so important for the trees and plants?",
+        "What do you think it would be like to be an earthworm living in the soil?",
+        "How does this soil feel different from sand at the beach?"
+      ],
+      "phaseSupplies": [
+        "Magnifying glass",
+        "Craft sticks or old spoons",
+        "Paper plate or piece of white paper",
+        "Hand sanitizer"
+      ]
+    },
+    {
+      "timeRange": "90-120 min",
+      "phase": "EXPLAIN",
+      "activity": "Nature's Clues Debrief",
+      "activityType": "Science",
+      "location": "A comfortable seating area (e.g., The 23rd Street Lawn and Seating Steps)",
+      "description": "After exploring, it's time to connect the dots. Find a comfortable spot to sit together and share your discoveries. This is the 'EXPLAIN' phase, where you help your child make sense of what they've seen. You'll look at the leaves and soil samples you collected and discuss the 'why' behind your observations. Why are the leaves red and not green? What does soil do? As the parent-guide, you can share some of the fascinating 'Did You Know?' facts from your background info, transforming observations into deeper scientific understanding. This conversational phase helps solidify new vocabulary and concepts in a relaxed, social setting.",
+      "learningObjective": "To articulate observations and connect them to basic scientific explanations about autumn and soil composition.",
+      "steps": [
+        "Gather the group in a circle with the collected leaves and soil observation plates.",
+        "Ask each child to choose their favorite leaf and describe it to the group using the sentence frames they practiced.",
+        "Pose guiding questions: 'What did we notice about all the leaves we found?' 'What colors did we see most often?'",
+        "Share a simplified explanation for why leaves change color (the 'green mask' analogy).",
+        "Discuss the soil observations. Ask, 'Was the soil just dirt? What else did we find?'",
+        "Explain the importance of soil for plant life using the 'cake recipe' or 'plant food' analogy.",
+        "Encourage questions and celebrate every child's contribution to the discussion."
+      ],
+      "backgroundInfo": [
+        "The process of leaves falling is called 'abscission.' The tree forms a special layer of cells at the base of the leaf stem that pushes it off.",
+        "Decomposition is the process where organic matter (like fallen leaves) is broken down by bacteria, fungi, and worms, turning it into nutrient-rich humus.",
+        "A deciduous tree is one that loses its leaves annually (like oak and maple). An evergreen tree (like a pine) keeps its needles year-round.",
+        "The High Line's soil is specially engineered to be lightweight and drain well, as it sits on an elevated structure. It's not the same as the soil you'd find in a forest.",
+        "Sunlight is a key trigger for autumn colors. Sunny days and cool nights in autumn lead to the most vibrant red and purple leaf colors.",
+        "Many animals rely on the layer of fallen leaves (leaf litter) for camouflage, food, and shelter during the winter."
+      ],
+      "teachingTips": [
+        "For Parents: Your role here is to be a 'curiosity guide,' not a lecturer. Start with 'I wonder...' or 'Did you know...?' to share facts in an engaging way.",
+        "ESL Scaffolding: Create a 'word wall' on a large piece of paper with the new vocabulary (Chlorophyll, Humus, Decompose). Draw simple pictures next to each word.",
+        "Group Management: Use a 'talking stick' or another object; only the person holding it can speak. This ensures everyone gets a turn.",
+        "Connect to Personal Experience: Ask questions like, 'Do the trees near our home look like this in autumn?' 'What does the soil in our garden look like?'"
+      ],
+      "conversationStarters": [
+        "Which discovery surprised you the most today, the leaves or the soil?",
+        "If you were a tree, what color would you want your leaves to be in the fall?",
+        "What do you think happens to all these leaves after they fall on the ground?"
+      ],
+      "phaseSupplies": [
+        "Collected leaf specimens",
+        "Soil observation plates",
+        "Explorer Handbook for reference",
+        "Large paper and markers for 'word wall' (optional)"
+      ]
+    },
+    {
+      "timeRange": "120-160 min",
+      "phase": "ELABORATE",
+      "activity": "Build a Nature Compass",
+      "activityType": "Engineering/Art/Science",
+      "location": "An open, flat area (e.g., The Piazza)",
+      "description": "Now it's time to apply everything you've learned in a creative, hands-on challenge. In this phase, your family will use the natural materials you've collected—leaves, twigs, pebbles, acorns—to build a large compass on the ground. First, you'll use your real compass to find North again. Then, you'll design and construct your own. This is an engineering and art challenge: you must correctly orient the cardinal directions (N, E, S, W) and then decorate each direction with different natural items. For example, you could use red leaves for East (sunrise) and dark twigs for North. This activity synthesizes navigation skills, scientific observation, and artistic expression.",
+      "learningObjective": "To apply knowledge of cardinal directions by designing and constructing a temporary compass using natural materials.",
+      "steps": [
+        "Lead the group to a flat, open space where they can build without disturbing plants.",
+        "Demonstrate how to find North one more time with the compass.",
+        "Instruct each family to find a space and lay down two long sticks in a cross shape, with one stick pointing North-South and the other East-West.",
+        "Challenge them to mark each direction. They can make the letters N, E, S, W out of small twigs or pebbles.",
+        "Encourage creativity: 'Let's use our most colorful leaves to mark East, where the sun rises!' or 'Let's use dark stones to mark North.'",
+        "Guide your child in arranging the materials. This is a great opportunity for collaboration and design thinking.",
+        "Walk around and admire the different compass designs, asking children to explain their creative choices."
+      ],
+      "backgroundInfo": [
+        "Many ancient cultures created large-scale constructions related to cardinal directions and astronomy, like Stonehenge, which aligns with the sunrise on the summer solstice.",
+        "In many cultures, the four directions have symbolic meanings. For example, in some Native American traditions, each direction is associated with a specific spirit, color, and season.",
+        "This type of art, made from natural materials and left in the environment, is called 'Land Art' or 'Earth Art.' A famous artist who does this is Andy Goldsworthy.",
+        "The sun's path can be used as a natural compass. In the Northern Hemisphere, shadows move clockwise. A stick in the ground will cast its shortest shadow at noon, and that shadow will point North.",
+        "Moss often (but not always!) grows more thickly on the northern side of trees in the Northern Hemisphere, as it receives less direct sunlight and stays damper."
+      ],
+      "teachingTips": [
+        "For Parents: Focus on the process, not the perfect product. Praise your child's effort and creative ideas. 'What a clever way to make the letter S!'",
+        "ESL Scaffolding: Practice the direction words again. As they place items, say 'You are putting the red leaf in the East.' Have them repeat. Use prepositions: 'Put the stone on the line. Put the leaf next to the twig.'",
+        "Environmental Responsibility: Remind everyone that this is temporary art. We will leave our materials where they are to decompose naturally and not disturb any living plants.",
+        "Differentiation: Younger children can focus on sorting materials by color for each direction. Older children can be challenged to add intermediate directions (NE, SW, etc.)."
+      ],
+      "conversationStarters": [
+        "If we came back tomorrow, what do you think our compass would look like?",
+        "Besides a compass, what other things in nature could help us know which way is North?",
+        "What part of your design are you most proud of? Why?"
+      ],
+      "phaseSupplies": [
+        "All collected natural materials (leaves, twigs, pebbles)",
+        "Magnetic compass or smartphone app",
+        "Long sticks (at least 4 per group)"
+      ]
+    },
+    {
+      "timeRange": "160-180 min",
+      "phase": "EVALUATE",
+      "activity": "Explorer's Showcase & Reflection",
+      "activityType": "Science",
+      "location": "At the site of the Nature Compasses",
+      "description": "In the final phase of our mission, we celebrate our discoveries. Each family will stand by their completed Nature Compass and present it to the rest of the group. This is the 'Explorer's Showcase.' Your child can share which direction they decorated and why they chose those specific materials. It’s a chance to practice their new vocabulary and share what they learned in a proud, supportive environment. We'll conclude by reflecting on the day's single most exciting discovery. This final sharing circle reinforces the learning, builds confidence in communication, and ends the workshop with a sense of accomplishment and community.",
+      "learningObjective": "To share and reflect upon the day's learning by presenting the final project and articulating a key discovery.",
+      "steps": [
+        "Gather the group for a 'gallery walk' to see all the different nature compasses.",
+        "Give each family 1-2 minutes to present their compass. Prompt your child: 'Tell us about the East on your compass. What did you use?'",
+        "Give a big round of applause for each family's creation.",
+        "Take photos of the children with their compasses.",
+        "Gather for a final circle. Ask the reflection question: 'What was the most amazing thing you discovered today?'",
+        "Present each child with their 'Official Nature Explorer' certificate from the handbook.",
+        "Thank everyone for being wonderful scientists and officially conclude the mission."
+      ],
+      "backgroundInfo": [
+        "Scientific communication is a critical skill for scientists. They share their findings through papers, conferences, and presentations so others can learn from their work.",
+        "Reflection is a key part of the learning process. It helps transfer knowledge from short-term to long-term memory.",
+        "Portfolio-based assessment (like showing a project) is a common way to evaluate understanding in hands-on learning, as it focuses on what the student can *do*.",
+        "Nature journaling, a practice started by naturalists like John Muir and Charles Darwin, is a way of combining scientific observation, drawing, and personal reflection.",
+        "Celebrating achievements, even small ones, builds intrinsic motivation and a positive attitude towards learning.",
+        "Group sharing helps build a 'community of practice,' where learners feel safe to share ideas and learn from one another."
+      ],
+      "teachingTips": [
+        "For Parents: Help your child prepare one or two sentences for their presentation. If they are shy, you can present together. 'We decided to use...' ",
+        "ESL Scaffolding: Model the reflection sentence first: 'My favorite discovery was the wiggly worm in the soil.' Then invite your child to use the frame: 'My favorite discovery was ____.'",
+        "Positive Reinforcement: Focus on praising effort, creativity, and teamwork. 'I love how carefully you placed all those tiny pebbles.' 'You worked so well together!'",
+        "Leave No Trace: After photos and sharing, gently disperse the compass materials nearby to leave the area as you found it, explaining why this is important for the park."
+      ],
+      "conversationStarters": [
+        "What was your favorite part of our mission today?",
+        "What is one new word you learned today that you want to remember?",
+        "Where should our next nature exploration mission be?"
+      ],
+      "phaseSupplies": [
+        "Completed Nature Compasses",
+        "Explorer Handbook with certificate page",
+        "Camera or smartphone for photos"
+      ]
+    }
+  ],
+  "handbook": [
+    {
+      "pageNumber": 1,
+      "title": "Nature Compass",
+      "section": "Cover",
+      "contentPrompt": "# Nature Compass\n\n## An Autumn Explorer's Mission Handbook",
+      "visualPrompt": "A vibrant, stylized compass rose made of autumn leaves, acorns, and twigs. The background is a soft-focus image of a sunlit autumn park path. The title is in a fun, bold, earthy font.",
+      "layoutDescription": "Full-page cover image with title text overlaid in the center. The overall feel is adventurous and inviting. Ample negative space around the title."
+    },
+    {
+      "pageNumber": 2,
+      "title": "Your Mission Map",
+      "section": "Table of Contents",
+      "contentPrompt": "# Your Mission Map\n\n## What's Inside?\n\n*   **Safety First!** .......... Page 3\n*   **Your Explorer Kit** ..... Page 4\n*   **What is a Compass?** .... Page 5\n*   **Map Your Adventure** .... Page 6\n*   **Autumn Leaf Secrets** ... Page 7\n*   **Leaf Detective** ........ Page 8\n*   **The World Under Our Feet** Page 9\n*   **My Soil Discovery** ..... Page 10\n*   **Build Your Compass** .... Page 11\n*   **Compass Design** ........ Page 12\n*   **My Favorite Discovery** . Page 13\n*   **Your Certificate** ...... Page 14",
+      "visualPrompt": "A simple, cartoon-style treasure map with a dotted line connecting icons that represent each section (e.g., a magnifying glass for 'Leaf Detective', a compass for 'What is a Compass?').",
+      "layoutDescription": "Title at the top. The table of contents is listed clearly on the left. The cute map illustration is on the right, taking up about half the page. Clean and easy to read."
+    },
+    {
+      "pageNumber": 3,
+      "title": "Safety First!",
+      "section": "Safety",
+      "contentPrompt": "# Safety First!\n\n## Our Explorer Rules\n\n1.  Always stay where you can see your parent.\n2.  We only collect things that are already on the ground.\n3.  Look, but don't touch little creatures unless a grown-up says it's okay.\n4.  Keep your hands away from your mouth. Wash them after we finish!",
+      "visualPrompt": "A set of four simple, clear icons corresponding to each rule: 1) An icon of an adult and child holding hands. 2) An icon of a leaf on the ground with a green checkmark. 3) An icon of a beetle with a 'do not touch' hand symbol. 4) An icon of hands under a water faucet.",
+      "layoutDescription": "Title at the top. Each rule is a short, simple sentence with a corresponding icon next to it. Lots of white space between rules."
+    },
+    {
+      "pageNumber": 4,
+      "title": "Your Explorer Kit",
+      "section": "Prop Checklist",
+      "contentPrompt": "# Your Explorer Kit\n\n## Check Your Supplies!\n\n*   [ ] This Handbook!\n*   [ ] A Pencil\n*   [ ] Magnifying Glass\n*   [ ] Collection Bag\n*   [ ] Compass (or phone app)\n*   [ ] Water Bottle\n*   [ ] A Big Smile!",
+      "visualPrompt": "A checklist with cute, simple drawings of each item: a book, a pencil, a magnifying glass, a cloth bag, a compass, a water bottle, and a smiley face.",
+      "layoutDescription": "Title at the top. A simple bulleted list with checkboxes. Each item is accompanied by a small, friendly illustration. Clean and functional."
+    },
+    {
+      "pageNumber": 5,
+      "title": "What Is a Compass?",
+      "section": "Reading",
+      "contentPrompt": "# What Is a Compass? [AUDIO_ICON]\n\n## Finding Your Way\n\nA **compass** [AUDIO_ICON] is a tool that helps us find directions. The Earth is a giant magnet! A compass has a small magnetic needle. This needle always points to the **North** [AUDIO_ICON]. When you know where North is, you can find South, East, and West too.",
+      "visualPrompt": "A large, simple illustration of a compass, with the North arrow colored bright red. An arrow points from the compass towards a cartoon drawing of the North Pole on a globe.",
+      "layoutDescription": "Title and subheading at the top. A short paragraph of text (46 words) on the left. The large, clear illustration of the compass and globe takes up the right half of the page. Key vocabulary is bolded."
+    },
+    {
+      "pageNumber": 6,
+      "title": "Map Your Adventure!",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Map Your Adventure!\n\n## Where Are We Going?\n\nLook at the park map with your parent. Find where we are now. Can you draw a circle around it?\n\nNow, find our next exploration spot. Draw a line from our circle to that spot. Which direction will we walk? \n\n[TEXT_INPUT: We will walk...]",
+      "visualPrompt": "A simplified, generic park map with a few landmarks (e.g., a fountain, a big tree, a bridge). A large 'You Are Here' star is clearly marked. The background is a faint grid pattern.",
+      "layoutDescription": "Title and instructions at the top. The map illustration dominates the page, with clear space for drawing. A text input box is at the bottom for the student's answer."
+    },
+    {
+      "pageNumber": 7,
+      "title": "Why Do Leaves Change Color?",
+      "section": "Reading",
+      "contentPrompt": "# Autumn Leaf Secrets\n\n## The Big Color Change\n\nIn summer, leaves are green because of **chlorophyll** [AUDIO_ICON]. It helps trees make food from sunlight. In autumn, trees rest. The green chlorophyll goes away. Then we can see the yellow and orange colors that were hiding all summer long! It's like taking off a green mask.",
+      "visualPrompt": "A simple diagram showing a green leaf in a sunbeam on the left, with an arrow pointing to a yellow and orange leaf on the right. A cartoon sun is shown going down.",
+      "layoutDescription": "Title at the top. The text (49 words) is on the left side. The clear, explanatory illustration is on the right. Airy layout with bolded key term."
+    },
+    {
+      "pageNumber": 8,
+      "title": "Leaf Detective Checklist",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Leaf Detective\n\n## What Did You Find?\n\nFind a cool leaf! Draw it here. Then, check the boxes.\n\n[TEXT_INPUT: Draw your leaf here.]\n\n**Color:**\n[ ] Red [ ] Yellow [ ] Orange [ ] Brown\n\n**Shape:**\n[ ] Oval [ ] Star [ ] Pointy\n\n**Size:**\nMy leaf is about [TEXT_INPUT: number] fingers wide.",
+      "visualPrompt": "A large blank box in the center of the page with a faint leaf outline inside, labeled 'Draw Here'. Below the box are simple checklist sections with icons for color (paint splotches) and shape (simple outlines).",
+      "layoutDescription": "Title at the top. A large drawing area is the main focus. The checklist items are below, clearly separated and easy to fill out. Interactive and engaging."
+    },
+    {
+      "pageNumber": 9,
+      "title": "The World Under Our Feet",
+      "section": "Reading",
+      "contentPrompt": "# The World Under Our Feet\n\n## What is Soil?\n\nSoil is not just dirt! It is a home for plants and animals. Soil is made of tiny rocks, water, air, and **humus** [AUDIO_ICON]. Humus is made from old, broken-down leaves and plants. It is full of nutrients that help new plants grow strong and healthy.",
+      "visualPrompt": "A cross-section illustration of the ground. The top layer is dark brown labeled 'Soil' with a happy cartoon worm and plant roots. Below are layers of rock and pebbles.",
+      "layoutDescription": "Title at the top. The paragraph of text (48 words) is placed next to the large, clear cross-section diagram. The layout makes the concept of soil layers easy to understand."
+    },
+    {
+      "pageNumber": 10,
+      "title": "My Soil Discovery",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# My Soil Discovery\n\n## Look Closer!\n\nLook at your soil sample with a magnifying glass. What did you see? Draw three things you found in the soil.\n\n[TEXT_INPUT: Drawing 1] [TEXT_INPUT: Drawing 2] [TEXT_INPUT: Drawing 3]\n\n> **Did You Know?** One handful of soil has more living things in it than there are people on Earth!",
+      "visualPrompt": "Three circles on the page, framed to look like the view through a magnifying glass. Inside each circle is a space for drawing. A fun fact is in a colored quote box at the bottom.",
+      "layoutDescription": "Title and instructions at the top. Three clear drawing areas are the main focus. The fun fact at the bottom adds an extra element of discovery."
+    },
+    {
+      "pageNumber": 11,
+      "title": "How to Build a Nature Compass",
+      "section": "Instructions",
+      "contentPrompt": "# Build Your Compass\n\n## Step-by-Step\n\n1.  Use your real compass to find **North**.\n2.  Find two long sticks. Place them in a cross shape (+).\n3.  Make one stick point North and South.\n4.  Make the other stick point East and West.\n5.  You did it! Now you can decorate.",
+      "visualPrompt": "A sequence of 4 simple, IKEA-style instructional diagrams: 1) A compass. 2) Two sticks. 3) The sticks forming a cross with N/S labels. 4) The full cross with N/S/E/W labels.",
+      "layoutDescription": "Title at the top. The numbered steps are on the left, with simple, clear language. The corresponding diagrams are on the right, making the instructions easy to follow visually."
+    },
+    {
+      "pageNumber": 12,
+      "title": "Design Your Compass",
+      "section": "Activity/Worksheet",
+      "contentPrompt": "# Design Your Compass\n\n## Get Creative!\n\nPlan your Nature Compass here. What will you use for each direction? Draw your ideas.\n\n**NORTH:** [TEXT_INPUT: Draw your idea for North]\n\n**EAST:** [TEXT_INPUT: Draw your idea for East]\n\n**SOUTH:** [TEXT_INPUT: Draw your idea for South]\n\n**WEST:** [TEXT_INPUT: Draw your idea for West]",
+      "visualPrompt": "A large, faint compass rose dominating the page. The page is divided into four quadrants, labeled N, E, S, W, each with a blank space for drawing.",
+      "layoutDescription": "Title and instructions at the top. The page is clearly structured into four sections for planning. This worksheet encourages forethought and design before building."
+    },
+    {
+      "pageNumber": 13,
+      "title": "My Favorite Discovery",
+      "section": "Reflection",
+      "contentPrompt": "# My Favorite Discovery\n\n## What Did You Learn?\n\nToday we were Nature Navigators! Think about everything you saw and did. What was the most amazing thing you discovered today?\n\n[TEXT_INPUT: My favorite discovery was...]\n\nDraw your discovery here!\n\n[TEXT_INPUT: A large blank space for drawing.]",
+      "visualPrompt": "A large, empty thought bubble at the top of the page for writing, connected to a large, empty box below for drawing. A friendly cartoon owl wearing an explorer's hat is in the corner.",
+      "layoutDescription": "Title at the top. A clear prompt for writing and a large, inviting space for drawing. The layout encourages personal reflection and creativity."
+    },
+    {
+      "pageNumber": 14,
+      "title": "Official Nature Explorer",
+      "section": "Certificate",
+      "contentPrompt": "# Certificate of Exploration\n\n## This certificate is awarded to\n\n[TEXT_INPUT: Write Your Name Here]\n\nFor successfully completing the Nature Compass mission. You have shown excellent skills in observation, navigation, and creativity.\n\n**Date:** [TEXT_INPUT: date]\n**Signed:** An Explorer Guide",
+      "visualPrompt": "A formal-looking certificate border made of illustrated vines and leaves. A gold seal icon is in the bottom corner. The text is in a fancy, calligraphic font.",
+      "layoutDescription": "A classic certificate layout. The text is centered. There are lines for the child to write their name and the date. It feels official and celebratory."
+    },
+    {
+      "pageNumber": 15,
+      "title": "Your Adventure Continues!",
+      "section": "Back Cover",
+      "contentPrompt": "# Your Adventure Continues!\n\n## Keep Exploring!\n\nLook for nature's clues everywhere you go.\n\nWhat can you discover in your own backyard or local park?",
+      "visualPrompt": "A beautiful, high-quality photograph of a child's hands holding a variety of natural treasures: a colorful leaf, a smooth stone, an acorn. The company/organization logo is at the bottom.",
+      "layoutDescription": "Full-page image with text overlaid at the top. The feeling is inspirational and encourages continued learning. The logo is placed discreetly at the bottom."
+    }
+  ],
+  "vocabulary": {
+    "keywords": [
+      {
+        "word": "Compass",
+        "definition": "A tool that shows directions (North, South, East, West)."
+      },
+      {
+        "word": "Navigate",
+        "definition": "To find the way to a place."
+      },
+      {
+        "word": "Observe",
+        "definition": "To look at something very carefully."
+      },
+      {
+        "word": "Chlorophyll",
+        "definition": "The green color in leaves that helps plants make food."
+      },
+      {
+        "word": "Humus",
+        "definition": "The dark, rich part of soil made from dead leaves and plants."
+      },
+      {
+        "word": "Decompose",
+        "definition": "To break down into smaller parts, like when a leaf turns into soil."
+      },
+      {
+        "word": "Environment",
+        "definition": "The natural world of land, water, air, plants, and animals around us."
+      }
+    ],
+    "phrases": [
+      "Cardinal directions",
+      "Look closely at...",
+      "What do you notice?",
+      "I found a...",
+      "This feels like...",
+      "Let's sort them by..."
+    ]
+  },
+  "supplies": {
+    "permanent": [
+      "Magnetic compasses (1 per family)",
+      "Magnifying glasses (1 per child)",
+      "Small rulers",
+      "Clipboards",
+      "First aid kit",
+      "Smartphone with compass app (as backup)"
+    ],
+    "consumables": [
+      "Explorer Handbooks (1 per child)",
+      "Pencils",
+      "Paper or cloth collection bags",
+      "Paper plates",
+      "Craft sticks or old spoons",
+      "Hand sanitizer",
+      "Sunscreen",
+      "Insect repellent"
+    ]
+  },
+  "safetyProtocol": [
+    "Adult-to-child ratio will be strictly maintained at a minimum of 1:8 for all land-based activities.",
+    "Establish clear physical boundaries using cones or landmarks. Instruct children not to go past the designated safe-zone line.",
+    "Tool Handling: Demonstrate safe use of magnifying glasses (do not point at the sun) and rulers. Any sharp tools are to be handled by adults only.",
+    "Biological Contact: Enforce a 'look but don't touch' policy for unknown plants, fungi, and insects. A strict hand-washing/sanitizing protocol must be followed after handling soil and before snacks.",
+    "Sun/Bug Protection: Parents must ensure children have applied sunscreen and insect repellent before the workshop. Hats are mandatory for sunny conditions.",
+    "Emergency Response: The instructor will have a fully stocked first aid kit, a list of emergency contacts for all participants, and the address/directions to the nearest hospital (Lenox Health Greenwich Village).",
+    "Weather-Specific Risks (Sunny): Be aware of signs of heatstroke or dehydration (dizziness, fatigue, flushed skin). Ensure frequent water breaks in shaded areas.",
+    "Allergy Awareness: Check with all parents for any known allergies to pollen, plants (like poison ivy), or bee stings before the nature walk begins.",
+    "Safe Group Movement: Use a 'buddy system' and conduct regular headcounts when moving from one location to another within the park."
+  ],
+  "basicInfo": {
+    "theme": "Nature Exploration",
+    "location": "High Line Park, New York, NY",
+    "activityType": "Outdoor STEAM Workshop",
+    "learningGoals": [
+      "Develop basic navigation skills using a map and compass.",
+      "Enhance scientific observation skills by examining autumn leaves and soil.",
+      "Learn and use new English vocabulary related to nature and science.",
+      "Apply learning creatively by engineering a compass from natural materials."
+    ],
+    "targetAudience": "ESL Students (Ages 10-12) and their parents (Family Mode)"
+  },
+  "handbookStylePrompt": "Create a visually engaging and clean handbook with a 'junior scientist field journal' aesthetic. Use a mix of cute, simple illustrations, clear icons, and high-quality nature photos. The color palette should be inspired by autumn: warm oranges, reds, browns, and deep greens. Use a friendly, rounded sans-serif font for body text and a slightly more adventurous, bold font for titles. Ensure plenty of white space to avoid clutter and make the pages feel approachable for A2 ESL learners. Interactive elements like checklists and drawing spaces should be large and clearly defined.",
+  "notebookLMPrompt": "Generate a lesson plan for a 180-minute family-oriented weekend workshop called 'Nature Compass' for 10-12 year old A2 ESL students. The theme is autumn nature exploration and environmental mapping. The lesson must be structured using the 5E model (Engage, Explore, Explain, Elaborate, Evaluate), with some stages subdivided to create 5-7 total phases. The context is a sunny day at a real, accessible urban park. The plan must be written for parents to lead their children, with simplified scientific explanations and ESL scaffolding (sentence frames). It needs to integrate Science, Technology, Math, and Art, with explicit callouts for Technology (e.g., compass app) and Math (e.g., counting, measuring). Include comprehensive safety protocols, detailed steps, rich background info, and specific teaching tips for each phase. The output must be a single, valid JSON file.",
+  "visualReferences": [
+    "https://www.pinterest.com/pin/54433519324545583/",
+    "https://www.pinterest.com/pin/158495699969627725/",
+    "https://www.pinterest.com/pin/589694764128509/"
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "Floating Friends: Wetland Plants",
+      "lessonNumber": 1,
+      "theme": "Wetland Flora and Buoyancy",
+      "location": "Jiefang Park (解放公园), Jiang'an District",
+      "season": "Spring or Summer",
+      "learningGoals": [
+        "Identify and name 3 different wetland plants in English",
+        "Understand why some plants float while others sink",
+        "Observe and draw plant structures (leaves, stems, roots)"
+      ],
+      "keyVocabulary": [
+        "Leaf",
+        "Stem",
+        "Root",
+        "Water",
+        "Green",
+        "Float",
+        "Sink",
+        "Wetland"
+      ],
+      "activitySummary": "Students will go on a 'Plant Scavenger Hunt' to find specific leaves and flowers near the park ponds. They will then conduct a simple 'Float or Sink' experiment using natural materials found on the ground to understand plant buoyancy.",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "Keep students at least 2 meters away from the water's edge; use long-handled nets for any plant collection; watch for slippery moss."
+    },
+    {
+      "lessonTitle": "Sky Dancers: The Bird Watchers",
+      "lessonNumber": 2,
+      "theme": "Wetland Birds and Habitats",
+      "location": "Sha Lake Park (沙湖公园), Wuchang District",
+      "season": "Autumn or Spring",
+      "learningGoals": [
+        "Count birds and use numbers 1-20 in a real-world context",
+        "Identify bird body parts and basic movements (fly, swim, walk)",
+        "Understand the concept of a 'habitat' as a home for animals"
+      ],
+      "keyVocabulary": [
+        "Bird",
+        "Wing",
+        "Beak",
+        "Fly",
+        "Swim",
+        "Nest",
+        "Home",
+        "Binoculars"
+      ],
+      "activitySummary": "Using child-friendly binoculars, students will participate in a 'Bird Census' to count how many white egrets and ducks they see. They will then use clay and twigs to build a model nest based on their observations of the environment.",
+      "steamFocus": "Science, Math, Engineering",
+      "safetyNotes": "Ensure students do not feed the birds; stay on the designated wooden boardwalks; use sun protection in open areas."
+    },
+    {
+      "lessonTitle": "Hidden Water World: Mini-Beasts",
+      "lessonNumber": 3,
+      "theme": "Aquatic Life and Magnification",
+      "location": "East Lake Wetland Park (东湖湿地公园 - 落雁景区), Hongshan District",
+      "season": "Summer",
+      "learningGoals": [
+        "Use magnifying glasses to observe small insects and fish",
+        "Use adjectives (big, small, fast, slow) to describe aquatic life",
+        "Learn the life cycle of a frog or dragonfly through observation"
+      ],
+      "keyVocabulary": [
+        "Fish",
+        "Bug",
+        "Small",
+        "Big",
+        "Fast",
+        "Slow",
+        "Water",
+        "Look"
+      ],
+      "activitySummary": "Students will use magnifying jars to safely observe water samples and identify 'mini-beasts' like water striders or small fry. They will create a 'Water Life Map' by drawing the creatures they find and labeling their speed and size.",
+      "steamFocus": "Science, Technology, Art",
+      "safetyNotes": "Strict supervision near the lake shore; ensure students wash hands after touching pond water; watch for stinging insects."
+    },
+    {
+      "lessonTitle": "Wetland Guardians: Clean Water Heroes",
+      "lessonNumber": 4,
+      "theme": "Water Filtration and Conservation",
+      "location": "Moon Lake Park (月湖公园), Hanyang District",
+      "season": "Any",
+      "learningGoals": [
+        "Understand that wetlands help clean our city's water",
+        "Follow a 3-step English instruction to build a simple filter",
+        "Express simple ways to 'help' the earth (e.g., 'Do not litter')"
+      ],
+      "keyVocabulary": [
+        "Clean",
+        "Dirty",
+        "Sand",
+        "Rock",
+        "Filter",
+        "Help",
+        "Earth",
+        "Pour"
+      ],
+      "activitySummary": "Students will act as 'Engineers' to build a natural water filter using sand, pebbles, and charcoal in a plastic bottle. They will test how the wetland-inspired layers can turn 'cloudy' water into 'clear' water and discuss how to protect the lake.",
+      "steamFocus": "Engineering, Science, Art",
+      "safetyNotes": "Remind students that the filtered water is for observation only and NOT for drinking; handle rocks and sand carefully to avoid eye contact."
+    }
+  ]
+}

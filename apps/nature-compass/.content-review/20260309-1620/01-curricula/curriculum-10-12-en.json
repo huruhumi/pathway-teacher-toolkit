@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "The Secret Life of Water",
+      "lessonNumber": 1,
+      "theme": "Water Quality and Filtration",
+      "location": "Jiefang Park (解放公园)",
+      "season": "Spring",
+      "learningGoals": [
+        "Identify the basic functions of a wetland in filtering city water.",
+        "Use comparative adjectives (cleaner, dirtier, clearer) to describe water samples.",
+        "Build a natural water filtration model using sand, gravel, and charcoal."
+      ],
+      "keyVocabulary": [
+        "Wetland",
+        "Filter",
+        "Pollution",
+        "Ecosystem",
+        "Purify",
+        "Sediment",
+        "Observe"
+      ],
+      "activitySummary": "Students collect water samples from the park's ponds and test their clarity. They then work in teams to build a multi-layer natural filter and record how the water changes as it passes through.",
+      "steamFocus": "Science, Engineering",
+      "safetyNotes": "Stay 2 meters away from the water edge; use long-handled cups for sampling; wash hands after touching pond water."
+    },
+    {
+      "lessonTitle": "Feathered Friends of the Lake",
+      "lessonNumber": 2,
+      "theme": "Bird Observation and Adaptation",
+      "location": "East Lake Wetland Park (东湖湿地公园 - 落雁景区)",
+      "season": "Winter",
+      "learningGoals": [
+        "Describe bird physical traits and behaviors using the present continuous tense.",
+        "Explain how different beak shapes help birds eat specific foods.",
+        "Use binoculars and a field guide to identify at least 3 local bird species."
+      ],
+      "keyVocabulary": [
+        "Migration",
+        "Beak",
+        "Feathers",
+        "Binoculars",
+        "Habitat",
+        "Species",
+        "Adaptation"
+      ],
+      "activitySummary": "Students go on a guided bird walk to spot migratory birds like the Grey Heron. They complete a 'Beak and Food' matching challenge and sketch birds in their field journals.",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "Keep noise levels low to avoid scaring wildlife; stay on the designated boardwalks; wear warm clothing."
+    },
+    {
+      "lessonTitle": "The Green Scavenger Hunt",
+      "lessonNumber": 3,
+      "theme": "Plant Biodiversity and Classification",
+      "location": "Sha Lake Park (沙湖公园)",
+      "season": "Summer",
+      "learningGoals": [
+        "Classify aquatic plants into floating, submerged, and emergent categories.",
+        "Use sequence adverbs (first, next, then) to explain the process of photosynthesis.",
+        "Measure and record leaf dimensions to practice data collection."
+      ],
+      "keyVocabulary": [
+        "Root",
+        "Stem",
+        "Floating",
+        "Submerged",
+        "Diversity",
+        "Photosynthesis",
+        "Oxygen"
+      ],
+      "activitySummary": "Students participate in a botanical scavenger hunt to find specific wetland plants. They use rulers to measure plant height and create leaf rubbings to study vein patterns.",
+      "steamFocus": "Science, Math, Art",
+      "safetyNotes": "Wear sunscreen and hats; watch out for slippery stones near the lotus ponds; do not pick or eat any wild plants."
+    },
+    {
+      "lessonTitle": "Eco-Engineers: Protecting the Shore",
+      "lessonNumber": 4,
+      "theme": "Conservation and Urban Impact",
+      "location": "Moon Lake (月湖公园)",
+      "season": "Autumn",
+      "learningGoals": [
+        "Propose 3 ways to reduce human impact on urban wetlands.",
+        "Use modal verbs (should/shouldn't) to create park rules for visitors.",
+        "Design a model of a 'Trash Trap' to prevent plastic from entering the lake."
+      ],
+      "keyVocabulary": [
+        "Conservation",
+        "Protect",
+        "Environment",
+        "Rubbish",
+        "Impact",
+        "Restore",
+        "Sustainable"
+      ],
+      "activitySummary": "Students conduct a 'Trash Audit' to see what types of waste are near the lake. They then use recycled materials to design and pitch a prototype device that protects the wetland from city pollution.",
+      "steamFocus": "Engineering, Technology, Art",
+      "safetyNotes": "Use gloves and tongs when picking up trash; avoid sharp objects like broken glass; stay within sight of the instructors."
+    }
+  ]
+}

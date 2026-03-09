@@ -95,23 +95,23 @@ export const lessonPlanSchema: Schema = {
           phase: { type: Type.STRING, description: "Phase name like 'Ice-breaking' or 'Core Challenge'" },
           activity: { type: Type.STRING, description: "Name of the specific activity" },
           activityType: { type: Type.STRING, description: "Type of activity e.g. 'Science', 'Art', 'Movement'." },
-          location: { type: Type.STRING, description: "Specific setting for this step, e.g. 'Classroom Rug', 'Outdoor Garden', 'Science Lab'." },
-          description: { type: Type.STRING, description: "A detailed narrative (6-8 sentences minimum) including specific theme, context, factual content, and enough detail to serve as source material for handbook Activity/Worksheet pages. Do NOT write a vague summary — include concrete actions, locations, and subject matter." },
-          learningObjective: { type: Type.STRING, description: "Specific learning goal for this time block." },
+          location: { type: Type.STRING, description: "Specific setting for this step, e.g. 'Classroom Rug', 'Outdoor Garden', 'Science Lab'. MUST NOT be empty." },
+          description: { type: Type.STRING, description: "MUST NOT be empty. A detailed narrative (6-8 sentences minimum) including specific theme, context, factual content, and enough detail to serve as source material for handbook Activity/Worksheet pages. Do NOT write a vague summary — include concrete actions, locations, and subject matter." },
+          learningObjective: { type: Type.STRING, description: "Specific learning goal for this time block. MUST NOT be empty." },
           steps: {
             type: Type.ARRAY,
             items: { type: Type.STRING },
-            description: "5-7 detailed, actionable instructional steps for the teacher. Each step should be specific enough to follow without additional explanation."
+            description: "MUST NOT be empty or contain placeholder text. 5-7 detailed, actionable instructional steps for the teacher. Each step must be a complete, specific instruction."
           },
           backgroundInfo: {
             type: Type.ARRAY,
             items: { type: Type.STRING },
-            description: "5-8 detailed factual points with specific data, names, numbers, and explanations. These WILL BE transformed into student-facing Reading/Background Knowledge handbook pages, so they must be rich enough to fill a full page. Include scientific names, historical dates, measurable quantities, cause-effect explanations."
+            description: "MUST NOT be empty. These are PRIMARY source material for handbook pages. 5-8 detailed factual points with specific data, names, numbers, and explanations. These WILL BE transformed into student-facing Reading/Background Knowledge handbook pages, so they must be rich enough to fill a full page. Include scientific names, historical dates, measurable quantities, cause-effect explanations."
           },
           teachingTips: {
             type: Type.ARRAY,
             items: { type: Type.STRING },
-            description: "3-5 specific tips covering: (1) ESL scaffolding (TPR, visual aids, sentence frames), (2) outdoor classroom management (attention signals like clapping patterns, boundary markers, buddy system, countdown timers), (3) group activity structure (clear role assignments like recorder/observer/collector, rotation protocols), (4) differentiation strategies."
+            description: "MUST NOT be empty. 3-5 specific tips covering: (1) ESL/bilingual scaffolding (TPR, visual aids, sentence frames), (2) outdoor classroom management (attention signals like clapping patterns, boundary markers, buddy system, countdown timers), (3) group activity structure (clear role assignments like recorder/observer/collector, rotation protocols), (4) differentiation strategies, (5) emergency response tips."
           },
         },
         required: ["timeRange", "phase", "activity", "activityType", "location", "description", "learningObjective", "steps", "backgroundInfo", "teachingTips"],
@@ -264,6 +264,13 @@ function buildHandbookRules(input: LessonInput): string {
       ? `Illustration Style for Ages 6-8: Friendly flat vector illustrations with bold outlines. Bright accent colors on WHITE backgrounds. Geometric shapes (hexagons, chevrons). Clean and inviting. Think: modern educational workbook.`
       : `Illustration Style for Ages 9-14: Sophisticated flat vector or low-poly illustrations. Muted accent colors on WHITE backgrounds. Infographic-quality layouts with clean data visualizations. Think: National Geographic Kids aesthetic.`;
 
+  // --- Family Mode Involvement Guidance ---
+  const familyInvolvementRule = input.mode === 'family'
+    ? (ageNum <= 9
+      ? `\n    [Family Mode - Parent Collaboration (Ages 3-9)]\n    CRITICAL: Activities MUST be designed for strong parent-child interaction. Include explicit "Parent Tips" or "Together Time" moments where parents scaffold the learning, assist with complex steps, or co-create with the child.`
+      : `\n    [Family Mode - Independent Exploration (Ages 10+)]\n    CRITICAL: Activities MUST be designed for 100% INDEPENDENT student execution. ZERO parent involvement is expected. You MUST provide exceptionally rich, detailed background information, data, and clear instructions so the student can complete the entire workbook completely autonomously.`)
+    : '';
+
   // --- Shared rules across all modes ---
   const sharedRules = `
     [Handbook Quality Rules]
@@ -273,10 +280,14 @@ function buildHandbookRules(input: LessonInput): string {
        - ${ageStyleGuide}
        - The style must be detailed enough for Midjourney/NotebookLM to reproduce a consistent visual across all pages.
        - Reference the workshop THEME in the style (e.g., nature/garden themes should use leaf, plant, insect motifs in decorative elements).
-    2. STRICT SYNCHRONIZATION: Every Roadmap phase MUST have ≥1 corresponding 'Activity/Worksheet' or 'Reading' page. The handbook is the student's physical guide.
-    3. BACKGROUND KNOWLEDGE INTEGRATION: Extract facts from the Roadmap's 'backgroundInfo' into student-facing 'Background Knowledge' / 'Reading' passages. Use inquiry-based tone — pose questions and paradoxes.
-    4. RICH, EXACT CONTENT: 'contentPrompt' must contain EXACT text for the page — actual paragraphs, questions, fill-in-the-blanks, or instructions. No vague summaries.
-    5. AGE & LANGUAGE ADAPTATION (Age ${age}, CEFR ${cefr}):
+    2. OCR-FRIENDLY FONTS STRICTLY REQUIRED: MUST use standard, highly legible sans-serif fonts to ensure perfect OCR text extraction later.
+       - English text: Arial, Helvetica, or Verdana.
+       - Chinese text: Microsoft YaHei (微软雅黑) or Noto Sans SC (思源黑体).
+       - NEVER use serif (e.g., Times New Roman, 宋体), cursive, or decorative fonts on ANY page.${familyInvolvementRule}
+    3. STRICT SYNCHRONIZATION: Every Roadmap phase MUST have ≥1 corresponding 'Activity/Worksheet' or 'Reading' page. The handbook is the student's physical guide.
+    4. BACKGROUND KNOWLEDGE INTEGRATION: Extract facts from the Roadmap's 'backgroundInfo' into student-facing 'Background Knowledge' / 'Reading' passages. Use inquiry-based tone — pose questions and paradoxes.
+    5. RICH, EXACT CONTENT: 'contentPrompt' must contain EXACT text for the page — actual paragraphs, questions, fill-in-the-blanks, or instructions. No vague summaries.
+    6. AGE & LANGUAGE ADAPTATION (Age ${age}, CEFR ${cefr}):
        CRITICAL: The ENTIRE handbook content — every page type — MUST be calibrated to the student's cognitive and linguistic level. Apply THESE age-specific rules:
 
        [Ages 3-5 / Pre-A1 — Preschool]
@@ -697,11 +708,38 @@ export const generateLessonPlanStreaming = async (
     - If "Sunny", prioritize high-engagement Outdoor exploration and data collection.
     - If "Rainy", pivot to Indoor ${isFamily ? 'home activities' : 'Maker/Lab scenarios'} using natural specimens, simulations, or ${isFamily ? 'kitchen experiments' : 'indoor experiments'}.
 
+    [Safety & Risk Management] Provide COMPREHENSIVE safety protocols:
+      * Adult-to-child ratios (minimum 1:5 for water activities, 1:8 for land activities)
+      * Explicit safe-zone boundaries (e.g. "do NOT go past the marked rope/cone line")
+      * Tool handling rules (scissors, magnifying glasses, collection jars)
+      * Biological contact principles ("look but don't touch" for unknown species, hand-washing protocol)
+      * Sun/bug protection checklist (sunscreen, hats, insect repellent, long sleeves near water)
+      * Emergency response flow: injury → first aid kit location → emergency contact → nearest hospital
+      * Weather-specific risks: heat stroke signs (for sunny), slippery surfaces (for rainy)
+      * Allergy awareness: check for bee/pollen/plant allergies before nature walks
+
+    [Location & Transportation Constraints] The recommended outdoor venue MUST be:
+      * A REAL, existing location in or near the specified city
+      * Reachable within 30 minutes by public transport or school bus from the city center
+      * For single-session courses (≤ 180 min), NEVER recommend locations requiring > 1 hour round-trip travel
+      * If the location is remote, the course MUST include a detailed transportation plan and adjusted activity timing
+
+    [Indoor Alternative Equivalence] When designing rainy-day indoor alternatives:
+      * The indoor activity MUST achieve the SAME learning objectives as the outdoor version
+      * Use real specimens, interactive multimedia, model-building, or role-play to maintain hands-on engagement
+      * Include explicit ${isFamily ? 'bilingual vocabulary games' : 'ESL scaffolding'} even in indoor mode
+      * Avoid passive alternatives (just watching videos) — students must still DO something physical
+
+    [Duration & Time Management]
+    - If duration is <= 90 minutes, strictly limit to 1-2 major core activities to avoid rushing.
+    - If duration >= 180 minutes, MUST explicitly include break times (10-15 min mid-session), team-building warm-ups, and clear segmenting into smaller activity blocks.
+    - Ensure ample time for setup, instruction, and student output — do NOT pack too many activities.
+
     [Roadmap Requirements]
     - The Roadmap MUST have enough phases to support the handbook. For a ${handbookPageTarget}-page handbook, generate ${minRoadmapPhases}-${minRoadmapPhases + 2} phases.
     - If ${minRoadmapPhases} > 5, subdivide 5E stages into sub-phases (e.g. EXPLORE: Field Observation, EXPLORE: Specimen Collection, EXPLORE: Data Recording).
-    - Each phase must include detailed 'steps' (5-7 actionable steps), 'backgroundInfo' (3-5 factual points for the teacher AND for handbook Background Knowledge pages), and 'teachingTips' (${isFamily ? 'parent interaction advice' : 'ESL scaffolding like TPR, visual aids, or sentence frames'}).
-    - Description for each phase should be detailed enough (3-4 sentences minimum) to serve as source material for handbook Activity/Worksheet pages.
+    - Each phase must include detailed 'steps' (5-7 actionable steps, plus explicit classroom management/grouping tips for outdoor environments), 'backgroundInfo' (5-8 RICH factual points with specific data, names, numbers, cause-effect explanations — these are the PRIMARY source material for handbook Reading/Background Knowledge pages and MUST be substantive enough to fill full pages), and 'teachingTips' (${isFamily ? 'parent interaction advice, safety reminders, how-to-explain-to-child tips' : 'ESL scaffolding, outdoor classroom management signals, group role assignments, and differentiation strategies'}).
+    - Description for each phase MUST be 6-8 sentences minimum with concrete actions, scientific/historical/cultural facts, and specific details. This description serves as source material for handbook pages — vague summaries will produce thin, useless handbook content.
 
     ${eslBlock}
 
@@ -789,10 +827,41 @@ ${cnFamilyBlock}
 - "晴天"：优先安排高参与度的户外探索和数据收集。
 - "雨天"：转向${isFamily ? '家庭室内活动' : '室内创客/实验场景'}，使用自然标本、模拟或${isFamily ? '厨房实验' : '室内实验'}。
 
+[安全与风险管理] 提供详尽的安全协议：
+  * 成人与儿童比例（水上活动至少1:5，陆地活动1:8）
+  * 明确的安全边界（如：“不要越过标记的绳子/锥形筒区域”）
+  * 工具使用规则（剪刀、放大镜、收集罐）
+  * 生物接触原则（对于未知物种“只看不要摸”，洗手协议）
+  * 防晒/防虫检查清单（防晒霜、帽子、驱蚊液、水边长袖）
+  * 应急响应流程：受伤 → 急救箱位置 → 紧急联系人 → 最近医院
+  * 针对天气的风险：中暑迹象（晴天），湿滑路面（雨天）
+  * 过敏意识：在自然步行前检查是否有蜜蜂/花粉/植物过敏
+
+[地点与交通限制] 推荐的户外场地必须满足：
+  * 是指定城市或其附近真实存在的地点
+  * 从市中心乘坐公共交通或校车30分钟内可达
+  * 对于单次课程（≤ 180分钟），绝对不要推荐往返需要超过1小时的地点
+  * 如果地点较远，课程必须包含详细的交通计划并相应调整活动时间
+
+[室内替代方案等价性] 在设计雨天室内替代方案时：
+  * 室内活动的学习目标必须与户外版本完全相同
+  * 使用真实标本、互动多媒体、模型制作或角色扮演来保持动手参与度
+  * 避免被动的替代方案（仅看视频）——${isFamily ? '孩子' : '学生'}必须有实际操作
+
+[时长与时间管理]
+- 如果时长 <= 90分钟，严格限制在1-2个主要核心活动内，避免赶进度。
+- 如果时长 >= 180分钟，必须明确包含休息时间（活动中段10-15分钟），破冰/热身游戏，并将环节清晰地分割成更小的活动块。
+- 确保有充足的时间进行准备、讲解和${isFamily ? '孩子' : '学生'}输出——不要塞入过多活动。
+
+[课前/课后活动] 流程中应包含：
+  * 一个简短的课前准备任务，${isFamily ? '家庭' : '学生'}可以在课前1-2天完成
+  * 一个课后延伸活动，在课程结束后继续学习
+  * 一个简单的评估机制：观察清单、作品集展示或同伴分享圈
+
 [${isFamily ? '探索' : '教学'}流程要求]
 - 生成恰好5-6个遵循5E模型的逻辑阶段。
-- 每个阶段的steps必须是具体可操作的${isFamily ? '亲子活动引导和对话建议' : '研学活动步骤和科学探究指导'}，不包含任何英语教学活动。
-- 每个阶段必须包含丰富的"背景知识"（科学事实、生态知识、历史文化）和"${isFamily ? '亲子互动建议' : '教学建议'}"。
+- 每个阶段的steps必须是具体可操作的${isFamily ? '亲子活动引导和对话建议（包含户外管理/组织提示）' : '研学活动步骤和科学探究指导'}，不包含任何英语教学活动。
+- 每个阶段必须包含丰富的"背景知识"（5-8条具体的科学事实、数据、专有名词、因果关系——这些是手册的【核心素材】，必须足够详实以支撑完整的页面内容）和"${isFamily ? '亲子互动建议、安全提醒' : '教学建议、户外课堂管理策略'}"。
 
 [${isFamily ? '亲子手册' : '学生手册'}设计规则（关键）]
 以下英文规范为手册页面设计的完整规则（JSON key名保持英文），仅手册文本内容（contentPrompt）使用中文书写。背景知识页面请使用启发式、探究式语气——通过提问和悖论引发好奇心，而非直接陈述事实。

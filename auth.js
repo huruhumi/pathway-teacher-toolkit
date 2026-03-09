@@ -160,14 +160,15 @@
                 // Restore href from original
                 href = link.getAttribute('data-original-href');
 
-                // Dev mode: map to dev server ports
-                if (isDevMode && DEV_PORT_MAP[href]) {
-                    href = DEV_PORT_MAP[href];
+                // Dev mode: map to dev server ports and pass tokens for cross-port SSO
+                if (isDevMode) {
+                    if (DEV_PORT_MAP[href]) {
+                        href = DEV_PORT_MAP[href];
+                    }
+                    // Append auth tokens across cross-port origin
+                    const sep = href.includes('?') ? '&' : '?';
+                    href = `${href}${sep}_token=${currentSession.access_token}&_refresh=${currentSession.refresh_token}`;
                 }
-
-                // Append auth tokens
-                const sep = href.includes('?') ? '&' : '?';
-                href = `${href}${sep}_token=${currentSession.access_token}&_refresh=${currentSession.refresh_token}`;
 
                 link.setAttribute('href', href);
                 link.setAttribute('target', '_blank');

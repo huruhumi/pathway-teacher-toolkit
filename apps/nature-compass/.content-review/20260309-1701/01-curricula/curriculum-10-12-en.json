@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "The Green Lung: Discovering Biodiversity",
+      "lessonNumber": 1,
+      "theme": "Introduction to Wetland Ecosystems",
+      "location": "Jiefang Park Wetland Area (Hankou)",
+      "season": "Spring or Autumn",
+      "learningGoals": [
+        "Identify and name 5 common wetland plants and animals in English.",
+        "Use 'I see...' and 'It has...' to describe natural observations.",
+        "Explain the concept of a 'habitat' within a city environment."
+      ],
+      "keyVocabulary": [
+        "Wetland",
+        "Ecosystem",
+        "Habitat",
+        "Observe",
+        "Insects",
+        "Reeds",
+        "Biodiversity"
+      ],
+      "activitySummary": "Students will go on a nature walk to identify local flora and fauna using a field guide. They will record their findings in a nature journal by sketching and labeling different species they find near the water.",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "Stay on the designated wooden boardwalks; do not touch unknown insects."
+    },
+    {
+      "lessonTitle": "Nature's Sponge: The Magic of Clean Water",
+      "lessonNumber": 2,
+      "theme": "Water Filtration and Engineering",
+      "location": "East Lake (Donghu) Eco-Park",
+      "season": "Summer or Autumn",
+      "learningGoals": [
+        "Understand how wetland plants filter and clean urban water.",
+        "Use sequence adverbs (First, Then, Next) to describe a process.",
+        "Build a small-scale natural water filter model."
+      ],
+      "keyVocabulary": [
+        "Filter",
+        "Pollution",
+        "Sediment",
+        "Purify",
+        "Flow",
+        "Gravel",
+        "Sand"
+      ],
+      "activitySummary": "Students will collect water samples and observe the natural filtration layers of the wetland. They will then work in teams to build a DIY water filter using sand, stones, and charcoal to see how materials trap dirt.",
+      "steamFocus": "Science, Engineering",
+      "safetyNotes": "Do not drink the lake water; wear waterproof gloves during the experiment."
+    },
+    {
+      "lessonTitle": "Feathered Friends: The Bird Watchers",
+      "lessonNumber": 3,
+      "theme": "Ornithology and Adaptation",
+      "location": "Sha Lake Park (Shahu)",
+      "season": "Winter or Spring",
+      "learningGoals": [
+        "Identify 3 local bird species and their physical adaptations.",
+        "Use comparative adjectives (bigger, smaller, longer) to describe birds.",
+        "Use binoculars correctly to observe wildlife from a distance."
+      ],
+      "keyVocabulary": [
+        "Migration",
+        "Beak",
+        "Feather",
+        "Binoculars",
+        "Adaptation",
+        "Wing",
+        "Prey"
+      ],
+      "activitySummary": "Students will use binoculars to spot migratory birds and record their behaviors. They will analyze how different beak shapes help birds eat different types of food found in the Wuhan wetlands.",
+      "steamFocus": "Science, Math",
+      "safetyNotes": "Keep a quiet voice to avoid scaring animals; keep a safe distance from the water's edge."
+    },
+    {
+      "lessonTitle": "Mapping the Marsh: Future Protectors",
+      "lessonNumber": 4,
+      "theme": "Conservation and Environmental Mapping",
+      "location": "Moon Lake (Yuehu) Park",
+      "season": "All Seasons",
+      "learningGoals": [
+        "Create a simple map of a wetland area using basic symbols.",
+        "Practice giving directions and using spatial prepositions (next to, between).",
+        "Propose one way to protect urban wetlands from pollution."
+      ],
+      "keyVocabulary": [
+        "Map",
+        "Compass",
+        "Symbol",
+        "Protect",
+        "Environment",
+        "Distance",
+        "Direction"
+      ],
+      "activitySummary": "Students will use a compass and measuring tapes to map out a small section of the park. They will then design a 'Conservation Plan' poster to teach other citizens how to keep the wetland clean.",
+      "steamFocus": "Technology, Math, Art",
+      "safetyNotes": "Be mindful of pedestrians and cyclists on the park paths; stay with your buddy group."
+    }
+  ]
+}

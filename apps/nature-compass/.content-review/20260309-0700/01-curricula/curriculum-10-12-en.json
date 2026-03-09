@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "Wetland Detectives: Finding the City's Lungs",
+      "lessonNumber": 1,
+      "theme": "Introduction to Wetland Ecosystems",
+      "location": "Jiefang Park (解放公园), Jiang'an District",
+      "season": "Spring",
+      "learningGoals": [
+        "Identify the three main parts of a wetland: water, soil, and plants.",
+        "Use 'There is/There are' to describe nature observations in English.",
+        "Create a basic map of the park's wetland area using symbols."
+      ],
+      "keyVocabulary": [
+        "Wetland",
+        "Ecosystem",
+        "Habitat",
+        "Nature",
+        "Urban",
+        "Soil",
+        "Observe"
+      ],
+      "activitySummary": "Students will go on a scavenger hunt to find different wetland features and take photos of local plants. They will then work in teams to draw a 'Nature Map' showing how water moves through the park.",
+      "steamFocus": "Science, Art, Mathematics",
+      "safetyNotes": "Stay on the designated wooden boardwalks; do not touch unknown berries or fungi; keep a safe distance from the water edge."
+    },
+    {
+      "lessonTitle": "The Great Water Filter Challenge",
+      "lessonNumber": 2,
+      "theme": "Water Quality and Natural Filtration",
+      "location": "East Lake - Tingtao Scenic Area (东湖听涛景区)",
+      "season": "Spring/Summer",
+      "learningGoals": [
+        "Measure water transparency using a DIY Secchi disk.",
+        "Explain the process of natural filtration using sequence adverbs (First, Then, Finally).",
+        "Compare water samples from different locations in the lake."
+      ],
+      "keyVocabulary": [
+        "Filter",
+        "Pollution",
+        "Transparent",
+        "Sample",
+        "Oxygen",
+        "Environment",
+        "Clean"
+      ],
+      "activitySummary": "Students will collect water samples and test their clarity. They will build a small-scale model of a natural filter using sand, gravel, and charcoal to see how wetlands clean our water.",
+      "steamFocus": "Science, Engineering, Mathematics",
+      "safetyNotes": "Wear waterproof gloves when handling lake water; use the 'buddy system' near the docks; do not drink the lake water."
+    },
+    {
+      "lessonTitle": "Nature's Superpowers: Plant Adaptations",
+      "lessonNumber": 3,
+      "theme": "Botany and Biomimicry",
+      "location": "Moon Lake Park (月湖公园), Hanyang District",
+      "season": "Summer",
+      "learningGoals": [
+        "Describe how lotus leaves stay dry using the 'Lotus Effect'.",
+        "Use comparative adjectives (bigger, smoother, greener) to describe wetland plants.",
+        "Design a waterproof product inspired by plant structures."
+      ],
+      "keyVocabulary": [
+        "Adaptation",
+        "Lotus",
+        "Root",
+        "Stem",
+        "Waterproof",
+        "Surface",
+        "Design"
+      ],
+      "activitySummary": "Students will use magnifying glasses to inspect lotus leaves and aquatic plants. They will perform a 'water drop test' on different surfaces and sketch an invention based on plant adaptations.",
+      "steamFocus": "Science, Technology, Art",
+      "safetyNotes": "Be mindful of high temperatures and stay in the shade; apply mosquito repellent; avoid leaning over the stone railings."
+    },
+    {
+      "lessonTitle": "Winged Neighbors: Bird Watching and Food Chains",
+      "lessonNumber": 4,
+      "theme": "Ornithology and Biodiversity",
+      "location": "Sha Lake Park (沙湖公园), Wuchang District",
+      "season": "Autumn/Winter",
+      "learningGoals": [
+        "Identify three common wetland birds using binoculars.",
+        "Build a simple food chain model showing energy flow from plants to birds.",
+        "Practice using action verbs to describe bird behaviors (flying, diving, nesting)."
+      ],
+      "keyVocabulary": [
+        "Migration",
+        "Beak",
+        "Feather",
+        "Binoculars",
+        "Species",
+        "Food Chain",
+        "Consumer"
+      ],
+      "activitySummary": "Using binoculars, students will conduct a bird census and record their findings in a field journal. They will then participate in a role-play game to understand how energy moves through the wetland food web.",
+      "steamFocus": "Science, Mathematics, Technology",
+      "safetyNotes": "Use binocular neck straps at all times; keep noise levels low to avoid disturbing wildlife; watch for slippery leaves on the paths."
+    }
+  ]
+}

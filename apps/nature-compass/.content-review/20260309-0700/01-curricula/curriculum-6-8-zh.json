@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "湿地小侦探：寻找水的秘密",
+      "lessonNumber": 1,
+      "theme": "湿地植物与水循环初探",
+      "location": "解放公园 (Jiefang Park)",
+      "season": "春季/秋季",
+      "learningGoals": [
+        "能够识别并用中英文说出湿地植物的基本结构（根、茎、叶）。",
+        "理解湿地作为“城市之肾”的初步过滤功能。",
+        "通过实地观察，记录并分类至少三种不同的湿地植物。"
+      ],
+      "keyVocabulary": [
+        "Wetland (湿地)",
+        "Root (根)",
+        "Stem (茎)",
+        "Leaf (叶)",
+        "Water (水)",
+        "Filter (过滤)",
+        "Environment (环境)"
+      ],
+      "activitySummary": "学生将化身小侦探，在解放公园的人造湿地区域观察水生植物。通过“湿地寻宝图”寻找特定的植物，并进行简单的水质过滤模拟实验，观察沙石和植物如何净化水源。",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "靠近水体边缘时必须由导师陪同；提醒学生不要采摘或食用野生植物；注意防蚊虫叮咬。"
+    },
+    {
+      "lessonTitle": "飞羽寻踪：东湖观鸟记",
+      "lessonNumber": 2,
+      "theme": "湿地生物多样性与鸟类观察",
+      "location": "东湖落雁景区 (East Lake Luoyan Scenic Area)",
+      "season": "冬季/春季",
+      "learningGoals": [
+        "学会正确使用望远镜观察远处的鸟类并记录其特征。",
+        "理解鸟类喙部形状与食物来源之间的演化关系。",
+        "练习使用描述性形容词（如颜色、大小、动作）描述观察对象。"
+      ],
+      "keyVocabulary": [
+        "Bird (鸟)",
+        "Feathers (羽毛)",
+        "Beak (鸟喙)",
+        "Wings (翅膀)",
+        "Binoculars (望远镜)",
+        "Migration (迁徙)",
+        "Observation (观察)"
+      ],
+      "activitySummary": "在东湖观鸟台使用专业望远镜寻找鸬鹚、苍鹭等湿地居民。学生将根据观察到的鸟类特征，在艺术手册上绘制“鸟类档案”，并讨论它们如何适应湿地生活。",
+      "steamFocus": "Science, Math (counting/sorting)",
+      "safetyNotes": "在木栈道上行走时严禁奔跑；注意湖边强风，建议穿着防风衣物；保持安静以免惊扰野生动物。"
+    },
+    {
+      "lessonTitle": "水滴里的生命：微观世界大发现",
+      "lessonNumber": 3,
+      "theme": "水质监测与微观生态",
+      "location": "沙湖公园 (Shahu Park)",
+      "season": "夏季/秋季",
+      "learningGoals": [
+        "学习使用便携式显微镜或放大镜观察水样中的微小生物。",
+        "理解水质清洁度对湿地生态系统的重要性。",
+        "掌握基础的实验记录方法，学会对比实验结果。"
+      ],
+      "keyVocabulary": [
+        "Microscopic (微观的)",
+        "Organism (生物)",
+        "Clean (干净)",
+        "Polluted (污染)",
+        "Algae (藻类)",
+        "Sample (样本)",
+        "Microscope (显微镜)"
+      ],
+      "activitySummary": "学生在湖边采集水样，利用手持显微镜观察水中的浮游生物或藻类。通过pH试纸测试不同区域的水质，并讨论城市垃圾对湿地微观生命的影响。",
+      "steamFocus": "Technology, Science",
+      "safetyNotes": "采集水样时必须使用长柄取水器，严禁学生身体接触深水区域；操作显微镜时需在平坦地面；实验后及时洗手消毒。"
+    },
+    {
+      "lessonTitle": "湿地工程师：建造我们的绿色防线",
+      "lessonNumber": 4,
+      "theme": "湿地保护与仿生设计",
+      "location": "汉口江滩公园 (Hankou Marshland Park)",
+      "season": "四季皆宜",
+      "learningGoals": [
+        "通过搭建模型理解湿地在防洪和防止土壤侵蚀中的作用。",
+        "运用工程思维设计一个简单的“湿地保护区”草图。",
+        "能够用英文陈述保护湿地的三个简单行动。"
+      ],
+      "keyVocabulary": [
+        "Engineer (工程师)",
+        "Erosion (侵蚀)",
+        "Protection (保护)",
+        "Sustainable (可持续的)",
+        "Design (设计)",
+        "Structure (结构)",
+        "Prevention (预防)"
+      ],
+      "activitySummary": "观察江滩的阶梯式生态护坡，探讨其防洪原理。学生分组利用现场收集的自然材料（树枝、石块、泥土）在沙池中模拟建造湿地堤坝，并进行冲刷测试（模拟洪水）。",
+      "steamFocus": "Engineering, Art, Science",
+      "safetyNotes": "江滩风大且开阔，需划定明确的活动边界；避开涨水期；搬运石块等材料时需戴手套防止划伤。"
+    }
+  ]
+}

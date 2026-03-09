@@ -1,0 +1,100 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "飞羽寻踪：湿地鸟类侦探",
+      "lessonNumber": 1,
+      "theme": "湿地生物多样性与鸟类观测",
+      "location": "沙湖公园 (Sha Lake Park)",
+      "season": "秋季或冬季 (迁徙季节最佳)",
+      "learningGoals": [
+        "识别并命名至少5种武汉常见的湿地水鸟及其特征 (Language/Science)",
+        "掌握双筒望远镜的正确使用方法及野外观测记录技巧 (Technology)",
+        "通过观察鸟类喙部形状探讨其与食物链的适应性关系 (Science)"
+      ],
+      "keyVocabulary": [
+        "Biodiversity (生物多样性)",
+        "Migration (迁徙)",
+        "Habitat (栖息地)",
+        "Binoculars (望远镜)",
+        "Adaptation (适应)",
+        "Observation (观测)",
+        "Beak (鸟喙)"
+      ],
+      "activitySummary": "学生将化身“鸟类侦探”，在沙湖公园湿地沿线使用望远镜寻找水鸟，并利用自然笔记本记录鸟类的外形和行为特征。随后进行“喙与食物”的模拟实验，理解生物进化与环境的关系。",
+      "steamFocus": "Science, Technology, Art",
+      "safetyNotes": "靠近水边观测时需保持安全距离，严禁私自下水；观鸟时保持安静，避免惊扰野生动物。"
+    },
+    {
+      "lessonTitle": "水质秘语：东湖生态化验室",
+      "lessonNumber": 2,
+      "theme": "水环境化学与湿地过滤功能",
+      "location": "东湖绿道 - 湖中道 (East Lake Greenway)",
+      "season": "春季或夏季",
+      "learningGoals": [
+        "使用专业试剂盒测量并比较不同水样的PH值、溶解氧及透明度 (Science/Technology)",
+        "用英语描述水质变化的过程及潜在污染源 (Language)",
+        "设计并搭建一个简易的湿地自然过滤模型 (Engineering)"
+      ],
+      "keyVocabulary": [
+        "Water Quality (水质)",
+        "Pollution (污染)",
+        "Filtration (过滤)",
+        "pH Level (酸碱度)",
+        "Transparency (透明度)",
+        "Dissolved Oxygen (溶解氧)",
+        "Sediment (沉积物)"
+      ],
+      "activitySummary": "在东湖边采集不同地点的水样进行现场化学测试，分析水质差异。学生将利用捡拾的自然材料（沙、石、炭）分组竞赛，看谁能设计出过滤效果最好的“人工湿地”装置。",
+      "steamFocus": "Science, Engineering, Math",
+      "safetyNotes": "处理水样和试剂时需佩戴手套；注意避让绿道上的自行车和电瓶车。"
+    },
+    {
+      "lessonTitle": "浮想联翩：湿地植物的生存秘籍",
+      "lessonNumber": 3,
+      "theme": "植物解剖学与水生适应性",
+      "location": "武汉植物园 - 水生植物区 (Wuhan Botanical Garden)",
+      "season": "夏季 (莲花与睡莲盛开期)",
+      "learningGoals": [
+        "通过解剖观察湿地植物（如莲藕）的内部气腔结构 (Science)",
+        "通过测量植物叶片面积探究其水分蒸腾作用 (Math)",
+        "绘制带有英文标注的植物科学插图 (Art/Language)"
+      ],
+      "keyVocabulary": [
+        "Aquatic Plants (水生植物)",
+        "Photosynthesis (光合作用)",
+        "Air Chamber (气腔)",
+        "Buoyancy (浮力)",
+        "Stomata (气孔)",
+        "Structure (结构)",
+        "Transpiration (蒸腾作用)"
+      ],
+      "activitySummary": "走进植物园水生区域，近距离观察浮水、沉水及挺水植物。学生将进行解剖实验，探索为什么荷叶不沾水以及莲藕为何有孔，最后创作一幅植物科学解剖图。",
+      "steamFocus": "Science, Art, Math",
+      "safetyNotes": "植物园内蚊虫较多，需备好驱蚊液；解剖实验使用工具时需在导师指导下进行。"
+    },
+    {
+      "lessonTitle": "湿地卫士：城市海绵工程",
+      "lessonNumber": 4,
+      "theme": "城市规划与海绵城市设计",
+      "location": "金银湖湿地公园 (Jinyinhu Wetland Park)",
+      "season": "春季或秋季",
+      "learningGoals": [
+        "理解“海绵城市”概念及其在解决武汉内涝中的作用 (Science/Engineering)",
+        "运用比例尺绘制一份湿地公园改造建议图 (Math/Art)",
+        "用英语进行关于“湿地保护”的小组倡议演讲 (Language)"
+      ],
+      "keyVocabulary": [
+        "Sponge City (海绵城市)",
+        "Permeability (渗透性)",
+        "Runoff (径流)",
+        "Urban Planning (城市规划)",
+        "Sustainability (可持续性)",
+        "Conservation (保护)",
+        "Eco-friendly (环保的)"
+      ],
+      "activitySummary": "考察金银湖湿地的地形与排水系统，进行土壤渗透性对比实验。学生将分组扮演城市规划师，在沙盘上利用乐高或自然材料模拟设计一个能应对暴雨挑战的“未来湿地社区”。",
+      "steamFocus": "Engineering, Technology, Math",
+      "safetyNotes": "野外考察需穿着运动鞋，防止滑倒；在公共区域活动时需轻声细语，不乱扔垃圾。"
+    }
+  ]
+}

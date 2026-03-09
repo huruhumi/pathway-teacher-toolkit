@@ -148,6 +148,8 @@ export interface Curriculum {
 }
 
 export interface CurriculumParams {
+  mode?: 'school' | 'family';
+  familyEslEnabled?: boolean;
   city: string;
   ageGroup: string;
   englishLevel: string;

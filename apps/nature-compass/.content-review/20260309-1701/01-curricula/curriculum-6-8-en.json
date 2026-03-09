@@ -1,0 +1,104 @@
+{
+  "lessons": [
+    {
+      "lessonTitle": "Feathered Friends of the Lake",
+      "lessonNumber": 1,
+      "theme": "Wetland Bird Observation",
+      "location": "Jiefang Park (解放公园), Hankou",
+      "season": "Spring",
+      "learningGoals": [
+        "Identify and name 3 common wetland birds in English.",
+        "Use the sentence pattern 'I see a [color] bird' to describe observations.",
+        "Understand why birds need water and nests for survival."
+      ],
+      "keyVocabulary": [
+        "Bird",
+        "Water",
+        "Wing",
+        "Fly",
+        "Nest",
+        "Blue",
+        "Big",
+        "Small"
+      ],
+      "activitySummary": "Students will use binoculars to spot local birds around the central pond and record their colors in a nature journal. They will then participate in a 'nest-building' challenge using fallen twigs and grass found on the ground.",
+      "steamFocus": "Science, Art",
+      "safetyNotes": "Keep a safe distance from the water's edge; watch for slippery mud near the pond."
+    },
+    {
+      "lessonTitle": "The Secret Life of Water Plants",
+      "lessonNumber": 2,
+      "theme": "Aquatic Plant Diversity",
+      "location": "East Lake Wetland Park (东湖落雁景区), Wuchang",
+      "season": "Summer",
+      "learningGoals": [
+        "Label the basic parts of a plant: root, stem, and leaf.",
+        "Use adjectives like 'soft', 'hard', 'smooth', and 'rough' to describe textures.",
+        "Discover how lotus leaves repel water through a simple 'water drop' experiment."
+      ],
+      "keyVocabulary": [
+        "Leaf",
+        "Root",
+        "Stem",
+        "Flower",
+        "Green",
+        "Soft",
+        "Float",
+        "Water"
+      ],
+      "activitySummary": "Students will go on a 'texture scavenger hunt' to touch different wetland plants and sketch their favorite leaf. They will conduct a 'Lotus Effect' experiment by dropping water onto leaves to see how they stay dry.",
+      "steamFocus": "Science, Technology",
+      "safetyNotes": "Wear hats and sunscreen; do not pick plants in protected areas; stay on the designated wooden boardwalks."
+    },
+    {
+      "lessonTitle": "Tiny Travelers in the Water",
+      "lessonNumber": 3,
+      "theme": "Macro-invertebrates and Water Quality",
+      "location": "Moon Lake (月湖公园), Hanyang",
+      "season": "Autumn",
+      "learningGoals": [
+        "Count and identify small creatures like snails, fish, and water bugs.",
+        "Use 'There is/There are' to describe the quantity of animals found.",
+        "Learn that clean water is necessary for healthy animals."
+      ],
+      "keyVocabulary": [
+        "Fish",
+        "Snail",
+        "Bug",
+        "Clean",
+        "Dirty",
+        "Swim",
+        "Count",
+        "Many"
+      ],
+      "activitySummary": "Using small nets and magnifying jars, students will safely scoop water samples to find 'tiny travelers.' They will count the creatures they find and sort them by size before carefully releasing them back into the lake.",
+      "steamFocus": "Science, Mathematics",
+      "safetyNotes": "Adult supervision required during water sampling; use long-handled nets to avoid leaning too far over the water."
+    },
+    {
+      "lessonTitle": "Building a Happy Wetland",
+      "lessonNumber": 4,
+      "theme": "Wetland Conservation and Design",
+      "location": "Sha Lake Park (沙湖公园), Wuchang",
+      "season": "Spring/Autumn",
+      "learningGoals": [
+        "Identify 'trash' versus 'nature' and understand the importance of cleaning up.",
+        "Use action verbs like 'build', 'help', and 'protect' in context.",
+        "Design and build a mini-wetland model using natural materials and clay."
+      ],
+      "keyVocabulary": [
+        "Trash",
+        "Protect",
+        "Home",
+        "Build",
+        "Tree",
+        "Safe",
+        "Happy",
+        "Earth"
+      ],
+      "activitySummary": "After a short walk to identify man-made vs. natural elements, students will act as 'Eco-Engineers' to build a small-scale wetland model that includes a 'safe home' for animals and a 'filter' for clean water.",
+      "steamFocus": "Engineering, Art",
+      "safetyNotes": "Wash hands thoroughly after handling soil and clay; avoid areas with heavy bicycle traffic."
+    }
+  ]
+}

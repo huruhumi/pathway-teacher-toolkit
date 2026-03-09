@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Sparkles, MapPin, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2, Compass,
-    Wind, Search, FileText, Upload, X, Plus,
+    Wind, Search, FileText, Upload, X, Plus, School, Heart
 } from 'lucide-react';
 import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/geminiService';
 import { Curriculum, CurriculumParams } from '../types';
@@ -43,6 +43,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [englishLevel, setEnglishLevel] = useState(ENGLISH_LEVELS[0]);
     const [lessonCount, setLessonCount] = useState(4);
     const [duration, setDuration] = useState("180");
+    const [mode, setMode] = useState<'school' | 'family'>('school');
+    const [familyEslEnabled, setFamilyEslEnabled] = useState(true);
     const [city, setCity] = useState("");
     const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
     const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -73,6 +75,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             if (params.ageGroup) setAgeGroup(params.ageGroup);
             if (params.lessonCount) setLessonCount(params.lessonCount);
             if (params.duration) setDuration(params.duration);
+            if (params.mode) setMode(params.mode);
+            if (params.familyEslEnabled !== undefined) setFamilyEslEnabled(params.familyEslEnabled);
             if (params.customTheme) setCustomTheme(params.customTheme);
             if (params.preferredLocation) {
                 const locations = params.preferredLocation.split(',').map(s => s.trim()).filter(Boolean);
@@ -99,6 +103,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             if (params.ageGroup) setAgeGroup(params.ageGroup);
             if (params.lessonCount) setLessonCount(params.lessonCount);
             if (params.duration) setDuration(params.duration);
+            if (params.mode) setMode(params.mode);
+            if (params.familyEslEnabled !== undefined) setFamilyEslEnabled(params.familyEslEnabled);
             if (params.customTheme) setCustomTheme(params.customTheme);
             if (params.preferredLocation) {
                 const locations = params.preferredLocation.split(',').map(s => s.trim()).filter(Boolean);
@@ -177,6 +183,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     };
 
     const getCurrentParams = (): CurriculumParams => ({
+        mode,
+        familyEslEnabled,
         city: effectiveCity,
         ageGroup,
         englishLevel,
@@ -268,6 +276,55 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
                 {/* === Unified Config Block === */}
                 <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-5 space-y-5 bg-white dark:bg-slate-900/50">
+
+                    {/* Mode Toggle: School vs Family */}
+                    <div>
+                        <label className="input-label mb-2 block">{t('input.modeLabel' as any) || 'Mode'}</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => { setMode('school'); setFamilyEslEnabled(false); }}
+                                className={`flex items-center justify-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${mode === 'school'
+                                    ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm'
+                                    : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50 text-slate-500'
+                                    }`}
+                            >
+                                <School size={18} className={mode === 'school' ? 'text-emerald-600' : 'text-slate-400'} />
+                                {t('input.modeSchool' as any) || 'School / Camp'}
+                            </button>
+                            <button
+                                onClick={() => setMode('family')}
+                                className={`flex items-center justify-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${mode === 'family'
+                                    ? 'border-pink-500 bg-pink-50 text-pink-800 shadow-sm'
+                                    : 'border-slate-200 hover:border-pink-200 hover:bg-slate-50 text-slate-500'
+                                    }`}
+                            >
+                                <Heart size={18} className={mode === 'family' ? 'text-pink-500' : 'text-slate-400'} />
+                                {t('input.modeFamily' as any) || 'Family Weekend'}
+                            </button>
+                        </div>
+
+                        {/* Family sub-option: ESL toggle */}
+                        {mode === 'family' && (
+                            <div className="mt-3 flex items-center justify-center gap-4 px-4 py-3 bg-pink-50/50 border border-pink-100 rounded-xl">
+                                <span className={`text-sm font-medium ${!familyEslEnabled ? 'text-pink-700' : 'text-slate-500'}`}>
+                                    {t('input.familyEslOff' as any) || 'Pure Exploration'}
+                                </span>
+                                <button
+                                    onClick={() => setFamilyEslEnabled(!familyEslEnabled)}
+                                    className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none ${familyEslEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                                    aria-label="Toggle ESL mode"
+                                >
+                                    <span className={`block w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${familyEslEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                                </button>
+                                <span className={`text-sm font-medium ${familyEslEnabled ? 'text-indigo-700' : 'text-slate-500'}`}>
+                                    {t('input.familyEslOn' as any) || 'English Exploration'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-4"></div>
+
                     {/* Row 1: Theme (full width) */}
                     <div className="space-y-2">
                         <label className="input-label flex items-center gap-2 uppercase tracking-wider text-slate-500">
