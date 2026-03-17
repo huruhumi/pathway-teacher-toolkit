@@ -23,11 +23,28 @@ interface LessonPlanGenerationOptions {
    * 'plan_only' = only generate structuredLessonPlan + summary + lessonPlanMarkdown
    */
   mode?: 'full' | 'plan_only';
+  /**
+   * Provenance of video evidence merged upstream.
+   * - transcript_verified: transcript/subtitle extraction succeeded from input video URLs
+   * - manual_verified: teacher supplied transcript/key points manually
+   * - fallback_web_unverified: web fallback evidence was used and can still be noisy
+   * - none: no usable video transcript evidence
+   */
+  videoEvidenceMode?: 'none' | 'transcript_verified' | 'manual_verified' | 'fallback_web_unverified';
 }
 
-const URL_REGEX = /https?:\/\/[^\s)]+/gi;
+const URL_REGEX = /https?:\/\/[^\s<>"'`]+/gi;
 const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
 const VIDEO_TRANSCRIPT_HINT_REGEX = /(transcript|caption|lyrics|summary|key points|字幕|歌词|台词|视频要点|视频摘要)/i;
+const TRAILING_URL_PUNCTUATION_REGEX = /[)\],.;!?'"\]}>\u3001\u3002\uFF0C\uFF1B\uFF1A\uFF01\uFF1F]+$/g;
+const URL_SEPARATOR_REGEX = /[\s\u3001\u3002\uFF0C\uFF1B\uFF1A\uFF01\uFF1F]+/;
+
+function cleanExtractedUrl(raw: string): string {
+  const trimmed = raw.trim();
+  const cutAtSeparator = trimmed.split(URL_SEPARATOR_REGEX)[0] || '';
+  return cutAtSeparator.replace(TRAILING_URL_PUNCTUATION_REGEX, '');
+}
+
 
 function extractUniqueUrls(text: string): string[] {
   const matches = text.match(URL_REGEX) || [];
@@ -35,7 +52,8 @@ function extractUniqueUrls(text: string): string[] {
   const result: string[] = [];
 
   for (const raw of matches) {
-    const url = raw.trim().replace(/[),.;!?]+$/, '');
+    const url = cleanExtractedUrl(raw);
+    if (!url) continue;
     if (!seen.has(url)) {
       seen.add(url);
       result.push(url);
@@ -69,6 +87,7 @@ export const generateLessonPlan = async (
   const hasTranscriptHints = VIDEO_TRANSCRIPT_HINT_REGEX.test(normalizedTextInput);
   const sourceMaterialBlock = normalizedTextInput ? `\nSource Material:\n${normalizedTextInput}` : '';
   const localQualityIssues = [...(options.qualityIssues || [])];
+  const videoEvidenceMode = options.videoEvidenceMode || 'none';
 
   // ---------- Build prompt based on mode ----------
   const ageGroup = options.ageGroup;
@@ -193,14 +212,31 @@ IMPORTANT: Keep assessment criteria stable for the selected textbook level regar
     sharedSuffixes.push(`
 [Referenced Video URLs]
 ${youtubeUrls.map((url) => `- ${url}`).join('\n')}`);
-    sharedSuffixes.push(`
+    if (videoEvidenceMode === 'transcript_verified' || videoEvidenceMode === 'manual_verified') {
+      sharedSuffixes.push(`
+[Video Evidence Policy: VERIFIED]
+Transcript/key-point evidence is available.
+You may reference specific song/video details ONLY when those details are explicitly present in Source Material or Teaching Background Fact Sheet.
+Do NOT add any ungrounded title/artist/lyrics.`);
+    } else if (videoEvidenceMode === 'fallback_web_unverified') {
+      sharedSuffixes.push(`
+[Video Evidence Policy: FALLBACK (UNVERIFIED)]
+Fallback web evidence was used and may be incorrect.
+You MUST NOT output specific song title, artist name, exact lyrics, or concrete scene claims from the video.
+Use generic phrasing only (e.g., "selected video clip", "teacher-provided video").
+For any needed specifics, insert placeholder text exactly:
+"Teacher verifies and inserts exact title/lyrics from the original video here."`);
+      localQualityIssues.push('Fallback web evidence mode: video details forced to generic placeholders pending teacher verification.');
+    } else {
+      sharedSuffixes.push(`
 [Video Evidence Limitation]
 The request includes video URLs, but this prompt does not provide guaranteed machine-readable transcript content.
 You MUST NOT invent exact lyrics, spoken lines, scene details, or factual claims from those videos.
 Only use explicit text provided in Source Material and grounded fact sheets.
 If a video-based activity is requested, provide a reusable activity template and mark:
 "Teacher inserts clip transcript/key points here."`);
-    if (!hasTranscriptHints) {
+    }
+    if (!hasTranscriptHints && videoEvidenceMode === 'none') {
       localQualityIssues.push('Video URLs were provided without transcript text; video-specific details were intentionally not inferred.');
     }
   }

@@ -66,10 +66,12 @@ type VideoFallbackEvidenceReview = {
     sources: GroundingSourceItem[];
 };
 
-const URL_REGEX = /https?:\/\/[^\s)]+/gi;
+type VideoEvidenceMode = 'none' | 'transcript_verified' | 'manual_verified' | 'fallback_web_unverified';
+
+const URL_REGEX = /https?:\/\/[^\s<>"'`]+/gi;
 const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
-const TRAILING_URL_PUNCTUATION_REGEX = /[)\],.;!?，。；！？、]+$/g;
-const URL_SEPARATOR_REGEX = /[\s，。；！？、]/;
+const TRAILING_URL_PUNCTUATION_REGEX = /[)\],.;!?'"\]}>\u3001\u3002\uFF0C\uFF1B\uFF1A\uFF01\uFF1F]+$/g;
+const URL_SEPARATOR_REGEX = /[\s\u3001\u3002\uFF0C\uFF1B\uFF1A\uFF01\uFF1F]+/;
 
 const cleanExtractedUrl = (raw: string): string => {
     const trimmed = raw.trim();
@@ -169,18 +171,18 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
     const getProgressStages = (mode: GenerationSourceMode): string[] => {
         if (mode === 'direct') {
             return lang === 'zh'
-                ? ['校验参数', '分析上传/输入资料', '生成课件', '整理结果']
+                ? ['Validate input', 'Analyze provided materials', 'Generate lesson kit', 'Finalize output']
                 : ['Validate input', 'Analyze provided materials', 'Generate lesson kit', 'Finalize output'];
         }
         return lang === 'zh'
-            ? ['校验参数', '连接 NotebookLM', '分析笔记资料', '生成课件', '整理结果']
+            ? ['Validate input', 'Connect NotebookLM', 'Analyze notebook sources', 'Generate lesson kit', 'Finalize output']
             : ['Validate input', 'Connect NotebookLM', 'Analyze notebook sources', 'Generate lesson kit', 'Finalize output'];
     };
 
     const [generationProgress, setGenerationProgress] = useState<LessonKitGenerationProgress>({
         stage: 0,
         percent: 0,
-        statusText: lang === 'zh' ? '准备开始...' : 'Preparing...',
+        statusText: lang === 'zh' ? 'Preparing...' : 'Preparing...',
         stages: getProgressStages('notebook'),
     });
 
@@ -213,7 +215,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             abortControllerRef.current = null;
         }
         setState(prev => ({ ...prev, isLoading: false, error: 'Generation cancelled by user.' }));
-        updateProgress(0, 0, lang === 'zh' ? '已取消生成。' : 'Generation cancelled.');
+        updateProgress(0, 0, lang === 'zh' ? 'Generation cancelled.' : 'Generation cancelled.');
     };
 
     const handleGenerate = async (
@@ -257,7 +259,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         updateProgress(
             0,
             10,
-            lang === 'zh' ? '正在校验参数并准备任务...' : 'Validating inputs and preparing task...',
+            lang === 'zh' ? 'Validating inputs and preparing task...' : 'Validating inputs and preparing task...',
             stages,
         );
         setActiveLessonId(null);
@@ -292,6 +294,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             let groundingStatus: GroundingStatus = 'unverified';
             const videoUrls = extractYouTubeUrls(text || '');
             let videoFactSheet: string | undefined;
+            let videoEvidenceMode: VideoEvidenceMode = 'none';
             const normalizedManualEvidence = manualEvidenceInput?.trim();
 
             if (videoUrls.length > 0) {
@@ -300,16 +303,14 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     setVideoFallbackEvidenceReview(null);
                     setVideoGroundingSummary({
                         status: 'unavailable',
-                        message: lang === 'zh'
-                            ? '无法自动提取字幕证据，请粘贴字幕或关键要点后继续生成。'
-                            : 'Transcript evidence could not be extracted. Paste transcript/key points to continue.',
+                        message: 'Transcript evidence could not be extracted. Paste transcript/key points to continue.',
                         urlCount: videoUrls.length,
                     });
                     setState(prev => ({ ...prev, isLoading: false, generatedContent: null, error: null }));
                     updateProgress(
                         0,
                         0,
-                        lang === 'zh' ? '等待手动字幕/要点输入…' : 'Waiting for manual transcript/key points...',
+                        lang === 'zh' ? 'Waiting for manual transcript/key points...' : 'Waiting for manual transcript/key points...',
                         stages,
                     );
                 };
@@ -331,9 +332,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     });
                     setVideoGroundingSummary({
                         status: 'review',
-                        message: lang === 'zh'
-                            ? '已找到回退证据，请先确认歌词/要点后再继续生成。'
-                            : 'Fallback web evidence was found. Please confirm lyrics/key points before generation.',
+                        message: 'Fallback web evidence was found. Please confirm lyrics/key points before generation.',
                         urlCount: videoUrls.length,
                         evidenceUrlCount: fallbackEvidenceUrls.length,
                     });
@@ -341,7 +340,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     updateProgress(
                         0,
                         0,
-                        lang === 'zh' ? '等待证据确认…' : 'Waiting for evidence confirmation...',
+                        lang === 'zh' ? 'Waiting for evidence confirmation...' : 'Waiting for evidence confirmation...',
                         stages,
                     );
                 };
@@ -353,14 +352,14 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     setVideoGroundingSummary({
                         status: 'processing',
                         message: lang === 'zh'
-                            ? '字幕不可用，正在自动检索公开歌词/字幕证据...'
+                            ? 'Transcript unavailable. Searching public lyric/transcript evidence...'
                             : 'Transcript unavailable. Searching public lyric/transcript evidence...',
                         urlCount: videoUrls.length,
                     });
                     updateProgress(
                         sourceMode === 'direct' ? 1 : 2,
                         sourceMode === 'direct' ? 56 : 58,
-                        lang === 'zh' ? '正在检索可确认的外部证据...' : 'Finding verifiable fallback evidence...',
+                        lang === 'zh' ? 'Finding verifiable fallback evidence...' : 'Finding verifiable fallback evidence...',
                         stages,
                     );
 
@@ -387,10 +386,14 @@ Never invent exact lines without a cited source URL.`,
                     const fallbackFactSheet = fallbackRag.factSheets.get(0)?.content?.trim() || '';
                     const fallbackEvidenceUrls = mergeUnique([], fallbackRag.validUrls || []);
                     const fallbackSources = Array.isArray(fallbackRag.sources) ? fallbackRag.sources : [];
+                    const hasConfidenceInfo = /confidence/i.test(fallbackFactSheet);
+                    const hasCoverageForInputUrls = videoUrls.every((url) => fallbackFactSheet.includes(url));
                     const noUsableFallback = (
                         !fallbackFactSheet
                         || /NO_FALLBACK_EVIDENCE|NO_USABLE_SOURCE|VIDEO_SOURCE_UNAVAILABLE/i.test(fallbackFactSheet)
                         || fallbackEvidenceUrls.length === 0
+                        || !hasConfidenceInfo
+                        || !hasCoverageForInputUrls
                     );
 
                     if (!noUsableFallback) {
@@ -405,34 +408,36 @@ Never invent exact lines without a cited source URL.`,
                 };
 
                 if (normalizedManualEvidence) {
-                    videoFactSheet = `[Manual Transcript / Key Points]\n${normalizedManualEvidence}`;
+                    videoEvidenceMode = manualEvidenceKind === 'fallback_web' ? 'fallback_web_unverified' : 'manual_verified';
+                    videoFactSheet = manualEvidenceKind === 'fallback_web'
+                        ? `[Fallback Web Evidence - User Confirmed]
+${normalizedManualEvidence}`
+                        : `[Manual Transcript / Key Points]
+${normalizedManualEvidence}`;
                     const evidenceUrls = mergeUnique(videoUrls, manualEvidenceUrls || []);
                     validUrls = mergeUnique(validUrls, evidenceUrls);
                     groundingSources = mergeGroundingSources(groundingSources, manualEvidenceSources || []);
+                    if (manualEvidenceKind === 'fallback_web') {
+                        qualityIssues.push('Video content used fallback web evidence. Specific song title/lyrics should be teacher-verified.');
+                    }
                     setVideoGroundingSummary({
                         status: 'grounded',
-                        message: lang === 'zh'
-                            ? (manualEvidenceKind === 'fallback_web'
-                                ? '已确认回退证据，继续生成。'
-                                : '已使用你手动提供的字幕/要点，继续生成。')
-                            : (manualEvidenceKind === 'fallback_web'
-                                ? 'Fallback evidence confirmed. Continuing generation.'
-                                : 'Using your manual transcript/key points for generation.'),
+                        message: manualEvidenceKind === 'fallback_web'
+                            ? 'Fallback evidence confirmed. Continuing generation.'
+                            : 'Using your manual transcript/key points for generation.',
                         urlCount: videoUrls.length,
                         evidenceUrlCount: evidenceUrls.length,
                     });
                 } else {
                     setVideoGroundingSummary({
                         status: 'processing',
-                        message: lang === 'zh'
-                            ? '检测到视频链接，正在尝试提取可用证据...'
-                            : 'Video URLs detected. Extracting evidence...',
+                        message: 'Video URLs detected. Extracting evidence...',
                         urlCount: videoUrls.length,
                     });
                     updateProgress(
                         sourceMode === 'direct' ? 1 : 2,
                         sourceMode === 'direct' ? 52 : 55,
-                        lang === 'zh' ? '正在解析视频链接内容...' : 'Analyzing referenced video URLs...',
+                        lang === 'zh' ? 'Analyzing referenced video URLs...' : 'Analyzing referenced video URLs...',
                         stages,
                     );
 
@@ -469,6 +474,7 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                             qualityIssues.push('Transcript extraction returned non-input URLs. Ignored in strict input-video mode.');
                         }
                         videoFactSheet = rawVideoFactSheet;
+                        videoEvidenceMode = 'transcript_verified';
                         validUrls = mergeUnique(validUrls, videoUrls);
                         groundingSources = mergeGroundingSources(
                             groundingSources,
@@ -476,9 +482,7 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                         );
                         setVideoGroundingSummary({
                             status: 'grounded',
-                            message: lang === 'zh'
-                                ? '视频内容证据提取成功，已合并到教案生成上下文。'
-                                : 'Video evidence extracted and merged into lesson generation context.',
+                            message: 'Video evidence extracted and merged into lesson generation context.',
                             urlCount: videoUrls.length,
                             evidenceUrlCount: mergeUnique(
                                 [],
@@ -512,17 +516,17 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
 
             if (sourceMode === 'notebook' && levelEntry?.notebookId) {
                 try {
-                    updateProgress(1, 24, lang === 'zh' ? '正在连接 NotebookLM...' : 'Connecting to NotebookLM...', stages);
+                    updateProgress(1, 24, lang === 'zh' ? 'Connecting to NotebookLM...' : 'Connecting to NotebookLM...', stages);
                     const backends = await checkBackends();
                     if (!backends.local) {
-                        const fbTitle = lang === 'zh' ? '本地 NotebookLM 不可用' : 'Local NotebookLM unavailable';
+                        const fbTitle = lang === 'zh' ? 'Local NotebookLM unavailable' : 'Local NotebookLM unavailable';
                         const fbDetail = lang === 'zh'
-                            ? `当前级别绑定 notebook "${levelEntry.notebookId}"，需要本地 dev:nlm。是否切换到 fallback 继续生成？`
+                            ? `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`
                             : `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`;
                         const choice = await askFallbackConfirm(fbTitle, fbDetail);
                         if (choice === 'cancel') throw new Error('AbortError');
                         qualityIssues.push(`Fallback: ${fbTitle} - ${fbDetail}`);
-                        updateProgress(2, 40, lang === 'zh' ? 'NotebookLM 不可用，切换 fallback...' : 'NotebookLM unavailable, switching to fallback...', stages);
+                        updateProgress(2, 40, lang === 'zh' ? 'NotebookLM unavailable, switching to fallback...' : 'NotebookLM unavailable, switching to fallback...', stages);
                         throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
                     }
 
@@ -532,7 +536,7 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                     updateProgress(
                         2,
                         35,
-                        lang === 'zh' ? '正在检查资源调用指南...' : 'Checking resource guide...',
+                        lang === 'zh' ? 'Checking resource guide...' : 'Checking resource guide...',
                         stages,
                     );
                     const guideResult = await ensureResourceGuide(levelEntry.notebookId!, {
@@ -550,7 +554,7 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                         3,
                         48,
                         lang === 'zh'
-                            ? `已连接 ${backend}，正在分析对应笔记资料...`
+                            ? `Connected to ${backend}, analyzing notebook sources...`
                             : `Connected to ${backend}, analyzing notebook sources...`,
                         stages,
                     );
@@ -590,12 +594,12 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     if (factSheet) {
                         const quality = rag.factSheets.get(0)?.quality;
                         groundingStatus = quality === 'good' ? 'verified' : 'mixed';
-                        updateProgress(2, 62, lang === 'zh' ? 'NotebookLM 命中来源，正在生成课件...' : 'Notebook sources grounded, generating lesson kit...', stages);
+                        updateProgress(2, 62, lang === 'zh' ? 'Notebook sources grounded, generating lesson kit...' : 'Notebook sources grounded, generating lesson kit...', stages);
                     } else {
                         groundingStatus = 'unverified';
-                        const fbTitle = lang === 'zh' ? '未提取到 notebook 事实表' : 'No notebook fact sheet extracted';
+                        const fbTitle = lang === 'zh' ? 'No notebook fact sheet extracted' : 'No notebook fact sheet extracted';
                         const fbDetail = lang === 'zh'
-                            ? `已连接 notebook "${knowledgeNotebookId || levelEntry.notebookId}"，但未返回可用事实表（来源 ${rag.sources.length} 个，URL ${rag.validUrls.length} 条）。是否继续 fallback 生成？`
+                            ? `Connected to notebook "${knowledgeNotebookId || levelEntry.notebookId}", but no usable fact sheet was returned (${rag.sources.length} source(s), ${rag.validUrls.length} URL). Continue with fallback?`
                             : `Connected to notebook "${knowledgeNotebookId || levelEntry.notebookId}", but no usable fact sheet was returned (${rag.sources.length} source(s), ${rag.validUrls.length} URL). Continue with fallback?`;
                         const choice = await askFallbackConfirm(fbTitle, fbDetail);
                         if (choice === 'cancel') throw new Error('AbortError');
@@ -609,9 +613,9 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     if (ragError.message === 'AbortError') throw ragError;
                     groundingStatus = 'unverified';
                     if (!String(ragError?.message || '').includes('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE')) {
-                        const fbTitle = lang === 'zh' ? 'NotebookLM 请求失败' : 'NotebookLM request failed';
+                        const fbTitle = lang === 'zh' ? 'NotebookLM request failed' : 'NotebookLM request failed';
                         const fbDetail = lang === 'zh'
-                            ? `Notebook 调用失败：${ragError?.message || '未知错误'}。是否改用级别标准继续生成？`
+                            ? `Notebook request failed: ${ragError?.message || 'Unknown error'}. Continue with level standard?`
                             : `Notebook request failed: ${ragError?.message || 'Unknown error'}. Continue with level standard?`;
                         const choice = await askFallbackConfirm(fbTitle, fbDetail);
                         if (choice === 'cancel') throw new Error('AbortError');
@@ -628,7 +632,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                 updateProgress(
                     1,
                     44,
-                    lang === 'zh' ? '正在分析上传/输入资料...' : 'Analyzing uploaded or typed materials...',
+                    lang === 'zh' ? 'Analyzing uploaded or typed materials...' : 'Analyzing uploaded or typed materials...',
                     stages,
                 );
             }
@@ -639,7 +643,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             ].filter(Boolean).join('\n\n---\n\n') || undefined;
 
             const generationStage = sourceMode === 'direct' ? 2 : 3;
-            updateProgress(generationStage, 78, lang === 'zh' ? '正在生成课件内容...' : 'Generating lesson kit content...', stages);
+            updateProgress(generationStage, 78, lang === 'zh' ? 'Generating lesson kit content...' : 'Generating lesson kit content...', stages);
 
             const lessonContent = await generateLessonPlan(
                 text,
@@ -663,6 +667,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     assessmentPackPrompt: assessmentPack ? buildAssessmentPackPrompt(assessmentPack) : undefined,
                     mode: 'plan_only', // Fix A: Phase 1 only generates lesson plan
                     ageGroup,
+                    videoEvidenceMode,
                 },
             );
 
@@ -683,15 +688,15 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             };
 
             const finalizeStage = sourceMode === 'direct' ? 3 : 4;
-            updateProgress(finalizeStage, 96, lang === 'zh' ? '正在整理结构化结果...' : 'Finalizing structured output...', stages);
+            updateProgress(finalizeStage, 96, lang === 'zh' ? 'Finalizing structured output...' : 'Finalizing structured output...', stages);
             // Preserve the user's custom prompt for display/copy
             if (text?.trim()) lessonContent.inputPrompt = text.trim();
             setState({ isLoading: false, generatedContent: lessonContent, error: null });
             setManualVideoEvidence('');
-            updateProgress(finalizeStage, 100, lang === 'zh' ? '教案已生成，请审阅后继续生成配套内容。' : 'Lesson plan ready - review and generate supporting content.', stages);
+            updateProgress(finalizeStage, 100, lang === 'zh' ? 'Lesson plan ready - review and generate supporting content.' : 'Lesson plan ready - review and generate supporting content.', stages);
         } catch (error: any) {
             if (error.name === 'AbortError' || error.message === 'AbortError' || error.message === 'Operation aborted') {
-                updateProgress(0, 0, lang === 'zh' ? '已中断生成' : 'Generation aborted', stages);
+                updateProgress(0, 0, lang === 'zh' ? 'Generation aborted' : 'Generation aborted', stages);
                 setState(prev => ({ ...prev, isLoading: false }));
                 return;
             }
@@ -722,10 +727,10 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         const hasEvidenceCount = (isGrounded || isReview) && typeof videoGroundingSummary.evidenceUrlCount === 'number';
         const suffix = hasEvidenceCount
             ? (lang === 'zh'
-                ? `（输入链接 ${videoGroundingSummary.urlCount} 条，证据 URL ${videoGroundingSummary.evidenceUrlCount} 条）`
+                ? ` (${videoGroundingSummary.urlCount} input URL(s), ${videoGroundingSummary.evidenceUrlCount} evidence URL(s))`
                 : ` (${videoGroundingSummary.urlCount} input URL(s), ${videoGroundingSummary.evidenceUrlCount} evidence URL(s))`)
             : (lang === 'zh'
-                ? `（视频链接 ${videoGroundingSummary.urlCount} 条）`
+                ? ` (${videoGroundingSummary.urlCount} video URL(s))`
                 : ` (${videoGroundingSummary.urlCount} video URL(s))`);
 
         return (
@@ -784,13 +789,13 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         setVideoTranscriptRequest({
             urls: videoFallbackEvidenceReview.inputUrls,
             reason: lang === 'zh'
-                ? '你已拒绝自动回退证据，请手动粘贴字幕/要点后继续。'
+                ? 'Fallback evidence was rejected. Paste manual transcript/key points to continue.'
                 : 'Fallback evidence was rejected. Paste manual transcript/key points to continue.',
         });
         setVideoGroundingSummary({
             status: 'unavailable',
             message: lang === 'zh'
-                ? '已拒绝回退证据，请手动提供字幕/要点。'
+                ? 'Fallback evidence rejected. Manual transcript/key points required.'
                 : 'Fallback evidence rejected. Manual transcript/key points required.',
             urlCount: videoFallbackEvidenceReview.inputUrls.length,
         });
@@ -804,12 +809,12 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <p className="text-sm font-semibold text-amber-900">
                     {lang === 'zh'
-                        ? '已找到回退歌词/字幕证据，请先确认后再继续生成'
+                        ? 'Fallback lyric/transcript evidence found. Confirm before generation'
                         : 'Fallback lyric/transcript evidence found. Confirm before generation'}
                 </p>
                 <p className="mt-1 text-xs text-amber-800">{videoFallbackEvidenceReview.reason}</p>
                 <p className="mt-2 text-xs text-amber-800">
-                    {lang === 'zh' ? '输入视频 URL：' : 'Input video URL(s):'}
+                    {lang === 'zh' ? 'Input video URL(s):' : 'Input video URL(s):'}
                 </p>
                 <ul className="mt-1 list-disc pl-5 text-xs text-amber-900">
                     {videoFallbackEvidenceReview.inputUrls.map((url) => (
@@ -817,7 +822,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     ))}
                 </ul>
                 <p className="mt-2 text-xs text-amber-800">
-                    {lang === 'zh' ? '自动检索到的证据 URL（请核对）：' : 'Auto-found evidence URL(s) for review:'}
+                    {lang === 'zh' ? 'Auto-found evidence URL(s) for review:' : 'Auto-found evidence URL(s) for review:'}
                 </p>
                 <ul className="mt-1 max-h-28 list-disc overflow-auto pl-5 text-xs text-amber-900">
                     {videoFallbackEvidenceReview.evidenceUrls.map((url) => (
@@ -828,7 +833,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     value={manualVideoEvidence}
                     onChange={(event) => setManualVideoEvidence(event.target.value)}
                     placeholder={lang === 'zh'
-                        ? '请确认/修改歌词或关键要点，再继续生成...'
+                        ? 'Review/edit extracted lyrics or key points before continuing...'
                         : 'Review/edit extracted lyrics or key points before continuing...'}
                     className="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
                     rows={8}
@@ -840,14 +845,14 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                         disabled={state.isLoading || !manualVideoEvidence.trim()}
                         className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {lang === 'zh' ? '确认证据并继续生成' : 'Confirm evidence and continue'}
+                        {lang === 'zh' ? 'Confirm evidence and continue' : 'Confirm evidence and continue'}
                     </button>
                     <button
                         type="button"
                         onClick={handleRejectFallbackEvidence}
                         className="rounded-md border border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
                     >
-                        {lang === 'zh' ? '拒绝回退证据' : 'Reject fallback evidence'}
+                        {lang === 'zh' ? 'Reject fallback evidence' : 'Reject fallback evidence'}
                     </button>
                 </div>
             </div>
@@ -860,14 +865,14 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <p className="text-sm font-semibold text-amber-900">
                     {lang === 'zh'
-                        ? '需要手动提供字幕/要点后才能继续生成'
+                        ? 'Manual transcript/key points required to continue'
                         : 'Manual transcript/key points required to continue'}
                 </p>
                 <p className="mt-1 text-xs text-amber-800">
                     {videoTranscriptRequest.reason}
                 </p>
                 <p className="mt-2 text-xs text-amber-800">
-                    {lang === 'zh' ? '仅接受以下输入 URL：' : 'Accepted input URL(s) only:'}
+                    {lang === 'zh' ? 'Accepted input URL(s) only:' : 'Accepted input URL(s) only:'}
                 </p>
                 <ul className="mt-1 list-disc pl-5 text-xs text-amber-900">
                     {videoTranscriptRequest.urls.map((url) => (
@@ -878,7 +883,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     value={manualVideoEvidence}
                     onChange={(event) => setManualVideoEvidence(event.target.value)}
                     placeholder={lang === 'zh'
-                        ? '请粘贴字幕，或写下关键台词/动作指令/词汇要点...'
+                        ? 'Paste transcript, or provide key lines/TPR cues/vocabulary points...'
                         : 'Paste transcript, or provide key lines/TPR cues/vocabulary points...'}
                     className="mt-3 w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
                     rows={5}
@@ -890,7 +895,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                         disabled={state.isLoading || !manualVideoEvidence.trim()}
                         className="rounded-md bg-amber-600 px-3 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        {lang === 'zh' ? '使用手动字幕继续生成' : 'Continue with manual evidence'}
+                        {lang === 'zh' ? 'Continue with manual evidence' : 'Continue with manual evidence'}
                     </button>
                     <button
                         type="button"
@@ -900,7 +905,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                         }}
                         className="rounded-md border border-amber-400 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
                     >
-                        {lang === 'zh' ? '取消' : 'Cancel'}
+                        {lang === 'zh' ? 'Cancel' : 'Cancel'}
                     </button>
                 </div>
             </div>
@@ -976,3 +981,5 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         </>
     );
 };
+
+
