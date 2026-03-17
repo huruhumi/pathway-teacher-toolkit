@@ -326,6 +326,22 @@ export const useProjectCRUD = <T extends BaseRecord>(
         try {
             const cloudResult = await deleteCloudRecord(cloudTable, user.id, id);
             if (!cloudResult.ok) {
+                const recoverable =
+                    cloudResult.errorCode === 'NETWORK_ERROR'
+                    || cloudResult.errorCode === 'SUPABASE_DISABLED';
+
+                // Local-first delete: keep optimistic local deletion on transient cloud/network failure.
+                if (recoverable) {
+                    return {
+                        ok: true,
+                        source: 'mixed',
+                        errorCode: cloudResult.errorCode,
+                        message: cloudResult.message || 'Cloud delete failed; local deletion kept.',
+                        retryable: true,
+                        pendingSync: true,
+                    };
+                }
+
                 // Rollback optimistic deletion
                 if (rollbackSnapshot) {
                     setItemsState(rollbackSnapshot);
@@ -354,13 +370,26 @@ export const useProjectCRUD = <T extends BaseRecord>(
             broadcastSync();
             return cloudResult;
         } catch (err: any) {
+            const message = err?.message || 'Unexpected error';
+            const isNetworkLike = /Failed to fetch|NetworkError|network/i.test(String(message));
+            if (isNetworkLike) {
+                return {
+                    ok: true,
+                    source: 'mixed',
+                    errorCode: 'NETWORK_ERROR',
+                    message: String(message),
+                    retryable: true,
+                    pendingSync: true,
+                };
+            }
+
             // Rollback on unexpected error
             if (rollbackSnapshot) {
                 setItemsState(rollbackSnapshot);
                 await persistLocal(rollbackSnapshot);
             }
             console.error('[useProjectCRUD] deleteItem unexpected error:', err);
-            return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Unexpected error', retryable: true };
+            return { ok: false, source: 'cloud', errorCode: 'UNEXPECTED_DELETE_ERROR', message, retryable: true };
         }
     }, [broadcastSync, cloudTable, persistLocal, user]);
 

@@ -276,7 +276,11 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                     return;
                 }
             }
-            useToast.getState().success(`Deleted "${title}".`);
+            if (result.pendingSync) {
+                useToast.getState().warning(`Deleted "${title}" locally. Cloud sync pending.`);
+            } else {
+                useToast.getState().success(`Deleted "${title}".`);
+            }
         } catch (err: any) {
             console.error('[RecordsPage] executeDelete error:', err);
             useToast.getState().error(`Delete failed. ${err?.message || 'Unexpected error'}`);
