@@ -96,6 +96,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         lessonTitle: string,
         textbookLevelKey: string,
         sourceMode: GenerationSourceMode,
+        ageGroup?: string,
     ) => {
         const stages = getProgressStages(sourceMode);
         setState(prev => ({ ...prev, isLoading: true, error: null, generatedContent: null }));
@@ -275,6 +276,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     qualityIssues,
                     assessmentPackPrompt: assessmentPack ? buildAssessmentPackPrompt(assessmentPack) : undefined,
                     mode: 'plan_only', // Fix A: Phase 1 only generates lesson plan
+                    ageGroup,
                 },
             );
 

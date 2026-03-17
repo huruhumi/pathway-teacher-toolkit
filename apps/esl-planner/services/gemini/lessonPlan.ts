@@ -16,6 +16,8 @@ interface LessonPlanGenerationOptions {
   groundingStatus?: GroundingStatus;
   qualityIssues?: string[];
   assessmentPackPrompt?: string;
+  /** Target age group for cognitive complexity adaptation (e.g., "6-8", "10-12", "14-16") */
+  ageGroup?: string;
   /**
    * 'full' (default) = generate everything (slides, games, flashcards, etc.)
    * 'plan_only' = only generate structuredLessonPlan + summary + lessonPlanMarkdown
@@ -42,26 +44,99 @@ export const generateLessonPlan = async (
   const isPlanOnly = mode === 'plan_only';
 
   // ---------- Build prompt based on mode ----------
-  const planOnlyInstructions = `Generate ONLY the lesson plan (structuredLessonPlan + summary + lessonPlanMarkdown) for Level: ${level}, Topic: ${lessonTitle}${topic ? ` (${topic})` : ''}, Duration: ${duration} mins, Students: ${studentCount}. ${textInput ? `Context: ${textInput}` : ''}.
-CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactly for "structuredLessonPlan.classInformation.topic" and all main headers.
-CRITICAL: Focus ALL your attention on creating a high-quality, detailed lesson plan with well-designed teaching stages.
-IMPORTANT: grammarSentences must be Q&A dialogue pairs (e.g. "Q: What's your name? → A: My name is Do."). Always include the question for conversation practice. No markdown headers.
-IMPORTANT: For each stage "interaction", provide comma-separated interaction mode per numbered step.
-IMPORTANT: In teacherActivity/studentActivity, do not use HTML tags.
-IMPORTANT: Each stage must include 2-3 teachingTips, 2-3 backgroundKnowledge points, one fillerActivity (SHORT NAME ONLY, 2-5 words), and one suggestedGameName (SHORT NAME ONLY, 2-5 words).`;
+  const ageGroup = options.ageGroup;
+  const ageLine = ageGroup ? `\nTarget Age Group: ${ageGroup} — adapt cognitive complexity, activity types, and language accordingly.` : '';
 
-  const fullInstructions = `Generate a complete lesson kit for Level: ${level}, Topic: ${lessonTitle}${topic ? ` (${topic})` : ''}, Duration: ${duration} mins, Students: ${studentCount}. ${textInput ? `Context: ${textInput}` : ''}.
-CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactly for "structuredLessonPlan.classInformation.topic" and all main headers.
-CRITICAL: Generate EXACTLY ${slideCount} slides in the "slides" array.
-CRITICAL: Slides must follow a coherent ESL pedagogical flow and expand creatively from context.
-CRITICAL: Generate exactly 7 review days in "readingCompanion.days", numbered 1-7.
-CRITICAL: Each review day must include at least 1 web resource.
-CRITICAL: If ${slideCount} > 15, prepend a "Global Style & Formatting Guidelines" section at the start of "notebookLMPrompt" with strict color palette hex values, typography, and illustration style.
-IMPORTANT: grammarSentences must be Q&A dialogue pairs (e.g. "Q: What's your name? → A: My name is Do."). Always include the question for conversation practice. No markdown headers.
-IMPORTANT: For each stage "interaction", provide comma-separated interaction mode per numbered step.
-IMPORTANT: In teacherActivity/studentActivity, do not use HTML tags.
-IMPORTANT: Each stage must include 2-3 teachingTips, 2-3 backgroundKnowledge points, one fillerActivity, and one suggestedGameName.
-IMPORTANT: "games" must map one-to-one with lesson stages and each game.linkedStage must exactly match stage name.`;
+  const sharedPlanRules = `
+=== LESSON PLAN QUALITY REQUIREMENTS ===
+
+1. STAGE DESIGN (5 stages minimum):
+   - Each lesson MUST follow PPP methodology: Present → Practice → Produce
+   - Standard stage sequence: Warm-up/Review → Presentation (vocabulary/grammar) → Controlled Practice → Freer Practice/Production → Wrap-up/Assessment
+   - Each stage must have a clear, specific aim (not vague like "practice vocabulary")
+
+2. TEACHER ACTIVITY (teacherActivity) — MUST be a numbered list of 5-8 scripted steps:
+   - Include EXACT teacher talk in quotes (e.g., 1. Say "Good morning! Today we're going to learn about...")
+   - Include board work instructions (e.g., 3. Write the word 'hello' on the board, point to it)
+   - Include comprehension check questions (e.g., 5. Ask "Can everyone say 'hello'? Let me hear you!")
+   - Include classroom management cues (e.g., "Clap if you can hear me")
+   - Include transition phrases between activities (e.g., "Great job! Now let's try something fun!")
+   - NEVER use vague instructions like "Show textbook page" or "Present vocabulary"
+
+3. STUDENT ACTIVITY (studentActivity) — MUST be a numbered list of 5-8 observable actions:
+   - Describe SPECIFIC student behaviors (e.g., 1. Students repeat "hello" 3 times with hand wave gesture)
+   - Include pair/group work instructions (e.g., 4. In pairs, Student A asks "What's your name?" Student B answers "I'm...")
+   - Include physical response (TPR) where appropriate (e.g., 2. Students stand up and mime the action)
+   - NEVER leave as "Student action..." or generic responses
+   - Every step must correspond to a teacher activity step
+
+4. VOCABULARY PRESENTATION:
+   - targetVocab: Include ALL target words (8-12 words minimum)
+   - Each word MUST have a simple, child-friendly definition
+   - Vocabulary stage teacher script must include: a) Visual/realia introduction b) Model pronunciation (say word 3x) c) Choral drill d) Individual drill (cold calling 2-3 students) e) Meaning check (concept check questions)
+
+5. GRAMMAR SENTENCES:
+   - Must be Q&A dialogue pairs: "Q: What's your name? → A: My name is Sofia."
+   - Include 4-6 pairs minimum, progress from simple to complex
+   - No markdown headers
+
+6. INTERACTION MODES:
+   - Provide comma-separated codes matching each numbered step (same count)
+   - Use: T-Ss (teacher to all), T-S (teacher to one student), S-S (pair work), S-Ss (student to group), Ss-Ss (group work)
+
+7. SUPPORTING FIELDS (per stage):
+   - teachingTips: 2-3 practical ESL methodology tips (scaffolding, TPR, error correction)
+   - backgroundKnowledge: 2-3 content/cultural knowledge points for the teacher
+   - fillerActivity: SHORT NAME ONLY (2-5 words)
+   - suggestedGameName: SHORT NAME ONLY (2-5 words)
+
+8. ANTICIPATED PROBLEMS: Include 3-4 realistic problems with concrete solutions
+
+9. In teacherActivity/studentActivity, do not use HTML tags.`;
+
+  const planOnlyInstructions = `You are an expert ESL lesson planner with 10+ years of classroom experience designing lessons for K-12 students. Generate a detailed, classroom-ready lesson plan.${ageLine}
+
+Level: ${level} | Topic: ${lessonTitle}${topic ? ` (${topic})` : ''} | Duration: ${duration} mins | Students: ${studentCount}
+${textInput ? `\nSource Material:\n${textInput}` : ''}
+${sharedPlanRules}
+CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactly for "structuredLessonPlan.classInformation.topic" and all main headers.`;
+
+  const fullInstructions = `You are an expert ESL lesson designer creating a COMPLETE lesson kit for K-12 students.${ageLine}
+
+Level: ${level} | Topic: ${lessonTitle}${topic ? ` (${topic})` : ''} | Duration: ${duration} mins | Students: ${studentCount}
+${textInput ? `\nSource Material:\n${textInput}` : ''}
+${sharedPlanRules}
+=== SLIDES REQUIREMENTS ===
+- Generate EXACTLY ${slideCount} slides
+- Slides must follow a coherent ESL pedagogical flow aligned with lesson stages
+- Slide 1: Title slide with lesson topic and key visual
+- Slides 2-3: Vocabulary presentation (one word per slide with image description)
+- Middle slides: Grammar explanation, practice exercises, dialogues
+- Final slides: Review/assessment activity, homework/extension
+- Each slide "content" must contain substantive teaching content (not just a title restatement)
+- Each slide "visual" must describe a specific, relevant illustration suitable for the age group
+- Each slide "layoutDesign" must specify practical layout (e.g., "Image left 40%, text right 60%")
+${slideCount > 15 ? '- Prepend a "Global Style & Formatting Guidelines" section at the start of "notebookLMPrompt" with strict color palette hex values, typography, and illustration style.' : ''}
+=== FLASHCARDS REQUIREMENTS ===
+- Generate flashcards for ALL targetVocab words (every word must have a flashcard)
+- "definition" should be a simple sentence using the word in context
+- "visualPrompt" should describe a concrete, age-appropriate image (not abstract concepts)
+
+=== GAMES REQUIREMENTS ===
+- Generate one game per lesson stage (games must map 1:1 with stages)
+- "linkedStage" must exactly match a stage name from structuredLessonPlan.stages[].stage
+- "instructions" must be detailed numbered steps (5-8 steps, teacher-ready)
+- Include materials list and variation suggestions
+
+=== READING COMPANION (7-Day Home Review) ===
+- EXACTLY 7 days, each with distinct focus, 2-3 tasks, and at least 1 web resource
+- Day 1-2: Vocabulary review and flashcard practice
+- Day 3-4: Grammar pattern drilling with family members
+- Day 5-6: Reading/listening with recommended resources
+- Day 7: Mini-assessment and self-reflection
+- All resources must have real, working URLs (YouTube, educational sites)
+
+CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactly for "structuredLessonPlan.classInformation.topic" and all main headers.`;
 
   const promptText = isPlanOnly ? planOnlyInstructions : fullInstructions;
 

@@ -37,7 +37,8 @@ interface InputSectionProps {
     studentCount: string,
     lessonTitle: string,
     textbookLevelKey: string,
-    sourceMode: GenerationSourceMode
+    sourceMode: GenerationSourceMode,
+    ageGroup?: string,
   ) => void;
   isLoading: boolean;
   initialValues?: {
@@ -72,6 +73,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
   const [studentCount, setStudentCount] = useState('6');
   const [lessonTitle, setLessonTitle] = useState('');
   const [sourceMode, setSourceMode] = useState<GenerationSourceMode>('notebook');
+  const [ageGroup, setAgeGroup] = useState('');
   const [textbookLevelKey, setTextbookLevelKey] = useState('');
   const [textbookId, setTextbookId] = useState('');
   const textbookLevels = listSelectableTextbookLevels();
@@ -175,7 +177,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const resolvedLevel = resolveCEFRFromTextbookLevelKey(textbookLevelKey, textbookOptions, CEFRLevel.Beginner);
-    onGenerate(text, files, resolvedLevel, topic, slideCount, duration, studentCount, lessonTitle, textbookLevelKey, sourceMode);
+    onGenerate(text, files, resolvedLevel, topic, slideCount, duration, studentCount, lessonTitle, textbookLevelKey, sourceMode, ageGroup || undefined);
   };
 
   return (
@@ -267,6 +269,22 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             onChange={(e) => setSlideCount(Number(e.target.value))}
             className="py-3"
             options={[5, 8, 10, 12, 15, 20, 25, 30].map(num => ({ label: `${num} ${t('input.slidesUnit')}`, value: num }))}
+          />
+          <Select
+            label={lang === 'zh' ? '学生年龄段' : 'Age Group'}
+            value={ageGroup}
+            onChange={(e) => setAgeGroup(e.target.value)}
+            className="py-3"
+            options={[
+              { label: lang === 'zh' ? '自动（根据级别推断）' : 'Auto (infer from level)', value: '' },
+              { label: '4-6 (K)', value: '4-6' },
+              { label: '6-8 (G1-G2)', value: '6-8' },
+              { label: '8-10 (G3-G4)', value: '8-10' },
+              { label: '10-12 (G5-G6)', value: '10-12' },
+              { label: '12-14 (G7-G8)', value: '12-14' },
+              { label: '14-16 (G9-G10)', value: '14-16' },
+              { label: '16-18 (G11-G12)', value: '16-18' },
+            ]}
           />
         </div>
 
