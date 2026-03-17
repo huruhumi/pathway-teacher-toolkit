@@ -9,7 +9,7 @@ import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
 import type { SaveResult, RecordIndexEntry } from '@shared/types';
 import type { TeacherReview } from '@shared/types/scoring';
 import { useToast } from '@shared/stores/useToast';
-import { upsertRecordIndexEntry, updateRecordIndexQualityStatus } from '@shared/services/cloudSync';
+import { upsertRecordIndexEntry, updateRecordIndexQualityStatus, deleteRecordIndexEntry } from '@shared/services/cloudSync';
 import {
     assessESLCurriculumQuality,
     assessESLLessonKitQuality,
@@ -711,7 +711,15 @@ function useLessonHistoryState() {
 
     const handleDeleteCurriculum = async (id: string, e?: React.MouseEvent): Promise<SaveResult> => {
         e?.stopPropagation();
-        return deleteCurriculumDb(id);
+        const result = deleteCurriculumDb(id);
+        // Clean up record_index so sidebar Review Queue stays in sync
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+            deleteRecordIndexEntry(currentUser.id, id).catch((err) =>
+                console.warn('[useLessonHistory] failed to delete record_index entry:', err)
+            );
+        }
+        return result;
     };
 
     const handleDeleteRecord = async (id: string, e?: React.MouseEvent): Promise<SaveResult> => {
@@ -721,6 +729,13 @@ function useLessonHistoryState() {
         if (activeLessonId === id) setActiveLessonId(null);
         // Clean up IndexedDB images
         await imageStore.removeByPrefix(`esl-${id}-`);
+        // Clean up record_index so sidebar Review Queue stays in sync
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+            deleteRecordIndexEntry(currentUser.id, id).catch((err) =>
+                console.warn('[useLessonHistory] failed to delete record_index entry:', err)
+            );
+        }
         return result;
     };
 
