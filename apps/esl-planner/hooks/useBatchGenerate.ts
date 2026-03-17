@@ -81,6 +81,7 @@ export function useBatchGenerate() {
                         assessmentPackId: levelEntry?.assessmentPackId,
                         knowledgeNotebookId: levelEntry?.notebookId || undefined,
                         groundingStatus: sheet ? 'mixed' : 'unverified',
+                        ageGroup: mapped.ageGroup,
                         qualityIssues: sheet
                             ? qualityIssues
                             : [...qualityIssues, 'Textbook assessment knowledge base not connected for this lesson.'],

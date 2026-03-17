@@ -60,6 +60,7 @@ export const generateESLCurriculum = async (
 Target Level: ${params.level}
 Lesson Duration: ${params.duration} minutes each
 Student Count: ${params.studentCount}
+${params.ageGroup ? `Target Age Group: ${params.ageGroup} (adapt cognitive complexity, activity type, and language load accordingly)` : ''}
 Total Lessons Required: ${params.lessonCount}
 
 CRITICAL INSTRUCTIONS:

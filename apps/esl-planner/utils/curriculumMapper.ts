@@ -7,6 +7,7 @@ export interface MappedESLInput {
     slideCount: number;
     duration: string;
     studentCount: string;
+    ageGroup?: string;
     lessonTitle: string;
     textbookLevelKey?: string;
     sourceMode?: 'notebook' | 'direct';
@@ -73,6 +74,7 @@ export function mapLessonToESLInput(
         slideCount: params.slideCount,
         duration: params.duration,
         studentCount: params.studentCount,
+        ageGroup: params.ageGroup,
         lessonTitle: formattedTitle,
         textbookLevelKey: params.textbookLevelKey,
         sourceMode: params.sourceMode,

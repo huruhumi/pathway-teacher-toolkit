@@ -172,6 +172,7 @@ export interface GenerationContext {
   level: CEFRLevel;
   topic: string;
   lessonTitle: string;
+  ageGroup?: string;
   duration: string;
   studentCount: string;
   slideCount: number;
@@ -284,6 +285,7 @@ export interface CurriculumParams {
   level: CEFRLevel;
   duration: string;
   studentCount: string;
+  ageGroup?: string;
   slideCount: number;
   customInstructions: string;
   textbookLevelKey?: string;

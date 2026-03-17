@@ -48,6 +48,7 @@ interface InputSectionProps {
     slideCount: number;
     duration: string;
     studentCount: string;
+    ageGroup?: string;
     lessonTitle: string;
     textbookLevelKey?: string;
     sourceMode?: GenerationSourceMode;
@@ -120,6 +121,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
       setSlideCount(initialValues.slideCount);
       setDuration(initialValues.duration);
       setStudentCount(initialValues.studentCount);
+      setAgeGroup(initialValues.ageGroup || '');
       setLessonTitle(initialValues.lessonTitle);
       setSourceMode(initialValues.sourceMode || 'notebook');
       setTextbookLevelKey(initialValues.textbookLevelKey || '');

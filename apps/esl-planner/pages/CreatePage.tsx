@@ -285,6 +285,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                 level,
                 topic,
                 lessonTitle,
+                ageGroup,
                 duration,
                 studentCount,
                 slideCount,
@@ -384,4 +385,3 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         </>
     );
 };
-

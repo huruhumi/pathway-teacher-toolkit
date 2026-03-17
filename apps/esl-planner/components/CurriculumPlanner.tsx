@@ -84,6 +84,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [level, setLevel] = useState<CEFRLevel>(CEFRLevel.Beginner);
     const [duration, setDuration] = useState('90');
     const [studentCount, setStudentCount] = useState('6');
+    const [ageGroup, setAgeGroup] = useState('');
     const [slideCount, setSlideCount] = useState(20);
     const [customInstructions, setCustomInstructions] = useState('');
     const [sourceMode, setSourceMode] = useState<GenerationSourceMode>('notebook');
@@ -186,6 +187,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setLevel(saved.params.level || CEFRLevel.A1);
             setDuration(saved.params.duration || '90');
             setStudentCount(saved.params.studentCount || '12');
+            setAgeGroup(saved.params.ageGroup || '');
             setSlideCount(saved.params.slideCount || 15);
             setCustomInstructions(saved.params.customInstructions || '');
             setSourceMode(saved.params.sourceMode || 'notebook');
@@ -238,6 +240,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setLevel(loadedCurriculum.params.level);
             setDuration(loadedCurriculum.params.duration);
             setStudentCount(loadedCurriculum.params.studentCount);
+            setAgeGroup(loadedCurriculum.params.ageGroup || '');
             setSlideCount(loadedCurriculum.params.slideCount);
             setCustomInstructions(loadedCurriculum.params.customInstructions || '');
             setSourceMode(loadedCurriculum.params.sourceMode || 'notebook');
@@ -259,8 +262,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 
     // Auto-save curriculum to Records (debounced)
     const autoSaveGetParams = useCallback((): CurriculumParams => ({
-        lessonCount, level, duration, studentCount, slideCount, customInstructions, textbookLevelKey, sourceMode
-    }), [lessonCount, level, duration, studentCount, slideCount, customInstructions, textbookLevelKey, sourceMode]);
+        lessonCount, level, duration, studentCount, ageGroup: ageGroup || undefined, slideCount, customInstructions, textbookLevelKey, sourceMode
+    }), [lessonCount, level, duration, studentCount, ageGroup, slideCount, customInstructions, textbookLevelKey, sourceMode]);
 
     const getCurriculumContent = useCallback(() => {
         return { curriculum: curriculum!, params: savedParams || autoSaveGetParams() };
@@ -312,6 +315,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         level,
         duration,
         studentCount,
+        ageGroup: ageGroup || undefined,
         slideCount,
         customInstructions,
         textbookLevelKey,
@@ -329,6 +333,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                 level,
                 duration,
                 studentCount,
+                ageGroup: ageGroup || undefined,
                 slideCount,
                 customInstructions,
                 textbookLevelKey: nextLevelKey,
@@ -871,6 +876,28 @@ If sources are missing, include the marker: NO_USABLE_SOURCE.`,
                                 />
                             </div>
 
+                            {/* Age Group */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                    <Users size={16} /> {lang === 'zh' ? '学生年龄段' : 'Age Group'}
+                                </label>
+                                <select
+                                    value={ageGroup}
+                                    onChange={(e) => setAgeGroup(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                                    aria-label="Age group"
+                                >
+                                    <option value="">{lang === 'zh' ? '自动（根据级别推断）' : 'Auto (infer from level)'}</option>
+                                    <option value="4-6">4-6 (K)</option>
+                                    <option value="6-8">6-8 (G1-G2)</option>
+                                    <option value="8-10">8-10 (G3-G4)</option>
+                                    <option value="10-12">10-12 (G5-G6)</option>
+                                    <option value="12-14">12-14 (G7-G8)</option>
+                                    <option value="14-16">14-16 (G9-G10)</option>
+                                    <option value="16-18">16-18 (G11-G12)</option>
+                                </select>
+                            </div>
+
                             {/* Slides Per Lesson */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">
@@ -1126,6 +1153,9 @@ If sources are missing, include the marker: NO_USABLE_SOURCE.`,
                                 <>
                                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Clock size={14} /> {savedParams.duration} min</span>
                                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams.studentCount} {t('cp.studentsUnit')}</span>
+                                    {savedParams.ageGroup && (
+                                        <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams.ageGroup}</span>
+                                    )}
                                 </>
                             )}
                         </div>
