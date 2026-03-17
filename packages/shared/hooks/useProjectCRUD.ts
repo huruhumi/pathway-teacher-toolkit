@@ -84,10 +84,33 @@ export const useProjectCRUD = <T extends BaseRecord>(
         await localforage.setItem(localStorageKey, nextItems.slice(0, limit));
     }, [localStorageKey, limit]);
 
+    const readLegacyLocalStorage = useCallback((): T[] => {
+        if (typeof window === 'undefined') return [];
+        try {
+            const raw = window.localStorage.getItem(storageKey);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.slice(0, limit) as T[];
+        } catch {
+            return [];
+        }
+    }, [limit, storageKey]);
+
     const readLocal = useCallback(async () => {
         const cached = await localforage.getItem<T[]>(localStorageKey);
-        return (cached ?? []).slice(0, limit);
-    }, [localStorageKey, limit]);
+        const normalizedCached = (cached ?? []).slice(0, limit);
+        if (normalizedCached.length > 0) return normalizedCached;
+
+        // One-time legacy migration path:
+        // older builds wrote arrays directly to localStorage under `storageKey`.
+        const legacy = readLegacyLocalStorage();
+        if (legacy.length > 0) {
+            await localforage.setItem(localStorageKey, legacy);
+            return legacy;
+        }
+        return normalizedCached;
+    }, [localStorageKey, limit, readLegacyLocalStorage]);
 
     const instanceId = useRef(crypto.randomUUID()).current;
 
@@ -205,8 +228,12 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 }
 
                 if (!cancelled) {
-                    setItemsState(mapped);
-                    await persistLocal(mapped);
+                    // Keep non-empty local cache when cloud/repository returns empty.
+                    // This avoids accidental data loss on transient auth/network issues.
+                    const shouldKeepLocalCache = localItems.length > 0 && mapped.length === 0;
+                    const nextItems = shouldKeepLocalCache ? localItems : mapped;
+                    setItemsState(nextItems);
+                    await persistLocal(nextItems);
                 }
             } catch (err: any) {
                 if (!cancelled) {
