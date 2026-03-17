@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
 import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateVocabDefinition, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/itemGenerators';
@@ -28,6 +28,9 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set());
     const [showStageInput, setShowStageInput] = useState(false);
     const [stagePrompt, setStagePrompt] = useState('');
+    const [stageComments, setStageComments] = useState<string[]>([]);
+    const [regeneratingStageIndex, setRegeneratingStageIndex] = useState<number | null>(null);
+    const [stageRegenerationErrors, setStageRegenerationErrors] = useState<Record<number, string>>({});
     const toggleStage = useCallback((idx: number) => {
         setExpandedStages((prev) => {
             const next = new Set(prev);
@@ -35,6 +38,17 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
             return next;
         });
     }, []);
+
+    useEffect(() => {
+        setStageComments((prev) => editablePlan.stages.map((_, idx) => prev[idx] || ''));
+        setStageRegenerationErrors((prev) => {
+            const next: Record<number, string> = {};
+            editablePlan.stages.forEach((_, idx) => {
+                if (prev[idx]) next[idx] = prev[idx];
+            });
+            return next;
+        });
+    }, [editablePlan.stages.length]);
 
     // --- Handlers ---
     const handlePlanInfoChange = (section: keyof StructuredLessonPlan, field: string, value: any) => {
@@ -387,6 +401,92 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         if (targetIndex < 0 || targetIndex >= newStages.length) return;
         [newStages[index], newStages[targetIndex]] = [newStages[targetIndex], newStages[index]];
         setEditablePlan({ ...editablePlan, stages: newStages });
+    };
+
+    const updateStageComment = (index: number, value: string) => {
+        setStageComments((prev) => {
+            const next = [...prev];
+            next[index] = value;
+            return next;
+        });
+    };
+
+    const regenerateStageFromComment = async (stageIndex: number) => {
+        if (regeneratingStageIndex !== null) return;
+        const feedback = (stageComments[stageIndex] || '').trim();
+        if (!feedback) {
+            setStageRegenerationErrors((prev) => ({
+                ...prev,
+                [stageIndex]: 'Please provide feedback before regenerating this stage.',
+            }));
+            return;
+        }
+
+        setRegeneratingStageIndex(stageIndex);
+        setStageRegenerationErrors((prev) => {
+            const next = { ...prev };
+            delete next[stageIndex];
+            return next;
+        });
+
+        try {
+            const currentStage = editablePlan.stages[stageIndex];
+            const previousStages = editablePlan.stages.slice(0, stageIndex);
+            const nextStages = editablePlan.stages.slice(stageIndex + 1);
+            const contextStages = [...previousStages, ...nextStages];
+
+            const customPrompt = `Regenerate ONLY this specific stage using teacher feedback.
+Target stage index: ${stageIndex + 1} / ${editablePlan.stages.length}
+Teacher feedback and improvement request:
+${feedback}
+
+Current stage to improve:
+${JSON.stringify(currentStage)}
+
+Previous stages:
+${JSON.stringify(previousStages)}
+
+Next stages:
+${JSON.stringify(nextStages)}
+
+Requirements:
+- Keep pedagogical continuity with previous and next stages.
+- Keep timing close to "${currentStage.timing}" unless feedback explicitly asks otherwise.
+- teacherActivity and studentActivity must be numbered steps with matching step count.
+- interaction must be comma-separated and map 1:1 to numbered steps.
+- Return one complete stage only.`;
+
+            const regenerated = await generateSingleStage(
+                editablePlan.classInformation.level as CEFRLevel,
+                editablePlan.classInformation.topic,
+                contextStages,
+                customPrompt,
+            );
+
+            const normalizedStage: LessonStage = {
+                stage: String(regenerated.stage || currentStage.stage || '').trim(),
+                stageAim: String(regenerated.stageAim || currentStage.stageAim || '').trim(),
+                timing: String(regenerated.timing || currentStage.timing || '').trim(),
+                interaction: String(regenerated.interaction || currentStage.interaction || '').trim(),
+                teacherActivity: String(regenerated.teacherActivity || currentStage.teacherActivity || '').trim(),
+                studentActivity: String(regenerated.studentActivity || currentStage.studentActivity || '').trim(),
+                teachingTips: Array.isArray(regenerated.teachingTips) ? regenerated.teachingTips : (currentStage.teachingTips || []),
+                backgroundKnowledge: Array.isArray(regenerated.backgroundKnowledge) ? regenerated.backgroundKnowledge : (currentStage.backgroundKnowledge || []),
+                fillerActivity: regenerated.fillerActivity || currentStage.fillerActivity || '',
+            };
+
+            const newStages = [...editablePlan.stages];
+            newStages[stageIndex] = normalizedStage;
+            setEditablePlan({ ...editablePlan, stages: newStages });
+        } catch (e: unknown) {
+            console.error('Failed to regenerate stage from feedback', e);
+            setStageRegenerationErrors((prev) => ({
+                ...prev,
+                [stageIndex]: e instanceof Error ? e.message : 'Failed to regenerate this stage.',
+            }));
+        } finally {
+            setRegeneratingStageIndex(null);
+        }
     };
 
     return (
@@ -875,6 +975,37 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                                                             </div>
                                                         ));
                                                     })()}
+
+                                                    <div className="mt-4 rounded-lg border border-violet-200/70 dark:border-violet-700/60 bg-violet-50/40 dark:bg-violet-500/5 p-3 no-print">
+                                                        <label className="block text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wide mb-1.5">
+                                                            Stage Comment / Improvement Notes
+                                                        </label>
+                                                        <AutoResizeTextarea
+                                                            value={stageComments[i] || ''}
+                                                            onChange={(e) => updateStageComment(i, e.target.value)}
+                                                            className="w-full text-sm text-slate-700 dark:text-slate-200 bg-white/90 dark:bg-slate-900/80 border border-violet-200/80 dark:border-violet-700 rounded-lg px-3 py-2 outline-none focus:border-violet-500 resize-none"
+                                                            minRows={2}
+                                                            placeholder="Add your evaluation and specific improvement request for this stage..."
+                                                        />
+                                                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                                                            <p className="text-[11px] text-violet-700/80 dark:text-violet-300/80">
+                                                                Regenerated stage updates this lesson plan and will be used in next Phase 2 generation.
+                                                            </p>
+                                                            <button
+                                                                onClick={() => regenerateStageFromComment(i)}
+                                                                disabled={regeneratingStageIndex !== null}
+                                                                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                                            >
+                                                                {regeneratingStageIndex === i ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                                                {regeneratingStageIndex === i ? 'Regenerating...' : 'Submit & Regenerate Stage'}
+                                                            </button>
+                                                        </div>
+                                                        {stageRegenerationErrors[i] && (
+                                                            <p className="mt-1.5 text-[11px] text-red-600 dark:text-red-400">
+                                                                {stageRegenerationErrors[i]}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>}
                                             </div>
                                         )}
