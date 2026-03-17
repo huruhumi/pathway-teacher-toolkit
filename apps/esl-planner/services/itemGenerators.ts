@@ -97,6 +97,19 @@ export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, e
     return JSON.parse(response.text || "{}");
 };
 
+/** Generate ONLY a definition for a given word at the specified CEFR level */
+export const generateVocabDefinition = async (word: string, level: CEFRLevel): Promise<string> => {
+    const ai = createAIClient();
+    const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Word: ${word}\nLevel: ${level}`,
+        config: {
+            systemInstruction: `Generate a simple, ${level}-level appropriate English definition for the given word. The definition should be concise (one sentence), using vocabulary that a ${level} ESL student can understand. Return ONLY the definition text string, no quotes.`
+        }
+    }));
+    return response.text?.trim() || "";
+};
+
 export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[], customPrompt?: string): Promise<LessonStage> => {
     const ai = createAIClient();
     const userContent = customPrompt

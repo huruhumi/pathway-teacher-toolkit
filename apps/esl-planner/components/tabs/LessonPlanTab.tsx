@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
-import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight } from 'lucide-react';
-import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/itemGenerators';
+import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateVocabDefinition, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/itemGenerators';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
@@ -20,6 +20,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     const [isGeneratingObjective, setIsGeneratingObjective] = useState(false);
     const [isGeneratingMaterial, setIsGeneratingMaterial] = useState(false);
     const [isGeneratingVocab, setIsGeneratingVocab] = useState(false);
+    const [generatingDefFor, setGeneratingDefFor] = useState<number | null>(null);
     const [isGeneratingSingleGrammar, setIsGeneratingSingleGrammar] = useState(false);
     const [isGeneratingProblem, setIsGeneratingProblem] = useState(false);
     const [isGeneratingStage, setIsGeneratingStage] = useState(false);
@@ -265,24 +266,31 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         }
     };
 
-    const addVocabEntry = async () => {
-        if (isGeneratingVocab) return;
-        setIsGeneratingVocab(true);
+    const addVocabEntry = () => {
+        setEditablePlan({
+            ...editablePlan,
+            lessonDetails: {
+                ...editablePlan.lessonDetails,
+                targetVocab: [...editablePlan.lessonDetails.targetVocab, { word: '', definition: '' }]
+            }
+        });
+    };
+
+    const generateDefinitionForVocab = async (index: number) => {
+        const word = editablePlan.lessonDetails.targetVocab[index]?.word?.trim();
+        if (!word || generatingDefFor !== null) return;
+        setGeneratingDefFor(index);
         try {
-            const existing = editablePlan.lessonDetails.targetVocab;
-            const newV = await generateSingleVocabItem(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                existing
-            );
-            if (newV) {
-                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: [...editablePlan.lessonDetails.targetVocab, newV] } });
+            const def = await generateVocabDefinition(word, editablePlan.classInformation.level as CEFRLevel);
+            if (def) {
+                const newVocab = [...editablePlan.lessonDetails.targetVocab];
+                newVocab[index] = { ...newVocab[index], definition: def };
+                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: newVocab } });
             }
         } catch (e: unknown) {
-            console.error(e);
-            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, targetVocab: [...editablePlan.lessonDetails.targetVocab, { word: "New Word", definition: "New Definition" }] } });
+            console.error('Failed to generate definition', e);
         } finally {
-            setIsGeneratingVocab(false);
+            setGeneratingDefFor(null);
         }
     };
 
@@ -483,8 +491,8 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                             <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                                 <BookOpen size={16} className="text-teal-500" /> Target Vocabulary
                             </h4>
-                            <button onClick={addVocabEntry} disabled={isGeneratingVocab} className="text-teal-600 hover:text-teal-800 flex items-center gap-1 text-xs font-bold no-print">
-                                {isGeneratingVocab ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} ADD
+                            <button onClick={addVocabEntry} className="text-teal-600 hover:text-teal-800 flex items-center gap-1 text-xs font-bold no-print">
+                                <Plus size={12} /> ADD
                             </button>
                         </div>
                         <Droppable droppableId="vocab-list" type="targetVocab">
@@ -499,10 +507,23 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                                                         <GripVertical size={14} />
                                                     </div>
                                                     <div className="flex-1 space-y-1">
-                                                        <input value={v.word} onChange={(e) => handleVocabChange(i, 'word', e.target.value)}
-                                                            className="font-bold text-sm text-slate-800 dark:text-slate-100 bg-transparent w-full border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none pb-0.5" placeholder="Word" />
+                                                        <div className="flex items-center gap-1">
+                                                            <input value={v.word} onChange={(e) => handleVocabChange(i, 'word', e.target.value)}
+                                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); generateDefinitionForVocab(i); } }}
+                                                                className="font-bold text-sm text-slate-800 dark:text-slate-100 bg-transparent flex-1 border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none pb-0.5" placeholder="Type a word..." autoFocus={!v.word} />
+                                                            {v.word.trim() && (
+                                                                <button
+                                                                    onClick={() => generateDefinitionForVocab(i)}
+                                                                    disabled={generatingDefFor === i}
+                                                                    className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-colors no-print"
+                                                                    title="Generate definition"
+                                                                >
+                                                                    {generatingDefFor === i ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         <AutoResizeTextarea value={v.definition} onChange={(e) => handleVocabChange(i, 'definition', e.target.value)}
-                                                            className="w-full text-xs text-slate-500 dark:text-slate-400 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none" minRows={1} placeholder="Definition" />
+                                                            className="w-full text-xs text-slate-500 dark:text-slate-400 bg-transparent border-b border-transparent hover:border-slate-200 focus:border-teal-400 outline-none" minRows={1} placeholder="Definition (auto-generated or manual)" />
                                                     </div>
                                                     <button onClick={() => deleteVocabItem(i)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 no-print"><Trash2 size={14} /></button>
                                                 </div>
