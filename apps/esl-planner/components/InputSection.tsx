@@ -259,7 +259,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             className="py-3"
           />
           <Input
-            containerClassName="sm:col-span-2"
+            containerClassName="sm:col-span-2 order-2"
             label={t('input.specificTopic')}
             type="text"
             value={topic}
@@ -269,13 +269,15 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
           />
           <Select
             label={t('input.slides')}
+            containerClassName="order-3"
             value={slideCount}
             onChange={(e) => setSlideCount(Number(e.target.value))}
             className="py-3"
             options={[5, 8, 10, 12, 15, 20, 25, 30].map(num => ({ label: `${num} ${t('input.slidesUnit')}`, value: num }))}
           />
           <Select
-            label={lang === 'zh' ? '学生年龄段' : 'Age Group'}
+            label={lang === 'zh' ? 'Age Group（年龄段）' : 'Age Group'}
+            containerClassName="order-1"
             value={ageGroup}
             onChange={(e) => setAgeGroup(e.target.value)}
             className="py-3"
@@ -303,8 +305,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
         {hasVideoUrlInText && !hasTranscriptHintInText && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
             {lang === 'zh'
-              ? '检测到视频链接：当前系统不会自动解析视频内容。请补充字幕/歌词/关键要点，避免 AI 编造视频细节。'
-              : 'Video URL detected: the planner does not auto-parse video content yet. Add transcript/lyrics/key points to avoid hallucinated details.'}
+              ? '检测到视频链接：系统会先尝试提取字幕；若失败会自动检索回退证据，并在继续生成前让你确认歌词/要点。建议仍补充关键要点以提升准确性。'
+              : 'Video URL detected: the planner will first try transcript extraction. If it fails, it will auto-find fallback evidence and ask for your confirmation before generation. Adding key points still improves accuracy.'}
           </p>
         )}
 
