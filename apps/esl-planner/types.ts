@@ -225,6 +225,8 @@ export interface GeneratedContent {
   generationPhase?: 'plan_only' | 'complete';
   /** Preserved context from Phase 1 for Phase 2 generation */
   _generationContext?: GenerationContext;
+  /** Original user-provided prompt text from the input stage */
+  inputPrompt?: string;
 }
 
 export interface SavedLesson {

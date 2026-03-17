@@ -295,6 +295,8 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
 
             const finalizeStage = sourceMode === 'direct' ? 3 : 4;
             updateProgress(finalizeStage, 96, lang === 'zh' ? '正在整理结构化结果...' : 'Finalizing structured output...', stages);
+            // Preserve the user's custom prompt for display/copy
+            if (text?.trim()) lessonContent.inputPrompt = text.trim();
             setState({ isLoading: false, generatedContent: lessonContent, error: null });
             updateProgress(finalizeStage, 100, lang === 'zh' ? '教案已生成，请审阅后一键生成配套内容。' : 'Lesson plan ready — review and generate supporting content.', stages);
         } catch (error: any) {

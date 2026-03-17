@@ -994,6 +994,36 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         </div>
       </div>
 
+      {/* Input Prompt Display — copyable for reuse */}
+      {content.inputPrompt && (
+        <div className="mx-4 mt-3 no-print">
+          <details className="group">
+            <summary className="cursor-pointer text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors select-none">
+              <FileText className="w-3.5 h-3.5" />
+              Custom Prompt Used
+              <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-2 relative">
+              <pre className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3 pr-10 whitespace-pre-wrap max-h-40 overflow-auto font-mono leading-relaxed">
+                {content.inputPrompt}
+              </pre>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(content.inputPrompt || '');
+                  const btn = document.getElementById('copy-prompt-btn');
+                  if (btn) { btn.textContent = '✓'; setTimeout(() => { btn.textContent = ''; }, 1500); }
+                }}
+                id="copy-prompt-btn"
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                title="Copy to clipboard"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </details>
+        </div>
+      )}
+
       {/* Phase 2: Generate Supporting Content Banner */}
       {isPlanOnly && (
         <div className="mx-4 mt-3 p-4 rounded-2xl border-2 border-dashed border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 no-print">
