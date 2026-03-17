@@ -39,11 +39,12 @@ const AppContent: React.FC = () => {
     }, [clearSessionState]);
 
     // Cross-page navigation handlers
-    const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => {
-        // Resolve curriculumId from savedCurricula and lessonIndex from curriculum
-        const matchedCurriculum = curriculum ? savedCurricula.find(sc => sc.textbookTitle === curriculum.textbookTitle && sc.totalLessons === curriculum.totalLessons) : undefined;
+    const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum, curriculumId?: string) => {
+        // Use directly-passed curriculumId first, fallback to fuzzy match
+        const resolvedCurriculumId = curriculumId
+            || (curriculum ? savedCurricula.find(sc => sc.textbookTitle === curriculum.textbookTitle && sc.totalLessons === curriculum.totalLessons)?.id : undefined);
         const lessonIndex = curriculum ? curriculum.lessons.indexOf(lesson) : undefined;
-        const mapped = mapLessonToESLInput(lesson, params, curriculum, '', matchedCurriculum?.id, lessonIndex !== undefined && lessonIndex >= 0 ? lessonIndex : undefined);
+        const mapped = mapLessonToESLInput(lesson, params, curriculum, '', resolvedCurriculumId, lessonIndex !== undefined && lessonIndex >= 0 ? lessonIndex : undefined);
         setPrefilledValues(mapped);
         setState(prev => ({ ...prev, generatedContent: null, error: null }));
         setActiveLessonId(null);

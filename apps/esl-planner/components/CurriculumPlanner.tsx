@@ -35,7 +35,7 @@ import {
 import { getCitationTooltip } from '../utils/citationTooltip';
 
 interface CurriculumPlannerProps {
-    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => void;
+    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum, curriculumId?: string) => void;
     onSaveCurriculum?: (curriculum: ESLCurriculum, params: CurriculumParams) => void | Promise<unknown>;
     loadedCurriculum?: { curriculum: ESLCurriculum; params: CurriculumParams } | null;
     savedLessons?: SavedLesson[];
@@ -637,7 +637,7 @@ If sources are missing, include the marker: NO_USABLE_SOURCE.`,
 
     const triggerGenerateKit = (lesson: CurriculumLesson) => {
         const params = savedParams || getCurrentParams();
-        onGenerateKit(lesson, params, curriculum || undefined);
+        onGenerateKit(lesson, params, curriculum || undefined, matchedCurriculumId || undefined);
     };
 
     const triggerBatchGenerate = () => {

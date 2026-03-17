@@ -6,7 +6,7 @@ import { useLessonHistory } from '../hooks/useLessonHistory';
 import { useBatchGenerate } from '../hooks/useBatchGenerate';
 
 export interface CurriculumPageProps {
-    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum) => void;
+    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum, curriculumId?: string) => void;
     onGoToCreate: () => void;
 }
 
