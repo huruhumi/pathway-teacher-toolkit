@@ -281,12 +281,31 @@ export function useNotebookLMRAG() {
         setRagProgress(INITIAL_PROGRESS);
     }, []);
 
+    /** Ensure a "📚 资源调用指南" source exists in the notebook. */
+    const ensureResourceGuide = useCallback(async (
+        notebookId: string,
+        userInput?: { level?: string; duration?: string; studentCount?: string; lessonCount?: number; customInstructions?: string },
+    ): Promise<{ status: string; sourceId?: string; error?: string }> => {
+        try {
+            const result = await callLocal({
+                action: 'ensure-resource-guide',
+                notebookId,
+                userInput,
+            });
+            return result;
+        } catch (error: any) {
+            console.warn('[ensureResourceGuide] Failed:', error?.message);
+            return { status: 'error', error: error?.message || 'Unknown error' };
+        }
+    }, []);
+
     return {
         ragProgress,
         startRAG,
         resumeRAG,
         cancelRAG,
         resetRAG,
+        ensureResourceGuide,
         isRAGAvailable,
         checkBackends,
     };

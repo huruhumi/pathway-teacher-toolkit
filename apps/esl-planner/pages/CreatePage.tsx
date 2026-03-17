@@ -37,7 +37,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
     const onSaveLesson = history.handleSaveLesson;
 
     const { t, lang } = useLanguage();
-    const { startRAG, checkBackends } = useNotebookLMRAG();
+    const { startRAG, checkBackends, ensureResourceGuide } = useNotebookLMRAG();
     const { pendingFallback, askFallbackConfirm, handleFallbackChoice, resetFallback } = useFallbackConfirm();
     const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -153,8 +153,27 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     }
 
                     const backend = 'local';
+
+                    // Ensure resource guide exists in notebook before RAG query
                     updateProgress(
                         2,
+                        35,
+                        lang === 'zh' ? '正在检查资源调用指南...' : 'Checking resource guide...',
+                        stages,
+                    );
+                    const guideResult = await ensureResourceGuide(levelEntry.notebookId!, {
+                        level,
+                        duration,
+                        studentCount,
+                    });
+                    if (guideResult.status === 'created') {
+                        console.log('[create] Resource guide created:', guideResult.sourceId);
+                    } else if (guideResult.status === 'error') {
+                        console.warn('[create] Resource guide failed (non-blocking):', guideResult.error);
+                    }
+
+                    updateProgress(
+                        3,
                         48,
                         lang === 'zh'
                             ? `已连接 ${backend}，正在分析对应笔记资料...`

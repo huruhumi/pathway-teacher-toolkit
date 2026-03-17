@@ -70,7 +70,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 }) => {
     // PDF state
     const { t, lang } = useLanguage();
-    const { startRAG, checkBackends } = useNotebookLMRAG();
+    const { startRAG, checkBackends, ensureResourceGuide } = useNotebookLMRAG();
     const { pendingFallback, askFallbackConfirm, handleFallbackChoice, resetFallback } = useFallbackConfirm();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfText, setPdfText] = useState('');
@@ -432,8 +432,28 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
                     }
                     const backend = 'local';
+
+                    // Ensure resource guide exists in notebook before RAG query
                     updateGenerationProgress(
                         2,
+                        25,
+                        lang === 'zh' ? '正在检查资源调用指南...' : 'Checking resource guide...',
+                    );
+                    const guideResult = await ensureResourceGuide(levelEntry.notebookId!, {
+                        level: params.level,
+                        duration: params.duration,
+                        studentCount: params.studentCount,
+                        lessonCount: params.lessonCount,
+                        customInstructions: params.customInstructions,
+                    });
+                    if (guideResult.status === 'created') {
+                        console.log('[curriculum] Resource guide created:', guideResult.sourceId);
+                    } else if (guideResult.status === 'error') {
+                        console.warn('[curriculum] Resource guide failed (non-blocking):', guideResult.error);
+                    }
+
+                    updateGenerationProgress(
+                        3,
                         38,
                         lang === 'zh'
                             ? `已连接 ${backend} 后端，正在分析对应笔记资料...`

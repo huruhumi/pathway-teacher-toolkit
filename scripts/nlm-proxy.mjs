@@ -327,6 +327,70 @@ const server = createServer(async (req, res) => {
             return; // Don't fall through to JSON response
         }
 
+        // --- ensure-resource-guide: check/generate resource guide in notebook ---
+        if (action === 'ensure-resource-guide') {
+            const { notebookId, userInput } = parsed;
+            if (!notebookId) throw new Error('Missing notebookId');
+
+            const scriptPath = join(process.cwd(), 'scripts', 'nlm-resource-guide.py');
+            const { existsSync } = await import('fs');
+            if (!existsSync(scriptPath)) throw new Error('nlm-resource-guide.py not found');
+
+            // Set API key env for the Python script
+            const apiKey = loadApiKey();
+            const env = { ...process.env };
+            if (apiKey) env.GEMINI_API_KEY = apiKey;
+
+            // Step 1: Check if guide exists
+            console.log(`[guide] Checking resource guide for notebook ${notebookId}...`);
+            const checkArgs = ['python', [`"${scriptPath}"`, 'check', notebookId], { shell: true, env }];
+            const checkResult = await new Promise((resolve, reject) => {
+                const proc = spawn(...checkArgs);
+                let stdout = '', stderr = '';
+                proc.stdout.on('data', d => stdout += d.toString());
+                proc.stderr.on('data', d => { stderr += d.toString(); console.log('[guide:check]', d.toString().trim()); });
+                proc.on('close', code => {
+                    if (code !== 0) return reject(new Error(`Check failed (${code}): ${stderr}`));
+                    try { resolve(JSON.parse(stdout.trim())); }
+                    catch { reject(new Error(`Bad JSON: ${stdout}`)); }
+                });
+            });
+
+            if (checkResult.error) throw new Error(checkResult.error);
+
+            if (checkResult.exists) {
+                console.log(`[guide] Guide already exists: ${checkResult.sourceId}`);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ status: 'exists', sourceId: checkResult.sourceId }));
+                return;
+            }
+
+            // Step 2: Generate guide
+            console.log(`[guide] No guide found. Generating for ${checkResult.sourcesCount} sources...`);
+            const genArgs = ['python', [`"${scriptPath}"`, 'generate', notebookId]];
+            if (userInput) {
+                genArgs[1].push('--user-input', `'${JSON.stringify(userInput)}'`);
+            }
+            const genResult = await new Promise((resolve, reject) => {
+                const proc = spawn(genArgs[0], genArgs[1], { shell: true, env, timeout: 5 * 60 * 1000 });
+                let stdout = '', stderr = '';
+                proc.stdout.on('data', d => stdout += d.toString());
+                proc.stderr.on('data', d => { stderr += d.toString(); console.log('[guide:gen]', d.toString().trim()); });
+                proc.on('close', code => {
+                    if (code !== 0) return reject(new Error(`Generate failed (${code}): ${stderr}`));
+                    try { resolve(JSON.parse(stdout.trim())); }
+                    catch { reject(new Error(`Bad JSON: ${stdout}`)); }
+                });
+            });
+
+            if (genResult.error) throw new Error(genResult.error);
+
+            console.log(`[guide] Guide created: ${genResult.sourceId} (${genResult.guideLength} chars)`);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(genResult));
+            return;
+        }
+
         // --- Existing actions ---
         const { topic, lessonPrompts } = parsed;
         const apiKey = loadApiKey();
