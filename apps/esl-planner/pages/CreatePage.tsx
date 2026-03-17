@@ -30,6 +30,13 @@ type LessonKitGenerationProgress = {
     stages: string[];
 };
 
+type VideoGroundingSummary = {
+    status: 'processing' | 'grounded' | 'unavailable';
+    message: string;
+    urlCount: number;
+    evidenceUrlCount?: number;
+};
+
 const URL_REGEX = /https?:\/\/[^\s)]+/gi;
 const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
 
@@ -89,6 +96,8 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         stages: getProgressStages('notebook'),
     });
 
+    const [videoGroundingSummary, setVideoGroundingSummary] = useState<VideoGroundingSummary | null>(null);
+
     const updateProgress = (
         stage: number,
         percent: number,
@@ -129,6 +138,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         ageGroup?: string,
     ) => {
         const stages = getProgressStages(sourceMode);
+        setVideoGroundingSummary(null);
         setState(prev => ({ ...prev, isLoading: true, error: null, generatedContent: null }));
         updateProgress(
             0,
@@ -170,6 +180,13 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             let videoFactSheet: string | undefined;
 
             if (videoUrls.length > 0) {
+                setVideoGroundingSummary({
+                    status: 'processing',
+                    message: lang === 'zh'
+                        ? '检测到视频链接，正在尝试提取可用内容证据...'
+                        : 'Video URLs detected. Extracting evidence...',
+                    urlCount: videoUrls.length,
+                });
                 updateProgress(
                     sourceMode === 'direct' ? 1 : 2,
                     sourceMode === 'direct' ? 52 : 55,
@@ -181,6 +198,13 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                 const videoBackend = backends.cloud ? 'cloud' : (backends.local ? 'local' : null);
                 if (!videoBackend) {
                     qualityIssues.push('Video URLs detected, but no NotebookLM backend is available for URL content analysis.');
+                    setVideoGroundingSummary({
+                        status: 'unavailable',
+                        message: lang === 'zh'
+                            ? '未连接可用的 NotebookLM 后端，无法解析视频链接内容。'
+                            : 'No NotebookLM backend available. Video URLs were not analyzed.',
+                        urlCount: videoUrls.length,
+                    });
                 } else {
                     const videoRag = await startRAG(
                         `Video evidence for lesson "${lessonTitle}" (${level})`,
@@ -207,12 +231,36 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                         videoFactSheet = rawVideoFactSheet;
                         validUrls = mergeUnique(validUrls, mergeUnique(videoUrls, videoRag.validUrls || []));
                         groundingSources = mergeGroundingSources(groundingSources, videoRag.sources || []);
+                        setVideoGroundingSummary({
+                            status: 'grounded',
+                            message: lang === 'zh'
+                                ? '视频内容证据提取成功，已合并到教案生成上下文。'
+                                : 'Video evidence extracted and merged into lesson generation context.',
+                            urlCount: videoUrls.length,
+                            evidenceUrlCount: (videoRag.validUrls || []).length,
+                        });
                     } else {
                         qualityIssues.push('Video URLs were provided, but usable transcript-backed evidence was not extracted.');
+                        setVideoGroundingSummary({
+                            status: 'unavailable',
+                            message: lang === 'zh'
+                                ? '视频链接已识别，但未提取到可用字幕/证据，已回退为文本模式。'
+                                : 'Video URLs recognized, but no usable transcript-backed evidence was extracted.',
+                            urlCount: videoUrls.length,
+                        });
                     }
 
                     if (videoRag.error) {
                         qualityIssues.push(`Video URL analysis fallback: ${videoRag.error}`);
+                        if (!videoFactSheet) {
+                            setVideoGroundingSummary({
+                                status: 'unavailable',
+                                message: lang === 'zh'
+                                    ? `视频解析失败：${videoRag.error}`
+                                    : `Video analysis fallback: ${videoRag.error}`,
+                                urlCount: videoUrls.length,
+                            });
+                        }
                     }
                 }
             }
@@ -407,18 +455,45 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         }
     };
 
+    const renderVideoGroundingBanner = () => {
+        if (!videoGroundingSummary) return null;
+        const isGrounded = videoGroundingSummary.status === 'grounded';
+        const isProcessing = videoGroundingSummary.status === 'processing';
+        const tone = isGrounded
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : isProcessing
+                ? 'bg-sky-50 border-sky-200 text-sky-800'
+                : 'bg-amber-50 border-amber-200 text-amber-800';
+        const suffix = isGrounded && typeof videoGroundingSummary.evidenceUrlCount === 'number'
+            ? (lang === 'zh'
+                ? `（输入链接 ${videoGroundingSummary.urlCount} 条，证据 URL ${videoGroundingSummary.evidenceUrlCount} 条）`
+                : ` (${videoGroundingSummary.urlCount} input URL(s), ${videoGroundingSummary.evidenceUrlCount} evidence URL(s))`)
+            : (lang === 'zh'
+                ? `（视频链接 ${videoGroundingSummary.urlCount} 条）`
+                : ` (${videoGroundingSummary.urlCount} video URL(s))`);
+
+        return (
+            <div className={`mb-4 rounded-lg border px-3 py-2 text-xs sm:text-sm ${tone}`}>
+                {videoGroundingSummary.message}{suffix}
+            </div>
+        );
+    };
+
     return (
         <>
             {!state.generatedContent && (
-                <InputSection
-                    onGenerate={handleGenerate}
-                    isLoading={state.isLoading}
-                    initialValues={prefilledValues}
-                    onStop={handleStopGeneration}
-                    generationProgress={generationProgress}
-                    pendingFallback={pendingFallback}
-                    onFallbackChoice={handleFallbackChoice}
-                />
+                <>
+                    {renderVideoGroundingBanner()}
+                    <InputSection
+                        onGenerate={handleGenerate}
+                        isLoading={state.isLoading}
+                        initialValues={prefilledValues}
+                        onStop={handleStopGeneration}
+                        generationProgress={generationProgress}
+                        pendingFallback={pendingFallback}
+                        onFallbackChoice={handleFallbackChoice}
+                    />
+                </>
             )}
             {state.error && (
                 <ErrorModal
@@ -440,6 +515,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                             <ArrowLeft className="w-4 h-4" /> {t('plan.backToGenerator')}
                         </button>
                     </div>
+                    {renderVideoGroundingBanner()}
 
                     <ReviewPanel
                         content={state.generatedContent}
