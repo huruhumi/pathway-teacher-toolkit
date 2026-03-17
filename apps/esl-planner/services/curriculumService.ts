@@ -83,6 +83,15 @@ CRITICAL INSTRUCTIONS:
         prompt += `\n\n--- NOTEBOOKLM GROUNDING CONTEXT (PRIORITY) ---\n${grounding.groundingFactSheet}`;
         prompt += `\nUse this grounding context as a strict curriculum guardrail for scope/sequence, unit coherence, vocabulary progression, and assessment alignment.`;
         prompt += `\nCRITICAL: Keep unit names/order aligned to this grounding context. Prefer grounded vocabulary/grammar evidence over generic ESL defaults.`;
+        prompt += `\n\n--- TRAIL DISTRIBUTION RULE (MANDATORY) ---
+IMPORTANT: If the textbook uses a Trail 1 + Trail 2 structure per unit, you MUST follow these rules:
+1. Each unit = EXACTLY 2 lessons: Lesson A covers Trail 1 ONLY, Lesson B covers Trail 2 ONLY.
+2. Trail 1 lesson focuses on: Trail 1 vocabulary, Trail 1 phonics, Trail 1 reading (typically nonfiction), Trail 1 grammar, Trail 1 speaking activity.
+3. Trail 2 lesson focuses on: Trail 2 vocabulary, Trail 2 phonics, Trail 2 reading (typically fiction), Trail 2 grammar, Trail 2 project activity.
+4. NEVER combine Trail 1 and Trail 2 content in the same lesson.
+5. The vocabulary list for each lesson must contain ONLY the vocabulary from its respective trail (typically 8-10 words per trail).
+6. Review lessons occur after every 2 units (covering 4 trails total).
+7. Each lesson title should indicate which trail it covers, e.g. "Unit 1 Lesson 1: [Trail 1 Theme]" and "Unit 1 Lesson 2: [Trail 2 Theme]".`;
     }
     if (grounding.textbookLevelLabel) {
         prompt += `\nSelected textbook level standard: ${grounding.textbookLevelLabel}`;

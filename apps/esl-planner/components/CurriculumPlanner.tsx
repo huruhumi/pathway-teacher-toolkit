@@ -462,9 +462,33 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     const rag = await startRAG(
                         `Curriculum grounding for ${levelEntry.displayName}.`,
                         [
-                            `Using ONLY the selected notebook sources, generate one curriculum fact sheet for "${levelEntry.displayName}".
-Return concrete evidence from sources: textbook title, unit names/order, at least 8 vocabulary examples, grammar progression, and any page/chapter refs.
-If notebook sources are missing/insufficient, include the exact marker: NO_USABLE_SOURCE.`,
+                            `You are helping create a curriculum for "${levelEntry.displayName}" (${params.lessonCount} lessons, ${params.duration} min each, ${params.studentCount} students).
+
+IMPORTANT STRUCTURAL RULE: Each unit has 2 Trails (Trail 1 and Trail 2). Each Trail = 1 lesson. So each unit = 2 lessons.
+
+Using ONLY the notebook sources (especially the Resource Guide, Lesson Planner, and Student's Book), provide a comprehensive fact sheet with:
+
+1. TEXTBOOK INFO: Exact textbook title, edition, level, total number of units, number of review lessons
+2. UNIT STRUCTURE: Confirm each unit has Trail 1 + Trail 2 structure
+3. FOR EACH UNIT, list SEPARATELY for Trail 1 AND Trail 2:
+   - Unit Big Question
+   - Trail 1 sub-theme and Trail 2 sub-theme
+   - Trail 1 vocabulary list (ALL words, 8-10 minimum)
+   - Trail 2 vocabulary list (ALL words, 8-10 minimum)
+   - Trail 1 grammar point
+   - Trail 2 grammar point
+   - Trail 1 phonics target
+   - Trail 2 phonics target
+   - Trail 1 reading text title and type (fiction/nonfiction)
+   - Trail 2 reading text title and type
+   - Trail 1 output activity (Speaking)
+   - Trail 2 output activity (Project)
+   - Page references from Student's Book
+4. REVIEW LESSONS: When they occur and what they cover
+5. PACING: Any official pacing guide recommendations
+
+CRITICAL: Trail 1 and Trail 2 must be SEPARATE lessons with DIFFERENT content. Do NOT combine them.
+If sources are missing/insufficient, include the marker: NO_USABLE_SOURCE.`,
                         ],
                         backend,
                         {
