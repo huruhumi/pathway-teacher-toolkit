@@ -150,7 +150,7 @@ export function useNotebookLMRAG() {
             const callFn = backend === 'local' ? callLocal : callCloud;
             const canResume = Boolean(notebookId);
             const payload = canResume
-                ? { action: 'resume', notebookId, lessonPrompts }
+                ? { action: 'notebook-query', notebookId, lessonPrompts }
                 : { action: 'full-pipeline', topic, lessonPrompts };
 
             const result = await callFn(payload);

@@ -391,6 +391,41 @@ const server = createServer(async (req, res) => {
             return;
         }
 
+        // --- notebook-query: query notebook sources directly via NLM chat ---
+        if (action === 'notebook-query') {
+            const { notebookId, lessonPrompts } = parsed;
+            if (!notebookId || !lessonPrompts?.length) throw new Error('Missing notebookId or lessonPrompts');
+
+            const scriptPath = join(process.cwd(), 'scripts', 'nlm-resource-guide.py');
+            const { existsSync } = await import('fs');
+            if (!existsSync(scriptPath)) throw new Error('nlm-resource-guide.py not found');
+
+            console.log(`[query] Querying notebook ${notebookId} with ${lessonPrompts.length} prompts...`);
+
+            const promptsJson = JSON.stringify(lessonPrompts);
+            const result = await new Promise((resolve, reject) => {
+                const proc = spawn('python', [
+                    `"${scriptPath}"`, 'query', notebookId,
+                    '--prompts', `'${promptsJson}'`
+                ], { shell: true, timeout: 5 * 60 * 1000 });
+                let stdout = '', stderr = '';
+                proc.stdout.on('data', d => stdout += d.toString());
+                proc.stderr.on('data', d => { stderr += d.toString(); console.log('[query]', d.toString().trim()); });
+                proc.on('close', code => {
+                    if (code !== 0) return reject(new Error(`Query failed (${code}): ${stderr}`));
+                    try { resolve(JSON.parse(stdout.trim())); }
+                    catch { reject(new Error(`Bad JSON from query: ${stdout.slice(0, 200)}`)); }
+                });
+            });
+
+            if (result.error) throw new Error(result.error);
+
+            console.log(`[query] Done: ${result.factSheets?.length} fact sheets`);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(result));
+            return;
+        }
+
         // --- Existing actions ---
         const { topic, lessonPrompts } = parsed;
         const apiKey = loadApiKey();

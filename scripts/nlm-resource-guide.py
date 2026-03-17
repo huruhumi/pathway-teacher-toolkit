@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-NotebookLM Resource Guide Manager
+NotebookLM Notebook Operations Helper
 
-Checks if a NotebookLM notebook has a resource guide source.
-If not, analyzes existing sources and generates one using Gemini.
+Checks/generates resource guide, and queries notebook sources.
 
 Usage:
     python nlm-resource-guide.py check <notebook_id>
     python nlm-resource-guide.py generate <notebook_id> [--user-input <json>]
+    python nlm-resource-guide.py query <notebook_id> --prompts <json_array>
 
 Output: JSON to stdout
 """
@@ -257,9 +257,72 @@ CRITICAL RULES:
     return response.text
 
 
+async def query_notebook(notebook_id: str, prompts: list[str]):
+    """Query the notebook's sources for each prompt, returning factSheets."""
+    client = await get_client()
+    try:
+        fact_sheets = []
+        all_source_refs = []
+
+        for i, prompt in enumerate(prompts):
+            print(f"[query] Querying {i+1}/{len(prompts)}: {prompt[:80]}...", file=sys.stderr)
+            try:
+                result = await client.chat.ask(notebook_id, prompt)
+                content = getattr(result, 'text', '') or getattr(result, 'content', '') or str(result)
+                
+                # Extract citation count from [N] markers
+                import re
+                citations = re.findall(r'\[\d+\]', content)
+                citation_count = len(set(citations))
+                
+                # Extract source references if available
+                source_refs = []
+                if hasattr(result, 'sources'):
+                    source_refs = [getattr(s, 'title', '') for s in (result.sources or [])]
+                    all_source_refs.extend(source_refs)
+                
+                quality = 'good' if citation_count >= 3 else ('low' if citation_count >= 1 else 'insufficient')
+                
+                fact_sheets.append({
+                    'content': content[:20000],
+                    'citationCount': citation_count,
+                    'quality': quality,
+                    'sourceRefs': source_refs[:10],
+                })
+                print(f"[query] Result {i+1}: {len(content)} chars, {citation_count} citations, quality={quality}", file=sys.stderr)
+            except Exception as e:
+                print(f"[query] Error on prompt {i+1}: {e}", file=sys.stderr)
+                fact_sheets.append({
+                    'content': f'Query failed: {str(e)}',
+                    'citationCount': 0,
+                    'quality': 'insufficient',
+                    'sourceRefs': [],
+                })
+            
+            # Small delay between queries to avoid rate limiting
+            if i < len(prompts) - 1:
+                import asyncio as _asyncio
+                await _asyncio.sleep(1)
+
+        # List sources for metadata
+        sources = await client.sources.list(notebook_id)
+        source_list = [
+            {'title': getattr(s, 'title', 'unknown'), 'type': getattr(s, 'source_type', 'unknown')}
+            for s in sources
+        ]
+
+        return {
+            'factSheets': fact_sheets,
+            'sources': source_list,
+            'notebookId': notebook_id,
+        }
+    finally:
+        await client.__aexit__(None, None, None)
+
+
 async def main():
     if len(sys.argv) < 3:
-        print(json.dumps({"error": "Usage: nlm-resource-guide.py <check|generate> <notebook_id>"}))
+        print(json.dumps({"error": "Usage: nlm-resource-guide.py <check|generate|query> <notebook_id>"}))
         sys.exit(1)
 
     action = sys.argv[1]
@@ -271,11 +334,22 @@ async def main():
         if idx + 1 < len(sys.argv):
             user_input = json.loads(sys.argv[idx + 1])
 
+    prompts = None
+    if '--prompts' in sys.argv:
+        idx = sys.argv.index('--prompts')
+        if idx + 1 < len(sys.argv):
+            prompts = json.loads(sys.argv[idx + 1])
+
     try:
         if action == 'check':
             result = await check_guide(notebook_id)
         elif action == 'generate':
             result = await generate_guide(notebook_id, user_input)
+        elif action == 'query':
+            if not prompts:
+                result = {"error": "Missing --prompts argument"}
+            else:
+                result = await query_notebook(notebook_id, prompts)
         else:
             result = {"error": f"Unknown action: {action}"}
         
