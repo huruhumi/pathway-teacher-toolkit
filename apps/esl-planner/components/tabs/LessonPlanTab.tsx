@@ -905,7 +905,7 @@ Requirements:
                                                     </div>
 
                                                     {/* Column headers */}
-                                                    <div className="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-2 items-center">
+                                                    <div className="grid grid-cols-[1.5rem_4.5rem_1fr_1fr_1.75rem] gap-x-2 mb-2 items-center">
                                                         <div />
                                                         <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center justify-center gap-0.5">
                                                             <Users size={10} /> MODE
@@ -916,6 +916,7 @@ Requirements:
                                                         <label className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center justify-center gap-1">
                                                             <Target size={12} /> STUDENT ACTIVITY
                                                         </label>
+                                                        <div />
                                                     </div>
                                                     {/* Step rows */}
                                                     {(() => {
@@ -933,9 +934,17 @@ Requirements:
                                                         const maxLen = Math.max(teacherSteps.length, studentSteps.length);
                                                         const mergeSteps = (steps: string[]): string =>
                                                             steps.map((s, idx) => `${idx + 1}. ${s}`).join(' ');
+                                                        const deleteStepGroup = (stepIndex: number) => {
+                                                            const nextTeacher = teacherSteps.filter((_, idx) => idx !== stepIndex).filter(Boolean);
+                                                            const nextStudent = studentSteps.filter((_, idx) => idx !== stepIndex).filter(Boolean);
+                                                            const nextInteraction = interactionParts.filter((_, idx) => idx !== stepIndex).filter(Boolean);
+                                                            handleStageChange(i, 'teacherActivity', mergeSteps(nextTeacher));
+                                                            handleStageChange(i, 'studentActivity', mergeSteps(nextStudent));
+                                                            handleStageChange(i, 'interaction', nextInteraction.join(', '));
+                                                        };
 
                                                         return Array.from({ length: maxLen }).map((_, si) => (
-                                                            <div key={si} className="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-1.5 items-center group/step">
+                                                            <div key={si} className="grid grid-cols-[1.5rem_4.5rem_1fr_1fr_1.75rem] gap-x-2 mb-1.5 items-center group/step">
                                                                 <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-[11px] font-bold flex items-center justify-center flex-shrink-0">
                                                                     {si + 1}
                                                                 </span>
@@ -972,6 +981,15 @@ Requirements:
                                                                     minRows={1}
                                                                     placeholder="Student action..."
                                                                 />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => deleteStepGroup(si)}
+                                                                    className="h-7 w-7 rounded-md border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500 transition-colors flex items-center justify-center opacity-0 group-hover/step:opacity-100 focus:opacity-100 no-print"
+                                                                    aria-label="Delete this interaction row"
+                                                                    title="Delete this interaction row"
+                                                                >
+                                                                    <X size={13} />
+                                                                </button>
                                                             </div>
                                                         ));
                                                     })()}
