@@ -30,6 +30,36 @@ type LessonKitGenerationProgress = {
     stages: string[];
 };
 
+const URL_REGEX = /https?:\/\/[^\s)]+/gi;
+const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
+
+const extractYouTubeUrls = (text: string): string[] => {
+    const matches = text.match(URL_REGEX) || [];
+    const deduped = new Set<string>();
+    for (const raw of matches) {
+        const cleaned = raw.trim().replace(/[),.;!?]+$/, '');
+        if (YOUTUBE_URL_REGEX.test(cleaned)) deduped.add(cleaned);
+    }
+    return [...deduped];
+};
+
+const mergeUnique = (base: string[] = [], incoming: string[] = []): string[] => {
+    return [...new Set([...(base || []), ...(incoming || [])])];
+};
+
+const mergeGroundingSources = (
+    base: Array<{ id?: string; title?: string; url?: string; status?: string; type?: string }> = [],
+    incoming: Array<{ id?: string; title?: string; url?: string; status?: string; type?: string }> = [],
+) => {
+    const map = new Map<string, { id?: string; title?: string; url?: string; status?: string; type?: string }>();
+    for (const item of [...base, ...incoming]) {
+        const key = item.url || item.id || `${item.title || ''}-${item.type || ''}`;
+        if (!key) continue;
+        map.set(key, item);
+    }
+    return [...map.values()];
+};
+
 export const CreatePage: React.FC<CreatePageProps> = () => {
     const { state, setState } = useSessionStore();
     const { activeLessonId, setActiveLessonId, prefilledValues, setPrefilledValues } = useAppStore();
@@ -136,6 +166,56 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             let groundingSources: Array<{ id?: string; title?: string; url?: string; status?: string; type?: string }> | undefined;
             let knowledgeNotebookId: string | undefined = sourceMode === 'notebook' ? (levelEntry?.notebookId || undefined) : undefined;
             let groundingStatus: GroundingStatus = 'unverified';
+            const videoUrls = extractYouTubeUrls(text || '');
+            let videoFactSheet: string | undefined;
+
+            if (videoUrls.length > 0) {
+                updateProgress(
+                    sourceMode === 'direct' ? 1 : 2,
+                    sourceMode === 'direct' ? 52 : 55,
+                    lang === 'zh' ? '正在解析视频链接内容...' : 'Analyzing referenced video URLs...',
+                    stages,
+                );
+
+                const backends = await checkBackends();
+                const videoBackend = backends.cloud ? 'cloud' : (backends.local ? 'local' : null);
+                if (!videoBackend) {
+                    qualityIssues.push('Video URLs detected, but no NotebookLM backend is available for URL content analysis.');
+                } else {
+                    const videoRag = await startRAG(
+                        `Video evidence for lesson "${lessonTitle}" (${level})`,
+                        [
+                            `Analyze ONLY these video URLs and generate one concise evidence sheet for ESL teaching:
+${videoUrls.map((url, idx) => `${idx + 1}. ${url}`).join('\n')}
+
+Output requirements:
+- "Video summary": 5-8 bullet points about teachable content
+- "Target vocabulary candidates": 8-15 items from video content
+- "TPR / classroom command ideas": 5-8 actionable commands
+- "Warm-up and wrap-up ideas": 2-4 items each
+- If any URL cannot be accessed or transcript is unavailable, mark: VIDEO_SOURCE_UNAVAILABLE (with URL).
+Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
+                        ],
+                        videoBackend,
+                        { tolerateErrors: true, allowEmptyFactSheets: true },
+                    );
+
+                    const rawVideoFactSheet = videoRag.factSheets.get(0)?.content;
+                    const unavailable = /VIDEO_SOURCE_UNAVAILABLE|NO_USABLE_SOURCE/i.test(rawVideoFactSheet || '');
+
+                    if (rawVideoFactSheet && !unavailable) {
+                        videoFactSheet = rawVideoFactSheet;
+                        validUrls = mergeUnique(validUrls, mergeUnique(videoUrls, videoRag.validUrls || []));
+                        groundingSources = mergeGroundingSources(groundingSources, videoRag.sources || []);
+                    } else {
+                        qualityIssues.push('Video URLs were provided, but usable transcript-backed evidence was not extracted.');
+                    }
+
+                    if (videoRag.error) {
+                        qualityIssues.push(`Video URL analysis fallback: ${videoRag.error}`);
+                    }
+                }
+            }
 
             if (sourceMode === 'notebook' && levelEntry?.notebookId) {
                 try {
@@ -198,8 +278,8 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     );
 
                     factSheet = rag.factSheets.get(0)?.content;
-                    validUrls = rag.validUrls;
-                    groundingSources = rag.sources;
+                    validUrls = mergeUnique(validUrls, rag.validUrls || []);
+                    groundingSources = mergeGroundingSources(groundingSources, rag.sources || []);
                     knowledgeNotebookId = rag.notebookId || levelEntry.notebookId || undefined;
                     const hasNoUsableSourceMarker = /NO_USABLE_SOURCE/i.test(factSheet || '');
                     if (hasNoUsableSourceMarker) {
@@ -252,6 +332,11 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                 );
             }
 
+            const mergedFactSheet = [
+                factSheet,
+                videoFactSheet ? `[Video Content Evidence]\n${videoFactSheet}` : undefined,
+            ].filter(Boolean).join('\n\n---\n\n') || undefined;
+
             const generationStage = sourceMode === 'direct' ? 2 : 3;
             updateProgress(generationStage, 78, lang === 'zh' ? '正在生成课件内容...' : 'Generating lesson kit content...', stages);
 
@@ -265,7 +350,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                 studentCount,
                 lessonTitle,
                 abortControllerRef.current.signal,
-                factSheet,
+                mergedFactSheet,
                 validUrls,
                 {
                     textbookLevelKey: normalizedLevelKey,
@@ -289,7 +374,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                 duration,
                 studentCount,
                 slideCount,
-                factSheet,
+                factSheet: mergedFactSheet,
                 validUrls,
                 textbookLevelKey: normalizedLevelKey,
                 assessmentPackPrompt: assessmentPack ? buildAssessmentPackPrompt(assessmentPack) : undefined,
