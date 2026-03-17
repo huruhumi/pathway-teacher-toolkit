@@ -66,7 +66,16 @@ type VideoFallbackEvidenceReview = {
     sources: GroundingSourceItem[];
 };
 
+type VideoTranscriptEvidenceReview = {
+    inputUrls: string[];
+    reason: string;
+    factSheet: string;
+    evidenceUrls: string[];
+    sources: GroundingSourceItem[];
+};
+
 type VideoEvidenceMode = 'none' | 'transcript_verified' | 'manual_verified' | 'fallback_web_unverified';
+type VideoReviewAction = 'normal' | 'force_fallback_search';
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/gi;
 const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
@@ -188,6 +197,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
 
     const [videoGroundingSummary, setVideoGroundingSummary] = useState<VideoGroundingSummary | null>(null);
     const [videoTranscriptRequest, setVideoTranscriptRequest] = useState<VideoTranscriptRequest | null>(null);
+    const [videoTranscriptEvidenceReview, setVideoTranscriptEvidenceReview] = useState<VideoTranscriptEvidenceReview | null>(null);
     const [videoFallbackEvidenceReview, setVideoFallbackEvidenceReview] = useState<VideoFallbackEvidenceReview | null>(null);
     const [manualVideoEvidence, setManualVideoEvidence] = useState('');
     const [pendingGenerationRequest, setPendingGenerationRequest] = useState<PendingGenerationRequest | null>(null);
@@ -210,6 +220,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
 
     const handleStopGeneration = () => {
         resetFallback();
+        setVideoTranscriptEvidenceReview(null);
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
@@ -234,6 +245,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         manualEvidenceUrls?: string[],
         manualEvidenceSources?: GroundingSourceItem[],
         manualEvidenceKind: 'manual' | 'fallback_web' = 'manual',
+        videoReviewAction: VideoReviewAction = 'normal',
     ) => {
         const stages = getProgressStages(sourceMode);
         setPendingGenerationRequest({
@@ -250,6 +262,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             ageGroup,
         });
         setVideoTranscriptRequest(null);
+        setVideoTranscriptEvidenceReview(null);
         setVideoFallbackEvidenceReview(null);
         if (!manualEvidenceInput?.trim()) {
             setVideoGroundingSummary(null);
@@ -300,6 +313,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             if (videoUrls.length > 0) {
                 const requireManualVideoEvidence = (reason: string) => {
                     setVideoTranscriptRequest({ urls: videoUrls, reason });
+                    setVideoTranscriptEvidenceReview(null);
                     setVideoFallbackEvidenceReview(null);
                     setVideoGroundingSummary({
                         status: 'unavailable',
@@ -315,6 +329,37 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     );
                 };
 
+                const requestTranscriptEvidenceReview = (
+                    reason: string,
+                    transcriptFactSheet: string,
+                    transcriptEvidenceUrls: string[],
+                    transcriptSources: GroundingSourceItem[],
+                ) => {
+                    setVideoTranscriptRequest(null);
+                    setVideoFallbackEvidenceReview(null);
+                    setManualVideoEvidence(transcriptFactSheet);
+                    setVideoTranscriptEvidenceReview({
+                        inputUrls: videoUrls,
+                        reason,
+                        factSheet: transcriptFactSheet,
+                        evidenceUrls: transcriptEvidenceUrls,
+                        sources: transcriptSources,
+                    });
+                    setVideoGroundingSummary({
+                        status: 'review',
+                        message: 'Transcript evidence extracted. Please review before generation.',
+                        urlCount: videoUrls.length,
+                        evidenceUrlCount: transcriptEvidenceUrls.length,
+                    });
+                    setState(prev => ({ ...prev, isLoading: false, generatedContent: null, error: null }));
+                    updateProgress(
+                        0,
+                        0,
+                        'Waiting for transcript evidence review...',
+                        stages,
+                    );
+                };
+
                 const requestFallbackEvidenceReview = (
                     reason: string,
                     fallbackFactSheet: string,
@@ -322,6 +367,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
                     fallbackSources: GroundingSourceItem[],
                 ) => {
                     setVideoTranscriptRequest(null);
+                    setVideoTranscriptEvidenceReview(null);
                     setManualVideoEvidence(fallbackFactSheet);
                     setVideoFallbackEvidenceReview({
                         inputUrls: videoUrls,
@@ -429,6 +475,22 @@ ${normalizedManualEvidence}`;
                         evidenceUrlCount: evidenceUrls.length,
                     });
                 } else {
+                    if (videoReviewAction === 'force_fallback_search') {
+                        const backends = await checkBackends();
+                        const videoBackend = backends.cloud ? 'cloud' : (backends.local ? 'local' : null);
+                        if (!videoBackend) {
+                            requireManualVideoEvidence('No NotebookLM backend available for fallback evidence extraction.');
+                            return;
+                        }
+                        const fallbackReady = await tryAutoWebFallbackEvidence(
+                            videoBackend,
+                            'Transcript review marked as incorrect. Searching fallback evidence for verification.',
+                        );
+                        if (fallbackReady) return;
+                        requireManualVideoEvidence('No usable fallback evidence was found. Paste transcript/key points manually.');
+                        return;
+                    }
+
                     setVideoGroundingSummary({
                         status: 'processing',
                         message: 'Video URLs detected. Extracting evidence...',
@@ -473,22 +535,20 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                         if ((videoRag.validUrls || []).some((url) => !isUrlFromInputVideos(url, videoUrls))) {
                             qualityIssues.push('Transcript extraction returned non-input URLs. Ignored in strict input-video mode.');
                         }
-                        videoFactSheet = rawVideoFactSheet;
-                        videoEvidenceMode = 'transcript_verified';
-                        validUrls = mergeUnique(validUrls, videoUrls);
-                        groundingSources = mergeGroundingSources(
-                            groundingSources,
-                            (videoRag.sources || []).filter((source) => !source.url || isUrlFromInputVideos(source.url, videoUrls)),
+                        const transcriptEvidenceUrls = mergeUnique(
+                            [],
+                            (videoRag.validUrls || []).filter((url) => isUrlFromInputVideos(url, videoUrls)),
                         );
-                        setVideoGroundingSummary({
-                            status: 'grounded',
-                            message: 'Video evidence extracted and merged into lesson generation context.',
-                            urlCount: videoUrls.length,
-                            evidenceUrlCount: mergeUnique(
-                                [],
-                                (videoRag.validUrls || []).filter((url) => isUrlFromInputVideos(url, videoUrls)),
-                            ).length,
-                        });
+                        const transcriptSources = (videoRag.sources || []).filter(
+                            (source) => !source.url || isUrlFromInputVideos(source.url, videoUrls),
+                        );
+                        requestTranscriptEvidenceReview(
+                            'Auto transcript evidence extracted from your input URLs. Please verify correctness before continuing.',
+                            rawVideoFactSheet,
+                            transcriptEvidenceUrls.length > 0 ? transcriptEvidenceUrls : videoUrls,
+                            transcriptSources,
+                        );
+                        return;
                     } else {
                         const fallbackReady = await tryAutoWebFallbackEvidence(
                             videoBackend,
@@ -762,6 +822,65 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         );
     };
 
+    const handleConfirmTranscriptEvidenceSubmit = async () => {
+        if (!pendingGenerationRequest || !videoTranscriptEvidenceReview || !manualVideoEvidence.trim()) return;
+        const req = pendingGenerationRequest;
+        await handleGenerate(
+            req.text,
+            req.files,
+            req.level,
+            req.topic,
+            req.slideCount,
+            req.duration,
+            req.studentCount,
+            req.lessonTitle,
+            req.textbookLevelKey,
+            req.sourceMode,
+            req.ageGroup,
+            manualVideoEvidence.trim(),
+            videoTranscriptEvidenceReview.evidenceUrls,
+            videoTranscriptEvidenceReview.sources,
+            'manual',
+            'normal',
+        );
+    };
+
+    const handleTranscriptEvidenceSearchFallback = async () => {
+        if (!pendingGenerationRequest || !videoTranscriptEvidenceReview) return;
+        const req = pendingGenerationRequest;
+        await handleGenerate(
+            req.text,
+            req.files,
+            req.level,
+            req.topic,
+            req.slideCount,
+            req.duration,
+            req.studentCount,
+            req.lessonTitle,
+            req.textbookLevelKey,
+            req.sourceMode,
+            req.ageGroup,
+            undefined,
+            undefined,
+            undefined,
+            'manual',
+            'force_fallback_search',
+        );
+    };
+
+    const handleCancelTranscriptEvidenceReview = () => {
+        if (!videoTranscriptEvidenceReview) return;
+        setVideoTranscriptEvidenceReview(null);
+        setManualVideoEvidence('');
+        setVideoGroundingSummary({
+            status: 'unavailable',
+            message: 'Transcript review canceled. Generation stopped.',
+            urlCount: videoTranscriptEvidenceReview.inputUrls.length,
+        });
+        setState(prev => ({ ...prev, isLoading: false }));
+        updateProgress(0, 0, 'Generation canceled at transcript review.');
+    };
+
     const handleConfirmFallbackEvidenceSubmit = async () => {
         if (!pendingGenerationRequest || !videoFallbackEvidenceReview || !manualVideoEvidence.trim()) return;
         const req = pendingGenerationRequest;
@@ -801,6 +920,66 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
         });
         setVideoFallbackEvidenceReview(null);
         setManualVideoEvidence('');
+    };
+
+    const renderVideoTranscriptEvidenceReviewPanel = () => {
+        if (!videoTranscriptEvidenceReview || state.generatedContent) return null;
+        return (
+            <div className="mb-4 rounded-lg border border-sky-300 bg-sky-50 p-4">
+                <p className="text-sm font-semibold text-sky-900">
+                    Transcript evidence review required before generation
+                </p>
+                <p className="mt-1 text-xs text-sky-800">{videoTranscriptEvidenceReview.reason}</p>
+                <p className="mt-2 text-xs text-sky-800">
+                    Input video URL(s):
+                </p>
+                <ul className="mt-1 list-disc pl-5 text-xs text-sky-900">
+                    {videoTranscriptEvidenceReview.inputUrls.map((url) => (
+                        <li key={url} className="break-all">{url}</li>
+                    ))}
+                </ul>
+                <p className="mt-2 text-xs text-sky-800">
+                    Extracted evidence URL(s):
+                </p>
+                <ul className="mt-1 max-h-24 list-disc overflow-auto pl-5 text-xs text-sky-900">
+                    {videoTranscriptEvidenceReview.evidenceUrls.map((url) => (
+                        <li key={url} className="break-all">{url}</li>
+                    ))}
+                </ul>
+                <textarea
+                    value={manualVideoEvidence}
+                    onChange={(event) => setManualVideoEvidence(event.target.value)}
+                    placeholder="Review extracted transcript/key points. Edit if needed before continue."
+                    className="mt-3 w-full rounded-md border border-sky-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    rows={8}
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={handleConfirmTranscriptEvidenceSubmit}
+                        disabled={state.isLoading || !manualVideoEvidence.trim()}
+                        className="rounded-md bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Confirm and continue
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleTranscriptEvidenceSearchFallback}
+                        disabled={state.isLoading}
+                        className="rounded-md border border-sky-400 px-3 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        This is wrong - find evidence URL
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleCancelTranscriptEvidenceReview}
+                        className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        );
     };
 
     const renderVideoFallbackEvidenceReviewPanel = () => {
@@ -860,7 +1039,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
     };
 
     const renderVideoTranscriptRequestPanel = () => {
-        if (!videoTranscriptRequest || videoFallbackEvidenceReview || state.generatedContent) return null;
+        if (!videoTranscriptRequest || videoFallbackEvidenceReview || videoTranscriptEvidenceReview || state.generatedContent) return null;
         return (
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <p className="text-sm font-semibold text-amber-900">
@@ -917,6 +1096,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             {!state.generatedContent && (
                 <>
                     {renderVideoGroundingBanner()}
+                    {renderVideoTranscriptEvidenceReviewPanel()}
                     {renderVideoFallbackEvidenceReviewPanel()}
                     {renderVideoTranscriptRequestPanel()}
                     <InputSection
