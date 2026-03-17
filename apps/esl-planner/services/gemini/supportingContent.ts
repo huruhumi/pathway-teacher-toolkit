@@ -200,6 +200,13 @@ export const generateSupportingContent = async (
     signal?: AbortSignal,
 ): Promise<GeneratedContent> => {
     const ai = createAIClient();
+    const teacherCustomPrompt = String(existingContent.inputPrompt || '').trim();
+    const teacherCustomBlock = teacherCustomPrompt
+        ? `
+[Teacher Custom Instructions - Highest Priority]
+${teacherCustomPrompt}
+`
+        : '';
 
     // Serialize the finalized lesson plan as context for the AI
     const planJSON = JSON.stringify(lessonPlan, null, 2);
@@ -220,6 +227,7 @@ export const generateSupportingContent = async (
 
 [FINALIZED LESSON PLAN]
 ${planJSON}
+${teacherCustomBlock}
 
 [GENERATION REQUIREMENTS]
 Level: ${ctx.level}
@@ -232,6 +240,13 @@ ${ageLine}
 - Keep classroom language teacher-ready and specific (no placeholders).
 - Maintain PPP progression consistency from the finalized lesson plan.
 - Activities must be age-appropriate and directly aligned to lesson stage objectives.
+${teacherCustomPrompt ? `
+[Instruction Priority Policy]
+Teacher custom instructions above must be treated as highest priority.
+- If teacher custom instructions conflict with backend default preferences, follow teacher custom instructions.
+- Apply backend/default preferences only when there is no conflict.
+- Safety rules and valid JSON schema compliance remain mandatory.
+` : ''}
 
 CRITICAL: Generate EXACTLY ${ctx.slideCount} slides in the "slides" array.
 CRITICAL: Slides must follow a coherent ESL pedagogical flow aligned with the lesson plan stages above.

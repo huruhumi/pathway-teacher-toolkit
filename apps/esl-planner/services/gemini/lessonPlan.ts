@@ -86,6 +86,7 @@ export const generateLessonPlan = async (
   const hasYouTubeUrls = youtubeUrls.length > 0;
   const hasTranscriptHints = VIDEO_TRANSCRIPT_HINT_REGEX.test(normalizedTextInput);
   const sourceMaterialBlock = normalizedTextInput ? `\nSource Material:\n${normalizedTextInput}` : '';
+  const hasCustomInstructions = Boolean(normalizedTextInput);
   const localQualityIssues = [...(options.qualityIssues || [])];
   const videoEvidenceMode = options.videoEvidenceMode || 'none';
 
@@ -187,6 +188,14 @@ CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactl
   const promptText = isPlanOnly ? planOnlyInstructions : fullInstructions;
 
   const sharedSuffixes: string[] = [];
+  if (hasCustomInstructions) {
+    sharedSuffixes.push(`
+[Instruction Priority Policy]
+Treat "Source Material" as teacher custom instructions with HIGHEST priority.
+- If teacher custom instructions conflict with backend default pedagogical preferences, follow teacher custom instructions.
+- Apply backend/default rules only when they do NOT conflict with teacher custom instructions.
+- Keep safety rules and valid JSON schema compliance mandatory at all times.`);
+  }
   if (factSheet) {
     sharedSuffixes.push(`
 [Factual Grounding]
