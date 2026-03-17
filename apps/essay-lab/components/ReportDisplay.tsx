@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { CorrectionReport, Grade, GrammarError } from '../types';
-import { generateAdditionalItem } from '../services/geminiService';
+import { generateAdditionalItem } from '../services/essayCorrectionService';
 import { useToast } from '@shared/stores/useToast';
 import { useLanguage } from '../i18n/LanguageContext';
 import {

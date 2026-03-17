@@ -1,0 +1,42 @@
+[
+  {
+    "levelKey": "trailblazer-2",
+    "driveSources": [
+      {
+        "fileId": "REPLACE_WITH_DRIVE_FILE_ID",
+        "title": "Trailblazer 2 Assessment Guide",
+        "mimeType": "google-doc"
+      },
+      {
+        "fileId": "REPLACE_WITH_DRIVE_FILE_ID",
+        "title": "Trailblazer 2 Student Book",
+        "mimeType": "pdf"
+      }
+    ],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 2 unit objectives vocabulary grammar checkpoints",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-4",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 4 assessment rubric and writing criteria",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-3",
+    "driveSources": [],
+    "researchQueries": []
+  }
+]

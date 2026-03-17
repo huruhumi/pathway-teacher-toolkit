@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Sparkles, MapPin, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2, Compass,
-    Wind, Search, FileText, Upload, X, Plus, School, Heart
+    Wind, Search, FileText, Upload, X, Plus, School, Heart, Zap,
+    XCircle, FlaskConical, CheckCircle, RotateCw
 } from 'lucide-react';
-import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/geminiService';
+import { suggestLocations, generateCurriculum, generateCurriculumCN } from '../services/curriculumService';
 import { Curriculum, CurriculumParams } from '../types';
 import { AGE_RANGES, CEFR_LEVELS } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -12,6 +13,8 @@ import { handleError } from '@shared/services/logger';
 import { safeStorage } from '@shared/safeStorage';
 import { extractPdfText as extractPdfTextShared } from '@shared/utils/pdf';
 import { GenerationButton } from '@shared/components/GenerationButton';
+import { useNotebookLMRAG, type RAGBackend, type RAGProgress } from '@pathway/notebooklm';
+import { useSessionStore } from '../stores/appStore';
 
 const ENGLISH_LEVELS = [
     "Zero Foundation",
@@ -29,8 +32,10 @@ interface CurriculumPlannerProps {
         curriculumCN: Curriculum | null;
         params: CurriculumParams;
         activeLanguage: 'en' | 'zh';
+        /** NotebookLM fact sheets for downstream lesson kit generation */
+        ragFactSheets?: Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }>;
     }) => void;
-    externalCurriculum?: { curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh' } | null;
+    externalCurriculum?: { curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh'; pairedCurriculum?: Curriculum } | null;
 }
 
 const STORAGE_KEY = 'nature-compass-curriculum';
@@ -51,6 +56,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     const [customLocation, setCustomLocation] = useState("");
     const [loadingLocations, setLoadingLocations] = useState(false);
     const [customTheme, setCustomTheme] = useState("");
+    const [customDescription, setCustomDescription] = useState("");
 
     // PDF state
     const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -62,7 +68,23 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
     // Generation state
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const abortRef = useRef<AbortController | null>(null);
     const { t, setLang } = useLanguage();
+
+    // NotebookLM RAG
+    const { ragProgress, startRAG, resumeRAG, cancelRAG, resetRAG, isRAGAvailable } = useNotebookLMRAG();
+    const [ragMode, setRagMode] = useState<'off' | 'cloud' | 'local'>('off');
+    const { ragProgress: storedRagProgress, setRagProgress: setStoredRagProgress } = useSessionStore();
+
+    // Use stored progress if local is idle (restored after navigation)
+    const displayRagProgress = ragProgress.status !== 'idle' ? ragProgress : storedRagProgress;
+
+    // Sync local ragProgress to store whenever it changes
+    useEffect(() => {
+        if (ragProgress.status !== 'idle') {
+            setStoredRagProgress(ragProgress);
+        }
+    }, [ragProgress.status, ragProgress.progress]);
 
     const effectiveCity = city.trim() || "Wuhan";
 
@@ -85,8 +107,8 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                 setSuggestedLocations(Array.from(new Set([...suggestedLocations, ...locations])));
             }
             onCurriculumGenerated({
-                curriculumEN: lang === 'en' ? externalCurriculum.curriculum : null,
-                curriculumCN: lang === 'zh' ? externalCurriculum.curriculum : null,
+                curriculumEN: lang === 'en' ? externalCurriculum.curriculum : (externalCurriculum.pairedCurriculum || null),
+                curriculumCN: lang === 'zh' ? externalCurriculum.curriculum : (externalCurriculum.pairedCurriculum || null),
                 params: externalCurriculum.params,
                 activeLanguage: lang,
             });
@@ -140,7 +162,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             setPdfText(text);
         } catch (err: any) {
             console.error('PDF extraction failed:', err);
-            setErrorMsg(`PDF parsing failed: ${err.message || 'Unknown error'}`);
+            setErrorMsg(`PDF parsing failed: ${err.message || 'Unknown error'} `);
         } finally {
             setExtracting(false);
         }
@@ -192,9 +214,12 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         duration,
         preferredLocation: [...selectedLocations, customLocation.trim()].filter(Boolean).join(", "),
         customTheme,
+        customDescription: customDescription.trim() || undefined,
     });
 
     const handleGenerate = async () => {
+        const ac = new AbortController();
+        abortRef.current = ac;
         setLoading(true);
         setErrorMsg(null);
 
@@ -202,27 +227,89 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
         const textForAI = pdfText || undefined;
 
         try {
+            // Step 1: NotebookLM RAG pre-fetch (if enabled and available)
+            let ragFactSheets: Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }> | undefined;
+
+            if (ragMode !== 'off') {
+                const themeLabel = params.customTheme || '自然教育 STEAM 课程';
+                const modeLabel = params.mode === 'family' ? '亲子模式' : '学校/机构';
+
+                // Context-rich research query for deep research
+                const topicDesc = [
+                    `为面向 ${params.ageGroup} 儿童的自然教育 STEAM 课程做深度资料调研。`,
+                    `课程主题: ${themeLabel} `,
+                    `课程地点: ${params.city}${params.preferredLocation ? ` (首选: ${params.preferredLocation})` : ''} `,
+                    `课时: ${params.lessonCount} 节，每节 ${params.duration} 分钟 | 教学模式: ${modeLabel} `,
+                    `调研重点: 1) 该主题在${params.city} 的自然生态、历史文化、地理环境权威资料`,
+                    `2) 适合 ${params.ageGroup} 的教学切入点 3) 可用的户外教学场地和安全注意事项`,
+                    `4) 相关科学事实、季节变化、本地物种 / 文化遗产`,
+                    `优先教育类、政府类、学术类来源，避免商业广告`,
+                ].join('\n');
+
+                // Per-lesson prompts with educational context
+                const lessonPrompts = Array.from({ length: params.lessonCount }, (_, i) =>
+                    [
+                        `基于已有资料，为第 ${i + 1} 节课（共 ${params.lessonCount} 节）生成教学知识底稿。`,
+                        `课程主题: ${themeLabel} | 目标年龄: ${params.ageGroup} | 地点: ${params.preferredLocation || params.city} `,
+                        `教学模式: ${modeLabel} | 时长: ${params.duration} 分钟`,
+                        `请包含: `,
+                        `- 适合该年龄段的核心知识点（2 - 3个，简单具体）`,
+                        `- 与教学地点相关的本地生态 / 历史 / 文化背景`,
+                        `- STEAM 维度建议（科学观察、技术工具、工程搭建、艺术创作、数学测量）`,
+                        `- 安全注意事项和季节性建议`,
+                        `- 引用所有来源[1], [2] 等，不要编造事实`,
+                    ].join('\n')
+                );
+
+                const backend: RAGBackend = ragMode === 'local' ? 'local' : 'cloud';
+
+                try {
+                    const ragResult = await startRAG(topicDesc, lessonPrompts, backend);
+                    if (ragResult.status === 'done' && ragResult.factSheets.size > 0) {
+                        ragFactSheets = new Map();
+                        ragResult.factSheets.forEach((fs, i) => {
+                            ragFactSheets!.set(i, { content: fs.content, quality: fs.quality });
+                        });
+                    } else if (ragResult.status === 'error') {
+                        return; // Progress bar already shows error
+                    }
+                } catch (ragErr: any) {
+                    return; // Progress bar already shows error
+                }
+            }
+
+            // Step 2: Generate curriculum outline (EN + CN in parallel)
             const [enResult, cnResult] = await Promise.allSettled([
-                generateCurriculum(params.ageGroup, params.englishLevel, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI),
-                generateCurriculumCN(params.ageGroup, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI),
+                generateCurriculum(params.ageGroup, params.englishLevel, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI, params.mode, params.familyEslEnabled, params.customDescription),
+                generateCurriculumCN(params.ageGroup, params.lessonCount, params.duration, params.preferredLocation, params.customTheme, params.city, textForAI, params.mode, params.familyEslEnabled, params.customDescription),
             ]);
 
             const curriculumEN = enResult.status === 'fulfilled' ? enResult.value : null;
             const curriculumCN = cnResult.status === 'fulfilled' ? cnResult.value : null;
 
             if (enResult.status === 'rejected' && cnResult.status === 'rejected') {
-                setErrorMsg(`Both generations failed. EN: ${enResult.reason}. CN: ${cnResult.reason}`);
+                setErrorMsg(`Both generations failed.EN: ${enResult.reason}.CN: ${cnResult.reason} `);
                 return;
             }
 
             safeStorage.set(STORAGE_KEY, { en: curriculumEN, cn: curriculumCN, lang: 'en', params });
 
-            onCurriculumGenerated({ curriculumEN, curriculumCN, params, activeLanguage: 'en' });
+            onCurriculumGenerated({ curriculumEN, curriculumCN, params, activeLanguage: 'en', ragFactSheets });
         } catch (e: unknown) {
+            if (ac.signal.aborted) return; // user cancelled
             setErrorMsg(handleError(e, 'Generation failed', 'CurriculumPlanner'));
         } finally {
             setLoading(false);
+            abortRef.current = null;
         }
+    };
+
+    const handleCancel = () => {
+        abortRef.current?.abort();
+        abortRef.current = null;
+        cancelRAG();
+        resetRAG();
+        setLoading(false);
     };
 
     return (
@@ -331,6 +418,13 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                             <Sparkles size={16} /> {t('cp.customTheme')}
                         </label>
                         <input type="text" placeholder={t('cp.themePlaceholder')} value={customTheme} onChange={(e) => setCustomTheme(e.target.value)} className="input-field py-3" />
+                        <textarea
+                            placeholder={t('cp.descriptionPlaceholder' as any) || '可选：补充描述信息，如教学目标、重点关注方向、特殊要求等...'}
+                            value={customDescription}
+                            onChange={(e) => setCustomDescription(e.target.value)}
+                            rows={2}
+                            className="input-field py-2.5 mt-2 text-sm resize-none"
+                        />
                     </div>
 
                     {/* Row 2: Age, Level, Lessons, Duration */}
@@ -430,11 +524,98 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                     </div>
                 </div>}
 
-                {/* Generate button */}
-                <div className="pt-4">
+                {/* RAG Mode Selector */}
+                <div className="pt-4 space-y-3">
+                    <div className="px-4 py-3 bg-slate-50/80 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700 rounded-xl">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Zap size={16} className="text-indigo-600" />
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                AI 资料研究模式
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setRagMode('off')}
+                                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${ragMode === 'off'
+                                    ? 'bg-slate-600 text-white shadow-sm'
+                                    : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                                    }`}
+                            >
+                                <XCircle size={14} className="inline mr-1" /> 关闭
+                            </button>
+                            <button
+                                onClick={() => setRagMode('cloud')}
+                                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${ragMode === 'cloud'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-600 hover:border-blue-300'
+                                    }`}
+                            >
+                                <Zap size={14} className="inline mr-1" /> 快速检索
+                                <span className="block text-[10px] opacity-75 mt-0.5">~10-30秒</span>
+                            </button>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-2">
+                            {ragMode === 'off' && '纯 AI 生成，不联网搜索'}
+                            {ragMode === 'cloud' && 'Gemini 单轮 Google 搜索 → ~5-10 个来源'}
+                        </p>
+                    </div>
+
+                    {/* RAG Progress Indicator */}
+                    {displayRagProgress && displayRagProgress.status !== 'idle' && (
+                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${displayRagProgress.status === 'done'
+                            ? 'bg-emerald-50 border-emerald-200'
+                            : displayRagProgress.status === 'error'
+                                ? 'bg-red-50 border-red-200'
+                                : 'bg-blue-50 border-blue-200'
+                            }`}>
+                            {displayRagProgress.status === 'done' ? (
+                                <CheckCircle size={16} className="text-emerald-600 shrink-0" />
+                            ) : displayRagProgress.status === 'error' ? (
+                                <XCircle size={16} className="text-red-500 shrink-0" />
+                            ) : (
+                                <Loader2 size={16} className="animate-spin text-blue-600 shrink-0" />
+                            )}
+                            <div className="flex-1">
+                                <p className={`text-sm font-medium ${displayRagProgress.status === 'done' ? 'text-emerald-800' :
+                                    displayRagProgress.status === 'error' ? 'text-red-700' : 'text-blue-800'
+                                    }`}>{displayRagProgress.message}</p>
+                                <div className="mt-1 h-1.5 bg-black/5 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all duration-500 ${displayRagProgress.status === 'done' ? 'bg-emerald-500' :
+                                        displayRagProgress.status === 'error' ? 'bg-red-400' : 'bg-blue-500'
+                                        }`} style={{ width: `${displayRagProgress.progress * 100}%` }} />
+                                </div>
+                                {displayRagProgress.status === 'error' && displayRagProgress.notebookId && (
+                                    <button
+                                        className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium transition-colors"
+                                        onClick={() => {
+                                            const params = getCurrentParams();
+                                            const themeLabel = params.customTheme || '自然教育 STEAM 课程';
+                                            const modeLabel = params.mode === 'family' ? '亲子模式' : '学校/机构';
+                                            const lessonPrompts = Array.from({ length: params.lessonCount }, (_, i) =>
+                                                [
+                                                    `基于已有资料，为第 ${i + 1} 节课（共 ${params.lessonCount} 节）生成教学知识底稿。`,
+                                                    `课程主题: ${themeLabel} | 目标年龄: ${params.ageGroup} | 地点: ${params.preferredLocation || params.city}`,
+                                                    `教学模式: ${modeLabel} | 时长: ${params.duration} 分钟`,
+                                                    `请包含: 核心知识点、本地背景、STEAM 维度建议、安全事项`,
+                                                    `引用所有来源 [1], [2] 等，不要编造事实`,
+                                                ].join('\n')
+                                            );
+                                            resumeRAG(displayRagProgress.notebookId!, lessonPrompts);
+                                        }}
+                                    >
+                                        <RotateCw size={14} />
+                                        恢复已有研究
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+
                     <GenerationButton
                         loading={loading}
                         onClick={handleGenerate}
+                        onCancel={handleCancel}
                         defaultText={pdfText ? t('cp.generateFromPdf') : t('cp.generate')}
                         theme="emerald"
                     />

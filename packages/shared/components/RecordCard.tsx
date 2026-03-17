@@ -66,6 +66,11 @@ export interface RecordCardProps {
 
     /** If true, card gets a highlighted ring */
     active?: boolean;
+
+    /** Inline slot rendered at top-left (e.g. checkbox). Replaces absolute overlays. */
+    topLeftSlot?: React.ReactNode;
+    /** Inline slot rendered at top-right (e.g. risk badge). Replaces absolute overlays. */
+    topRightSlot?: React.ReactNode;
 }
 
 const COLOR_MAP = {
@@ -94,10 +99,13 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
     onOpen, onDelete, onExport, exporting, onRename,
     customActions,
     accentColor = 'emerald', active = false,
+    topLeftSlot, topRightSlot,
 }) => {
     const colors = COLOR_MAP[accentColor];
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState(title);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const confirmTimerRef = React.useRef<number | null>(null);
 
     const startEditing = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -118,6 +126,32 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
         setEditing(false);
     };
 
+    const startDeleteConfirm = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setConfirmingDelete(true);
+        if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+        confirmTimerRef.current = window.setTimeout(() => setConfirmingDelete(false), 5000);
+    };
+
+    const confirmDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+        setConfirmingDelete(false);
+        onDelete();
+    };
+
+    const cancelDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+        setConfirmingDelete(false);
+    };
+
+    React.useEffect(() => {
+        return () => {
+            if (confirmTimerRef.current) window.clearTimeout(confirmTimerRef.current);
+        };
+    }, []);
+
     const ts = new Date(timestamp);
     const dateStr = `${ts.toLocaleDateString()} ${ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
@@ -130,7 +164,14 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
                 }`}
         >
             {/* Content area */}
-            <div className="p-4 flex-1">
+            <div className="p-4 flex-1 min-h-[120px]">
+                {/* Top row: checkbox + title + badge */}
+                {(topLeftSlot || topRightSlot) && (
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                        <div className="flex-shrink-0">{topLeftSlot}</div>
+                        <div className="flex-shrink-0">{topRightSlot}</div>
+                    </div>
+                )}
                 {/* Title */}
                 {editing ? (
                     <div className="mb-2 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -163,9 +204,9 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{description}</p>
                 )}
 
-                {/* Tags */}
+                {/* Tags — show max 3. Overflow as +N */}
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                    {tags.map((tag, i) => (
+                    {tags.slice(0, 3).map((tag, i) => (
                         <span
                             key={i}
                             className={`px-2 py-0.5 text-xs font-medium rounded-md flex items-center gap-1 ${tag.className
@@ -178,6 +219,9 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
                             {tag.icon} {tag.label}
                         </span>
                     ))}
+                    {tags.length > 3 && (
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-400">+{tags.length - 3}</span>
+                    )}
                 </div>
 
                 {/* Timestamp */}
@@ -188,16 +232,16 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
             </div>
 
             {/* Footer action bar */}
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+            <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between gap-1 overflow-hidden">
                 <button
                     onClick={(e) => { e.stopPropagation(); onOpen(); }}
-                    className={`text-xs font-bold whitespace-nowrap ${colors.open} flex items-center gap-1.5 transition-all`}
+                    className={`text-xs font-bold whitespace-nowrap ${colors.open} flex items-center gap-1.5 transition-all flex-shrink-0`}
                 >
                     {openLabel}
                     <ArrowRight size={16} />
                 </button>
-                <div className="flex gap-1 items-center">
-                    {customActions}
+                <div className="flex gap-1 items-center flex-shrink-0">
+                    {!confirmingDelete && customActions}
                     {onExport && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onExport(); }}
@@ -217,13 +261,32 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
                             <Edit2 size={16} />
                         </button>
                     )}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                        title="Delete"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    {confirmingDelete ? (
+                        <div className="flex items-center gap-1 animate-in fade-in slide-in-from-right-2 duration-150">
+                            <button
+                                onClick={confirmDelete}
+                                className="px-2.5 py-1 text-[11px] font-bold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+                                title="Confirm delete"
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={cancelDelete}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                title="Cancel"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={startDeleteConfirm}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

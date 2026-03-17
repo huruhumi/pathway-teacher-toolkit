@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { GeneratedEssay, SavedEssayFromCorrection, EssayItem, EssayGenre, StudentGrade, CEFRLevel } from '../types';
 import { generateModelEssay } from '../services/essayGeneratorService';
-import { getRecords } from '../components/CorrectionRecords';
+import { getRecords } from '../services/recordsService';
 import localforage from 'localforage';
 
 const ESSAYS_KEY = 'essay_lab_essays';

@@ -61,8 +61,8 @@ export function useRenameCloudRecord(tableName: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ recordId, newName, nameColumn }: { recordId: string; newName: string; nameColumn?: string }) =>
-            renameCloudRecord(tableName, recordId, newName, nameColumn),
+        mutationFn: ({ userId, recordId, newName, nameColumn }: { userId: string; recordId: string; newName: string; nameColumn?: string }) =>
+            renameCloudRecord(tableName, userId, recordId, newName, nameColumn),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: cloudRecordKeys.all(tableName),

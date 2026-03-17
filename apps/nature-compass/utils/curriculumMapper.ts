@@ -68,14 +68,15 @@ export function mapLessonToInput(
     const paramsLocation = params.preferredLocation ? `\n[Preferred Location: ${params.preferredLocation}]` : '';
 
     return {
-        mode: 'school',
+        mode: params.mode || 'school',
+        familyEslEnabled: params.familyEslEnabled ?? false,
         theme: lesson.title,
         topicIntroduction: `${lesson.description}${locationContext}${paramsLocation}`,
         activityFocus: parseActivityFocus(lesson.steam_focus),
         weather: 'Sunny', // default — user can change
         season: 'Spring', // default — user can change
         studentAge: params.ageGroup || AGE_RANGES[0],
-        studentCount: 12,
+        studentCount: params.mode === 'family' ? 2 : 12,
         duration: parseDuration(params.duration),
         cefrLevel: mapEnglishLevel(params.englishLevel),
         handbookMode: 'auto', handbookPreset: 'standard', handbookPageConfig: getDefaultPageConfig(),

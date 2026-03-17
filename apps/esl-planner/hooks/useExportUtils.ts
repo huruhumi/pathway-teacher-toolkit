@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { jsPDF } from 'jspdf';
-import { StructuredLessonPlan, Slide, Flashcard, Game, ReadingCompanionContent, Worksheet, PhonicsContent } from '../types';
+import { StructuredLessonPlan, Slide, Flashcard, Game, ReadingCompanionContent, Worksheet, PhonicsContent, AssignmentSheet } from '../types';
 import { wrapViewerHtml } from './viewerShell';
 import { downloadBlob } from '@shared/utils/download';
 
@@ -19,6 +19,7 @@ export interface UseExportUtilsProps {
     flashcardImages?: Record<number, string>;
     decodableTextImages?: Record<number, string>;
     viewLang?: 'en' | 'cn';
+    assignmentSheet?: AssignmentSheet;
 }
 
 export const useExportUtils = (props: UseExportUtilsProps) => {
@@ -34,7 +35,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         phonicsContent,
         flashcardImages,
         decodableTextImages,
-        viewLang
+        viewLang,
+        assignmentSheet
     } = props;
 
     const openViewer = (tabId: string, subTabId?: string) => {
@@ -775,6 +777,79 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                 </div>
             `;
             }
+        } else if (tabId === 'assignment' && assignmentSheet) {
+            title = `课后作业单: ${editablePlan?.classInformation.topic || '课程'}`;
+            const starDisplay = (score: number) => '★'.repeat(score) + '☆'.repeat(5 - score);
+            const studentNameDisplay = assignmentSheet.studentName || '____________________';
+            contentHtml = `
+            <style>
+                @media print {
+                    @page { size: A4 portrait; margin: 10mm; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; padding: 0 !important; font-size: 12px; }
+                    .viewer-container { max-width: none !important; padding: 0 !important; }
+                }
+            </style>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #4f46e5; padding-bottom:10px; margin-bottom:10px;">
+                <div>
+                    <h1 style="font-size:22px; font-weight:900; color:#1e1b4b; margin:0;">📋 课后作业单</h1>
+                    <div style="font-size:12px; color:#64748b; margin-top:2px;">Pathway Academy · After-Class Assignment Sheet</div>
+                </div>
+                <div style="text-align:right; font-size:12px; color:#475569;">
+                    <div style="font-size:15px; font-weight:800; color:#4f46e5; margin-bottom:2px;">👤 ${studentNameDisplay}</div>
+                    <div><strong>日期:</strong> ${editablePlan?.classInformation.date || '__________'}</div>
+                    <div><strong>级别:</strong> ${editablePlan?.classInformation.level || '______'}</div>
+                </div>
+            </div>
+            <div style="background:#eef2ff; border-radius:8px; padding:8px 14px; margin-bottom:12px; font-size:15px; font-weight:700; color:#312e81;">
+                📚 课程主题: ${editablePlan?.classInformation.topic || '______'}
+            </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; margin-bottom:12px;">
+                <h3 style="font-size:13px; font-weight:900; color:#4f46e5; margin:0 0 6px; text-transform:uppercase; letter-spacing:0.05em;">📖 本课内容总结</h3>
+                <div style="font-size:12px; color:#334155; line-height:1.6; white-space:pre-wrap;">${assignmentSheet.lessonSummary || '（未填写）'}</div>
+                ${assignmentSheet.keyPoints.length > 0 ? `
+                    <div style="margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0;">
+                        <div style="font-size:10px; font-weight:900; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">学习重点</div>
+                        ${assignmentSheet.keyPoints.map(kp => `
+                            <div style="font-size:12px; color:#1e293b; padding:3px 0; display:flex; gap:6px; white-space:pre-wrap;"><span style="color:#4f46e5; flex-shrink:0;">•</span> <span>${kp}</span></div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:12px;">
+                <h3 style="font-size:13px; font-weight:900; color:#d97706; margin:0 0 6px; text-transform:uppercase; letter-spacing:0.05em;">📝 作业清单</h3>
+                ${assignmentSheet.assignments.map((a, i) => `
+                    <div style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid #fef3c7;">
+                        <span style="width:22px; height:22px; border-radius:50%; background:#fbbf24; color:#fff; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${i + 1}</span>
+                        <div>
+                            <div style="font-size:13px; font-weight:700; color:#1e293b;">${a.title} ${a.isFixed ? '<span style="font-size:9px; background:#fef3c7; color:#d97706; padding:1px 6px; border-radius:4px; font-weight:700;">固定</span>' : ''}</div>
+                            ${a.description ? `<div style="font-size:11px; color:#64748b; margin-top:1px;">${a.description}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:10px; padding:10px 14px;">
+                <h3 style="font-size:13px; font-weight:900; color:#7c3aed; margin:0 0 8px; text-transform:uppercase; letter-spacing:0.05em;">⭐ 课堂表现反馈</h3>
+                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; margin-bottom:10px;">
+                    ${assignmentSheet.feedback.ratings.map(r => `
+                        <div style="text-align:center; background:#fff; border:1px solid #ede9fe; border-radius:8px; padding:6px 4px;">
+                            <div style="font-size:11px; font-weight:700; color:#4c1d95;">${r.dimension}</div>
+                            <div style="font-size:9px; color:#a78bfa; margin-bottom:3px;">${r.dimension_en}</div>
+                            <div style="font-size:14px; color:#eab308; letter-spacing:2px;">${starDisplay(r.score)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                ${assignmentSheet.showComment ? `
+                <div style="background:#fff; border:1px solid #ede9fe; border-radius:8px; padding:8px 12px; min-height:40px;">
+                    <div style="font-size:10px; font-weight:900; color:#a78bfa; text-transform:uppercase; margin-bottom:4px;">老师寄语</div>
+                    <div style="font-size:12px; color:#334155; line-height:1.6; white-space:pre-wrap;">${assignmentSheet.feedback.overallComment || '（待填写）'}</div>
+                </div>
+                ` : ''}
+            </div>
+            <div style="margin-top:12px; padding-top:8px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8;">
+                <span>Pathway Academy · 课后作业单</span>
+                <span>家长签名: ____________________</span>
+            </div>
+            `;
         }
 
         const fullHtml = wrapViewerHtml(title, contentHtml);

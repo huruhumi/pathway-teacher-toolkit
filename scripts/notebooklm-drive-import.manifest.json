@@ -1,0 +1,326 @@
+[
+  {
+    "levelKey": "trailblazer-starter",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer Starter teacher guide assessment rubric Pre-A1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer Starter unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-1",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 1 teacher guide assessment rubric A1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 1 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-2",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 2 teacher guide assessment rubric A2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 2 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-3",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 3 teacher guide assessment rubric A2-B1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 3 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-4",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 4 teacher guide assessment rubric B1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 4 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-5",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 5 teacher guide assessment rubric B1-B2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 5 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "trailblazer-6",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Trailblazer 6 teacher guide assessment rubric B2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Trailblazer 6 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-1",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 1 teacher guide assessment rubric A1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 1 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-2",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 2 teacher guide assessment rubric A2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 2 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-3",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 3 teacher guide assessment rubric B1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 3 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-4",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 4 teacher guide assessment rubric B1+ pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 4 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-5",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 5 teacher guide assessment rubric B2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 5 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "reflect-6",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Reflect 6 teacher guide assessment rubric C1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Reflect 6 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-f",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Pathways Foundations teacher guide assessment rubric A1-A2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Pathways Foundations unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-1",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Pathways 1 teacher guide assessment rubric A2-B1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Pathways 1 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-2",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Pathways 2 teacher guide assessment rubric B1-B2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Pathways 2 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-3",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Pathways 3 teacher guide assessment rubric B2 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Pathways 3 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  },
+  {
+    "levelKey": "pathways-4",
+    "driveSources": [],
+    "researchQueries": [
+      {
+        "query": "Pathways 4 teacher guide assessment rubric C1 pdf doc",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      },
+      {
+        "query": "Pathways 4 unit objectives vocabulary grammar worksheet",
+        "from": "drive",
+        "mode": "fast",
+        "importAll": true
+      }
+    ]
+  }
+]

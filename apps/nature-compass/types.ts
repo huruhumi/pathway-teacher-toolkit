@@ -8,9 +8,9 @@ export type HandbookSectionType =
   | 'Table of Contents'
   | 'Safety'
   | 'Prop Checklist'
+  | 'Phase Transition'
   | 'Background Knowledge'
   | 'Activity/Worksheet'
-  | 'Reading'
   | 'Reflection'
   | 'Certificate'
   | 'Back Cover';
@@ -44,11 +44,27 @@ export interface LessonInput {
   studentCount: number;
   duration: number;
   cefrLevel: string;
-  handbookMode: 'auto' | 'preset' | 'custom';
+  handbookMode: 'auto' | 'preset' | 'custom' | 'structured';
   handbookPreset: 'light' | 'standard' | 'full' | 'deep';
   handbookPageConfig: HandbookPageConfig[];
   autoPageTarget?: number;
   uploadedFiles: UploadedFile[];
+  /** NotebookLM-generated fact sheet for RAG grounding (optional) */
+  factSheet?: string;
+  /** Quality indicator from NotebookLM fact sheet evaluation */
+  factSheetQuality?: 'good' | 'low' | 'insufficient';
+  /** User-defined page-by-page handbook outline (structured mode) */
+  customStructure?: string;
+  /** Researched knowledge for structured mode */
+  structuredKnowledge?: StructuredKnowledge[];
+  /** Selected handbook illustration style ID (e.g. 'realistic', 'kawaii', 'watercolor') */
+  handbookStyleId?: string;
+}
+
+export interface StructuredKnowledge {
+  topic: string;
+  content: string;
+  sources?: string[];
 }
 
 export interface VocabularyItem {
@@ -67,6 +83,8 @@ export interface RoadmapItem {
   steps: string[];
   backgroundInfo: string[];
   teachingTips: string[];
+  /** Student-facing activity instructions: what to do, how to do it, materials, time */
+  activityInstructions?: string;
 }
 
 export interface SupplyList {
@@ -87,6 +105,10 @@ export interface HandbookPage {
   layoutDescription: string;
   visualPrompt: string;
   contentPrompt: string;
+  /** Teacher-facing content: teaching scripts, guided questions, differentiation tips, time controls */
+  teacherContentPrompt?: string;
+  /** Index into roadmap array — binds this page to a specific phase. Undefined for system pages (Cover, ToC, etc.) */
+  phaseIndex?: number;
 }
 
 export interface LessonPlanResponse {
@@ -115,6 +137,10 @@ export interface LessonPlanResponse {
   notebookLMPrompt: string;
   imagePrompts: string[];
   translatedPlan?: any;
+  /** RAG knowledge base / fact sheet used to ground this lesson */
+  factSheet?: string;
+  /** Structured knowledge entries (topic + content + sources) for cache matching */
+  structuredKnowledge?: StructuredKnowledge[];
 }
 
 export interface SavedLessonPlan {
@@ -157,6 +183,7 @@ export interface CurriculumParams {
   duration: string;
   preferredLocation: string;
   customTheme: string;
+  customDescription?: string;
 }
 
 export interface SavedCurriculum {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import * as edu from '@shared/services/educationService';
+import * as edu from '@pathway/education';
 import { Users, School, ClipboardList, BookOpen, Loader2, CalendarDays } from 'lucide-react';
 
 const DashboardPage: React.FC<{ onNav?: (tab: string) => void }> = ({ onNav }) => {

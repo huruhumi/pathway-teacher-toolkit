@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, Square } from 'lucide-react';
 
 export interface GenerationButtonProps {
     /** Whether the generation process is currently active */
@@ -22,6 +22,8 @@ export interface GenerationButtonProps {
     className?: string;
     /** Custom icon to show next to the default text, defaults to ArrowRight */
     icon?: React.ReactNode;
+    /** Called when user clicks stop/cancel during loading */
+    onCancel?: () => void;
 }
 
 /**
@@ -36,11 +38,12 @@ export const GenerationButton: React.FC<GenerationButtonProps> = React.memo(({
     loadingText = defaultText,
     theme = 'emerald',
     className = '',
-    icon = <ArrowRight size={20} />
+    icon = <ArrowRight size={20} />,
+    onCancel,
 }) => {
 
     const getGradientClasses = () => {
-        if (loading) return 'bg-slate-400 dark:bg-slate-600'; // Or specific loading color if desired
+        if (loading) return 'bg-slate-400 dark:bg-slate-600';
 
         switch (theme) {
             case 'indigo':
@@ -58,6 +61,30 @@ export const GenerationButton: React.FC<GenerationButtonProps> = React.memo(({
                 return 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500';
         }
     };
+
+    if (loading && onCancel) {
+        return (
+            <div className={`flex gap-2 w-full ${className}`}>
+                <button
+                    type="button"
+                    disabled
+                    className="flex-1 text-white rounded-xl py-4 font-bold text-lg flex items-center justify-center gap-3 bg-blue-600"
+                >
+                    <Loader2 className="animate-spin" size={22} />
+                    {loadingText}
+                </button>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="px-5 text-white rounded-xl py-4 font-bold text-sm bg-red-500 hover:bg-red-600 transition-colors flex items-center gap-2 shrink-0"
+                    title="Stop generation"
+                >
+                    <Square size={16} fill="currentColor" />
+                    停止
+                </button>
+            </div>
+        );
+    }
 
     return (
         <button

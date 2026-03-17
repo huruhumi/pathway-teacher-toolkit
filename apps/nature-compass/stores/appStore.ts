@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { LessonPlanResponse, Curriculum, CurriculumParams, SavedLessonPlan, SavedCurriculum, LessonInput } from '../types';
 import { getDefaultPageConfig } from '../constants/handbookDefaults';
+import type { RAGProgress } from '@pathway/notebooklm';
 
 interface SessionState {
     lessonPlan: LessonPlanResponse | null;
@@ -17,8 +18,15 @@ interface SessionState {
 
     externalCurriculum: {
         curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh';
+        pairedCurriculum?: Curriculum; // The other language version if found
     } | null;
     setExternalCurriculum: (cur: any) => void;
+
+    // RAG state — persists across page navigation
+    ragProgress: RAGProgress | null;
+    setRagProgress: (p: RAGProgress | null) => void;
+    ragFactSheets: Array<{ lessonIndex: number; content: string; quality: string }> | null;
+    setRagFactSheets: (fs: Array<{ lessonIndex: number; content: string; quality: string }> | null) => void;
 
     clearSessionState: () => void;
 }
@@ -39,13 +47,25 @@ export const useSessionStore = create<SessionState>()(
                 externalCurriculum: typeof cur === 'function' ? cur(get().externalCurriculum) : cur
             }),
 
+            ragProgress: null,
+            setRagProgress: (p) => set({ ragProgress: p }),
+            ragFactSheets: null,
+            setRagFactSheets: (fs) => set({ ragFactSheets: fs }),
+
             clearSessionState: () => set({
-                lessonPlan: null, curriculumResult: null, externalCurriculum: null
+                lessonPlan: null, curriculumResult: null, externalCurriculum: null,
+                ragProgress: null, ragFactSheets: null,
             })
         }),
         {
             name: 'nc-session-state',
             storage: createJSONStorage(() => sessionStorage),
+            partialize: (state) => ({
+                lessonPlan: state.lessonPlan,
+                curriculumResult: state.curriculumResult,
+                externalCurriculum: state.externalCurriculum,
+                // ragProgress and ragFactSheets excluded — large ephemeral data
+            }),
         }
     )
 );

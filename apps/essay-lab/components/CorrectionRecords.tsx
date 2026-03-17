@@ -1,48 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { SavedRecord, StudentGrade, CEFRLevel } from '../types';
 import ReportDisplay from './ReportDisplay';
-import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter } from 'lucide-react';
+import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import { upsertCloudRecord, deleteCloudRecord, fetchCloudRecords } from '@shared/services/cloudSync';
+import { useToast } from '@shared/stores/useToast';
+import { fetchCloudRecords, upsertRecordIndexEntry } from '@shared/services/cloudSync';
+import { deleteRecord, getRecords, setRecords as persistRecords } from '../services/recordsService';
+import { assessEssayRecordQuality } from '@shared/config/recordQuality';
 
-import localforage from 'localforage';
-
-const STORAGE_KEY = 'essay_lab_records';
-
-export async function getRecords(): Promise<SavedRecord[]> {
-    try {
-        const raw = await localforage.getItem<SavedRecord[]>(STORAGE_KEY);
-        return raw || [];
-    } catch { return []; }
-}
-
-export async function saveRecord(record: SavedRecord) {
-    const records = await getRecords();
-    records.unshift(record);
-    await localforage.setItem(STORAGE_KEY, records);
-
-    // Cloud sync (fire-and-forget)
-    const user = useAuthStore.getState().user;
-    if (user) {
-        upsertCloudRecord('essay_records', user.id, {
-            id: record.id, grade: record.grade, cefr: record.cefr,
-            topic_text: record.topicText || null, essay_text: record.essayText || null,
-            report_data: record.report,
-        });
-    }
-}
-
-export async function deleteRecord(id: string) {
-    const records = await getRecords();
-    const updated = records.filter(r => r.id !== id);
-    await localforage.setItem(STORAGE_KEY, updated);
-
-    const user = useAuthStore.getState().user;
-    if (user) {
-        deleteCloudRecord('essay_records', user.id, id);
-    }
-}
+const MAX_RECORDS = 100;
 
 const CorrectionRecords: React.FC = () => {
     const { t } = useLanguage();
@@ -50,6 +17,7 @@ const CorrectionRecords: React.FC = () => {
     const [viewingReport, setViewingReport] = useState<SavedRecord | null>(null);
     const [filterGrade, setFilterGrade] = useState<string>('all');
     const [filterCefr, setFilterCefr] = useState<string>('all');
+    const [filterQuality, setFilterQuality] = useState<'all' | 'ok' | 'needs_review'>('all');
     const [isLoaded, setIsLoaded] = useState(false);
 
     React.useEffect(() => {
@@ -57,11 +25,12 @@ const CorrectionRecords: React.FC = () => {
             const local = await getRecords();
             setRecords(local);
             setIsLoaded(true);
+            let recordsForIndex = local;
 
             // Merge cloud records if logged in
             const user = useAuthStore.getState().user;
             if (user) {
-                const cloudRows = await fetchCloudRecords<any>('essay_records', user.id);
+                const cloudRows = await fetchCloudRecords<any>('essay_records', user.id, 'updated_at', MAX_RECORDS);
                 if (cloudRows.length > 0) {
                     const localIds = new Set(local.map((r: SavedRecord) => r.id));
                     const newFromCloud: SavedRecord[] = [];
@@ -76,26 +45,67 @@ const CorrectionRecords: React.FC = () => {
                         }
                     }
                     if (newFromCloud.length > 0) {
-                        const merged = [...newFromCloud, ...local];
+                        const merged = [...newFromCloud, ...local].slice(0, MAX_RECORDS);
                         setRecords(merged);
-                        await localforage.setItem(STORAGE_KEY, merged);
+                        await persistRecords(merged);
+                        recordsForIndex = merged;
                     }
+                }
+
+                for (const record of recordsForIndex.slice(0, MAX_RECORDS)) {
+                    const quality = assessEssayRecordQuality(record.report as any, record.essayText);
+                    await upsertRecordIndexEntry({
+                        recordId: record.id,
+                        appId: 'essay-lab',
+                        recordType: 'essay_report',
+                        ownerId: user.id,
+                        title: record.topicText || 'Essay Report',
+                        searchableText: [
+                            record.topicText,
+                            record.grade,
+                            record.cefr,
+                            record.report?.overallGrade,
+                            record.report?.originalText?.slice(0, 300),
+                        ].filter(Boolean).join(' '),
+                        textbookLevelKey: null,
+                        cefr: record.cefr,
+                        curriculumId: null,
+                        unitNumber: null,
+                        tags: ['essay', 'correction', ...(quality.status === 'needs_review' ? ['needs-review'] : ['ready'])],
+                        qualityStatus: quality.status,
+                        updatedAt: new Date().toISOString(),
+                    });
                 }
             }
         })();
     }, []);
 
+    const qualityMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof assessEssayRecordQuality>>();
+        records.forEach((record) => {
+            map.set(record.id, assessEssayRecordQuality(record.report as any, record.essayText));
+        });
+        return map;
+    }, [records]);
+
     const filtered = useMemo(() => {
         return records.filter(r => {
             if (filterGrade !== 'all' && r.grade !== filterGrade) return false;
             if (filterCefr !== 'all' && r.cefr !== filterCefr) return false;
+            if (filterQuality !== 'all') {
+                const quality = qualityMap.get(r.id)?.status || 'unknown';
+                if (quality !== filterQuality) return false;
+            }
             return true;
         });
-    }, [records, filterGrade, filterCefr]);
+    }, [records, filterGrade, filterCefr, filterQuality, qualityMap]);
 
     const handleDelete = async (id: string) => {
         if (!confirm(t('records.deleteConfirm'))) return;
-        await deleteRecord(id);
+        const result = await deleteRecord(id);
+        if (!result.ok) {
+            useToast.getState().warning(t('records.deleteCloudFailed') || 'Deleted locally. Cloud delete can be retried.');
+        }
         const updated = await getRecords();
         setRecords(updated);
     };
@@ -151,6 +161,15 @@ const CorrectionRecords: React.FC = () => {
                             <option key={c} value={c}>{c}</option>
                         ))}
                     </select>
+                    <select
+                        value={filterQuality}
+                        onChange={e => setFilterQuality(e.target.value as 'all' | 'ok' | 'needs_review')}
+                        className="text-sm border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-900/60 dark:text-slate-300 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none"
+                    >
+                        <option value="all">All Quality</option>
+                        <option value="needs_review">Needs Review</option>
+                        <option value="ok">Ready</option>
+                    </select>
                 </div>
             )}
 
@@ -184,6 +203,15 @@ const CorrectionRecords: React.FC = () => {
                                             }`}>
                                             <Award className="w-3 h-3" /> {record.report.overallGrade}
                                         </span>
+                                        {qualityMap.get(record.id)?.status === 'needs_review' ? (
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-amber-50 text-amber-700">
+                                                <ShieldAlert className="w-3 h-3" /> Needs Review
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-emerald-50 text-emerald-700">
+                                                <ShieldCheck className="w-3 h-3" /> Ready
+                                            </span>
+                                        )}
                                         <span className="inline-flex items-center gap-1 text-xs text-slate-400">
                                             <Calendar className="w-3 h-3" />
                                             {new Date(record.timestamp).toLocaleDateString()}

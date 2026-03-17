@@ -2,17 +2,18 @@
 
 import { Type, GenerateContentResponse } from "@google/genai";
 import { CEFRLevel, Flashcard, LessonStage } from '../types';
-import { createAIClient } from '@shared/ai/client';
-import { retryApiCall, RESPONSE_SCHEMA, cleanMarkdownPrefix } from './geminiService';
+import { createAIClient } from '@pathway/ai';
+import { retryApiCall, responseSchemaFragments, cleanMarkdownPrefix } from './gemini/shared';
 
 export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, existingWords: string[]): Promise<Flashcard> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate a new target vocabulary flashcard for Level: ${level}, Topic: ${topic}. Avoid: ${existingWords.join(", ")}. Return JSON.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting words to avoid: ${existingWords.join(", ")}`,
         config: {
+            systemInstruction: "Generate a new target vocabulary flashcard based on the provided Level and Topic. You must return valid JSON. Do not include any existing words provided.",
             responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA.properties!.flashcards!.items
+            responseSchema: responseSchemaFragments.flashcard
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -21,8 +22,11 @@ export const generateSingleFlashcard = async (level: CEFRLevel, topic: string, e
 export const generateSingleGrammarPoint = async (level: CEFRLevel, topic: string, existingPoints: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one new grammar rule or target sentence for Level: ${level}, Topic: ${topic}. Avoid repeating: ${existingPoints.join(". ")}. DO NOT use markdown bold headers. Return ONLY the plain text string of the rule/sentence.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting points to avoid: ${existingPoints.join(". ")}`,
+        config: {
+            systemInstruction: "Generate exactly ONE new grammar rule or target sentence. DO NOT use markdown bold headers. Return ONLY the plain text string. Do not provide any introductory text."
+        }
     }));
     return cleanMarkdownPrefix(response.text || "");
 };
@@ -30,8 +34,11 @@ export const generateSingleGrammarPoint = async (level: CEFRLevel, topic: string
 export const generateSingleObjective = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one specific learning objective for Level: ${level}, Topic: ${topic}. It MUST follow the format: "Students will be able to [action] [content]". Existing ones: ${existing.join(". ")}. Return ONLY the objective text string.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting objectives: ${existing.join(". ")}`,
+        config: {
+            systemInstruction: "Generate exactly ONE specific learning objective. It MUST strictly follow the format: 'Students will be able to [action] [content]'. Return ONLY the objective text string."
+        }
     }));
     return response.text?.trim() || "";
 };
@@ -39,8 +46,11 @@ export const generateSingleObjective = async (level: CEFRLevel, topic: string, e
 export const generateSingleMaterial = async (level: CEFRLevel, topic: string, existing: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Suggest one teaching material or piece of equipment for Level: ${level}, Topic: ${topic}. Existing: ${existing.join(", ")}. Return ONLY the material name string.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting materials: ${existing.join(", ")}`,
+        config: {
+            systemInstruction: "Suggest exactly ONE teaching material or piece of equipment. Return ONLY the material name string."
+        }
     }));
     return response.text?.trim() || "";
 };
@@ -48,9 +58,10 @@ export const generateSingleMaterial = async (level: CEFRLevel, topic: string, ex
 export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ problem: string, solution: string }> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Identify one anticipated learning problem and its practical solution for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting problems: ${JSON.stringify(existing)}`,
         config: {
+            systemInstruction: "Identify exactly ONE anticipated learning problem and its practical solution. Return valid JSON.",
             responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
@@ -68,9 +79,10 @@ export const generateSingleAnticipatedProblem = async (level: CEFRLevel, topic: 
 export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, existing: any[]): Promise<{ word: string, definition: string }> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one new target vocabulary word and its simple English definition for Level: ${level}, Topic: ${topic}. Existing: ${JSON.stringify(existing)}. Return JSON.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nExisting vocabulary: ${JSON.stringify(existing)}`,
         config: {
+            systemInstruction: "Generate exactly ONE new target vocabulary word and its simple English definition. Return valid JSON.",
             responseMimeType: "application/json",
             responseSchema: {
                 type: Type.OBJECT,
@@ -85,14 +97,18 @@ export const generateSingleVocabItem = async (level: CEFRLevel, topic: string, e
     return JSON.parse(response.text || "{}");
 };
 
-export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[]): Promise<LessonStage> => {
+export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[], customPrompt?: string): Promise<LessonStage> => {
     const ai = createAIClient();
+    const userContent = customPrompt
+        ? `Level: ${level}\nTopic: ${topic}\nPrevious stages: ${JSON.stringify(existingStages)}\nUser requirement: ${customPrompt}`
+        : `Level: ${level}\nTopic: ${topic}\nPrevious stages: ${JSON.stringify(existingStages)}`;
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one cohesive teaching stage (e.g., Warm-up, Presentation, Practice, or Production) for Level: ${level}, Topic: ${topic}. It must complement the previous stages. Previous stages: ${JSON.stringify(existingStages)}. IMPORTANT: The "interaction" field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. Return JSON.`,
+        model: 'gemini-2.5-flash',
+        contents: userContent,
         config: {
+            systemInstruction: "Generate exactly ONE cohesive teaching stage. It must complement the previous stages logically. If the user provides a specific requirement, follow it closely to design the stage accordingly. IMPORTANT: The 'interaction' field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use exactly these codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. Return valid JSON.",
             responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA.properties!.structuredLessonPlan!.properties!.stages!.items
+            responseSchema: responseSchemaFragments.lessonStage
         }
     }));
     return JSON.parse(response.text || "{}");
@@ -101,7 +117,7 @@ export const generateSingleStage = async (level: CEFRLevel, topic: string, exist
 export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string, existingPoints: string[], vocab: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: `Identify one specific phonics pattern or sound for Level: ${level}, Topic: ${topic} using vocabulary like ${vocab.join(", ")}. 
     You MUST use the format: "Category name: Word1, Word2, Word3". 
     Example: "Initial sound S: Sun, Sit, Sad". 
@@ -113,7 +129,7 @@ export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string
 export const generateSingleDecodableText = async (level: CEFRLevel, topic: string, points: string[], vocab: string[]): Promise<{ text: string, visualPrompt: string }> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: `Create a highly logical, engaging decodable rhyming story for Level: ${level}.
 Focus heavily on the target sounds: ${points.join(", ")}.
 Include the target vocabulary: ${vocab.join(", ")}.
@@ -145,8 +161,11 @@ Also provide a simple visual prompt describing the scene for an AI image generat
 export const generateSingleTeachingTip = async (level: CEFRLevel, topic: string, stageName: string, existingTips: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one practical ESL teaching methodology tip for Level: ${level}, Topic: ${topic}, Stage: ${stageName}. Focus on scaffolding techniques, TPR, visual aids, sentence frames, or error correction strategies. Existing tips: ${existingTips.join(". ")}. Return ONLY the tip text string.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nStage: ${stageName}\nExisting tips: ${existingTips.join(". ")}`,
+        config: {
+            systemInstruction: "Generate exactly ONE practical ESL teaching methodology tip. Focus on scaffolding techniques, TPR, visual aids, sentence frames, or error correction strategies. Return ONLY the tip text string."
+        }
     }));
     return response.text?.trim() || "";
 };
@@ -154,8 +173,11 @@ export const generateSingleTeachingTip = async (level: CEFRLevel, topic: string,
 export const generateSingleBackgroundKnowledge = async (level: CEFRLevel, topic: string, stageName: string, existingInfo: string[]): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate one background knowledge point for the teacher about Level: ${level}, Topic: ${topic}, Stage: ${stageName}. Include cultural context, linguistic notes, common misconceptions, or subject matter facts. Existing info: ${existingInfo.join(". ")}. Return ONLY the knowledge point text string.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nStage: ${stageName}\nExisting info: ${existingInfo.join(". ")}`,
+        config: {
+            systemInstruction: "Generate exactly ONE background knowledge point for the teacher. Include cultural context, linguistic notes, common misconceptions, or subject matter facts. Return ONLY the knowledge point text string."
+        }
     }));
     return response.text?.trim() || "";
 };
@@ -163,8 +185,11 @@ export const generateSingleBackgroundKnowledge = async (level: CEFRLevel, topic:
 export const generateFillerActivity = async (level: CEFRLevel, topic: string, stageName: string): Promise<string> => {
     const ai = createAIClient();
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate a quick 2-3 minute filler/extension activity for Level: ${level}, Topic: ${topic}, Stage: ${stageName}. It should be simple, require no extra equipment, and serve as a backup if students finish early or need extra practice. Return ONLY the activity description text string.`,
+        model: 'gemini-2.5-flash',
+        contents: `Level: ${level}\nTopic: ${topic}\nStage: ${stageName}`,
+        config: {
+            systemInstruction: "Generate a SHORT NAME (2-5 words) for a quick 2-3 minute filler/extension activity suitable for this ESL stage. It should be simple, require no extra equipment, and serve as a backup if students finish early or need extra practice. Return ONLY the activity name (e.g. 'Vocabulary Hot Seat', 'Quick Draw Relay', 'Word Chain Challenge'). Do NOT return instructions or descriptions."
+        }
     }));
     return response.text?.trim() || "";
 };

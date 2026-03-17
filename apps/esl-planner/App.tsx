@@ -3,16 +3,7 @@ import { useHashTab } from '@shared/hooks/useHashTab';
 import { CurriculumLesson, CurriculumParams, ESLCurriculum } from './types';
 import { mapLessonToESLInput } from './utils/curriculumMapper';
 import { Sparkles, Brain, BookOpen, History } from 'lucide-react';
-import { AppHeader } from '@shared/components/AppHeader';
-import { HeroBanner } from '@shared/components/HeroBanner';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import { HeaderToggles } from '@shared/components/HeaderToggles';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import AppFooter from '@shared/components/AppFooter';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
+import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 // Pages — lazy-loaded for code splitting
@@ -22,8 +13,8 @@ const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ 
 
 // Stores & Hooks
 import { useAppStore, useSessionStore } from './stores/appStore';
-import { useLessonHistory } from './hooks/useLessonHistory';
-import { useThemeStore } from '@shared/stores/useThemeStore';
+import { LessonHistoryProvider, useLessonHistory } from './hooks/useLessonHistory';
+import { useThemeStore } from '@pathway/platform';
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
@@ -68,7 +59,18 @@ const AppContent: React.FC = () => {
 
     return (
         <RouteGuard>
-            <AppLayout currentApp="esl-planner" userName="Teacher">
+            <AppLayout
+                currentApp="esl-planner"
+                userName="Teacher"
+                onFinderItemClick={(recordId) => {
+                    const lesson = savedLessons.find(l => l.id === recordId);
+                    if (!lesson) return;
+                    setActiveLessonId(lesson.id);
+                    setState({ isLoading: false, generatedContent: lesson.content, error: null });
+                    setViewMode('create');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+            >
                 <div className="min-h-screen h-full w-full overflow-y-auto bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-300 font-sans flex flex-col">
                     <AppHeader
                         appName="ESL Smart Planner"
@@ -134,9 +136,11 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => (
     <LanguageProvider>
-        <ErrorBoundary>
-            <AppContent />
-        </ErrorBoundary>
+        <LessonHistoryProvider>
+            <ErrorBoundary>
+                <AppContent />
+            </ErrorBoundary>
+        </LessonHistoryProvider>
         <ToastContainer />
     </LanguageProvider>
 );

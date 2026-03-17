@@ -1,25 +1,21 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { Header } from './components/Header';
 const CurriculumPage = React.lazy(() => import('./pages/CurriculumPage').then(m => ({ default: m.CurriculumPage })));
 const LessonKitPage = React.lazy(() => import('./pages/LessonKitPage').then(m => ({ default: m.LessonKitPage })));
 const RecordsPage = React.lazy(() => import('./pages/RecordsPage').then(m => ({ default: m.RecordsPage })));
 import { LessonPlanResponse, SavedLessonPlan, SavedCurriculum, Curriculum, CurriculumLesson, CurriculumParams } from './types';
-import { useAuthStore } from '@shared/stores/useAuthStore';
+import { useAuthStore } from '@pathway/platform';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { migrateSavedPlan, migrateSavedCurriculum } from './utils/schemaMigration';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { imageStore } from '@shared/imageStore';
-import { HeroBanner } from '@shared/components/HeroBanner';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import AppFooter from '@shared/components/AppFooter';
+import { AppFooter, AppLayout, BodyContainer, ErrorBoundary, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import { useAppStore, useSessionStore } from './stores/appStore';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
+import { useToast } from '@shared/stores/useToast';
+import { assessNatureCurriculumQuality, assessNatureLessonPlanQuality } from '@shared/config/recordQuality';
+import { upsertRecordIndexEntry } from '@shared/services/cloudSync';
 
 /** Generate a short description for a saved NC lesson kit */
 function generateNCKitDescription(plan: LessonPlanResponse): string {
@@ -61,22 +57,101 @@ export const App: React.FC = () => {
 
   // Global Stores
   const { user } = useAuthStore();
-  const { clearSessionState, setLessonPlan, setExternalCurriculum } = useSessionStore();
+  const { clearSessionState, setLessonPlan, setExternalCurriculum, curriculumResult } = useSessionStore();
   const {
     currentPlanId, setCurrentPlanId, currentKitLanguage, setCurrentKitLanguage,
     setInput, input
   } = useAppStore();
+  const ragFactSheets = useSessionStore((s) => s.ragFactSheets);
+  const indexSyncSignatureRef = useRef('');
 
   const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
     cloudTable: 'lesson_plans',
-    mapToCloud: (p: SavedLessonPlan) => ({ id: p.id, name: p.name, plan_data: p.plan, cover_image: p.coverImage || null, mode: p.mode || 'school' }),
-    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), plan: row.plan_data, coverImage: row.cover_image || undefined, mode: row.mode || 'school' } as SavedLessonPlan),
+    mapToCloud: (p: SavedLessonPlan) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description || '',
+      content_data: {
+        plan: p.plan,
+        coverImage: p.coverImage || null,
+        mode: p.mode || 'school',
+        language: p.language || 'en',
+      },
+    }),
+    mapFromCloud: (row: any) => ({
+      id: row.id,
+      name: row.name,
+      timestamp: new Date(row.updated_at || row.created_at).getTime(),
+      description: row.description || '',
+      plan: row.content_data?.plan || row.content_data || row.plan_data,
+      coverImage: row.content_data?.coverImage || row.cover_image || undefined,
+      mode: row.content_data?.mode || row.mode || 'school',
+      language: row.content_data?.language || row.language || 'en',
+    } as SavedLessonPlan),
+    buildIndexEntry: (record: SavedLessonPlan) => {
+      const quality = assessNatureLessonPlanQuality(record.plan as any);
+      return {
+        appId: 'nature-compass',
+        recordType: 'lesson_plan',
+        title: record.name || 'Untitled Plan',
+        searchableText: [
+          record.name,
+          record.description,
+          record.plan?.basicInfo?.theme,
+          record.plan?.basicInfo?.activityType,
+          record.plan?.basicInfo?.targetAudience,
+        ].filter(Boolean).join(' '),
+        textbookLevelKey: null,
+        cefr: null,
+        curriculumId: null,
+        unitNumber: null,
+        tags: ['nature', record.mode || 'school'],
+        qualityStatus: quality.status,
+      };
+    },
     migrate: migrateSavedPlan,
   });
   const { items: savedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50, {
     cloudTable: 'curricula',
-    mapToCloud: (c: SavedCurriculum) => ({ id: c.id, name: c.name, curriculum_data: c.curriculum, params_data: c.params, language: c.language }),
-    mapFromCloud: (row: any) => ({ id: row.id, name: row.name, timestamp: new Date(row.updated_at || row.created_at).getTime(), curriculum: row.curriculum_data, params: row.params_data, language: row.language, description: row.description || '' } as SavedCurriculum),
+    mapToCloud: (c: SavedCurriculum) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description || '',
+      content_data: {
+        curriculum: c.curriculum,
+        params: c.params,
+        language: c.language,
+      },
+    }),
+    mapFromCloud: (row: any) => ({
+      id: row.id,
+      name: row.name,
+      timestamp: new Date(row.updated_at || row.created_at).getTime(),
+      curriculum: row.content_data?.curriculum || row.content_data || row.curriculum_data,
+      params: row.content_data?.params || row.params_data,
+      language: row.content_data?.language || row.language || 'en',
+      description: row.description || '',
+    } as SavedCurriculum),
+    buildIndexEntry: (record: SavedCurriculum) => {
+      const quality = assessNatureCurriculumQuality(record.curriculum as any, record.params as any);
+      return {
+        appId: 'nature-compass',
+        recordType: 'curriculum',
+        title: record.name || 'Untitled Curriculum',
+        searchableText: [
+          record.name,
+          record.description,
+          record.curriculum?.theme,
+          record.curriculum?.overview,
+        ].filter(Boolean).join(' '),
+        textbookLevelKey: null,
+        cefr: record.params?.englishLevel || null,
+        curriculumId: record.id,
+        unitNumber: null,
+        tags: ['nature', record.language],
+        qualityStatus: quality.status,
+      };
+    },
     migrate: migrateSavedCurriculum,
   });
 
@@ -103,6 +178,80 @@ export const App: React.FC = () => {
     });
   }, []);
 
+  // Best-effort index backfill for existing records so quality filters work without manual re-save.
+  useEffect(() => {
+    if (!user) return;
+
+    const signature = [
+      ...savedPlans.map((item) => `${item.id}:${item.timestamp}`),
+      ...savedCurricula.map((item) => `${item.id}:${item.timestamp}`),
+    ].join('|');
+    if (signature === indexSyncSignatureRef.current) return;
+    indexSyncSignatureRef.current = signature;
+
+    let cancelled = false;
+    (async () => {
+      const now = new Date().toISOString();
+      const planEntries = savedPlans.map((record) => {
+        const quality = assessNatureLessonPlanQuality(record.plan as any);
+        return {
+          recordId: record.id,
+          appId: 'nature-compass',
+          recordType: 'lesson_plan',
+          ownerId: user.id,
+          title: record.name || 'Untitled Plan',
+          searchableText: [
+            record.name,
+            record.description,
+            record.plan?.basicInfo?.theme,
+            record.plan?.basicInfo?.activityType,
+            record.plan?.basicInfo?.targetAudience,
+          ].filter(Boolean).join(' '),
+          textbookLevelKey: null,
+          cefr: null,
+          curriculumId: null,
+          unitNumber: null,
+          tags: ['nature', record.mode || 'school'],
+          qualityStatus: quality.status,
+          updatedAt: now,
+        };
+      });
+      const curriculumEntries = savedCurricula.map((record) => {
+        const quality = assessNatureCurriculumQuality(record.curriculum as any, record.params as any);
+        return {
+          recordId: record.id,
+          appId: 'nature-compass',
+          recordType: 'curriculum',
+          ownerId: user.id,
+          title: record.name || 'Untitled Curriculum',
+          searchableText: [
+            record.name,
+            record.description,
+            record.curriculum?.theme,
+            record.curriculum?.overview,
+          ].filter(Boolean).join(' '),
+          textbookLevelKey: null,
+          cefr: record.params?.englishLevel || null,
+          curriculumId: record.id,
+          unitNumber: null,
+          tags: ['nature', record.language],
+          qualityStatus: quality.status,
+          updatedAt: now,
+        };
+      });
+
+      const entries = [...planEntries, ...curriculumEntries];
+      for (const entry of entries) {
+        if (cancelled) return;
+        await upsertRecordIndexEntry(entry);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, savedPlans, savedCurricula]);
+
   // Cloud sync is now handled automatically by useProjectCRUD's cloudTable option.
 
   // =========== CRUD Handlers ===========
@@ -123,16 +272,21 @@ export const App: React.FC = () => {
       coverRef = imgKey;
     }
 
+
     const newSavedPlan: SavedLessonPlan = {
       id: planId, timestamp: Date.now(),
-      name: existing?.name || planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
+      name: existing?.name || planToSave.basicInfo?.theme || planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
       description: existing?.description || generateNCKitDescription(planToSave),
       plan: planToSave, language: currentKitLanguage,
       mode: input.mode,
       ...((coverRef || existing?.coverImage) ? { coverImage: coverRef || existing?.coverImage } : {}),
     };
 
-    savePlanDb(newSavedPlan);
+    const saveResult = await savePlanDb(newSavedPlan);
+    if (!saveResult.ok) {
+      useToast.getState().error('Plan save failed. Local draft is kept and can be retried.');
+      return saveResult;
+    }
     setCurrentPlanId(planId);
 
     // Provide instant UI update for base64 image ref before reload
@@ -141,6 +295,7 @@ export const App: React.FC = () => {
     }
 
     // Cloud sync is automatic via useProjectCRUD
+    return saveResult;
   };
 
   const handleLoadPlan = (saved: SavedLessonPlan) => {
@@ -152,17 +307,17 @@ export const App: React.FC = () => {
     }, 100);
   };
 
-  const handleDeletePlan = (id: string) => {
-    deletePlanDb(id);
-    imageStore.removeByPrefix(`nc-${id}-`);
+  const handleDeletePlan = async (id: string) => {
+    await deletePlanDb(id);
+    await imageStore.removeByPrefix(`nc-${id}-`);
     if (currentPlanId === id) setCurrentPlanId(null);
   };
 
-  const handleRenamePlan = (id: string, newName: string) => {
-    renamePlanDb(id, newName);
+  const handleRenamePlan = async (id: string, newName: string) => {
+    await renamePlanDb(id, newName);
   };
 
-  const handleSaveCurriculum = (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => {
+  const handleSaveCurriculum = async (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => {
     const name = `${language === 'zh' ? '[中文] ' : ''}${curriculum.theme || `Curriculum ${new Date().toLocaleDateString()}`}`;
     const existing = savedCurricula.find(c => c.curriculum.theme === curriculum.theme && c.language === language);
     const id = existing ? existing.id : crypto.randomUUID();
@@ -170,19 +325,37 @@ export const App: React.FC = () => {
     const savedCurriculum: SavedCurriculum = {
       id, timestamp: Date.now(), name, description: existing?.description || curriculum.overview, curriculum, params, language
     };
-    saveCurriculumDb(savedCurriculum);
+    const saveResult = await saveCurriculumDb(savedCurriculum);
+    if (!saveResult.ok) {
+      useToast.getState().error('Curriculum save failed. Local draft is kept and can be retried.');
+    }
+    return saveResult;
   };
 
-  const handleDeleteCurriculum = (id: string) => {
-    deleteCurriculumDb(id);
+  const handleDeleteCurriculum = async (id: string) => {
+    await deleteCurriculumDb(id);
   };
 
-  const handleRenameCurriculum = (id: string, newName: string) => {
-    renameCurriculumDb(id, newName);
+  const handleRenameCurriculum = async (id: string, newName: string) => {
+    await renameCurriculumDb(id, newName);
   };
 
   const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => {
     const mappedInput = mapLessonToInput(lesson, params);
+
+    // Attach RAG fact sheet if available from curriculum generation
+    if (ragFactSheets && curriculumResult) {
+      const curriculum = language === 'zh' ? curriculumResult.curriculumCN : curriculumResult.curriculumEN;
+      const lessonIndex = curriculum?.lessons.findIndex(l => l.title === lesson.title) ?? -1;
+      if (lessonIndex >= 0) {
+        const fs = ragFactSheets.find(f => f.lessonIndex === lessonIndex);
+        if (fs) {
+          mappedInput.factSheet = fs.content;
+          mappedInput.factSheetQuality = fs.quality as 'good' | 'low' | 'insufficient';
+        }
+      }
+    }
+
     setInput(mappedInput);
     setLessonPlan(null);
     setCurrentPlanId(null);
@@ -248,7 +421,21 @@ export const App: React.FC = () => {
                         onDeleteCurriculum={handleDeleteCurriculum}
                         onRenameCurriculum={handleRenameCurriculum}
                         onLoadCurriculum={(saved) => {
-                          setExternalCurriculum({ curriculum: saved.curriculum, params: saved.params, language: saved.language });
+                          // Find the paired language version (same theme & params but different language)
+                          const otherLang = saved.language === 'en' ? 'zh' : 'en';
+                          const paired = savedCurricula.find(c =>
+                            c.id !== saved.id &&
+                            c.language === otherLang &&
+                            c.curriculum.theme === saved.curriculum.theme &&
+                            c.params.city === saved.params.city &&
+                            c.params.ageGroup === saved.params.ageGroup
+                          );
+                          setExternalCurriculum({
+                            curriculum: saved.curriculum,
+                            params: saved.params,
+                            language: saved.language,
+                            pairedCurriculum: paired?.curriculum,
+                          });
                           setView('curriculum');
                         }}
                       />

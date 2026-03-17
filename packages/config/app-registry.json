@@ -1,0 +1,62 @@
+[
+  {
+    "id": "planner",
+    "name": "ESL Planner",
+    "workspace": "apps/esl-planner",
+    "distSource": "esl-planner",
+    "distTarget": "planner",
+    "devPort": 3001,
+    "scanPath": "/planner/",
+    "devCmd": "npm run dev:planner"
+  },
+  {
+    "id": "essay",
+    "name": "Essay Lab",
+    "workspace": "apps/essay-lab",
+    "distSource": "essay-lab",
+    "distTarget": "essay-lab",
+    "devPort": 3002,
+    "scanPath": "/essay-lab/",
+    "devCmd": "npm run dev:essay"
+  },
+  {
+    "id": "nature",
+    "name": "Nature Compass",
+    "workspace": "apps/nature-compass",
+    "distSource": "nature-compass",
+    "distTarget": "nature-compass",
+    "devPort": 3003,
+    "scanPath": "/nature-compass/",
+    "devCmd": "npm run dev:nature"
+  },
+  {
+    "id": "ops",
+    "name": "Rednote Ops",
+    "workspace": "apps/rednote-ops",
+    "distSource": "rednote-ops",
+    "distTarget": "rednote-ops",
+    "devPort": 3005,
+    "scanPath": "/rednote-ops/",
+    "devCmd": "npm run dev:ops"
+  },
+  {
+    "id": "edu",
+    "name": "Edu Hub",
+    "workspace": "apps/edu-hub",
+    "distSource": "edu-hub",
+    "distTarget": "edu-hub",
+    "devPort": 3006,
+    "scanPath": "/edu-hub/",
+    "devCmd": "npm run dev:edu"
+  },
+  {
+    "id": "student",
+    "name": "Student Portal",
+    "workspace": "apps/student-portal",
+    "distSource": "student-portal",
+    "distTarget": "student-portal",
+    "devPort": 3007,
+    "scanPath": "/student-portal/",
+    "devCmd": "npm run dev:student"
+  }
+]

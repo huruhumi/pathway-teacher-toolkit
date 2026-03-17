@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CEFRLevel } from '../types';
 import { FileText, Loader2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -9,6 +8,23 @@ import { Input } from '@shared/components/ui/Input';
 import { Select } from '@shared/components/ui/Select';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { GenerationProgress } from '@shared/components/GenerationProgress';
+import { FallbackPrompt } from '@shared/components/FallbackPrompt';
+import type { FallbackPromptContent } from '@shared/hooks/useFallbackConfirm';
+import {
+  listSelectableTextbookLevels,
+  groupTextbookLevelOptionViews,
+  buildTextbookLevelOptionViews,
+  type TextbookLevelGroupView,
+  type TextbookLevelOptionView,
+} from '@shared/config/eslAssessmentRegistry';
+import {
+  OTHER_TEXTBOOK_ID,
+  isCustomTextbookLevelKey,
+  listCustomTextbookLevelOptions,
+} from '../utils/customTextbookLevels';
+import { resolveCEFRFromTextbookLevelKey } from '../utils/textbookLevelCefr';
+
+type GenerationSourceMode = 'notebook' | 'direct';
 
 interface InputSectionProps {
   onGenerate: (
@@ -19,7 +35,9 @@ interface InputSectionProps {
     slideCount: number,
     duration: string,
     studentCount: string,
-    lessonTitle: string
+    lessonTitle: string,
+    textbookLevelKey: string,
+    sourceMode: GenerationSourceMode
   ) => void;
   isLoading: boolean;
   initialValues?: {
@@ -30,42 +48,120 @@ interface InputSectionProps {
     duration: string;
     studentCount: string;
     lessonTitle: string;
+    textbookLevelKey?: string;
+    sourceMode?: GenerationSourceMode;
   } | null;
   onStop: () => void;
+  generationProgress?: {
+    stage: number;
+    percent: number;
+    statusText: string;
+    stages: string[];
+  };
+  pendingFallback?: FallbackPromptContent | null;
+  onFallbackChoice?: (choice: 'continue' | 'cancel') => void;
 }
 
-export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues, onStop }) => {
+export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues, onStop, generationProgress, pendingFallback, onFallbackChoice }) => {
   const { t, lang } = useLanguage();
   const [text, setText] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const [level, setLevel] = useState<CEFRLevel>(CEFRLevel.Beginner);
   const [topic, setTopic] = useState('');
   const [slideCount, setSlideCount] = useState<number>(15);
   const [duration, setDuration] = useState('90');
   const [studentCount, setStudentCount] = useState('6');
   const [lessonTitle, setLessonTitle] = useState('');
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sourceMode, setSourceMode] = useState<GenerationSourceMode>('notebook');
+  const [textbookLevelKey, setTextbookLevelKey] = useState('');
+  const [textbookId, setTextbookId] = useState('');
+  const textbookLevels = listSelectableTextbookLevels();
+  const textbookGroupsBase = useMemo(() => groupTextbookLevelOptionViews(textbookLevels), [textbookLevels]);
+  const textbookOptionsBase = useMemo(() => buildTextbookLevelOptionViews(textbookLevels), [textbookLevels]);
+  const customLevelOptions = useMemo<TextbookLevelOptionView[]>(
+    () =>
+      listCustomTextbookLevelOptions().map((item) => ({
+        levelKey: item.levelKey,
+        status: 'ready',
+        textbookId: OTHER_TEXTBOOK_ID,
+        textbookName: lang === 'zh' ? 'Other（其他教材）' : 'Other',
+        volumeLabel: item.label,
+        levelLabel: item.label,
+        levelDisplayName: item.label,
+      })),
+    [lang],
+  );
+  const textbookGroups = useMemo<TextbookLevelGroupView[]>(
+    () => [
+      ...textbookGroupsBase,
+      {
+        textbookId: OTHER_TEXTBOOK_ID,
+        textbookName: lang === 'zh' ? 'Other（其他教材）' : 'Other',
+        options: customLevelOptions,
+      },
+    ],
+    [customLevelOptions, lang, textbookGroupsBase],
+  );
+  const textbookOptions = useMemo<TextbookLevelOptionView[]>(
+    () => [...textbookOptionsBase, ...customLevelOptions],
+    [customLevelOptions, textbookOptionsBase],
+  );
+  const activeTextbookGroup = useMemo(
+    () => textbookGroups.find((group) => group.textbookId === textbookId) || null,
+    [textbookGroups, textbookId],
+  );
 
   // Pre-fill fields when initialValues changes (from curriculum)
   useEffect(() => {
     if (initialValues) {
       setText(initialValues.text);
-      setLevel(initialValues.level);
       setTopic(initialValues.topic);
       setSlideCount(initialValues.slideCount);
       setDuration(initialValues.duration);
       setStudentCount(initialValues.studentCount);
       setLessonTitle(initialValues.lessonTitle);
+      setSourceMode(initialValues.sourceMode || 'notebook');
+      setTextbookLevelKey(initialValues.textbookLevelKey || '');
+      if (initialValues.textbookLevelKey) {
+        if (isCustomTextbookLevelKey(initialValues.textbookLevelKey)) {
+          setTextbookId(OTHER_TEXTBOOK_ID);
+        }
+        const selected = textbookOptions.find((item) => item.levelKey === initialValues.textbookLevelKey);
+        if (selected) setTextbookId(selected.textbookId);
+      }
     }
-  }, [initialValues]);
+  }, [initialValues, textbookOptions]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...newFiles]);
+  useEffect(() => {
+    if (!textbookGroups.length) return;
+    if (!textbookId) {
+      setTextbookId(textbookGroups[0].textbookId);
+      return;
     }
-  };
+    const valid = textbookGroups.some((group) => group.textbookId === textbookId);
+    if (!valid) {
+      setTextbookId(textbookGroups[0].textbookId);
+    }
+  }, [textbookGroups, textbookId]);
+
+  useEffect(() => {
+    if (!textbookLevelKey) return;
+    if (isCustomTextbookLevelKey(textbookLevelKey)) {
+      if (textbookId !== OTHER_TEXTBOOK_ID) setTextbookId(OTHER_TEXTBOOK_ID);
+      return;
+    }
+    const selected = textbookOptions.find((item) => item.levelKey === textbookLevelKey);
+    if (selected && selected.textbookId !== textbookId) {
+      setTextbookId(selected.textbookId);
+    }
+  }, [textbookLevelKey, textbookId, textbookOptions]);
+
+  useEffect(() => {
+    if (!activeTextbookGroup?.options?.length) return;
+    const stillValid = activeTextbookGroup.options.some((item) => item.levelKey === textbookLevelKey);
+    if (!stillValid) {
+      setTextbookLevelKey(activeTextbookGroup.options[0].levelKey);
+    }
+  }, [activeTextbookGroup, textbookLevelKey]);
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
@@ -78,7 +174,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    onGenerate(text, files, level, topic, slideCount, duration, studentCount, lessonTitle);
+    const resolvedLevel = resolveCEFRFromTextbookLevelKey(textbookLevelKey, textbookOptions, CEFRLevel.Beginner);
+    onGenerate(text, files, resolvedLevel, topic, slideCount, duration, studentCount, lessonTitle, textbookLevelKey, sourceMode);
   };
 
   return (
@@ -95,15 +192,50 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
           className="py-3 text-base font-bold"
         />
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Select
+            label={lang === 'zh' ? '教材名称' : 'Textbook'}
+            value={textbookId}
+            onChange={(e) => {
+              const nextTextbookId = e.target.value;
+              setTextbookId(nextTextbookId);
+              const stillValid = textbookOptions.some(
+                (item) => item.levelKey === textbookLevelKey && item.textbookId === nextTextbookId,
+              );
+              if (!stillValid) setTextbookLevelKey('');
+            }}
+            className="py-3"
+            options={textbookGroups.map((group) => ({
+              label: group.textbookName,
+              value: group.textbookId,
+            }))}
+          />
+          <Select
+            label={lang === 'zh' ? '级别' : 'Level'}
+            value={textbookLevelKey}
+            onChange={(e) => setTextbookLevelKey(e.target.value)}
+            className="py-3"
+            options={[
+              ...((activeTextbookGroup?.options || []).map((item) => ({
+                label: item.textbookId === OTHER_TEXTBOOK_ID ? item.levelDisplayName : `${item.levelDisplayName} (${item.status})`,
+                value: item.levelKey,
+              }))),
+            ]}
+          />
+          <Select
+            label={t('input.sourceMode')}
+            value={sourceMode}
+            onChange={(e) => setSourceMode(e.target.value as GenerationSourceMode)}
+            className="py-3"
+            options={[
+              { label: t('input.modeNotebook') as string, value: 'notebook' },
+              { label: t('input.modeDirect') as string, value: 'direct' },
+            ]}
+          />
+        </div>
+
         {/* Class Context Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-          <Select
-            label={t('input.targetLevel')}
-            value={level}
-            onChange={(e) => setLevel(e.target.value as CEFRLevel)}
-            className="py-3"
-            options={Object.values(CEFRLevel).map(lvl => ({ label: t(`cefr.${lvl}`) as string, value: lvl }))}
-          />
           <Input
             label={t('input.classDuration')}
             type="number"
@@ -174,14 +306,27 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
                 icon={null}
               />
               <GenerationProgress
-                statusText={lang === 'zh' ? '正在生成课程套件...' : 'Generating lesson kit...'}
+                statusText={generationProgress?.statusText || (lang === 'zh' ? '正在生成课程套件...' : 'Generating lesson kit...')}
+                progress={generationProgress?.percent}
+                stages={generationProgress?.stages}
+                currentStage={generationProgress?.stage}
                 theme="indigo"
               />
+              {pendingFallback && onFallbackChoice && (
+                <FallbackPrompt
+                  title={pendingFallback.title}
+                  detail={pendingFallback.detail}
+                  onContinue={() => onFallbackChoice('continue')}
+                  onCancel={() => onFallbackChoice('cancel')}
+                  continueLabel={lang === 'zh' ? '继续 Fallback 生成' : 'Continue with Fallback'}
+                  cancelLabel={lang === 'zh' ? '停止生成' : 'Stop Generation'}
+                />
+              )}
             </>
           ) : (
             <GenerationButton
               loading={isLoading}
-              disabled={!text && files.length === 0}
+              disabled={!lessonTitle.trim() || (!text && files.length === 0) || !textbookLevelKey}
               onClick={handleSubmit}
               defaultText={t('input.generateKit')}
               theme="indigo"

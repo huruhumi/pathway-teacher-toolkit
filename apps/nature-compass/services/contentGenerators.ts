@@ -2,14 +2,14 @@
 
 import { Type, Schema } from "@google/genai";
 import { LessonPlanResponse, VocabularyItem, VisualReferenceItem, RoadmapItem } from "../types";
-import { createAIClient } from '@shared/ai/client';
-import { retryOperation, lessonPlanSchema } from './geminiService';
+import { createAIClient, retryAICall as retryOperation } from '@pathway/ai';
+import { lessonPlanSchema } from './gemini/schema';
 
 export const generateSingleStep = async (context: any, currentSteps: string[]): Promise<string> => {
     const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Context: A teaching activity "${context.activity}" (${context.description}).
             Current steps: ${JSON.stringify(currentSteps)}.
             Task: Write the NEXT single logical instructional step for the teacher. Keep it actionable and concise. Return only the step text.`,
@@ -22,7 +22,7 @@ export const generateVocabularyItem = async (theme: string, existingWords: strin
     const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Theme: ${theme}. Existing words: ${existingWords.join(', ')}.
             Generate ONE new relevant vocabulary word and a simple definition for a child.
             Return JSON: { "word": "...", "definition": "..." }`,
@@ -46,7 +46,7 @@ export const generateVisualReferenceItem = async (theme: string, activityType: s
     const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Theme: ${theme}. Activity: ${activityType}. Existing visuals: ${existingLabels.join(', ')}.
             Suggest ONE new visual reference aid (diagram, photo, etc) that would help the teacher.
             Return JSON: { "label": "...", "description": "...", "type": "..." }`,
@@ -88,7 +88,7 @@ export const generateRoadmapItem = async (theme: string, activityType: string, c
 
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Theme: ${theme}. Activity Type: ${activityType}.
             Current phases: ${currentRoadmap.map(r => r.phase).join(', ')}.
             Generate the NEXT logical phase/activity for this workshop.
@@ -106,7 +106,7 @@ export const generateSingleBackgroundInfo = async (theme: string, activity: stri
     const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Theme: ${theme}. Activity: ${activity}.
             Current background info: ${currentInfo.join(' | ')}.
             Provide ONE new interesting fact or concept explanation for the teacher. Keep it brief. Return only text.`,
@@ -119,7 +119,7 @@ export const generateSingleTeachingTip = async (theme: string, activity: string,
     const ai = createAIClient();
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: `Theme: ${theme}. Activity: ${activity}.
             Current teaching tips: ${currentTips.join(' | ')}.
             Provide ONE new specific teaching tip (methodology, safety, or engagement). Keep it actionable and brief. Return only text.`,
@@ -146,7 +146,7 @@ export const translateLessonPlan = async (plan: LessonPlanResponse, targetLangua
 
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             config: {
                 systemInstruction,
                 responseMimeType: 'application/json',

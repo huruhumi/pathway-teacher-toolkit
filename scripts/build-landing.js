@@ -1,56 +1,43 @@
 const fs = require('fs');
 const path = require('path');
+const { runMain } = require('./app-task-runner');
+const { createScriptLogger } = require('./script-logger');
+const { toBuildAssemblyApps } = require('./app-targets');
+const {
+    copyRootFiles,
+    copyRegistryFile,
+    copyAppDists,
+} = require('./landing-assembly');
 
 const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
+const APP_REGISTRY_SOURCE = path.join(ROOT, 'packages', 'config', 'app-registry.json');
+const log = createScriptLogger('landing-build');
 
-const apps = [
-    { name: 'esl-planner', dir: 'planner' },
-    { name: 'essay-lab', dir: 'essay-lab' },
-    { name: 'nature-compass', dir: 'nature-compass' },
-    { name: 'academy-ops', dir: 'academy-ops' },
-    { name: 'edu-hub', dir: 'edu-hub' },
-    { name: 'student-portal', dir: 'student-portal' },
-];
+const apps = toBuildAssemblyApps();
+const ROOT_FILES = Object.freeze([
+    'index.html',
+    'style.css',
+    'logo.png',
+    'landing-copy.js',
+    'landing-runtime.js',
+    'landing-dom.js',
+    'i18n.js',
+    'auth.js',
+]);
 
-function copyDir(src, dest) {
-    fs.mkdirSync(dest, { recursive: true });
-    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-        if (entry.isDirectory()) {
-            copyDir(srcPath, destPath);
-        } else {
-            fs.copyFileSync(srcPath, destPath);
-        }
+async function main() {
+    if (fs.existsSync(DIST)) {
+        fs.rmSync(DIST, { recursive: true });
     }
+    fs.mkdirSync(DIST, { recursive: true });
+
+    copyRootFiles({ rootDir: ROOT, distDir: DIST, files: ROOT_FILES, log });
+    copyRegistryFile({ sourcePath: APP_REGISTRY_SOURCE, distDir: DIST, log });
+    copyAppDists({ rootDir: ROOT, distDir: DIST, apps, log });
+
+    console.log('');
+    log.info('Build assembly complete.');
 }
 
-// Clean dist
-if (fs.existsSync(DIST)) {
-    fs.rmSync(DIST, { recursive: true });
-}
-fs.mkdirSync(DIST, { recursive: true });
-
-// Copy landing page files
-for (const file of ['index.html', 'style.css', 'logo.png', 'i18n.js', 'auth.js']) {
-    const src = path.join(ROOT, file);
-    if (fs.existsSync(src)) {
-        fs.copyFileSync(src, path.join(DIST, file));
-        console.log(`Copied ${file}`);
-    }
-}
-
-// Copy each app's build output
-for (const app of apps) {
-    const appDist = path.join(ROOT, 'apps', app.name, 'dist');
-    const target = path.join(DIST, app.dir);
-    if (fs.existsSync(appDist)) {
-        copyDir(appDist, target);
-        console.log(`Copied ${app.name} → dist/${app.dir}/`);
-    } else {
-        console.error(`WARNING: ${appDist} does not exist. Did the build fail?`);
-    }
-}
-
-console.log('\nBuild assembly complete!');
+runMain('landing-build', main);

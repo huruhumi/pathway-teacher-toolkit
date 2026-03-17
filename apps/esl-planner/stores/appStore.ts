@@ -31,7 +31,15 @@ export const useSessionStore = create<SessionState>()(
         }),
         {
             name: 'esl-planner-session',
-            storage: createJSONStorage(() => sessionStorage)
+            storage: createJSONStorage(() => sessionStorage),
+            partialize: (state) => ({
+                state: {
+                    ...state.state,
+                    // Strip generatedContent from persistence — it can be very large
+                    generatedContent: null,
+                },
+                loadedCurriculum: state.loadedCurriculum,
+            }),
         }
     )
 );

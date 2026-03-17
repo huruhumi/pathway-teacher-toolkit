@@ -1,5 +1,5 @@
 const fs = require('fs');
-const file = 'd:/Vibe Coding Projects/Pathway Academy Toolkit/apps/academy-ops/src/components/ContentGenerator.tsx';
+const file = 'd:/Vibe Coding Projects/Pathway Academy Toolkit/apps/rednote-ops/src/components/ContentGenerator.tsx';
 let content = fs.readFileSync(file, 'utf8');
 
 // 1. Add imports

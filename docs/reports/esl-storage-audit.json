@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-03-14T22:12:00.898Z",
+  "scope": {
+    "userId": "all-users",
+    "sampleLimit": 20
+  },
+  "counts": {
+    "lessons": 0,
+    "curricula": 0,
+    "lessonIndexRows": 0,
+    "curriculumIndexRows": 0
+  },
+  "lessons": {
+    "issues": {
+      "missingContentData": [],
+      "missingStructuredPlan": [],
+      "missingClassInfo": [],
+      "metaFieldMismatch": [],
+      "missingIndexEntry": [],
+      "indexTitleMismatch": []
+    }
+  },
+  "curricula": {
+    "issues": {
+      "missingCurriculumData": [],
+      "missingParamsData": [],
+      "missingTextbookLevelKey": [],
+      "missingIndexEntry": [],
+      "indexTitleMismatch": []
+    }
+  },
+  "summary": {
+    "ok": true,
+    "criticalIssueCount": 0,
+    "lessonIssueCount": 0,
+    "curriculumIssueCount": 0
+  }
+}

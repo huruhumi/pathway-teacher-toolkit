@@ -1,4 +1,4 @@
-import { commonTranslations } from '@shared/i18n/commonTranslations';
+import { commonTranslations } from '@pathway/i18n';
 
 export const translations = {
     ...commonTranslations,
@@ -326,6 +326,33 @@ export const translations = {
     'style.claymation': { en: 'Claymation', zh: '黏土动画' },
     'style.technicalDiagram': { en: 'Technical Diagram', zh: '技术图表' },
     'style.isometricView': { en: 'Isometric View', zh: '等距视图' },
+
+    // TabPoster
+    'poster.platformStrategy': { en: 'Platform Strategy', zh: '平台策略' },
+    'poster.wechat': { en: 'WeChat Moments', zh: '朋友圈' },
+    'poster.xhs': { en: 'Xiaohongshu (RED)', zh: '小红书' },
+    'poster.socialCopy': { en: 'Social Copy', zh: '社交文案' },
+    'poster.generate': { en: 'Generate', zh: '生成' },
+    'poster.regenerate': { en: 'Regenerate', zh: '重新生成' },
+    'poster.copyPlaceholder': { en: 'Click generate to create platform-optimized social media copy...', zh: '点击生成以创建针对平台优化的社交媒体文案...' },
+    'poster.visualPoster': { en: 'Visual Poster', zh: '视觉海报' },
+    'poster.visualDesc': { en: 'Generate a clean background image that allows space for text overlay.', zh: '生成干净且留白的海报背景，用于叠加文字。' },
+    'poster.generateImage': { en: 'Generate Poster Image', zh: '生成海报底图' },
+    'poster.download': { en: 'Download high-res PNG', zh: '下载高清 PNG' },
+    'poster.regenerateBg': { en: 'Regenerate background', zh: '重新生成背景' },
+
+    'poster.typeTitle': { en: 'Poster Type', zh: '海报类型' },
+    'poster.typeCover': { en: 'Cover Poster', zh: '竖版封面' },
+    'poster.typeIntro': { en: 'Content Intro', zh: '内容简介页' },
+    'poster.typeShowcase': { en: 'Inner Pages', zh: '内页展示页' },
+    'poster.typeAllPages': { en: 'All Pages Grid', zh: '全局缩略图' },
+    'poster.uploadInner': { en: 'Upload Inner Pages', zh: '上传课件内页截图' },
+    'poster.uploadInnerDesc': { en: 'Upload 1-2 screenshots of the generated slide deck (Ratio: 16:9)', zh: '上传1-2张课件内页截图（建议 16:9）' },
+    'poster.uploadGridDesc': { en: 'Upload 1 combined screenshot of all pages layout', zh: '上传1张包含所有页面的缩略拼图' },
+    'poster.clearImages': { en: 'Clear Images', zh: '清空图片' },
+    'poster.commentPlaceholder': { en: 'Describe changes for the background...', zh: '描述背景图修改要求...' },
+    'poster.regenerateWithComment': { en: 'Regenerate with instructions', zh: '按要求重新生成' },
+    'poster.introTitle': { en: 'Course Highlights', zh: '课程亮点' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

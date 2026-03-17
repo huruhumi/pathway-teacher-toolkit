@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 import { ExternalLink, Sparkles, Loader2, X, Trash2, ImageIcon } from 'lucide-react';
 import { StructuredLessonPlan, PhonicsContent } from '../../../types';
 
@@ -121,7 +122,7 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
                                             newTexts[idx] = e.currentTarget.innerHTML;
                                             setPhonicsContent({ ...phonicsContent, decodableTexts: newTexts });
                                         }}
-                                        dangerouslySetInnerHTML={{ __html: text }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text, { ALLOWED_TAGS: ['span', 'br', 'b', 'i'], ALLOWED_ATTR: ['style'] }) }}
                                     />
                                     <div className="mt-6 flex flex-wrap gap-4 pt-4 border-t border-slate-100 dark:border-white/5 no-print">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#10b981]"></div> Phonics Extension</span>

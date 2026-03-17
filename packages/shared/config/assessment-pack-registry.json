@@ -1,0 +1,392 @@
+[
+  {
+    "id": "pre-a1-pack",
+    "title": "Pre-A1 Assessment Pack",
+    "summary": "Foundational pre-literacy and classroom communication standards for very early learners.",
+    "objectives": [
+      "Recognize and respond to classroom routines.",
+      "Use isolated words and simple chunks with support.",
+      "Demonstrate comprehension through actions, matching, and visuals."
+    ],
+    "performanceIndicators": [
+      "Follows one-step instructions with gestures.",
+      "Produces target words/chunks in controlled tasks.",
+      "Shows understanding through pointing, sorting, and basic TPR responses."
+    ],
+    "rubricBands": [
+      "Exceeding: responds independently and accurately in familiar routines.",
+      "Meeting: responds correctly with light prompting.",
+      "Developing: needs repeated modeling and scaffolded prompts."
+    ],
+    "commonErrors": [
+      "Confuses target classroom routines and commands.",
+      "Relies on L1 instead of target chunks.",
+      "Limited retention of high-frequency words."
+    ],
+    "exemplarTasks": [
+      "TPR command-response check.",
+      "Picture-word matching and oral naming.",
+      "Routine dialogue echo and substitution."
+    ]
+  },
+  {
+    "id": "a1-pack",
+    "title": "A1 Assessment Pack",
+    "summary": "Beginner standards for high-frequency language, controlled sentence production, and routine communication.",
+    "objectives": [
+      "Use high-frequency vocabulary in simple contexts.",
+      "Produce short sentences using learned frames.",
+      "Understand and complete basic reading/listening tasks."
+    ],
+    "performanceIndicators": [
+      "Uses target words accurately in guided output.",
+      "Maintains intelligible pronunciation in short exchanges.",
+      "Completes simple comprehension tasks with evidence."
+    ],
+    "rubricBands": [
+      "Exceeding: accurate and mostly independent basic communication.",
+      "Meeting: generally accurate with occasional support.",
+      "Developing: partial control and frequent prompting required."
+    ],
+    "commonErrors": [
+      "Word-order transfer from L1.",
+      "Missing auxiliaries/articles in short sentences.",
+      "Over-reliance on single-word responses."
+    ],
+    "exemplarTasks": [
+      "Guided speaking with sentence starters.",
+      "Short form-fill and sentence completion.",
+      "Picture-based listening and response."
+    ]
+  },
+  {
+    "id": "a2-pack",
+    "title": "A2 Assessment Pack",
+    "summary": "Elementary standards for connected language, basic grammar control, and task completion.",
+    "objectives": [
+      "Use linked sentences to describe familiar topics.",
+      "Apply target grammar with moderate consistency.",
+      "Extract key details from short texts and audio."
+    ],
+    "performanceIndicators": [
+      "Sustains short interaction with understandable output.",
+      "Uses core grammar in controlled-to-semi-open tasks.",
+      "Supports responses with details from source material."
+    ],
+    "rubricBands": [
+      "Exceeding: clear, connected, and mostly accurate output.",
+      "Meeting: understandable and task-complete with minor errors.",
+      "Developing: uneven control and incomplete responses."
+    ],
+    "commonErrors": [
+      "Tense inconsistency across connected sentences.",
+      "Limited range of linking devices.",
+      "Literal translation in collocations."
+    ],
+    "exemplarTasks": [
+      "Role-play with target grammar goals.",
+      "Short paragraph with checklist.",
+      "Detail-focused reading/listening response."
+    ]
+  },
+  {
+    "id": "a1-a2-pack",
+    "title": "A1-A2 Transition Assessment Pack",
+    "summary": "Bridge standards for learners moving from sentence-level production to short connected discourse.",
+    "objectives": [
+      "Expand from fixed frames to flexible sentence patterns.",
+      "Use familiar vocabulary for short connected output.",
+      "Demonstrate comprehension with basic evidence language."
+    ],
+    "performanceIndicators": [
+      "Produces 3-5 linked statements on familiar topics.",
+      "Uses a small range of connectors appropriately.",
+      "Completes integrated comprehension tasks with support."
+    ],
+    "rubricBands": [
+      "Exceeding: coherent short discourse with controlled grammar.",
+      "Meeting: mostly coherent output with occasional breakdown.",
+      "Developing: fragmented output requiring heavy scaffolding."
+    ],
+    "commonErrors": [
+      "Repetition of simple sentence patterns.",
+      "Weak cohesion between ideas.",
+      "Limited detail extension."
+    ],
+    "exemplarTasks": [
+      "Guided compare/contrast speaking.",
+      "Short response writing with evidence stems.",
+      "Two-source (image+text) comprehension check."
+    ]
+  },
+  {
+    "id": "a2-b1-pack",
+    "title": "A2-B1 Transition Assessment Pack",
+    "summary": "Transition standards for moving from routine communication to structured opinion and reasoning.",
+    "objectives": [
+      "Develop paragraph-level spoken and written responses.",
+      "Use target language to explain reasons and outcomes.",
+      "Apply vocabulary and grammar to semi-open tasks."
+    ],
+    "performanceIndicators": [
+      "Organizes ideas with basic logical flow.",
+      "Supports answers with simple reasons/examples.",
+      "Shows growing control of complex sentence patterns."
+    ],
+    "rubricBands": [
+      "Exceeding: coherent and supported responses with clear logic.",
+      "Meeting: understandable reasoning with moderate accuracy.",
+      "Developing: limited support and inconsistent control."
+    ],
+    "commonErrors": [
+      "Weak reasoning support in opinion tasks.",
+      "Inconsistent clause linking.",
+      "Inaccurate register for academic tasks."
+    ],
+    "exemplarTasks": [
+      "Opinion card with reason-evidence frames.",
+      "Paragraph response with organizer.",
+      "Integrated reading-to-speaking task."
+    ]
+  },
+  {
+    "id": "b1-pack",
+    "title": "B1 Assessment Pack",
+    "summary": "Intermediate standards for coherent communication, evidence use, and independent task execution.",
+    "objectives": [
+      "Express and defend opinions with relevant support.",
+      "Sustain multi-step language tasks independently.",
+      "Use topic and academic vocabulary with control."
+    ],
+    "performanceIndicators": [
+      "Builds coherent responses with clear structure.",
+      "Uses varied sentence forms with manageable errors.",
+      "References source details appropriately."
+    ],
+    "rubricBands": [
+      "Exceeding: well-structured, accurate, and independent output.",
+      "Meeting: coherent output with occasional language slips.",
+      "Developing: partial coherence and limited support."
+    ],
+    "commonErrors": [
+      "Insufficient detail to support claims.",
+      "Repetitive sentence patterns.",
+      "Inconsistent tense/aspect control."
+    ],
+    "exemplarTasks": [
+      "Evidence-based mini presentation.",
+      "Structured writing with rubric checkpoints.",
+      "Discussion task with follow-up clarification."
+    ]
+  },
+  {
+    "id": "b1-plus-pack",
+    "title": "B1+ Assessment Pack",
+    "summary": "Upper-intermediate bridge standards toward B2 with stronger argument quality and language range.",
+    "objectives": [
+      "Develop nuanced explanations with clearer stance.",
+      "Use wider discourse markers and connectors.",
+      "Demonstrate stronger lexical precision in academic topics."
+    ],
+    "performanceIndicators": [
+      "Expands and refines ideas with relevant qualifiers.",
+      "Maintains coherence across longer responses.",
+      "Shows control of mid-complexity structures."
+    ],
+    "rubricBands": [
+      "Exceeding: confident, coherent, and precise argumentation.",
+      "Meeting: clear argument with manageable errors.",
+      "Developing: uneven range and occasional coherence gaps."
+    ],
+    "commonErrors": [
+      "Overgeneralization without evidence.",
+      "Misuse of advanced connectors.",
+      "Lexical imprecision in abstract topics."
+    ],
+    "exemplarTasks": [
+      "Argument paragraph with counterpoint.",
+      "Debate-prep speaking task.",
+      "Synthesis response from two short sources."
+    ]
+  },
+  {
+    "id": "b1-b2-pack",
+    "title": "B1-B2 Transition Assessment Pack",
+    "summary": "Transition standards from intermediate to upper-intermediate academic communication.",
+    "objectives": [
+      "Produce structured arguments with evidence and comparison.",
+      "Handle extended speaking/writing tasks with coherence.",
+      "Demonstrate wider vocabulary and functional accuracy."
+    ],
+    "performanceIndicators": [
+      "Maintains clear argument line across sections.",
+      "Supports claims with examples and source references.",
+      "Balances fluency and accuracy in extended output."
+    ],
+    "rubricBands": [
+      "Exceeding: persuasive and precise with sustained coherence.",
+      "Meeting: clear, supported output with occasional breakdown.",
+      "Developing: partially developed argument and uneven control."
+    ],
+    "commonErrors": [
+      "Evidence listed but not explained.",
+      "Paragraphing/organization weaknesses.",
+      "Register inconsistency in academic responses."
+    ],
+    "exemplarTasks": [
+      "Problem-solution writing task.",
+      "Data/diagram-supported speaking response.",
+      "Multi-paragraph compare/evaluate prompt."
+    ]
+  },
+  {
+    "id": "b2-pack",
+    "title": "B2 Assessment Pack",
+    "summary": "Upper-intermediate standards for analytical communication, argumentation, and classroom transfer.",
+    "objectives": [
+      "Develop clear arguments with well-selected evidence.",
+      "Use complex structures and cohesive devices effectively.",
+      "Adapt output to purpose, audience, and task constraints."
+    ],
+    "performanceIndicators": [
+      "Sustains coherent extended discourse.",
+      "Uses topic-specific vocabulary with precision.",
+      "Demonstrates control in integrated skills tasks."
+    ],
+    "rubricBands": [
+      "Exceeding: sophisticated, coherent, and highly accurate output.",
+      "Meeting: strong task fulfillment with minor issues.",
+      "Developing: adequate but inconsistent complexity/control."
+    ],
+    "commonErrors": [
+      "Argument structure not fully balanced.",
+      "Overcomplex sentences causing clarity loss.",
+      "Weak synthesis across multiple inputs."
+    ],
+    "exemplarTasks": [
+      "Evidence-weighted discussion response.",
+      "Integrated reading/listening to writing task.",
+      "Formal presentation with peer Q&A."
+    ]
+  },
+  {
+    "id": "c1-pack",
+    "title": "C1 Assessment Pack",
+    "summary": "Advanced standards for high-precision, flexible, and critically reasoned academic communication.",
+    "objectives": [
+      "Deliver nuanced arguments with critical evaluation.",
+      "Integrate and synthesize multiple sources accurately.",
+      "Maintain register control and stylistic flexibility."
+    ],
+    "performanceIndicators": [
+      "Produces highly coherent and well-structured responses.",
+      "Uses precise lexical/grammatical choices for meaning control.",
+      "Demonstrates strong source integration and critique."
+    ],
+    "rubricBands": [
+      "Exceeding: polished, insightful, and academically robust output.",
+      "Meeting: strong advanced performance with limited issues.",
+      "Developing: competent but lacking consistency/precision."
+    ],
+    "commonErrors": [
+      "Overly dense language reducing readability.",
+      "Insufficient critical stance despite strong summary.",
+      "Inconsistent citation/evidence framing."
+    ],
+    "exemplarTasks": [
+      "Critical synthesis essay/speaking brief.",
+      "Source comparison with stance development.",
+      "Seminar-style discussion with rebuttal."
+    ]
+  },
+  {
+    "id": "starter-a1-pack",
+    "title": "Starter A1 Assessment Pack",
+    "summary": "Entry-level assessment standards for foundational listening, speaking, reading, and writing tasks.",
+    "objectives": [
+      "Use high-frequency classroom vocabulary accurately.",
+      "Follow and respond to simple instructions.",
+      "Produce short, structured spoken and written outputs."
+    ],
+    "performanceIndicators": [
+      "Understands key lesson words in context.",
+      "Uses sentence frames with limited support.",
+      "Completes low-complexity tasks with clear sequencing."
+    ],
+    "rubricBands": [
+      "Exceeding: accurate output with independent use.",
+      "Meeting: mostly accurate output with minor support.",
+      "Developing: partial completion and frequent support needed."
+    ],
+    "commonErrors": [
+      "Word-order transfer from L1.",
+      "Missing function words in short sentences.",
+      "Over-reliance on isolated vocabulary."
+    ],
+    "exemplarTasks": [
+      "Picture-supported speaking check.",
+      "Guided sentence completion.",
+      "Simple comprehension and response."
+    ]
+  },
+  {
+    "id": "bridge-a2-pack",
+    "title": "Bridge A2 Assessment Pack",
+    "summary": "Developing assessment standards for connected language, grammar control, and task completion.",
+    "objectives": [
+      "Demonstrate control of target grammar in context.",
+      "Use linked sentences to explain ideas.",
+      "Apply lesson vocabulary to classroom tasks."
+    ],
+    "performanceIndicators": [
+      "Maintains intelligible output in short interactions.",
+      "Uses target grammar with moderate consistency.",
+      "Completes reading/listening tasks with evidence."
+    ],
+    "rubricBands": [
+      "Exceeding: consistent accuracy and clear reasoning.",
+      "Meeting: adequate accuracy with occasional slips.",
+      "Developing: uneven control and incomplete support."
+    ],
+    "commonErrors": [
+      "Tense inconsistency in extended responses.",
+      "Limited cohesion markers.",
+      "Literal translation in collocations."
+    ],
+    "exemplarTasks": [
+      "Role-play with target grammar goals.",
+      "Short paragraph with structure checklist.",
+      "Evidence-based comprehension questions."
+    ]
+  },
+  {
+    "id": "intermediate-b1-pack",
+    "title": "Intermediate B1 Assessment Pack",
+    "summary": "Intermediate standards for structured reasoning, language precision, and independent task execution.",
+    "objectives": [
+      "Express and defend opinions with support.",
+      "Sustain multi-step speaking and writing tasks.",
+      "Integrate topic vocabulary with academic precision."
+    ],
+    "performanceIndicators": [
+      "Builds coherent responses with logical flow.",
+      "Uses varied sentence structures appropriately.",
+      "Supports answers with relevant details."
+    ],
+    "rubricBands": [
+      "Exceeding: precise, coherent, and self-corrected output.",
+      "Meeting: coherent output with manageable errors.",
+      "Developing: fragmented output and limited support."
+    ],
+    "commonErrors": [
+      "Weak evidence in opinion tasks.",
+      "Repetitive sentence patterns.",
+      "Inaccurate discourse markers."
+    ],
+    "exemplarTasks": [
+      "Opinion presentation with evidence prompts.",
+      "Structured writing task with rubric cues.",
+      "Integrated reading-to-speaking response."
+    ]
+  }
+]

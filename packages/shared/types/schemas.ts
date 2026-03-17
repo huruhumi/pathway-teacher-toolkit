@@ -131,6 +131,14 @@ export const PhonicsContentSchema = z.object({
     decodableTextPrompts: z.array(z.string())
 });
 
+export const SentenceCitationSchema = z.object({
+    section: z.string(),
+    sentence: z.string(),
+    sourceIds: z.array(z.string()),
+    sourceTitles: z.array(z.string()),
+    sourceUrls: z.array(z.string()).optional(),
+});
+
 export const ESLGeneratedContentSchema = z.object({
     lessonPlanMarkdown: z.string(),
     structuredLessonPlan: StructuredLessonPlanSchema,
@@ -149,7 +157,70 @@ export const ESLGeneratedContentSchema = z.object({
     blackboardImageUrl: z.string().optional(),
     phonics: PhonicsContentSchema.optional(),
     flashcardImages: z.record(z.string(), z.string()).optional(),
-    decodableTextImages: z.record(z.string(), z.string()).optional()
+    decodableTextImages: z.record(z.string(), z.string()).optional(),
+    textbookLevelKey: z.string().optional(),
+    assessmentPackId: z.string().optional(),
+    knowledgeNotebookId: z.string().optional(),
+    groundingSources: z.array(z.object({
+        id: z.string().optional(),
+        title: z.string().optional(),
+        url: z.string().optional(),
+        status: z.string().optional(),
+        type: z.string().optional(),
+    })).optional(),
+    groundingCoverage: z.array(z.object({
+        section: z.string(),
+        evidenceType: z.enum(['strict_fact_sheet', 'assisted', 'synthesized']),
+        note: z.string(),
+    })).optional(),
+    sentenceCitations: z.array(SentenceCitationSchema).optional(),
+    groundingStatus: z.enum(['verified', 'mixed', 'unverified']).optional(),
+    qualityGate: z.object({
+        pass: z.boolean(),
+        status: z.enum(['ok', 'needs_review']),
+        issues: z.array(z.string())
+    }).optional(),
+    scoreReport: z.object({
+        overallScore: z.number(),
+        dimensionScores: z.array(z.object({
+            key: z.enum([
+                'accuracy',
+                'teachability',
+                'objective_alignment',
+                'assessment_measurability',
+                'age_appropriateness',
+            ]),
+            label: z.string(),
+            score: z.number(),
+            maxScore: z.number(),
+            issues: z.array(z.string()),
+            actionableFixes: z.array(z.string()),
+        })),
+        risks: z.array(z.string()),
+        actionableFixes: z.array(z.string()),
+        reviewerStatus: z.enum(['ready_to_teach', 'needs_teacher_review']),
+        generatedAt: z.string(),
+        calibration: z.object({
+            textbookLevelKey: z.string(),
+            sampleCount: z.number(),
+            appliedDelta: z.number(),
+            confidence: z.enum(['low', 'medium', 'high']),
+        }).optional(),
+    }).optional(),
+});
+
+/**
+ * Reduced Zod schema for Phase 1 (plan_only) validation.
+ * Only the lesson plan + summary are required.
+ */
+export const ESLPlanOnlySchema = z.object({
+    structuredLessonPlan: StructuredLessonPlanSchema,
+    lessonPlanMarkdown: z.string(),
+    summary: z.object({
+        objectives: z.string(),
+        targetVocab: z.array(z.string()),
+        grammarPoints: z.array(z.string())
+    }),
 });
 
 // --- Nature Compass Schemas ---
@@ -169,7 +240,8 @@ export const RoadmapItemSchema = z.object({
     learningObjective: z.string(),
     steps: z.array(z.string()),
     backgroundInfo: z.array(z.string()),
-    teachingTips: z.array(z.string())
+    teachingTips: z.array(z.string()),
+    activityInstructions: z.string().optional()
 });
 
 export const SupplyListSchema = z.object({
@@ -186,10 +258,11 @@ export const VisualReferenceItemSchema = z.object({
 export const HandbookPageSchema = z.object({
     pageNumber: z.number(),
     title: z.string(),
-    section: z.enum(['Cover', 'Introduction', 'Table of Contents', 'Safety', 'Prop Checklist', 'Background Knowledge', 'Reading', 'Instructions', 'Activity/Worksheet', 'Reflection', 'Certificate', 'Back Cover']),
+    section: z.string(),
     layoutDescription: z.string(),
     visualPrompt: z.string(),
-    contentPrompt: z.string()
+    contentPrompt: z.string(),
+    phaseIndex: z.number().optional()
 });
 
 export const NatureLessonPlanResponseSchema = z.object({
@@ -213,6 +286,7 @@ export const NatureLessonPlanResponseSchema = z.object({
     safetyProtocol: z.array(z.string()),
     visualReferences: z.array(VisualReferenceItemSchema),
     handbookStylePrompt: z.string(),
+    handbookStructurePlan: z.string().optional(),
     handbook: z.array(HandbookPageSchema),
     notebookLMPrompt: z.string(),
     imagePrompts: z.array(z.string()),

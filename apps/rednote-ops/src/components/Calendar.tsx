@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type MouseEvent } from 'react';
 import { useToast } from '@shared/stores/useToast';
 import { downloadFile } from '@shared/utils/download';
 import { SavedNote } from '../types';
@@ -32,7 +32,7 @@ export default function Calendar({ savedNotes, onUpdateNote, onDeleteNote, onEdi
     }
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = (e: MouseEvent, id: string) => {
     e.stopPropagation();
     onDeleteNote?.(id);
   };

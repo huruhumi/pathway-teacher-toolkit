@@ -1,0 +1,6 @@
+{
+  "name": "@pathway/shared-legacy",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module"
+}

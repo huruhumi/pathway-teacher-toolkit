@@ -1,33 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LessonPlanResponse, RoadmapItem, VocabularyItem, VisualReferenceItem } from '../types';
-import { Clipboard, Check, Box, BookOpen, ImageIcon, FileText, BadgeCheck, Printer, Loader2, Sparkles, Download, Compass, Languages, ChevronDown, Share2, Save, X } from 'lucide-react';
-import { generateSingleStep, generateImagePrompt, generateImage, generateVocabularyItem, generateVisualReferenceItem, generateRoadmapItem, generateBadgePrompt, generateSingleBackgroundInfo, generateSingleTeachingTip } from '../services/geminiService';
+import { Clipboard, Check, Box, BookOpen, BookOpenCheck, ImageIcon, FileText, BadgeCheck, Printer, Loader2, Sparkles, Download, Compass, Languages, ChevronDown, Share2, Save, X } from 'lucide-react';
+import {
+    generateSingleStep,
+    generateVocabularyItem,
+    generateVisualReferenceItem,
+    generateRoadmapItem,
+    generateSingleBackgroundInfo,
+    generateSingleTeachingTip,
+} from '../services/contentGenerators';
+import { generateImagePrompt, generateImage, generateBadgePrompt } from '../services/imageService';
+import { regenerateSinglePhase, regenerateDownstreamFromRoadmap } from '../services/curriculumService';
 import { useLessonStore } from '../stores/useLessonStore';
+import { useAppStore } from '../stores/appStore';
 import { useToast } from '@shared/stores/useToast';
 import { useLanguage } from '../i18n/LanguageContext';
 import { RichTextEditor } from './RichTextEditor';
 import { usePrintUtils } from '../hooks/usePrintUtils';
+import { useSlideExport } from '../hooks/useSlideExport';
 import { useAutoSave, SaveStatus } from '@shared/hooks/useAutoSave';
 
-// Tab Components
 import { TabRoadmap } from './tabs/TabRoadmap';
 import { TabSupplies } from './tabs/TabSupplies';
 import { TabFlashcards } from './tabs/TabFlashcards';
 import { TabVisuals } from './tabs/TabVisuals';
 import { TabHandbook } from './tabs/TabHandbook';
-import { TabBadge } from './tabs/TabBadge';
+import { TabPoster } from './tabs/TabPoster';
+import { TabFactSheet } from './tabs/TabFactSheet';
 
 // Utils
 import { sanitizeFilename, downloadImage } from '../utils/fileHelpers';
 
 interface LessonPlanDisplayProps {
     plan: LessonPlanResponse;
-    onSave?: (plan: LessonPlanResponse, coverImage?: string | null) => void;
+    onSave?: (plan: LessonPlanResponse, coverImage?: string | null) => void | Promise<unknown>;
+    mode?: 'school' | 'family';
 }
 
-type Tab = 'roadmap' | 'supplies' | 'flashcards' | 'visuals' | 'handbook' | 'badge';
+type Tab = 'roadmap' | 'supplies' | 'factsheet' | 'flashcards' | 'visuals' | 'handbook' | 'poster';
 
-export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSave }) => {
+export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSave, mode = 'school' }) => {
     const [activeTab, setActiveTab] = useState<Tab>('roadmap');
     const { t, lang } = useLanguage();
     const [copiedNotebook, setCopiedNotebook] = useState(false);
@@ -35,6 +47,16 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
     const [copiedImagePrompt, setCopiedImagePrompt] = useState<number | null>(null);
     const [copiedContentPrompt, setCopiedContentPrompt] = useState<number | null>(null);
     const [isSaved, setIsSaved] = useState(false);
+    const [slideVersionPref, setSlideVersionPref] = useState<'detailed' | 'simple' | 'both'>('both');
+    const [regeneratingPhase, setRegeneratingPhase] = useState<number | null>(null);
+    const [isCommitting, setIsCommitting] = useState(false);
+
+
+    // Slide Export
+    const { exportState, startExport, cancelExport, resetExport, isProxyAvailable } = useSlideExport();
+
+    // App input for regeneration
+    const input = useAppStore(s => s.input);
 
     // Image Zoom State
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -129,7 +151,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
 
 
 
-    const handleSaveClick = () => {
+    const handleSaveClick = async () => {
         if (!onSave) return;
 
         const currentPlan: LessonPlanResponse = {
@@ -148,7 +170,11 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
             handbook: handbookPages,
             translatedPlan: plan.translatedPlan,
         };
-        onSave(currentPlan, badgeImage);
+        const result = await onSave(currentPlan, badgeImage) as { ok?: boolean } | void;
+        if (result && typeof result === 'object' && 'ok' in result && result.ok === false) {
+            useToast.getState().error(lang === 'zh' ? '淇濆瓨澶辫触锛岃绋嶅悗閲嶈瘯' : 'Save failed. Please retry.');
+            return;
+        }
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
     };
@@ -560,6 +586,86 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
         });
     };
 
+    const handleStylePromptChange = (prompt: string) => {
+        plan.handbookStylePrompt = prompt;
+    };
+
+    const handleRegeneratePhase = async (phaseIndex: number, feedback: string) => {
+        setRegeneratingPhase(phaseIndex);
+        try {
+            const currentPlan: LessonPlanResponse = {
+                ...plan,
+                roadmap,
+                basicInfo: { ...plan.basicInfo, ...basicInfo },
+                handbook: handbookPages,
+                supplies,
+                safetyProtocol,
+            };
+            const newPhase = await regenerateSinglePhase(currentPlan, phaseIndex, feedback, lang as 'en' | 'zh');
+            const updated = [...roadmap];
+            updated[phaseIndex] = newPhase;
+            setRoadmap(updated);
+            useToast.getState().success(lang === 'zh' ? `阶段 ${phaseIndex + 1} 已更新！` : `Phase ${phaseIndex + 1} updated!`);
+        } catch (err: any) {
+            console.error('[RegeneratePhase] Failed:', err);
+            useToast.getState().error(lang === 'zh' ? `重新生成失败: ${err.message}` : `Regeneration failed: ${err.message}`);
+        } finally {
+            setRegeneratingPhase(null);
+        }
+    };
+
+    const handleCommit = async () => {
+        setIsCommitting(true);
+        try {
+            const currentPlan: LessonPlanResponse = {
+                ...plan,
+                roadmap,
+                basicInfo: { ...plan.basicInfo, ...basicInfo },
+                handbook: handbookPages,
+                supplies,
+                safetyProtocol,
+            };
+            const downstream = await regenerateDownstreamFromRoadmap(currentPlan, lang as 'en' | 'zh');
+            if (downstream.handbook) setHandbookPages(downstream.handbook);
+            if (downstream.supplies) setSupplies(downstream.supplies);
+            if (downstream.imagePrompts) plan.imagePrompts = downstream.imagePrompts;
+            if (downstream.notebookLMPrompt) plan.notebookLMPrompt = downstream.notebookLMPrompt;
+            if (downstream.handbookStylePrompt) plan.handbookStylePrompt = downstream.handbookStylePrompt;
+            useToast.getState().success(lang === 'zh' ? '手册和配套内容已根据修改后的活动阶段更新！' : 'Handbook & downstream content updated!');
+        } catch (err: any) {
+            console.error('[Commit] Failed:', err);
+            useToast.getState().error(lang === 'zh' ? `Commit 失败: ${err.message}` : `Commit failed: ${err.message}`);
+        } finally {
+            setIsCommitting(false);
+        }
+    };
+
+    const handleExportSlides = async () => {
+        // Reset any stuck state from previous attempts
+        resetExport();
+
+        const available = await isProxyAvailable();
+        console.log('[Export] Proxy available:', available);
+        if (!available) {
+            useToast.getState().error(lang === 'zh' ? '本地代理未运行，请先执行: node scripts/nlm-proxy.mjs' : 'Local proxy not running. Start it with: node scripts/nlm-proxy.mjs');
+            return;
+        }
+        const title = plan.basicInfo?.theme || plan.missionBriefing?.title || 'Handbook';
+        const detectedLang = /[\u4e00-\u9fff]/.test(title) ? 'zh' as const : 'en' as const;
+        console.log('[Export] Starting export:', { title, detectedLang, pages: handbookPages.length });
+        startExport(
+            title,
+            handbookPages,
+            plan.handbookStylePrompt || '',
+            detectedLang,
+            mode,
+            slideVersionPref,
+            plan.factSheet || null,
+            null, // structurePlan not needed for NotebookLM
+            JSON.stringify(roadmap)
+        );
+    };
+
     const copyToClipboard = async (text: string, type: 'image' | 'content', index: number) => {
         await navigator.clipboard.writeText(text);
         if (type === 'image') {
@@ -617,7 +723,19 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                         handleRoadmapDragStart={handleRoadmapDragStart}
                         handleRoadmapDragOver={handleRoadmapDragOver}
                         handleRoadmapDrop={handleRoadmapDrop}
+                        onRegeneratePhase={handleRegeneratePhase}
+                        regeneratingPhase={regeneratingPhase}
+                        onCommit={handleCommit}
+                        isCommitting={isCommitting}
                     />
+                );
+            case 'factsheet':
+                return plan.factSheet ? <TabFactSheet factSheet={plan.factSheet} /> : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <BookOpenCheck className="w-12 h-12 text-slate-300 mb-4" />
+                        <p className="text-slate-500 font-medium">{lang === 'zh' ? '暂无知识底稿' : 'No fact sheet available'}</p>
+                        <p className="text-slate-400 text-sm mt-1">{lang === 'zh' ? '从课程大纲页面生成课件包时会自动创建' : 'Generated automatically when creating a kit from the curriculum page'}</p>
+                    </div>
                 );
             case 'supplies':
                 return (
@@ -678,19 +796,17 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                         copyToClipboard={copyToClipboard}
                         copiedImagePrompt={copiedImagePrompt}
                         copiedContentPrompt={copiedContentPrompt}
+                        onStylePromptChange={handleStylePromptChange}
+                        onExportSlides={handleExportSlides}
+                        exportState={exportState}
+                        onCancelExport={() => { cancelExport(); resetExport(); }}
+                        slideVersionPref={slideVersionPref}
+                        setSlideVersionPref={setSlideVersionPref}
+                        mode={mode}
                     />
                 );
-            case 'badge':
-                return (
-                    <TabBadge
-                        badgePrompt={badgePrompt}
-                        badgeImage={badgeImage}
-                        loadingBadge={loadingBadge}
-                        basicInfo={basicInfo}
-                        setBadgePrompt={setBadgePrompt}
-                        handleGenerateBadge={handleGenerateBadge}
-                    />
-                );
+            case 'poster':
+                return <TabPoster />;
             default:
                 return null;
         }
@@ -705,10 +821,11 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                     {[
                         { id: 'roadmap', label: t('tab.roadmap'), icon: Compass },
                         { id: 'supplies', label: t('tab.supplies'), icon: Box },
+                        { id: 'factsheet', label: lang === 'zh' ? '知识底稿' : 'Fact Sheet', icon: BookOpenCheck },
                         { id: 'flashcards', label: t('tab.flashcards'), icon: BookOpen },
                         { id: 'visuals', label: t('tab.visuals'), icon: ImageIcon },
                         { id: 'handbook', label: t('tab.handbook'), icon: FileText },
-                        { id: 'badge', label: t('tab.badge'), icon: BadgeCheck },
+                        { id: 'poster', label: lang === 'zh' ? '营销海报' : 'Social Poster', icon: Sparkles },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         return (
@@ -747,19 +864,8 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                         <Printer className="w-4 h-4" />
                         <span className="hidden md:inline">{t('lp.printView')}</span>
                     </button>
-                    {activeTab === 'handbook' && (
-                        <button
-                            onClick={handleCopyAllPrompts}
-                            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors whitespace-nowrap border ${copiedNotebook
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-white dark:bg-slate-900/80 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-slate-50'
-                                }`}
-                            title={t('lp.exportTitle')}
-                        >
-                            {copiedNotebook ? <Check className="w-4 h-4 text-emerald-600" /> : <Clipboard className="w-4 h-4" />}
-                            <span className="hidden md:inline">{copiedNotebook ? t('lp.copied') : t('lp.export')}</span>
-                        </button>
-                    )}
+
+
                     {onSave && (
                         <>
                             <button
@@ -792,6 +898,7 @@ export const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({ plan, onSa
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

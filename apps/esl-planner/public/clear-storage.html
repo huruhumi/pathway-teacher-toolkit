@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Clear All Storage</title>
+</head>
+
+<body>
+  <h2>🧹 Clearing all browser storage + Supabase records...</h2>
+  <pre id="log"></pre>
+  <script>
+    const SUPABASE_URL = 'https://mjvxaicypucfrrvollwm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qdnhhaWN5cHVjZnJydm9sbHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1OTg0MjUsImV4cCI6MjA4ODE3NDQyNX0.uMeRaP7C7fQvKjJlhGrDxGtp0OY6PHMod0FSXOInCzU';
+
+    (async () => {
+      const log = document.getElementById('log');
+      const print = (msg) => { log.textContent += msg + '\n'; };
+
+      // --- Step 1: Find Supabase auth token before clearing storage ---
+      let accessToken = null;
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            const val = JSON.parse(localStorage.getItem(key));
+            accessToken = val?.access_token || val?.currentSession?.access_token;
+            if (accessToken) { print(`Auth: found token from ${key}`); break; }
+          }
+        }
+      } catch (e) { print(`Auth: skip - ${e.message}`); }
+
+      // --- Step 2: Clear Supabase tables via REST API ---
+      if (accessToken) {
+        const headers = {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        };
+        const tables = ['esl_lessons', 'esl_curricula'];
+        for (const table of tables) {
+          try {
+            // DELETE all rows where user_id matches (RLS handles it)
+            const resp = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=neq.IMPOSSIBLE`, {
+              method: 'DELETE', headers
+            });
+            print(`Supabase: ${table} → ${resp.ok ? 'cleared' : resp.status + ' ' + resp.statusText}`);
+          } catch (e) { print(`Supabase: ${table} → error: ${e.message}`); }
+        }
+        // Clear record_index for esl-planner
+        try {
+          const resp = await fetch(`${SUPABASE_URL}/rest/v1/record_index?app_id=eq.esl-planner`, {
+            method: 'DELETE', headers
+          });
+          print(`Supabase: record_index → ${resp.ok ? 'cleared' : resp.status + ' ' + resp.statusText}`);
+        } catch (e) { print(`Supabase: record_index → error: ${e.message}`); }
+      } else {
+        print('Auth: no token found, skipping Supabase cleanup (will clear via MCP)');
+      }
+
+      // --- Step 3: Clear localStorage ---
+      const lsCount = localStorage.length;
+      localStorage.clear();
+      print(`localStorage: cleared ${lsCount} items`);
+
+      // --- Step 4: Clear sessionStorage ---
+      const ssCount = sessionStorage.length;
+      sessionStorage.clear();
+      print(`sessionStorage: cleared ${ssCount} items`);
+
+      // --- Step 5: Clear all IndexedDB databases ---
+      try {
+        const dbs = await indexedDB.databases();
+        for (const db of dbs) {
+          if (db.name) {
+            indexedDB.deleteDatabase(db.name);
+            print(`IndexedDB: deleted "${db.name}"`);
+          }
+        }
+        print(`IndexedDB: cleared ${dbs.length} database(s)`);
+      } catch (e) {
+        print(`IndexedDB: error - ${e.message}`);
+      }
+
+      print('\n✅ Done! Close ALL localhost:3001 tabs, then open a new tab to the planner.');
+    })();
+  </script>
+</body>
+
+</html>

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { useToast } from '@shared/stores/useToast';
-import * as edu from '@shared/services/educationService';
-import type { Student } from '@shared/types/education';
+import * as edu from '@pathway/education';
+import type { Student } from '@pathway/education';
 import { Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw, ClipboardList, BookOpen, Library } from 'lucide-react';
 
 // Lazy-load sub-pages

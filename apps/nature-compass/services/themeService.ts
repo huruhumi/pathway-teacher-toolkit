@@ -2,8 +2,8 @@
 
 import { Type, Part } from "@google/genai";
 import { UploadedFile } from "../types";
-import { createAIClient } from '@shared/ai/client';
-import { retryOperation, THEME_PERSPECTIVES } from './geminiService';
+import { createAIClient, retryAICall as retryOperation } from '@pathway/ai';
+import { THEME_PERSPECTIVES } from './gemini/constants';
 
 export const generateRandomTheme = async (season: string, weather: string, focus: string[], age: string, uploadedFiles: UploadedFile[] = []): Promise<{ theme: string; introduction: string }> => {
     const ai = createAIClient();
@@ -49,7 +49,7 @@ export const generateRandomTheme = async (season: string, weather: string, focus
         }
 
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: contents,
             config: {
                 temperature: 1.0,

@@ -1,92 +1,302 @@
-/**
- * Generic Cloud Sync Service
- * 
- * Provides a table-agnostic CRUD layer over Supabase.
- * Each app passes its own `tableName` (e.g. 'lesson_plans', 'essay_records').
- * Falls back silently when Supabase is not configured.
- */
-import { supabase, isSupabaseEnabled } from './supabaseClient';
+import type { PostgrestError } from '@supabase/supabase-js';
+import type { RecordIndexEntry, SaveResult } from '@shared/types';
+import { isSupabaseEnabled, supabase } from './supabaseClient';
 
 export interface CloudRecord {
     id: string;
     [key: string]: any;
 }
 
-// ── Fetch all records for a user ──
+export interface RecordIndexListParams {
+    ownerId: string;
+    appId?: string;
+    recordType?: string;
+    keyword?: string;
+    textbookLevelKey?: string;
+    cefr?: string;
+    curriculumId?: string;
+    unitNumber?: number;
+    qualityStatus?: 'ok' | 'needs_review' | 'unknown';
+    limit?: number;
+    offset?: number;
+}
+
+export interface RecordIndexListResult {
+    items: RecordIndexEntry[];
+    total: number;
+    errorCode?: string;
+}
+
+function fromSupabaseError(error: PostgrestError | null): SaveResult {
+    if (!error) return { ok: true, source: 'cloud' };
+    return {
+        ok: false,
+        source: 'cloud',
+        errorCode: error.code || 'SUPABASE_ERROR',
+        message: error.message,
+        retryable: !error.code?.startsWith('23'),
+    };
+}
+
+function disabledResult(): SaveResult {
+    return {
+        ok: false,
+        source: 'none',
+        errorCode: 'SUPABASE_DISABLED',
+        message: 'Supabase is not configured.',
+        retryable: true,
+    };
+}
+
 export async function fetchCloudRecords<T extends CloudRecord>(
     tableName: string,
     userId: string,
     orderBy: string = 'updated_at',
+    limit?: number,
 ): Promise<T[]> {
     if (!isSupabaseEnabled() || !supabase) return [];
 
-    const { data, error } = await supabase
+    let query = supabase
         .from(tableName)
         .select('*')
         .eq('user_id', userId)
         .order(orderBy, { ascending: false });
 
+    if (typeof limit === 'number') {
+        query = query.limit(limit);
+    }
+
+    const { data, error } = await query;
     if (error) {
         console.error(`[cloudSync] fetch ${tableName}:`, error.message);
         return [];
     }
+
     return (data ?? []) as T[];
 }
 
-// ── Upsert a single record ──
+export async function fetchCloudRecordsByIds<T extends CloudRecord>(
+    tableName: string,
+    userId: string,
+    ids: string[],
+): Promise<T[]> {
+    if (!isSupabaseEnabled() || !supabase || ids.length === 0) return [];
+
+    const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('user_id', userId)
+        .in('id', ids);
+
+    if (error) {
+        console.error(`[cloudSync] fetchByIds ${tableName}:`, error.message);
+        return [];
+    }
+
+    const rowById = new Map((data ?? []).map((row: any) => [row.id, row]));
+    return ids.map((id) => rowById.get(id)).filter(Boolean) as T[];
+}
+
 export async function upsertCloudRecord<T extends CloudRecord>(
     tableName: string,
     userId: string,
     record: T,
-): Promise<void> {
-    if (!isSupabaseEnabled() || !supabase) return;
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
 
-    const { error } = await supabase
-        .from(tableName)
-        .upsert(
-            { ...record, user_id: userId, updated_at: new Date().toISOString() },
-            { onConflict: 'id' },
-        );
+    try {
+        const { error } = await supabase
+            .from(tableName)
+            .upsert(
+                { ...record, user_id: userId, updated_at: new Date().toISOString() },
+                { onConflict: 'id' },
+            );
 
-    if (error) {
-        console.error(`[cloudSync] upsert ${tableName}:`, error.message);
+        if (error) {
+            console.error(`[cloudSync] upsert ${tableName}:`, error.message);
+        }
+        return fromSupabaseError(error);
+    } catch (err: any) {
+        console.error(`[cloudSync] network error upserting ${tableName}:`, err?.message);
+        return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };
     }
 }
 
-// ── Delete a record ──
 export async function deleteCloudRecord(
     tableName: string,
     userId: string,
     recordId: string,
-): Promise<void> {
-    if (!isSupabaseEnabled() || !supabase) return;
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
 
-    const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', recordId)
-        .eq('user_id', userId);
+    try {
+        const { error } = await supabase
+            .from(tableName)
+            .delete()
+            .eq('id', recordId)
+            .eq('user_id', userId);
 
-    if (error) {
-        console.error(`[cloudSync] delete ${tableName}:`, error.message);
+        if (error) {
+            console.error(`[cloudSync] delete ${tableName}:`, error.message);
+        }
+        return fromSupabaseError(error);
+    } catch (err: any) {
+        console.error(`[cloudSync] network error deleting ${tableName}:`, err?.message);
+        return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };
     }
 }
 
-// ── Rename a record (update a single column) ──
 export async function renameCloudRecord(
     tableName: string,
+    userId: string,
     recordId: string,
     newName: string,
     nameColumn: string = 'name',
-): Promise<void> {
-    if (!isSupabaseEnabled() || !supabase) return;
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
 
     const { error } = await supabase
         .from(tableName)
         .update({ [nameColumn]: newName, updated_at: new Date().toISOString() })
-        .eq('id', recordId);
+        .eq('id', recordId)
+        .eq('user_id', userId);
 
     if (error) {
         console.error(`[cloudSync] rename ${tableName}:`, error.message);
     }
+    return fromSupabaseError(error);
+}
+
+export async function upsertRecordIndexEntry(entry: RecordIndexEntry): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
+
+    const { error } = await supabase
+        .from('record_index')
+        .upsert({
+            record_id: entry.recordId,
+            app_id: entry.appId,
+            record_type: entry.recordType,
+            owner_id: entry.ownerId,
+            title: entry.title,
+            searchable_text: entry.searchableText,
+            textbook_level_key: entry.textbookLevelKey ?? null,
+            cefr: entry.cefr ?? null,
+            curriculum_id: entry.curriculumId ?? null,
+            unit_number: entry.unitNumber ?? null,
+            tags: entry.tags ?? null,
+            quality_status: entry.qualityStatus ?? null,
+            updated_at: entry.updatedAt,
+        }, {
+            onConflict: 'record_id,owner_id',
+        });
+
+    if (error) {
+        console.error('[cloudSync] upsert record_index:', error.message);
+    }
+    return fromSupabaseError(error);
+}
+
+export async function deleteRecordIndexEntry(
+    ownerId: string,
+    recordId: string,
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
+
+    try {
+        const { error } = await supabase
+            .from('record_index')
+            .delete()
+            .eq('owner_id', ownerId)
+            .eq('record_id', recordId);
+
+        if (error) {
+            console.error('[cloudSync] delete record_index:', error.message);
+        }
+        return fromSupabaseError(error);
+    } catch (err: any) {
+        console.error('[cloudSync] network error deleting record_index:', err?.message);
+        return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };
+    }
+}
+
+export async function listRecordIndexEntries(params: RecordIndexListParams): Promise<RecordIndexListResult> {
+    if (!isSupabaseEnabled() || !supabase) {
+        return { items: [], total: 0, errorCode: 'SUPABASE_DISABLED' };
+    }
+
+    const {
+        ownerId,
+        appId,
+        recordType,
+        keyword,
+        textbookLevelKey,
+        cefr,
+        curriculumId,
+        unitNumber,
+        qualityStatus,
+        limit = 24,
+        offset = 0,
+    } = params;
+
+    let query = supabase
+        .from('record_index')
+        .select('*', { count: 'exact' })
+        .eq('owner_id', ownerId)
+        .order('updated_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+    if (appId) query = query.eq('app_id', appId);
+    if (recordType) query = query.eq('record_type', recordType);
+    if (textbookLevelKey) query = query.eq('textbook_level_key', textbookLevelKey);
+    if (cefr) query = query.eq('cefr', cefr);
+    if (curriculumId) query = query.eq('curriculum_id', curriculumId);
+    if (typeof unitNumber === 'number') query = query.eq('unit_number', unitNumber);
+    if (qualityStatus) query = query.eq('quality_status', qualityStatus);
+    if (keyword?.trim()) query = query.ilike('searchable_text', `%${keyword.trim()}%`);
+
+    const { data, error, count } = await query;
+    if (error) {
+        console.error('[cloudSync] list record_index:', error.message);
+        return { items: [], total: 0, errorCode: error.code };
+    }
+
+    const items: RecordIndexEntry[] = (data ?? []).map((row: any) => ({
+        recordId: row.record_id,
+        appId: row.app_id,
+        recordType: row.record_type,
+        ownerId: row.owner_id,
+        title: row.title,
+        searchableText: row.searchable_text || '',
+        textbookLevelKey: row.textbook_level_key,
+        cefr: row.cefr,
+        curriculumId: row.curriculum_id,
+        unitNumber: row.unit_number,
+        tags: row.tags,
+        qualityStatus: row.quality_status,
+        updatedAt: row.updated_at,
+    }));
+
+    return { items, total: count ?? 0 };
+}
+
+export async function updateRecordIndexQualityStatus(
+    ownerId: string,
+    recordId: string,
+    qualityStatus: 'ok' | 'needs_review' | 'unknown',
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
+
+    const { error } = await supabase
+        .from('record_index')
+        .update({
+            quality_status: qualityStatus,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('owner_id', ownerId)
+        .eq('record_id', recordId);
+
+    if (error) {
+        console.error('[cloudSync] update record_index quality:', error.message);
+    }
+    return fromSupabaseError(error);
 }

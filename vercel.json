@@ -17,8 +17,8 @@
       "destination": "/nature-compass/index.html"
     },
     {
-      "source": "/academy-ops/(.*)",
-      "destination": "/academy-ops/index.html"
+      "source": "/rednote-ops/(.*)",
+      "destination": "/rednote-ops/index.html"
     },
     {
       "source": "/edu-hub/(.*)",

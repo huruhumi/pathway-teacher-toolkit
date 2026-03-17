@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CurriculumPlanner } from '../components/CurriculumPlanner';
 import { CurriculumResultDisplay } from '../components/CurriculumResultDisplay';
 import type { Curriculum, CurriculumParams, CurriculumLesson, SavedLessonPlan } from '../types';
@@ -7,17 +7,17 @@ import { useBatchGenerate } from '../hooks/useBatchGenerate';
 import { safeStorage } from '@shared/safeStorage';
 
 export interface CurriculumPageProps {
-    onSaveCurriculum: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void;
+    onSaveCurriculum: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void | Promise<unknown>;
     onGenerateLessonKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => void;
     onNavigate: (view: 'lesson' | 'saved') => void;
     savedPlans: SavedLessonPlan[];
-    savePlanDb: (saved: SavedLessonPlan) => void;
+    savePlanDb: (saved: SavedLessonPlan) => void | Promise<unknown>;
 }
 
 export const CurriculumPage: React.FC<CurriculumPageProps> = ({
     onSaveCurriculum, onGenerateLessonKit, onNavigate, savedPlans, savePlanDb
 }) => {
-    const { curriculumResult, setCurriculumResult, externalCurriculum, setExternalCurriculum } = useSessionStore();
+    const { curriculumResult, setCurriculumResult, externalCurriculum, setExternalCurriculum, setRagFactSheets } = useSessionStore();
     const { setLessonPlan } = useSessionStore();
     const { setCurrentPlanId } = useAppStore();
     const {
@@ -36,12 +36,26 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
             }, 100);
         }
     };
+    // Store RAG fact sheets between curriculum generation and batch generation
+    const ragFactSheetsRef = useRef<Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }> | undefined>();
+
     const handleCurriculumGenerated = (data: {
         curriculumEN: Curriculum | null;
         curriculumCN: Curriculum | null;
         params: CurriculumParams;
         activeLanguage: 'en' | 'zh';
+        ragFactSheets?: Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }>;
     }) => {
+        ragFactSheetsRef.current = data.ragFactSheets;
+        // Persist fact sheets as serializable array in session store for handleSavePlan
+        if (data.ragFactSheets && data.ragFactSheets.size > 0) {
+            const arr = Array.from(data.ragFactSheets.entries()).map(([idx, fs]) => ({
+                lessonIndex: idx, content: fs.content, quality: fs.quality
+            }));
+            setRagFactSheets(arr);
+        } else {
+            setRagFactSheets(null);
+        }
         setCurriculumResult(data);
     };
 
@@ -75,9 +89,17 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
             batchLessonMap={batchLessonMap}
             batchRunning={batchRunning}
             batchProgress={batchProgress}
-            onBatchGenerate={(lessons, params, language) => handleBatchGenerate(lessons, params, language, savePlanDb)}
+            onBatchGenerate={(lessons, params, language) => handleBatchGenerate(lessons, params, language, savePlanDb, ragFactSheetsRef.current)}
             onCancelBatch={handleCancelBatch}
             onOpenPlan={handleOpenBatchPlan}
+            onCurriculumUpdate={(updated, language) => {
+                setCurriculumResult((prev: any) => {
+                    if (!prev) return prev;
+                    return language === 'en'
+                        ? { ...prev, curriculumEN: updated }
+                        : { ...prev, curriculumCN: updated };
+                });
+            }}
         />
     ) : (
         <CurriculumPlanner

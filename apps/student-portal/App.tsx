@@ -1,23 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
-import { useAuthStore } from '@shared/stores/useAuthStore';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import type { Assignment, Submission, ClassSession } from '@shared/types/education';
+import { useAuthStore } from '@pathway/platform';
+import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
+import type { Assignment, Submission, ClassSession } from '@pathway/education';
 import {
     ClipboardList, CalendarDays, Languages, BookOpen,
     GraduationCap, User, Loader2, CheckCircle2, Clock,
     Send, RotateCcw,
 } from 'lucide-react';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppFooter from '@shared/components/AppFooter';
-import * as edu from '@shared/services/educationService';
+import * as edu from '@pathway/education';
 import { InteractiveAssignmentRenderer } from './components/InteractiveAssignmentRenderer';
 import { ReadingView } from './components/ReadingView';
-import { AppHeader } from '@shared/components/AppHeader';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
 
 type View = 'assignments' | 'schedule' | 'reading';
 

@@ -1,16 +1,7 @@
 import React from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
-import { AppHeader } from '@shared/components/AppHeader';
-import { HeroBanner } from '@shared/components/HeroBanner';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import { HeaderToggles } from '@shared/components/HeaderToggles';
-import AppFooter from '@shared/components/AppFooter';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
+import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import {
     LayoutDashboard, Users, School, CalendarDays, GraduationCap,
 } from 'lucide-react';

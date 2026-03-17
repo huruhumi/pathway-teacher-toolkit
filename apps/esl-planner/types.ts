@@ -1,6 +1,8 @@
 
 import { CEFRLevel } from '@shared/types';
 export { CEFRLevel };
+import type { GroundingStatus, QualityGate } from '@shared/types/quality';
+import type { ScoreReport } from '@shared/types/scoring';
 
 export interface Flashcard {
   word: string;
@@ -17,6 +19,10 @@ export interface Game {
   materials: string[];
   isCompleted?: boolean;
   linkedStage?: string;
+  /** True for filler activities extracted from stages */
+  isFiller?: boolean;
+  /** Index of the stage this activity belongs to */
+  stageIndex?: number;
 }
 
 export interface Slide {
@@ -122,6 +128,60 @@ export interface PhonicsContent {
   decodableText?: string;
 }
 
+export interface SentenceCitation {
+  section: string;
+  sentence: string;
+  sourceIds: string[];
+  sourceTitles: string[];
+  sourceUrls?: string[];
+}
+
+// --- Assignment Sheet (课后作业单) ---
+
+export interface AssignmentItem {
+  title: string;
+  description: string;
+  isFixed?: boolean;
+}
+
+export interface FeedbackRating {
+  dimension: string;
+  dimension_en: string;
+  score: number; // 0-5, 0 = unrated
+}
+
+export interface ClassroomFeedback {
+  ratings: FeedbackRating[];
+  overallComment: string;
+}
+
+export interface AssignmentSheet {
+  studentName: string;
+  lessonSummary: string;
+  keyPoints: string[];
+  assignments: AssignmentItem[];
+  feedback: ClassroomFeedback;
+  showComment: boolean;
+}
+
+/**
+ * Context preserved from Phase 1 for use in Phase 2 supporting content generation.
+ * Stored in _generationContext so Phase 2 has access to original generation parameters.
+ */
+export interface GenerationContext {
+  level: CEFRLevel;
+  topic: string;
+  lessonTitle: string;
+  duration: string;
+  studentCount: string;
+  slideCount: number;
+  factSheet?: string;
+  validUrls?: string[];
+  textbookLevelKey?: string;
+  assessmentPackPrompt?: string;
+  sourceMode: 'direct' | 'notebook';
+}
+
 export interface GeneratedContent {
   lessonPlanMarkdown: string;
   structuredLessonPlan: StructuredLessonPlan;
@@ -141,6 +201,30 @@ export interface GeneratedContent {
   phonics?: PhonicsContent;
   flashcardImages?: Record<number, string>;
   decodableTextImages?: Record<number, string>;
+  textbookLevelKey?: string;
+  assessmentPackId?: string;
+  knowledgeNotebookId?: string;
+  groundingStatus?: GroundingStatus;
+  qualityGate?: QualityGate;
+  scoreReport?: ScoreReport;
+  groundingSources?: Array<{
+    id?: string;
+    title?: string;
+    url?: string;
+    status?: string;
+    type?: string;
+  }>;
+  groundingCoverage?: Array<{
+    section: string;
+    evidenceType: 'strict_fact_sheet' | 'assisted' | 'synthesized';
+    note: string;
+  }>;
+  sentenceCitations?: SentenceCitation[];
+  assignmentSheet?: AssignmentSheet;
+  /** Tracks which generation phase this content is in. Defaults to 'complete' for old records. */
+  generationPhase?: 'plan_only' | 'complete';
+  /** Preserved context from Phase 1 for Phase 2 generation */
+  _generationContext?: GenerationContext;
 }
 
 export interface SavedLesson {
@@ -189,6 +273,8 @@ export interface ESLCurriculum {
   totalLessons: number;
   targetLevel: string;
   lessons: CurriculumLesson[];
+  sentenceCitations?: SentenceCitation[];
+  assignmentSheet?: AssignmentSheet;
 }
 
 export interface CurriculumParams {
@@ -198,6 +284,8 @@ export interface CurriculumParams {
   studentCount: string;
   slideCount: number;
   customInstructions: string;
+  textbookLevelKey?: string;
+  sourceMode?: 'notebook' | 'direct';
 }
 
 export interface SavedCurriculum {

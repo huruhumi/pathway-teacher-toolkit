@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Game, StructuredLessonPlan, CEFRLevel } from '../../types';
-import { generateSingleGame } from '../../services/geminiService';
+import { generateSingleGame } from '../../services/worksheetService';
 import { Sparkles, Loader2, Bot, CheckSquare, Gamepad2, Trash2, Plus, X, ExternalLink } from 'lucide-react';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
@@ -160,7 +160,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                             <div>
                                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Instructions</h5>
                                 <AutoResizeTextarea
-                                    value={game.instructions}
+                                    value={game.instructions?.includes('\n') ? game.instructions : (game.instructions || '').replace(/(?!^)(\d+)\.\s/g, '\n$1. ')}
                                     onChange={(e) => handleGameChange(idx, 'instructions', e.target.value)}
                                     className="w-full text-sm text-slate-700 dark:text-slate-400 leading-relaxed bg-slate-50/50 border border-transparent hover:border-slate-200 focus:border-indigo-300 rounded-xl p-3 outline-none transition-all"
                                     minRows={4}

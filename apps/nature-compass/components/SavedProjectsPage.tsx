@@ -7,10 +7,11 @@ import { downloadBlob } from '@shared/utils/download';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
     Filter, ArrowUpDown, BookOpen, Languages,
-    MapPin, Users, GraduationCap, FileText, Compass, School, Heart
+    MapPin, Users, GraduationCap, FileText, Compass, School, Heart, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { AGE_RANGES } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
+import { assessNatureCurriculumQuality, assessNatureLessonPlanQuality } from '@shared/config/recordQuality';
 
 interface SavedProjectsPageProps {
     savedPlans: SavedLessonPlan[];
@@ -52,6 +53,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const [cCount, setCCount] = useState('all');
     const [cSort, setCSort] = useState('newest');
     const [cLang, setCLang] = useState<'all' | 'en' | 'zh'>('all');
+    const [cQuality, setCQuality] = useState<'all' | 'ok' | 'needs_review'>('all');
 
     // --- Lesson Kit filter state ---
     const [kSearch, setKSearch] = useState('');
@@ -61,6 +63,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const [kSort, setKSort] = useState('Newest First');
     const [kLang, setKLang] = useState<'all' | 'en' | 'zh'>('all');
     const [kMode, setKMode] = useState<'all' | 'school' | 'family'>('all');
+    const [kQuality, setKQuality] = useState<'all' | 'ok' | 'needs_review'>('all');
 
     // === Dynamic options ===
     const uniqueCities = useMemo(() =>
@@ -75,6 +78,20 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
         Array.from(new Set(savedPlans.map(p => p.plan.basicInfo?.location).filter(Boolean))).sort(),
         [savedPlans]
     );
+    const curriculumQualityMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof assessNatureCurriculumQuality>>();
+        savedCurricula.forEach((item) => {
+            map.set(item.id, assessNatureCurriculumQuality(item.curriculum as any, item.params as any));
+        });
+        return map;
+    }, [savedCurricula]);
+    const planQualityMap = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof assessNatureLessonPlanQuality>>();
+        savedPlans.forEach((item) => {
+            map.set(item.id, assessNatureLessonPlanQuality(item.plan as any));
+        });
+        return map;
+    }, [savedPlans]);
 
     // === Curricula filtering ===
     const filteredCurricula = useMemo(() => {
@@ -99,6 +116,10 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     }
                 }
                 if (cLang !== 'all' && (c.language || 'en') !== cLang) return false;
+                if (cQuality !== 'all') {
+                    const quality = curriculumQualityMap.get(c.id)?.status || 'unknown';
+                    if (quality !== cQuality) return false;
+                }
                 return true;
             })
             .sort((a, b) => {
@@ -108,7 +129,7 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                 if (cSort === 'lessons-desc') return b.curriculum.lessons.length - a.curriculum.lessons.length;
                 return 0;
             });
-    }, [savedCurricula, cSearch, cCity, cAge, cLevel, cCount, cSort, cLang]);
+    }, [savedCurricula, cSearch, cCity, cAge, cLevel, cCount, cSort, cLang, cQuality, curriculumQualityMap]);
 
     // === Lesson Kits filtering ===
     const filteredPlans = useMemo(() => {
@@ -134,10 +155,14 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     const planMode = p.mode || 'school';
                     if (planMode !== kMode) return false;
                 }
+                if (kQuality !== 'all') {
+                    const quality = planQualityMap.get(p.id)?.status || 'unknown';
+                    if (quality !== kQuality) return false;
+                }
                 return true;
             })
             .sort((a, b) => kSort === 'Newest First' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
-    }, [savedPlans, kSearch, kCity, kLevel, kActivity, kSort, kLang, kMode]);
+    }, [savedPlans, kSearch, kCity, kLevel, kActivity, kSort, kLang, kMode, kQuality, planQualityMap]);
 
     // === Helpers ===
     const getLevelLabel = (audience: string) => {
@@ -195,6 +220,11 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                     <option value="lessons-desc">{t('saved.lessonsDesc')}</option>
                                     <option value="lessons-asc">{t('saved.lessonsAsc')}</option>
                                 </FilterSelect>
+                                <FilterSelect value={cQuality} onChange={(v) => setCQuality(v as 'all' | 'ok' | 'needs_review')} icon={ShieldAlert}>
+                                    <option value="all">All Quality</option>
+                                    <option value="needs_review">Needs Review</option>
+                                    <option value="ok">Ready</option>
+                                </FilterSelect>
                                 <FilterSelect value={cLang} onChange={(v) => setCLang(v as 'all' | 'en' | 'zh')} icon={Languages}>
                                     <option value="all">{t('saved.allLangs')}</option>
                                     <option value="en">{t('saved.english')}</option>
@@ -222,6 +252,9 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                         { icon: <Users size={11} />, label: item.params.ageGroup.split(' ')[0] },
                                         { icon: <GraduationCap size={11} />, label: item.params.englishLevel.split(' ')[0] },
                                         { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} ${t('saved.lessons')}`, accent: true },
+                                        ...(curriculumQualityMap.get(item.id)?.status === 'needs_review'
+                                            ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
+                                            : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
                                         { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
                                     ]}
                                     timestamp={item.timestamp}
@@ -282,6 +315,11 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                     <option value="school">{t('saved.modeSchool')}</option>
                                     <option value="family">{t('saved.modeFamily')}</option>
                                 </FilterSelect>
+                                <FilterSelect value={kQuality} onChange={(v) => setKQuality(v as 'all' | 'ok' | 'needs_review')} icon={ShieldAlert}>
+                                    <option value="all">All Quality</option>
+                                    <option value="needs_review">Needs Review</option>
+                                    <option value="ok">Ready</option>
+                                </FilterSelect>
                             </>
                         }
                     />
@@ -300,11 +338,13 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                                 <RecordCard
                                     key={item.id}
                                     title={item.name}
-                                    description={item.plan.missionBriefing?.title || item.plan.basicInfo?.theme || ''}
                                     tags={[
                                         { icon: <GraduationCap size={11} />, label: getLevelLabel(item.plan.basicInfo?.targetAudience || '') },
                                         ...(item.plan.basicInfo?.location ? [{ icon: <MapPin size={11} />, label: item.plan.basicInfo.location }] : []),
                                         ...(item.plan.basicInfo?.activityType ? [{ icon: <Compass size={11} />, label: item.plan.basicInfo.activityType }] : []),
+                                        ...(planQualityMap.get(item.id)?.status === 'needs_review'
+                                            ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
+                                            : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
                                         { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} ${item.language === 'zh' ? '个活动' : 'activities'}`, accent: true },
                                         { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
                                         { icon: item.mode === 'family' ? <Heart size={11} /> : <School size={11} />, label: item.mode === 'family' ? (item.language === 'zh' ? '亲子' : 'Family') : (item.language === 'zh' ? '学校' : 'School'), className: item.mode === 'family' ? 'bg-pink-50 text-pink-600 font-bold' : 'bg-slate-50 text-slate-600 font-bold' },

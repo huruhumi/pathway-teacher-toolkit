@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle } from 'lucide-react';
-import type { Assignment, Submission } from '@shared/types/education';
+import type { Assignment, Submission } from '@pathway/education';
 import { Worksheet, ReadingCompanionContent } from '../../esl-planner/types'; // Assuming we can import types, wait we should copy or move them to shared, but for now we can import or define locally.
 import { Button } from '@shared/components/ui/Button';
 import { Textarea } from '@shared/components/ui/Textarea';

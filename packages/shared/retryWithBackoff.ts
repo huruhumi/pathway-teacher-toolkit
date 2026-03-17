@@ -40,6 +40,14 @@ export async function retryWithBackoff<T>(
 
             const errorMessage = error?.message || JSON.stringify(error);
             const errorCode = error?.status || error?.code;
+            // ─── TEMP DEBUG: Remove after fixing ───
+            console.error(`[RetryDebug] Attempt ${attempt + 1}/${maxRetries}`, {
+                name: error?.name,
+                code: errorCode,
+                message: errorMessage?.slice(0, 500),
+                stack: error?.stack?.slice(0, 300),
+                fullError: error,
+            });
             const nestedCode = error?.error?.code || error?.error?.status;
             const nestedMessage = error?.error?.message;
 

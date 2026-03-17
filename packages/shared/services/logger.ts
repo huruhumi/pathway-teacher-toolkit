@@ -18,6 +18,7 @@ interface LogEntry {
 
 const LOG_BUFFER_SIZE = 100;
 const logBuffer: LogEntry[] = [];
+let globalHandlersInstalled = false;
 
 function createEntry(level: LogLevel, message: string, context?: string, data?: unknown): LogEntry {
     return {
@@ -105,6 +106,9 @@ export function handleError(error: unknown, fallback: string, context?: string):
  * unhandled errors and promise rejections.
  */
 export function installGlobalErrorHandlers() {
+    if (globalHandlersInstalled) return;
+    globalHandlersInstalled = true;
+
     window.addEventListener('error', (event) => {
         logger.error(
             event.message || 'Uncaught error',

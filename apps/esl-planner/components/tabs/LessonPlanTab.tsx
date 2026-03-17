@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
-import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X } from 'lucide-react';
-import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/geminiService';
+import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/itemGenerators';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
@@ -24,6 +24,16 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     const [isGeneratingProblem, setIsGeneratingProblem] = useState(false);
     const [isGeneratingStage, setIsGeneratingStage] = useState(false);
     const [generatingExtraFor, setGeneratingExtraFor] = useState<{ stageIndex: number; type: 'tip' | 'bg' | 'filler' } | null>(null);
+    const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set());
+    const [showStageInput, setShowStageInput] = useState(false);
+    const [stagePrompt, setStagePrompt] = useState('');
+    const toggleStage = useCallback((idx: number) => {
+        setExpandedStages((prev) => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx); else next.add(idx);
+            return next;
+        });
+    }, []);
 
     // --- Handlers ---
     const handlePlanInfoChange = (section: keyof StructuredLessonPlan, field: string, value: any) => {
@@ -318,14 +328,15 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         }
     };
 
-    const addStageEntry = async (index?: number) => {
+    const addStageEntry = async (index?: number, customPrompt?: string) => {
         if (isGeneratingStage) return;
         setIsGeneratingStage(true);
         try {
             const newStage = await generateSingleStage(
                 editablePlan.classInformation.level as CEFRLevel,
                 editablePlan.classInformation.topic,
-                editablePlan.stages
+                editablePlan.stages,
+                customPrompt || undefined
             );
             const newStages = [...editablePlan.stages];
             if (typeof index === 'number') {
@@ -631,12 +642,19 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                                             <div
                                                 ref={provided.innerRef}
                                                 {...provided.draggableProps}
+                                                data-stage-index={i}
                                                 className={`bg-white dark:bg-slate-900/80 rounded-xl border transition-all ${snapshot.isDragging ? 'border-violet-400 shadow-lg opacity-50' : 'border-slate-200 dark:border-white/5 hover:border-violet-300 shadow-sm'}`}
                                             >
                                                 {/* Stage Header */}
-                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
-                                                    <div {...provided.dragHandleProps} className="mt-1 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                                                <div
+                                                    className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-white/5 flex items-start gap-3 rounded-t-xl cursor-pointer group select-none"
+                                                    onClick={() => toggleStage(i)}
+                                                >
+                                                    <div {...provided.dragHandleProps} className="mt-1 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" onClick={(e) => e.stopPropagation()}>
                                                         <GripVertical size={16} />
+                                                    </div>
+                                                    <div className="mt-1 text-slate-400 flex-shrink-0">
+                                                        {expandedStages.has(i) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                                     </div>
                                                     <div className="flex-1 space-y-2">
                                                         {/* Row 1: Time + Stage name + Interaction badge */}
@@ -661,13 +679,13 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                                                             placeholder="Stage aim..."
                                                         />
                                                     </div>
-                                                    <button onClick={() => deleteStageEntry(i)} className="text-slate-400 hover:text-red-500 p-1 no-print">
+                                                    <button onClick={(e) => { e.stopPropagation(); deleteStageEntry(i); }} className="text-slate-400 hover:text-red-500 p-1 no-print">
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>
 
-                                                {/* Stage Body */}
-                                                <div className="p-4">
+                                                {/* Stage Body (collapsible) */}
+                                                {expandedStages.has(i) && <div className="p-4 animate-fade-in">
                                                     {/* === Background Knowledge === */}
                                                     <div className="mb-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg p-2.5 border border-blue-100 dark:border-blue-500/20">
                                                         <label className="block text-xs font-bold text-blue-500 uppercase mb-2 flex items-center gap-1">
@@ -836,7 +854,7 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                                                             </div>
                                                         ));
                                                     })()}
-                                                </div>
+                                                </div>}
                                             </div>
                                         )}
                                     </Draggable>
@@ -846,14 +864,51 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                         )}
                     </Droppable>
 
-                    <button
-                        onClick={() => addStageEntry()}
-                        disabled={isGeneratingStage}
-                        className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 font-semibold hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all flex items-center justify-center gap-2 no-print"
-                    >
-                        {isGeneratingStage ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-                        Add Teaching Stage
-                    </button>
+                    {showStageInput ? (
+                        <div className="border-2 border-dashed border-violet-300 dark:border-violet-700 rounded-xl p-4 space-y-3 bg-violet-50/50 dark:bg-violet-500/5 no-print">
+                            <label className="text-xs font-bold text-violet-600 uppercase">Describe the stage you want (or leave empty for auto)</label>
+                            <textarea
+                                value={stagePrompt}
+                                onChange={(e) => setStagePrompt(e.target.value)}
+                                placeholder="e.g. A competitive team game to review vocabulary from this lesson..."
+                                className="w-full border border-violet-200 dark:border-violet-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500 resize-none"
+                                rows={2}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        addStageEntry(undefined, stagePrompt.trim());
+                                        setStagePrompt('');
+                                        setShowStageInput(false);
+                                    }
+                                }}
+                            />
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => { addStageEntry(undefined, stagePrompt.trim()); setStagePrompt(''); setShowStageInput(false); }}
+                                    disabled={isGeneratingStage}
+                                    className="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors flex items-center gap-1.5"
+                                >
+                                    {isGeneratingStage ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                                    Generate
+                                </button>
+                                <button
+                                    onClick={() => { setShowStageInput(false); setStagePrompt(''); }}
+                                    className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowStageInput(true)}
+                            disabled={isGeneratingStage}
+                            className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 font-semibold hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-all flex items-center justify-center gap-2 no-print"
+                        >
+                            {isGeneratingStage ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
+                            Add Teaching Stage
+                        </button>
+                    )}
                 </div>
             </div>
         </DragDropContext>

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Compass, FolderOpen, Map, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { AppHeader } from '@shared/components/AppHeader';
-import { HeaderToggles } from '@shared/components/HeaderToggles';
-import { useThemeStore } from '@shared/stores/useThemeStore';
+import { AppHeader, HeaderToggles } from '@pathway/ui';
+import { useThemeStore } from '@pathway/platform';
 
 interface HeaderProps {
   currentView: 'curriculum' | 'lesson' | 'saved';

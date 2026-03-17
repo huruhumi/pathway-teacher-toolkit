@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { LessonInput, UploadedFile } from '../types';
+import { LessonInput, UploadedFile, StructuredKnowledge } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
-import { Sun, CloudRain, Shuffle, Loader2, School, Heart } from 'lucide-react';
-import { generateRandomTheme } from '../services/geminiService';
+import { Sun, CloudRain, Shuffle, Loader2, School, Heart, Layers, Sparkles, Wand2 } from 'lucide-react';
+import { generateRandomTheme } from '../services/themeService';
 import { useToast } from '@shared/stores/useToast';
 import { useLanguage, TranslationKey } from '../i18n/LanguageContext';
 import { FileUploadDropzone } from '@shared/components/ui/FileUploadDropzone';
@@ -11,6 +11,7 @@ import { Select } from '@shared/components/ui/Select';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { Button } from '@shared/components/ui/Button';
 import { HandbookPageSelector } from './HandbookPageSelector';
+import { StructuredHandbookInput } from './StructuredHandbookInput';
 
 interface InputSectionProps {
   input: LessonInput;
@@ -196,28 +197,6 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
       </div>
 
-      <div>
-        <label className="input-label">
-          {t('input.focusLabel')}</label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {ACTIVITY_FOCUS_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            const isSelected = input.activityFocus.includes(opt.id);
-            return (
-              <button
-                key={opt.id}
-                onClick={() => handleFocusChange(opt.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${isSelected
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                  : 'border-slate-200 dark:border-white/10 hover:border-emerald-200 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
-                  }`}
-              >
-                <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Select
@@ -261,19 +240,63 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         )}
       </div>
 
-      {/* Handbook Page Configuration */}
-      <HandbookPageSelector
-        mode={input.handbookMode}
-        preset={input.handbookPreset}
-        config={input.handbookPageConfig}
-        autoPageTarget={input.autoPageTarget}
-        duration={input.duration}
-        onModeChange={(m) => setInput(prev => ({ ...prev, handbookMode: m }))}
-        onPresetChange={(p) => setInput(prev => ({ ...prev, handbookPreset: p }))}
-        onConfigChange={(c) => setInput(prev => ({ ...prev, handbookPageConfig: c }))}
-        onAutoPageTargetChange={(t) => setInput(prev => ({ ...prev, autoPageTarget: t }))}
-        lang={lang}
-      />
+      {/* Handbook Mode Selector: Standard vs Structured */}
+      <div>
+        <label className="input-label">{lang === 'zh' ? '手册生成模式' : 'Handbook Mode'}</label>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <button
+            onClick={() => setInput(prev => ({ ...prev, handbookMode: prev.handbookMode === 'structured' ? 'auto' : prev.handbookMode }))}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 text-xs font-semibold transition-all ${input.handbookMode !== 'structured'
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+              : 'border-slate-200 text-slate-500 hover:border-emerald-200'
+              }`}
+          >
+            <Sparkles size={14} /> {lang === 'zh' ? 'AI 自动生成' : 'AI Auto'}
+          </button>
+          <button
+            onClick={() => setInput(prev => ({ ...prev, handbookMode: 'structured' }))}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 text-xs font-semibold transition-all ${input.handbookMode === 'structured'
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+              : 'border-slate-200 text-slate-500 hover:border-indigo-200'
+              }`}
+          >
+            <Layers size={14} /> {lang === 'zh' ? '自定义结构' : 'Custom Structure'}
+          </button>
+        </div>
+
+        {input.handbookMode !== 'structured' ? (
+          <HandbookPageSelector
+            mode={input.handbookMode === 'structured' ? 'auto' : input.handbookMode}
+            preset={input.handbookPreset}
+            config={input.handbookPageConfig}
+            autoPageTarget={input.autoPageTarget}
+            duration={input.duration}
+            onModeChange={(m) => setInput(prev => ({ ...prev, handbookMode: m }))}
+            onPresetChange={(p) => setInput(prev => ({ ...prev, handbookPreset: p }))}
+            onConfigChange={(c) => setInput(prev => ({ ...prev, handbookPageConfig: c }))}
+            onAutoPageTargetChange={(t) => setInput(prev => ({ ...prev, autoPageTarget: t }))}
+            lang={lang}
+          />
+        ) : (
+          <StructuredHandbookInput
+            structure={input.customStructure || ''}
+            onStructureChange={(text) => setInput(prev => ({ ...prev, customStructure: text }))}
+            knowledge={input.structuredKnowledge || []}
+            onKnowledgeReady={(k) => setInput(prev => ({
+              ...prev,
+              structuredKnowledge: k,
+              factSheet: k.filter(item => !item.content.startsWith('(搜索失败')).map(item => `## ${item.topic}\n${item.content}`).join('\n\n---\n\n'),
+              factSheetQuality: k.some(item => !item.content.startsWith('(搜索失败')) ? 'good' : 'insufficient',
+            }))}
+            onMetaReady={({ theme, intro }) => setInput(prev => ({
+              ...prev,
+              theme: theme || prev.theme,
+              topicIntroduction: intro || prev.topicIntroduction,
+            }))}
+            lang={lang}
+          />
+        )}
+      </div>
 
       <div>
         <label className="input-label">
@@ -307,6 +330,76 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         rows={3}
         className="py-3 resize-none"
       />
+
+      {/* Activity Focus — moved below Topic Introduction */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="input-label mb-0">
+            {t('input.focusLabel')}</label>
+          {input.handbookMode === 'structured' && (input.structuredKnowledge?.length || input.customStructure) && (
+            <button
+              onClick={() => {
+                const text = [
+                  input.theme || '',
+                  input.topicIntroduction || '',
+                  input.customStructure || '',
+                  ...(input.structuredKnowledge || []).map(k => `${k.topic} ${k.content}`),
+                ].join(' ').toLowerCase();
+                const allScored = ACTIVITY_FOCUS_OPTIONS
+                  .map(opt => {
+                    const keywords: Record<string, string[]> = {
+                      biology: ['生物', '生态', '植物', '动物', '昆虫', '鸟', '花', '树', '种', 'biology', 'ecology', 'plant', 'animal', 'insect', 'bird', 'flower', 'tree', 'species', 'photosynthesis', 'pollination', 'ecosystem'],
+                      physics: ['物理', '力', '能量', '运动', '光', '声', 'physics', 'force', 'energy', 'motion', 'light', 'sound', 'gravity', 'kinetic'],
+                      chemistry: ['化学', '物质', '反应', '元素', '分子', 'chemistry', 'matter', 'reaction', 'element', 'molecule', 'acid', 'pigment'],
+                      engineering: ['工程', '设计', '建造', '结构', '机械', 'engineering', 'design', 'build', 'structure', 'robot', 'bridge', 'shelter'],
+                      earth: ['地球', '地质', '天文', '气象', '土壤', '岩石', '水', 'earth', 'geology', 'astronomy', 'weather', 'soil', 'rock', 'water', 'moon', 'climate', 'volcano'],
+                      math: ['数学', '逻辑', '测量', '统计', '几何', 'math', 'logic', 'measure', 'statistics', 'geometry', 'calculate'],
+                      art: ['美术', '绘画', '雕塑', '视觉', '艺术', 'art', 'painting', 'sculpture', 'visual', 'drawing', 'craft'],
+                      theater: ['戏剧', '表演', '角色', '舞台', 'theater', 'drama', 'performance', 'role', 'stage', 'act'],
+                      music: ['音乐', '声音', '乐器', '节奏', '歌', 'music', 'sound', 'instrument', 'rhythm', 'song'],
+                      social: ['社会', '社区', '人文', '心理', 'social', 'community', 'society', 'psychology', 'sociology'],
+                      economy: ['经济', '贸易', '市场', '商业', '金融', 'economy', 'trade', 'market', 'business', 'finance', 'commerce'],
+                      history: ['历史', '文化', '遗产', '古代', '传统', '朝代', '文物', 'history', 'culture', 'heritage', 'ancient', 'tradition', 'dynasty', 'museum', 'monument'],
+                    };
+                    const hits = (keywords[opt.id] || []).filter(kw => text.includes(kw)).length;
+                    return { id: opt.id, hits };
+                  });
+                const scored = allScored
+                  .filter(r => r.hits > 0)
+                  .sort((a, b) => b.hits - a.hits);
+                // Take top 3-5: always at least 3 if available, up to 5
+                const top = scored.slice(0, Math.max(3, Math.min(5, scored.length)));
+                if (top.length > 0) {
+                  setInput(prev => ({ ...prev, activityFocus: top.map(r => r.id) }));
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title={lang === 'zh' ? '根据知识底稿和大纲自动选择' : 'Auto-select based on knowledge base & outline'}
+            >
+              <Wand2 size={14} />
+              {lang === 'zh' ? '智能推荐' : 'Auto-detect'}
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {ACTIVITY_FOCUS_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = input.activityFocus.includes(opt.id);
+            return (
+              <button
+                key={opt.id}
+                onClick={() => handleFocusChange(opt.id)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-left ${isSelected
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                  : 'border-slate-200 dark:border-white/10 hover:border-emerald-200 hover:bg-slate-50 text-slate-600 dark:text-slate-400'
+                  }`}
+              >
+                <Icon size={18} className={isSelected ? 'text-emerald-600' : 'text-slate-400'} /> {t(`focus.${opt.label}` as TranslationKey) || opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div>
         <FileUploadDropzone

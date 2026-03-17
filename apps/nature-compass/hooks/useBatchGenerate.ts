@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { CurriculumLesson, CurriculumParams, SavedLessonPlan, LessonPlanResponse } from '../types';
 import { mapLessonToInput } from '../utils/curriculumMapper';
-import { generateLessonPlanStreaming, generateLessonPlanStreamingCN, translateLessonPlan } from '../services/geminiService';
+import { generateLessonPlanStreaming, generateLessonPlanStreamingCN } from '../services/lessonKitService';
+import { translateLessonPlan } from '../services/contentGenerators';
 import { useBatchGenerateState } from '@shared/hooks/useBatchGenerateState';
 import { runWithConcurrency } from '@shared/utils/concurrency';
 
@@ -21,7 +22,9 @@ export function useBatchGenerate() {
         lessons: CurriculumLesson[],
         params: CurriculumParams,
         language: 'en' | 'zh',
-        savePlan: (saved: SavedLessonPlan) => void
+        savePlan: (saved: SavedLessonPlan) => void | Promise<unknown>,
+        /** Pre-fetched NotebookLM fact sheets, keyed by lesson index (optional) */
+        factSheets?: Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }>
     ) => {
         startBatch(lessons.length);
         let errorCount = 0;
@@ -41,6 +44,14 @@ export function useBatchGenerate() {
 
             try {
                 const mappedInput = mapLessonToInput(lessons[i], params);
+
+                // Inject pre-fetched fact sheet if available
+                const fs = factSheets?.get(i);
+                if (fs) {
+                    mappedInput.factSheet = fs.content;
+                    mappedInput.factSheetQuality = fs.quality;
+                }
+
                 const controller = new AbortController();
                 abortControllersRef.current.set(i, controller);
 
@@ -75,11 +86,11 @@ export function useBatchGenerate() {
                         })
                         .finally(() => {
                             // Save with whatever translation state we have (translated or not)
-                            savePlan(newSavedPlan);
+                            void savePlan(newSavedPlan);
                         });
                     pendingTranslations.push(translationPromise);
                 } else {
-                    savePlan(newSavedPlan);
+                    await savePlan(newSavedPlan);
                 }
 
                 abortControllersRef.current.delete(i);

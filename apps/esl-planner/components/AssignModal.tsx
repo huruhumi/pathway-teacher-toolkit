@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import * as edu from '@shared/services/educationService';
-import type { EduClass } from '@shared/types/education';
+import * as edu from '@pathway/education';
+import type { EduClass } from '@pathway/education';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface AssignModalProps {

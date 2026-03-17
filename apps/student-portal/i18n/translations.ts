@@ -1,4 +1,4 @@
-import { commonTranslations } from '@shared/i18n/commonTranslations';
+import { commonTranslations } from '@pathway/i18n';
 
 export const translations = {
     ...commonTranslations,

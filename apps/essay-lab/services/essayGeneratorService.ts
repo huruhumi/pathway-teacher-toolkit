@@ -1,7 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { GeneratedEssay, StudentGrade, CEFRLevel, EssayGenre, WordBankItem } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+import { createAIClient, retryAICall } from '@pathway/ai';
 
 const genreLabels: Record<EssayGenre, string> = {
     [EssayGenre.NARRATIVE]: 'Narrative Essay (记叙文)',
@@ -48,6 +47,7 @@ export async function generateModelEssay(
     genre: EssayGenre,
     targetWords: number
 ): Promise<GeneratedEssay> {
+    const ai = createAIClient();
     const prompt = `You are an expert ESL teacher writing a model essay for Chinese students.
 
 **Task**: Write a high-quality model essay (范文) with the following specifications:
@@ -70,15 +70,17 @@ export async function generateModelEssay(
 
 Write naturally — this should read like a genuine high-scoring student essay, not a textbook example.`;
 
-    const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: responseSchema,
-            temperature: 0.8,
-        },
-    });
+    const response = await retryAICall(() =>
+        ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: responseSchema,
+                temperature: 0.8,
+            },
+        })
+    );
 
     const text = response.text;
     if (!text) throw new Error("AI generation failed");

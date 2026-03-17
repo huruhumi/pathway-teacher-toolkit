@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
-import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel } from '../../types';
-import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/geminiService';
+import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel, SentenceCitation } from '../../types';
+import { generateReadingTask, generateWebResource, generateNewCompanionDay, generateTrivia } from '../../services/worksheetService';
 import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, Target, List, AlertCircle } from 'lucide-react';
 import { handleError } from '@shared/services/logger';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { AssignModal } from '../AssignModal';
-import * as edu from '@shared/services/educationService';
+import * as edu from '@pathway/education';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
+import { getCitationTooltip } from '../../utils/citationTooltip';
 
 interface CompanionTabProps {
     editableReadingCompanion: ReadingCompanionContent;
     setEditableReadingCompanion: (companion: ReadingCompanionContent) => void;
     editablePlan: StructuredLessonPlan | null;
+    sentenceCitations?: SentenceCitation[];
 }
 
 export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     editableReadingCompanion,
     setEditableReadingCompanion,
     editablePlan,
+    sentenceCitations,
 }) => {
     const [isAddingDay, setIsAddingDay] = useState(false);
     const [addingTaskIndex, setAddingTaskIndex] = useState<number | null>(null);
@@ -31,6 +34,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     const [isAssigning, setIsAssigning] = useState(false);
     const [assignError, setAssignError] = useState('');
     const [assignSuccess, setAssignSuccess] = useState('');
+    const getCitationTitle = (section: string, text: string) => getCitationTooltip(sentenceCitations, section, text);
 
     const handleTaskChange = (dIdx: number, tIdx: number, field: keyof ReadingTask, value: any) => {
         const newDays = [...editableReadingCompanion.days];
@@ -367,6 +371,7 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                                 <AutoResizeTextarea
                                                     value={day.trivia.en}
                                                     onChange={(e) => handleDayTriviaChange(dIdx, 'en', e.target.value)}
+                                                    title={getCitationTitle(`readingCompanion.days.${dIdx}.trivia.en`, day.trivia.en)}
                                                     className="w-full text-xs font-semibold text-amber-900 leading-snug bg-transparent border-b border-transparent hover:border-amber-200 focus:border-amber-400 outline-none transition-colors print:text-slate-800"
                                                     minRows={1}
                                                 />

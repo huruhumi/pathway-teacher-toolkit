@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import * as edu from '@shared/services/educationService';
+import * as edu from '@pathway/education';
 import { BookOpen, Search, CheckCircle2, Clock, Loader2, Layers, AlertCircle } from 'lucide-react';
-import type { ReadingLog } from '@shared/types/education';
+import type { ReadingLog } from '@pathway/education';
 
 const ReadingLogsPage: React.FC = () => {
     const { t, lang } = useLanguage();

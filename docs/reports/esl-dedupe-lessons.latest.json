@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-03-15T05:15:53.619Z",
+  "mode": "dry-run",
+  "scope": {
+    "userId": "all-users",
+    "windowMinutes": 10,
+    "sampleLimit": 30,
+    "maxDelete": 500,
+    "skipIndexCleanup": false
+  },
+  "counts": {
+    "scannedRows": 2,
+    "users": 1,
+    "duplicateGroups": 0,
+    "duplicateRows": 0
+  },
+  "samples": [],
+  "deleted": {
+    "lessonRows": 0,
+    "indexRows": 0
+  }
+}

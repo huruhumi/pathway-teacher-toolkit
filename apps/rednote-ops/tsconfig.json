@@ -1,13 +1,13 @@
 {
-  "extends": "../../packages/config/tsconfig.base.json",
-  "compilerOptions": {
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@shared/*": [
-        "../../packages/shared/*"
-      ]
-    }
-  }
+  "extends": "../tsconfig.app.options.json",
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../../packages/shared/**/*.ts",
+    "../../packages/shared/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

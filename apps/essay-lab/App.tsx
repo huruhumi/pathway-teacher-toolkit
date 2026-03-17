@@ -1,25 +1,17 @@
 
 import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
-import { analyzeEssay } from './services/geminiService';
+import { analyzeEssay } from './services/essayCorrectionService';
 import { CorrectionReport, StudentGrade, CEFRLevel, SavedRecord, FileData } from './types';
 import ReportDisplay from './components/ReportDisplay';
-import { saveRecord } from './components/CorrectionRecords';
+import { saveRecord } from './services/recordsService';
 const CorrectionRecords = React.lazy(() => import('./components/CorrectionRecords'));
 const EssayLibrary = React.lazy(() => import('./components/EssayLibrary'));
 import { GraduationCap, History, X, School, Gauge, Target, CloudUpload, Image as ImageIcon, PenTool, Camera, Sparkles, AlertCircle, Feather, BookOpen } from 'lucide-react';
-import { AppHeader } from '@shared/components/AppHeader';
-import { HeroBanner } from '@shared/components/HeroBanner';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import AppFooter from '@shared/components/AppFooter';
-import { HeaderToggles } from '@shared/components/HeaderToggles';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
+import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { EssayInputForm } from './components/EssayInputForm';
+import { useToast } from '@shared/stores/useToast';
 
 
 
@@ -86,7 +78,10 @@ const AppContent: React.FC = () => {
         essayText: typeof data.essay === 'string' ? data.essay : undefined,
         report: result,
       };
-      saveRecord(record);
+      const saveResult = await saveRecord(record);
+      if (!saveResult.ok) {
+        useToast.getState().warning(t('records.saveError') || 'Record saved locally, cloud sync failed.');
+      }
     } catch (err: any) {
       setError(err.message || t('input.error'));
     } finally {

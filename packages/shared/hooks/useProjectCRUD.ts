@@ -1,11 +1,24 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type SetStateAction } from 'react';
+import localforage from 'localforage';
+import type {
+    RecordEnvelope,
+    RecordIndexEntry,
+    RecordRepository,
+    SaveResult,
+} from '@shared/types';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useToast } from '../stores/useToast';
 import {
     fetchCloudRecords,
+    fetchCloudRecordsByIds,
     upsertCloudRecord,
     deleteCloudRecord,
     renameCloudRecord,
+    upsertRecordIndexEntry,
+    deleteRecordIndexEntry,
 } from '../services/cloudSync';
+
+const SYNC_EVENT_NAME = 'pathway:project-crud-sync';
 
 export interface BaseRecord {
     id: string;
@@ -14,29 +27,32 @@ export interface BaseRecord {
     [key: string]: any;
 }
 
-interface UseProjectCRUDOptions<T> {
-    /** Supabase table name (REQUIRED — all data lives in Supabase). */
-    cloudTable: string;
-    /** Map Supabase row → local record shape. */
-    mapFromCloud?: (row: any) => T;
-    /** Map local record → Supabase row shape. */
-    mapToCloud?: (record: T) => any;
-    /** Optional migration function applied to each record on load.
-     *  Use this to patch old schema records to the current shape. */
-    migrate?: (item: T) => T;
+interface RepositoryAdapter<T> {
+    create: (userId: string) => RecordRepository<T>;
+    toEnvelope: (record: T, userId: string) => RecordEnvelope<T>;
+    fromEnvelope: (envelope: RecordEnvelope<T>) => T;
+    dualWrite?: boolean;
+    readFromRepository?: boolean;
 }
 
-/**
- * Pure Supabase CRUD hook.
- * All data is stored in and fetched from Supabase.
- * Requires an authenticated user — returns empty items if not logged in.
- */
+interface UseProjectCRUDOptions<T> {
+    cloudTable: string;
+    mapFromCloud?: (row: any) => T;
+    mapToCloud?: (record: T) => any;
+    migrate?: (item: T) => T;
+    repositoryAdapter?: RepositoryAdapter<T>;
+    buildIndexEntry?: (record: T) => Omit<RecordIndexEntry, 'recordId' | 'ownerId' | 'updatedAt'> & {
+        recordId?: string;
+        updatedAt?: string;
+    };
+}
+
 export const useProjectCRUD = <T extends BaseRecord>(
-    _storageKey: string, // kept for call-site compatibility, not used
+    storageKey: string,
     limit: number = 50,
     options: UseProjectCRUDOptions<T>,
 ) => {
-    const [items, setItems] = useState<T[]>([]);
+    const [items, setItemsState] = useState<T[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const user = useAuthStore((s) => s.user);
     const {
@@ -44,104 +60,397 @@ export const useProjectCRUD = <T extends BaseRecord>(
         mapFromCloud = (r: any) => r as T,
         mapToCloud = (r: any) => r,
         migrate,
+        repositoryAdapter,
+        buildIndexEntry,
     } = options;
+    const mapFromCloudRef = useRef(mapFromCloud);
+    const mapToCloudRef = useRef(mapToCloud);
+    const migrateRef = useRef(migrate);
+    const repositoryAdapterRef = useRef(repositoryAdapter);
+    const buildIndexEntryRef = useRef(buildIndexEntry);
+    const syncedLocalUserIdRef = useRef<string | null>(null);
 
-    // Track if initial fetch has happened to avoid duplicate fetches
-    const hasFetched = useRef(false);
-
-    // ── Fetch from Supabase on mount / login ──
     useEffect(() => {
-        if (!user) {
-            setItems([]);
-            setIsLoading(false);
-            hasFetched.current = false;
-            return;
-        }
+        mapFromCloudRef.current = mapFromCloud;
+        mapToCloudRef.current = mapToCloud;
+        migrateRef.current = migrate;
+        repositoryAdapterRef.current = repositoryAdapter;
+        buildIndexEntryRef.current = buildIndexEntry;
+    }, [mapFromCloud, mapToCloud, migrate, repositoryAdapter, buildIndexEntry]);
 
-        // Prevent duplicate fetch on re-render
-        if (hasFetched.current) return;
-        hasFetched.current = true;
+    const localStorageKey = `${storageKey}:records`;
 
-        setIsLoading(true);
-        fetchCloudRecords<any>(cloudTable, user.id)
-            .then((rows) => {
-                let mapped = rows.map(mapFromCloud);
-                if (migrate) {
-                    mapped = mapped.map(migrate);
+    const persistLocal = useCallback(async (nextItems: T[]) => {
+        await localforage.setItem(localStorageKey, nextItems.slice(0, limit));
+    }, [localStorageKey, limit]);
+
+    const readLocal = useCallback(async () => {
+        const cached = await localforage.getItem<T[]>(localStorageKey);
+        return (cached ?? []).slice(0, limit);
+    }, [localStorageKey, limit]);
+
+    const instanceId = useRef(crypto.randomUUID()).current;
+
+    const broadcastSync = useCallback(() => {
+        if (typeof window === 'undefined') return;
+        window.dispatchEvent(new CustomEvent(SYNC_EVENT_NAME, {
+            detail: { storageKey, sourceInstance: instanceId },
+        }));
+    }, [storageKey, instanceId]);
+
+    const setItems = useCallback((next: SetStateAction<T[]>) => {
+        let resolved: T[] = [];
+        setItemsState((prev) => {
+            const nextValue = typeof next === 'function'
+                ? (next as (prevState: T[]) => T[])(prev)
+                : next;
+            resolved = nextValue.slice(0, limit);
+            return resolved;
+        });
+        // Fire-and-forget persist then broadcast (not awaitable from SetStateAction)
+        void persistLocal(resolved).then(broadcastSync);
+    }, [broadcastSync, limit, persistLocal]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const onSync = async (event: Event) => {
+            const payload = (event as CustomEvent<{ storageKey?: string; sourceInstance?: string }>).detail;
+            if (payload?.storageKey !== storageKey) return;
+            // Ignore events dispatched by this same hook instance to prevent
+            // self-triggered re-reads that overwrite optimistic state updates.
+            if (payload?.sourceInstance === instanceId) return;
+            const synced = await readLocal();
+            setItemsState(synced);
+        };
+
+        window.addEventListener(SYNC_EVENT_NAME, onSync as EventListener);
+        return () => window.removeEventListener(SYNC_EVENT_NAME, onSync as EventListener);
+    }, [instanceId, readLocal, storageKey]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const load = async () => {
+            setIsLoading(true);
+            try {
+                const localItems = await readLocal();
+                if (!cancelled) {
+                    setItemsState(localItems);
                 }
-                setItems(mapped);
-            })
-            .catch((err) => {
-                console.error(`[useProjectCRUD] fetch ${cloudTable}:`, err);
-                setItems([]);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }, [user, cloudTable]);
 
-    // ── Save (upsert) ──
-    const saveItem = useCallback((item: T) => {
-        // Optimistic local update
-        setItems((prev) => {
+                if (!user) {
+                    if (!cancelled) setIsLoading(false);
+                    syncedLocalUserIdRef.current = null;
+                    return;
+                }
+
+                if (localItems.length > 0 && syncedLocalUserIdRef.current !== user.id) {
+                    // Only sync local → cloud when cloud has NO data for this user
+                    // (true offline-to-online first-time migration).
+                    // Never blindly push cached local items back — they may include
+                    // records already deleted on the server, causing "resurrection".
+                    const repoAdapter = repositoryAdapterRef.current;
+                    const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
+                    let cloudHasData = false;
+
+                    if (canReadFromRepo) {
+                        try {
+                            const repo = repoAdapter!.create(user.id);
+                            const existing = await repo.list({ ownerId: user.id, limit: 1 });
+                            cloudHasData = existing.length > 0;
+                        } catch { /* ignore — will fall through to cloud table check */ }
+                    }
+                    if (!cloudHasData) {
+                        const existingRows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', 1);
+                        cloudHasData = existingRows.length > 0;
+                    }
+
+                    if (!cloudHasData) {
+                        // Cloud is empty — push local drafts up (genuine first sync)
+                        const repo = repoAdapter ? repoAdapter.create(user.id) : null;
+                        for (const item of localItems) {
+                            await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
+                            if (repo && repoAdapter?.dualWrite !== false) {
+                                await repo.save(repoAdapter.toEnvelope(item, user.id));
+                            }
+                        }
+                    }
+                    syncedLocalUserIdRef.current = user.id;
+                }
+
+                const repoAdapter = repositoryAdapterRef.current;
+                const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
+                let mapped: T[] = [];
+
+                if (canReadFromRepo) {
+                    try {
+                        const repo = repoAdapter!.create(user.id);
+                        const envelopes = await repo.list({ ownerId: user.id, limit });
+                        mapped = envelopes
+                            .slice(0, limit)
+                            .map((envelope) => repoAdapter!.fromEnvelope(envelope));
+                    } catch (repoErr: any) {
+                        console.warn('[useProjectCRUD] repository list failed, falling back to cloud table:', repoErr?.message || repoErr);
+                    }
+                }
+
+                if (mapped.length === 0) {
+                    const rows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', limit);
+                    mapped = rows.map((row) => mapFromCloudRef.current(row));
+                }
+
+                if (migrateRef.current) {
+                    mapped = mapped.map((item) => migrateRef.current!(item));
+                }
+
+                if (!cancelled) {
+                    setItemsState(mapped);
+                    await persistLocal(mapped);
+                }
+            } catch (err: any) {
+                if (!cancelled) {
+                    useToast.getState().error(
+                        `Failed to load records from ${cloudTable}: ${err?.message || 'Unknown error'}`,
+                    );
+                }
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
+        };
+
+        void load();
+        return () => {
+            cancelled = true;
+        };
+    }, [cloudTable, limit, persistLocal, readLocal, user?.id]);
+
+    const saveItem = useCallback(async (item: T): Promise<SaveResult> => {
+        let optimistic: T[] = [];
+        setItemsState((prev) => {
             const exists = prev.some((p) => p.id === item.id);
-            let updated = exists
+            optimistic = exists
                 ? prev.map((p) => (p.id === item.id ? item : p))
                 : [item, ...prev];
-            if (updated.length > limit) updated = updated.slice(0, limit);
-            return updated;
+            optimistic = optimistic.slice(0, limit);
+            return optimistic;
         });
+        // IMPORTANT: await persist BEFORE broadcast to avoid race condition
+        // (broadcastSync triggers onSync → readLocal which would read stale data)
+        await persistLocal(optimistic);
+        broadcastSync();
 
-        // Persist to Supabase
-        if (user) {
-            upsertCloudRecord(cloudTable, user.id, mapToCloud(item));
+        if (!user) {
+            return { ok: true, source: 'local', pendingSync: true };
         }
-    }, [limit, user, cloudTable, mapToCloud]);
 
-    // ── Delete ──
-    const deleteItem = useCallback((id: string) => {
-        // Optimistic local update
-        setItems((prev) => prev.filter((item) => item.id !== id));
-
-        // Persist to Supabase
-        if (user) {
-            deleteCloudRecord(cloudTable, user.id, id);
+        const cloudResult = await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
+        if (!cloudResult.ok) {
+            useToast.getState().error(`Save failed. ${cloudResult.message || 'Please retry.'}`);
+            return { ...cloudResult, source: 'mixed', pendingSync: true };
         }
-    }, [user, cloudTable]);
 
-    // ── Rename ──
-    const renameItem = useCallback((id: string, newName: string, nameField: keyof T = 'name' as keyof T) => {
-        // Optimistic local update
-        setItems((prev) => prev.map((item) => {
-            if (item.id === id) {
-                return { ...item, [nameField]: newName };
+        const repoAdapter = repositoryAdapterRef.current;
+        if (repoAdapter && repoAdapter.dualWrite !== false) {
+            const repoResult = await repoAdapter.create(user.id).save(repoAdapter.toEnvelope(item, user.id));
+            if (!repoResult.ok) {
+                useToast.getState().warning('Saved to current storage, but repository sync failed. Retry when convenient.');
+                return { ok: true, source: 'mixed', errorCode: repoResult.errorCode, message: repoResult.message, retryable: true };
             }
-            return item;
-        }));
-
-        // Persist to Supabase
-        if (user) {
-            renameCloudRecord(cloudTable, id, newName, nameField as string);
         }
-    }, [user, cloudTable]);
 
-    // ── Refresh (manual re-fetch from Supabase) ──
+        const indexBuilder = buildIndexEntryRef.current;
+        if (indexBuilder) {
+            const partial = indexBuilder(item);
+            const indexResult = await upsertRecordIndexEntry({
+                ...partial,
+                recordId: partial.recordId || item.id,
+                ownerId: user.id,
+                updatedAt: partial.updatedAt || new Date().toISOString(),
+            });
+            if (!indexResult.ok) {
+                if (indexResult.errorCode !== '42P01') {
+                    useToast.getState().warning('Saved, but search index update failed. Results may appear late.');
+                }
+                return { ok: true, source: 'mixed', errorCode: indexResult.errorCode, message: indexResult.message, retryable: true };
+            }
+        }
+
+        return cloudResult;
+    }, [broadcastSync, cloudTable, limit, persistLocal, user]);
+
+    const deleteItem = useCallback(async (id: string): Promise<SaveResult> => {
+        // Snapshot for rollback on failure
+        let rollbackSnapshot: T[] | null = null;
+        let optimistic: T[] = [];
+        setItemsState((prev) => {
+            rollbackSnapshot = prev;
+            optimistic = prev.filter((item) => item.id !== id);
+            return optimistic;
+        });
+        // IMPORTANT: await persist BEFORE broadcast to avoid race condition
+        await persistLocal(optimistic);
+        broadcastSync();
+
+        if (!user) {
+            return { ok: true, source: 'local', pendingSync: true };
+        }
+
+        try {
+            const cloudResult = await deleteCloudRecord(cloudTable, user.id, id);
+            if (!cloudResult.ok) {
+                // Rollback optimistic deletion
+                if (rollbackSnapshot) {
+                    setItemsState(rollbackSnapshot);
+                    await persistLocal(rollbackSnapshot);
+                }
+                useToast.getState().error(`Delete failed. ${cloudResult.message || 'Please retry.'}`);
+                return { ...cloudResult, source: 'mixed', pendingSync: true };
+            }
+
+            // NOTE: skip repo.delete for delete operations — repo.delete internally calls
+            // deleteCloudRecord on the same table, so it would be a redundant duplicate request.
+
+            const indexResult = await deleteRecordIndexEntry(user.id, id);
+            if (!indexResult.ok && indexResult.errorCode !== '42P01') {
+                useToast.getState().warning('Deleted record, but search index cleanup failed. Finder results may lag.');
+                broadcastSync();
+                return {
+                    ok: true,
+                    source: 'mixed',
+                    errorCode: indexResult.errorCode,
+                    message: indexResult.message,
+                    retryable: true,
+                };
+            }
+
+            broadcastSync();
+            return cloudResult;
+        } catch (err: any) {
+            // Rollback on unexpected error
+            if (rollbackSnapshot) {
+                setItemsState(rollbackSnapshot);
+                await persistLocal(rollbackSnapshot);
+            }
+            console.error('[useProjectCRUD] deleteItem unexpected error:', err);
+            return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Unexpected error', retryable: true };
+        }
+    }, [broadcastSync, cloudTable, persistLocal, user]);
+
+    const renameItem = useCallback(async (
+        id: string,
+        newName: string,
+        nameField: keyof T = 'name' as keyof T,
+    ): Promise<SaveResult> => {
+        let optimistic: T[] = [];
+        setItemsState((prev) => {
+            optimistic = prev.map((item) => (item.id === id
+                ? { ...item, [nameField]: newName }
+                : item));
+            return optimistic;
+        });
+        await persistLocal(optimistic);
+        broadcastSync();
+
+        if (!user) {
+            return { ok: true, source: 'local', pendingSync: true };
+        }
+
+        const cloudResult = await renameCloudRecord(cloudTable, user.id, id, newName, nameField as string);
+        if (!cloudResult.ok) {
+            useToast.getState().error(`Rename failed. ${cloudResult.message || 'Please retry.'}`);
+            return { ...cloudResult, source: 'mixed', pendingSync: true };
+        }
+
+        const repoAdapter = repositoryAdapterRef.current;
+        if (repoAdapter && repoAdapter.dualWrite !== false) {
+            const repoResult = await repoAdapter.create(user.id).rename(id, newName);
+            if (!repoResult.ok) {
+                useToast.getState().warning('Renamed in current storage, but repository sync failed.');
+                return { ok: true, source: 'mixed', errorCode: repoResult.errorCode, message: repoResult.message, retryable: true };
+            }
+        }
+
+        return cloudResult;
+    }, [broadcastSync, cloudTable, persistLocal, user]);
+
     const refresh = useCallback(async () => {
-        if (!user) return;
         setIsLoading(true);
         try {
-            const rows = await fetchCloudRecords<any>(cloudTable, user.id);
-            let mapped = rows.map(mapFromCloud);
-            if (migrate) {
-                mapped = mapped.map(migrate);
+            if (!user) {
+                const localItems = await readLocal();
+                setItemsState(localItems);
+                return;
             }
-            setItems(mapped);
-        } catch (err) {
-            console.error(`[useProjectCRUD] refresh ${cloudTable}:`, err);
+
+            const repoAdapter = repositoryAdapterRef.current;
+            const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
+            let mapped: T[] = [];
+
+            if (canReadFromRepo) {
+                try {
+                    const repo = repoAdapter!.create(user.id);
+                    const envelopes = await repo.list({ ownerId: user.id, limit });
+                    mapped = envelopes
+                        .slice(0, limit)
+                        .map((envelope) => repoAdapter!.fromEnvelope(envelope));
+                } catch (repoErr: any) {
+                    console.warn('[useProjectCRUD] repository refresh failed, fallback to cloud table:', repoErr?.message || repoErr);
+                }
+            }
+
+            if (mapped.length === 0) {
+                const rows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', limit);
+                mapped = rows.map((row) => mapFromCloudRef.current(row));
+            }
+
+            if (migrateRef.current) {
+                mapped = mapped.map((item) => migrateRef.current!(item));
+            }
+            setItemsState(mapped);
+            await persistLocal(mapped);
+        } catch (err: any) {
+            useToast.getState().error(`Refresh failed. ${err?.message || 'Please retry.'}`);
         } finally {
             setIsLoading(false);
         }
-    }, [user, cloudTable, mapFromCloud, migrate]);
+    }, [cloudTable, limit, persistLocal, readLocal, user]);
+
+    const hydrateByIds = useCallback(async (ids: string[]): Promise<T[]> => {
+        if (ids.length === 0) return [];
+
+        if (!user) {
+            const localItems = await readLocal();
+            const map = new Map(localItems.map((item) => [item.id, item]));
+            return ids.map((id) => map.get(id)).filter(Boolean) as T[];
+        }
+
+        const repoAdapter = repositoryAdapterRef.current;
+        const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
+        let mapped: T[] = [];
+
+        if (canReadFromRepo) {
+            try {
+                const repo = repoAdapter!.create(user.id);
+                const envelopes = await Promise.all(ids.map((id) => repo.getById(id)));
+                mapped = envelopes
+                    .filter(Boolean)
+                    .map((envelope) => repoAdapter!.fromEnvelope(envelope!));
+            } catch (repoErr: any) {
+                console.warn('[useProjectCRUD] repository getById failed, fallback to cloud ids:', repoErr?.message || repoErr);
+            }
+        }
+
+        if (mapped.length === 0) {
+            const rows = await fetchCloudRecordsByIds<any>(cloudTable, user.id, ids);
+            mapped = rows.map((row) => mapFromCloudRef.current(row));
+        }
+
+        if (migrateRef.current) {
+            mapped = mapped.map((item) => migrateRef.current!(item));
+        }
+        return mapped;
+    }, [cloudTable, readLocal, user]);
 
     return {
         items,
@@ -151,5 +460,6 @@ export const useProjectCRUD = <T extends BaseRecord>(
         deleteItem,
         renameItem,
         refresh,
+        hydrateByIds,
     };
 };

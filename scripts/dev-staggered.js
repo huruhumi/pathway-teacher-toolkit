@@ -1,169 +1,135 @@
-const { spawn } = require('child_process');
 const path = require('path');
-const http = require('http');
-const fs = require('fs');
+const { spawnSync } = require('child_process');
+const { SCRIPT_DEFAULTS } = require('./script-defaults');
+const {
+    parsePositiveIntEnv,
+    readAppSelection,
+    spawnWorkspaceTask,
+    runMain,
+} = require('./app-task-runner');
+const { createScriptLogger } = require('./script-logger');
+const {
+    terminateChildren,
+    createIdempotentShutdown,
+    registerSignalExitHandlers,
+} = require('./process-lifecycle');
+const { parseReadyMarkers, createReadinessDetector } = require('./dev-readiness');
+const { toDevLauncherApps, toNamedUrls } = require('./app-targets');
+const { startStaticServer } = require('./static-server');
+const { waitForAppStartup } = require('./dev-app-startup');
+const { printBlankLine, printSection, printAlignedUrls } = require('./script-output');
+const { logWithColoredTag, logErrorWithColoredTag } = require('./dev-log-tags');
 
 /**
  * Staggered Dev Server Launcher
  *
  * 1. Starts a static file server for the landing page on port 3000
- * 2. Starts each Vite dev server one at a time, waiting for the previous one
- *    to finish its startup (detected by "ready in" output) before launching
- *    the next. This prevents OOM by avoiding concurrent pre-bundling.
- *
- * Memory is capped at 512MB per app (3GB total for 6 apps).
+ * 2. Starts Vite dev servers one by one to reduce startup memory pressure
  */
 
 const ROOT = path.resolve(__dirname, '..');
+const log = createScriptLogger('dev');
 
-const apps = [
-    { name: 'planner', workspace: 'apps/esl-planner', color: '\x1b[36m' },
-    { name: 'essay', workspace: 'apps/essay-lab', color: '\x1b[32m' },
-    { name: 'nature', workspace: 'apps/nature-compass', color: '\x1b[33m' },
-    { name: 'ops', workspace: 'apps/rednote-ops', color: '\x1b[35m' },
-    { name: 'edu', workspace: 'apps/edu-hub', color: '\x1b[34m' },
-    { name: 'student', workspace: 'apps/student-portal', color: '\x1b[37m' },
-];
+function shouldDisableEsbuild() {
+    if (process.env.VITE_DISABLE_ESBUILD) return true;
+    const probe = spawnSync(process.execPath, ['-v'], { stdio: 'ignore' });
+    return Boolean(probe?.error && probe.error.code === 'EPERM');
+}
 
-const RESET = '\x1b[0m';
-const MAX_WAIT_MS = 30000; // max 30s to wait for each app's "ready" signal
+if (shouldDisableEsbuild()) {
+    process.env.VITE_DISABLE_ESBUILD = '1';
+    log.warn('Detected child process spawn restrictions. Disabling esbuild for dev servers.');
+}
 
-// --- Landing page static server ---
-const MIME = {
-    '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
-    '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
-    '.json': 'application/json', '.ico': 'image/x-icon',
-};
+const apps = toDevLauncherApps();
+
+const maxOldSpace = parsePositiveIntEnv('DEV_MAX_OLD_SPACE', SCRIPT_DEFAULTS.dev.maxOldSpaceMb);
+const { selected: filteredApps } = readAppSelection({
+    apps,
+    envName: 'DEV_APPS',
+});
+const readyMarkers = parseReadyMarkers(process.env.DEV_READY_MARKERS, SCRIPT_DEFAULTS.dev.readyMarkers);
+const isReadyOutput = createReadinessDetector({ markers: readyMarkers });
+
+const LANDING_COLOR = '\x1b[95m';
+const LANDING_PORT = SCRIPT_DEFAULTS.dev.landingPort;
+const MAX_WAIT_MS = SCRIPT_DEFAULTS.dev.startupWaitMs;
 
 function startLandingServer() {
-    return new Promise((resolve) => {
-        const server = http.createServer((req, res) => {
-            let url = req.url.split('?')[0];
-            if (url === '/') url = '/index.html';
-            const filePath = path.join(ROOT, url);
-            const ext = path.extname(filePath);
-            fs.readFile(filePath, (err, data) => {
-                if (err) {
-                    res.writeHead(404);
-                    res.end('Not found');
-                    return;
-                }
-                res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-                res.end(data);
+    return startStaticServer({
+        rootDir: ROOT,
+        port: LANDING_PORT,
+        onReady() {
+            logWithColoredTag({
+                color: LANDING_COLOR,
+                name: 'landing',
+                message: `Static server ready at ${SCRIPT_DEFAULTS.dev.landingUrl}\n`,
             });
-        });
-        server.listen(3000, () => {
-            console.log(`\x1b[95m[landing]\x1b[0m ✅ Static server ready at http://localhost:3000/\n`);
-            resolve(server);
-        });
-        server.on('error', (err) => {
-            if (err.code === 'EADDRINUSE') {
-                console.log(`\x1b[95m[landing]\x1b[0m ⚠️  Port 3000 in use, skipping landing server\n`);
-            } else {
-                console.error(`\x1b[95m[landing]\x1b[0m ❌ ${err.message}\n`);
-            }
-            resolve(null);
-        });
+        },
+        onPortInUse(port) {
+            logWithColoredTag({
+                color: LANDING_COLOR,
+                name: 'landing',
+                message: `Port ${port} already in use, skipping landing server\n`,
+            });
+        },
+        onError(err) {
+            logErrorWithColoredTag({
+                color: LANDING_COLOR,
+                name: 'landing',
+                message: `Failed to start: ${err.message}\n`,
+            });
+        },
     });
 }
 
-console.log(`${RESET}Starting landing page + ${apps.length} dev servers sequentially (512MB each)...\n`);
-
 function startApp(app) {
-    return new Promise((resolve, reject) => {
-        const proc = spawn('npm', ['-w', app.workspace, 'run', 'dev'], {
-            shell: true,
-            stdio: 'pipe',
-            cwd: ROOT,
-            env: {
-                ...process.env,
-                NODE_OPTIONS: '--max-old-space-size=512',
-            },
-        });
+    const proc = spawnWorkspaceTask({
+        workspace: app.workspace,
+        npmArgs: ['run', 'dev'],
+        stdio: 'pipe',
+        maxOldSpace,
+        env: process.env,
+    });
 
-        let resolved = false;
-
-        // Auto-resolve after timeout even if "ready" not detected
-        const timeout = setTimeout(() => {
-            if (!resolved) {
-                resolved = true;
-                console.log(`${app.color}[${app.name}]${RESET} ⏰ Timeout reached, proceeding...\n`);
-                resolve(proc);
-            }
-        }, MAX_WAIT_MS);
-
-        proc.stdout.on('data', (data) => {
-            const text = data.toString();
-            text.split('\n').forEach((line) => {
-                if (line.trim()) {
-                    console.log(`${app.color}[${app.name}]${RESET} ${line}`);
-                }
-            });
-            // Wait for Vite's "ready in" message before starting the next app
-            if (!resolved && text.includes('ready in')) {
-                resolved = true;
-                clearTimeout(timeout);
-                console.log(`${app.color}[${app.name}]${RESET} ✅ Ready!\n`);
-                resolve(proc);
-            }
-        });
-
-        proc.stderr.on('data', (data) => {
-            const text = data.toString();
-            // Filter out Vite's normal "re-optimizing" messages
-            if (text.includes('Re-optimizing') || text.includes('lockfile')) return;
-            console.error(`${app.color}[${app.name} ERR]${RESET} ${text}`);
-        });
-
-        proc.on('error', (err) => {
-            clearTimeout(timeout);
-            if (!resolved) {
-                resolved = true;
-                console.error(`${app.color}[${app.name}]${RESET} ❌ Failed to start: ${err.message}`);
-                // Don't reject — let other apps continue
-                resolve(null);
-            }
-        });
-
-        proc.on('exit', (code) => {
-            if (code !== null && code !== 0 && !resolved) {
-                clearTimeout(timeout);
-                resolved = true;
-                console.error(`${app.color}[${app.name}]${RESET} ❌ Exited with code ${code}`);
-                resolve(null);
-            }
-        });
+    return waitForAppStartup({
+        proc,
+        app,
+        isReadyOutput,
+        maxWaitMs: MAX_WAIT_MS,
+        ignoreStderrPatterns: ['Re-optimizing', 'lockfile'],
     });
 }
 
 async function main() {
-    // Start landing page first
-    const landingServer = await startLandingServer();
+    printSection(`Starting landing page + ${filteredApps.length} dev servers sequentially (${maxOldSpace}MB each)\n`);
+    log.info(`Ready markers: ${readyMarkers.join(' | ')}`);
+    printBlankLine();
 
-    // Then start app dev servers sequentially
+    const landingServer = await startLandingServer();
     const procs = [];
-    for (const app of apps) {
-        console.log(`🚀 Starting [${app.name}]...`);
+
+    for (const app of filteredApps) {
+        printSection(`Starting [${app.name}]...`);
         const proc = await startApp(app);
         if (proc) procs.push(proc);
     }
-    console.log(`\n✅ Landing page + ${procs.length}/${apps.length} dev servers running.\n`);
-    console.log(`   Landing:  http://localhost:3000/`);
-    console.log(`   Planner:  http://localhost:3001/planner/`);
-    console.log(`   Essay:    http://localhost:3002/essay-lab/`);
-    console.log(`   Nature:   http://localhost:3003/nature-compass/`);
-    console.log(`   Ops:      http://localhost:3005/academy-ops/`);
-    console.log(`   Edu:      http://localhost:3006/edu-hub/`);
-    console.log(`   Student:  http://localhost:3007/student-portal/\n`);
 
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-        console.log('\n🛑 Shutting down all dev servers...');
-        procs.forEach((p) => p.kill());
+    printSection(`\nRunning ${procs.length}/${filteredApps.length} app dev servers`);
+    printSection(`Landing:  ${SCRIPT_DEFAULTS.dev.landingUrl}`);
+    printAlignedUrls(toNamedUrls({ apps: filteredApps, host: 'localhost' }));
+    printBlankLine();
+
+    const shutdown = createIdempotentShutdown(() => {
+        console.log('\nShutting down all dev servers...');
+        terminateChildren(procs);
         if (landingServer) landingServer.close();
-        process.exit(0);
+    });
+    registerSignalExitHandlers({
+        shutdown,
+        sigintExitCode: 0,
+        sigtermExitCode: 143,
     });
 }
 
-main().catch(console.error);
-
+runMain('dev', main);

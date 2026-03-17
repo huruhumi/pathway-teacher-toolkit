@@ -8,6 +8,8 @@ export interface MappedESLInput {
     duration: string;
     studentCount: string;
     lessonTitle: string;
+    textbookLevelKey?: string;
+    sourceMode?: 'notebook' | 'direct';
     /** Curriculum metadata for precise kit→unit matching */
     curriculumId?: string;
     unitNumber?: number;
@@ -27,7 +29,7 @@ export function formatLessonDisplayName(
     textbookTitle?: string
 ): string {
     const series = curriculum?.seriesName
-        || (curriculum?.textbookTitle || textbookTitle || '').replace(/\s*Student'?s?\s*Book/gi, '').trim();
+        || (curriculum?.textbookTitle || textbookTitle || '').replace(/\s*Student(?:'|\u2019)?s?\s*Book/gi, '').trim();
 
     const unitStr = lesson.unitNumber ? `Unit ${lesson.unitNumber} ` : '';
     const lessonNum = lesson.lessonInUnit ?? lesson.lessonNumber;
@@ -72,6 +74,8 @@ export function mapLessonToESLInput(
         duration: params.duration,
         studentCount: params.studentCount,
         lessonTitle: formattedTitle,
+        textbookLevelKey: params.textbookLevelKey,
+        sourceMode: params.sourceMode,
         curriculumId,
         unitNumber: lesson.unitNumber,
         lessonIndex,

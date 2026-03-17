@@ -1,4 +1,4 @@
-export { AppFooter } from './AppFooter';
+export { default as AppFooter } from './AppFooter';
 export { AppHeader } from './AppHeader';
 export { AppLayout } from './AppLayout';
 export { BodyContainer } from './BodyContainer';

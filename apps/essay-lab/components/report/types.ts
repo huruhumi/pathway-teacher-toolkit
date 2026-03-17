@@ -1,3 +1,4 @@
+import type React from 'react';
 import { CorrectionReport, Grade, GradeItem, GrammarError, IdiomSuggestion, VocabularyUpgrade, WordBankItem, TopicExtension } from '../../types';
 
 export interface ReportState {

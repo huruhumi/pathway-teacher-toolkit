@@ -1,5 +1,5 @@
-import React from 'react';
-import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2, Palette, Sparkles, Users, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2, Palette, Sparkles, Users, FileText, RefreshCw, MessageSquare, Zap } from 'lucide-react';
 import { RichTextEditor } from '../RichTextEditor';
 import { RoadmapItem } from '../../types';
 import { BasicInfoState } from '../../stores/useLessonStore';
@@ -38,6 +38,12 @@ interface TabRoadmapProps {
     handleRoadmapDragStart: (e: React.DragEvent, index: number) => void;
     handleRoadmapDragOver: (e: React.DragEvent) => void;
     handleRoadmapDrop: (e: React.DragEvent, targetIndex: number) => void;
+    // Per-phase feedback & regeneration
+    onRegeneratePhase?: (index: number, feedback: string) => void;
+    regeneratingPhase?: number | null;
+    // Commit
+    onCommit?: () => void;
+    isCommitting?: boolean;
 }
 
 export const TabRoadmap: React.FC<TabRoadmapProps> = ({
@@ -70,9 +76,14 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
     handleDrop,
     handleRoadmapDragStart,
     handleRoadmapDragOver,
-    handleRoadmapDrop
+    handleRoadmapDrop,
+    onRegeneratePhase,
+    regeneratingPhase = null,
+    onCommit,
+    isCommitting = false,
 }) => {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
+    const [phaseFeedback, setPhaseFeedback] = useState<Record<number, string>>({});
     return (
         <div className="space-y-5 animate-fade-in">
             <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
@@ -388,6 +399,38 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     {generatingStepFor === idx ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
                                     {t('road.generateStep')}</button>
                             </div>
+
+                            {/* Per-phase feedback */}
+                            {onRegeneratePhase && (
+                                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex-1">
+                                            <textarea
+                                                value={phaseFeedback[idx] || ''}
+                                                onChange={e => setPhaseFeedback(prev => ({ ...prev, [idx]: e.target.value }))}
+                                                placeholder={lang === 'zh' ? '对此阶段的修改建议...' : 'Feedback for this phase...'}
+                                                rows={2}
+                                                className="w-full text-sm text-slate-700 dark:text-slate-300 bg-amber-50/60 border border-amber-200/60 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 resize-none placeholder:text-amber-400/70"
+                                                disabled={regeneratingPhase === idx}
+                                                aria-label={`Feedback for phase ${idx + 1}`}
+                                                title={`Feedback for phase ${idx + 1}`}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const fb = phaseFeedback[idx]?.trim();
+                                                if (fb) onRegeneratePhase(idx, fb);
+                                            }}
+                                            disabled={regeneratingPhase === idx || !phaseFeedback[idx]?.trim()}
+                                            className="mt-0.5 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                                            title={lang === 'zh' ? '重新生成此阶段' : 'Regenerate this phase'}
+                                        >
+                                            {regeneratingPhase === idx ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                                            {lang === 'zh' ? '重新生成' : 'Regen'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -399,7 +442,21 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 >
                     {isAddingRoadmapItem ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
                     {t('road.addPhaseBtn')}</button>
+
+                {/* Commit Button */}
+                {onCommit && (
+                    <button
+                        onClick={onCommit}
+                        disabled={isCommitting}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2.5 text-sm"
+                    >
+                        {isCommitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+                        {isCommitting
+                            ? (lang === 'zh' ? '正在根据修改后的活动阶段重新生成配套内容...' : 'Regenerating downstream content...')
+                            : (lang === 'zh' ? '✨ Commit — 根据修改重新生成手册和配套内容' : '✨ Commit — Regenerate handbook & downstream')}
+                    </button>
+                )}
             </div>
-        </div>
+        </div >
     );
 };

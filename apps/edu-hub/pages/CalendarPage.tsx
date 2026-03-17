@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import * as edu from '@shared/services/educationService';
-import type { EduClass, ClassSession, Student, Attendance } from '@shared/types/education';
+import * as edu from '@pathway/education';
+import type { EduClass, ClassSession, Student, Attendance } from '@pathway/education';
 import {
     Plus, ChevronLeft, ChevronRight, X, Loader2, Clock,
     CalendarDays, CheckCircle2, XCircle, AlertCircle, Users,

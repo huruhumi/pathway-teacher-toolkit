@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
-import { useThemeStore } from '@shared/stores/useThemeStore';
+import { useThemeStore } from '@pathway/platform';
 import { motion } from 'motion/react';
 
 import { Settings, Calendar as CalendarIcon, PenTool, LayoutDashboard, CalendarDays, Moon, Sun, Library } from 'lucide-react';
@@ -13,17 +13,8 @@ import { INITIAL_BRAND_DATA } from './data/brandData';
 import { SavedNote } from './types';
 import { safeStorage } from '@shared/safeStorage';
 import localforage from 'localforage';
-import { AppHeader } from '@shared/components/AppHeader';
-import { HeroBanner } from '@shared/components/HeroBanner';
-import { PageLayout } from '@shared/components/PageLayout';
-import { BodyContainer } from '@shared/components/BodyContainer';
-import { HeaderToggles } from '@shared/components/HeaderToggles';
+import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
-import { ErrorBoundary } from '@shared/components/ErrorBoundary';
-import AppFooter from '@shared/components/AppFooter';
-import ToastContainer from '@shared/components/ui/ToastContainer';
-import AppLayout from '@shared/components/AppLayout';
-import { RouteGuard } from '@shared/components/auth/RouteGuard';
 
 
 

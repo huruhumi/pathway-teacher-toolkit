@@ -4,11 +4,12 @@ import {
     Sparkles, MapPin, CloudRain, BookOpen, Users,
     GraduationCap, ArrowRight, Loader2,
     Trees, FileText, ArrowLeft,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, Sun, Cloud
 } from 'lucide-react';
 import { Curriculum, CurriculumLesson, CurriculumParams } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { BatchItemStatus } from '@shared/hooks/useBatchGenerateState';
+
 
 interface CurriculumResultDisplayProps {
     curriculumEN: Curriculum | null;
@@ -28,6 +29,7 @@ interface CurriculumResultDisplayProps {
     onBatchGenerate?: (lessons: CurriculumLesson[], params: CurriculumParams, language: 'en' | 'zh') => void;
     onCancelBatch?: () => void;
     onOpenPlan?: (savedId: string) => void;
+    onCurriculumUpdate?: (curriculum: Curriculum, language: 'en' | 'zh') => void;
 }
 
 export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = ({
@@ -36,12 +38,14 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
     savedParams,
     onBack, onNew, onSave, onGenerateKit,
     batchStatus = {}, batchLessonMap = {}, batchRunning = false, batchProgress,
-    onBatchGenerate, onCancelBatch, onOpenPlan,
+    onBatchGenerate, onCancelBatch, onOpenPlan, onCurriculumUpdate,
 }) => {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [expandedLessons, setExpandedLessons] = useState<Set<number>>(new Set());
     const [isSavedEN, setIsSavedEN] = useState(false);
     const [isSavedCN, setIsSavedCN] = useState(false);
+
+    const [activityTab, setActivityTab] = useState<Record<number, 'outdoor' | 'indoor'>>({});
 
     const curriculum = activeLanguage === 'zh' ? curriculumCN : curriculumEN;
     const isSaved = activeLanguage === 'zh' ? isSavedCN : isSavedEN;
@@ -59,7 +63,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
     if (!curriculum) return null;
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
+        <div className="space-y-8 animate-fade-in-up">
 
 
             {/* Action buttons — unified row */}
@@ -123,8 +127,11 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                     {onSave && (
                         <button
                             onClick={() => {
-                                onSave(curriculum, savedParams!, activeLanguage);
-                                setIsSaved(true);
+                                // Save both EN and CN versions so the toggle works on reload
+                                if (curriculumEN) onSave(curriculumEN, savedParams!, 'en');
+                                if (curriculumCN) onSave(curriculumCN, savedParams!, 'zh');
+                                setIsSavedEN(true);
+                                setIsSavedCN(true);
                             }}
                             disabled={isSaved}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${isSaved
@@ -147,9 +154,9 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
             </div>
 
             {/* Overview */}
-            <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200 mb-2">{curriculum.theme}</h2>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{curriculum.overview}</p>
+            <div className="bg-white dark:bg-slate-900/60 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-white/5">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-200 mb-3">{curriculum.theme}</h2>
+                <p className="text-[15px] text-slate-600 dark:text-slate-400 leading-7">{curriculum.overview}</p>
                 <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-500">
                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><MapPin size={14} /> {savedParams?.city}</span>
                     <span className="px-3 py-1 bg-slate-100 rounded-lg flex items-center gap-1.5"><Users size={14} /> {savedParams?.ageGroup}</span>
@@ -163,7 +170,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                 return (
                     <div
                         key={index}
-                        className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden"
+                        className="rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden bg-white dark:bg-slate-900/60 shadow-sm"
                     >
                         {/* Header — always visible, click to toggle */}
                         <div
@@ -191,12 +198,12 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
 
                         {/* Expanded content */}
                         {isExpanded && (
-                            <div className="px-5 pb-5 space-y-4 border-t border-slate-100 dark:border-white/5 pt-4">
-                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{lesson.description}</p>
+                            <div className="px-5 pb-6 space-y-5 border-t border-slate-100 dark:border-white/5 pt-5">
+                                <p className="text-[15px] text-slate-600 dark:text-slate-400 leading-7">{lesson.description}</p>
 
                                 {/* Detail Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+                                    <div className="bg-slate-50/80 dark:bg-slate-800/30 rounded-xl p-4">
                                         <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                             <Sparkles size={12} /> {t('cp.steamFocus')}
                                         </span>
@@ -207,7 +214,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                         </div>
                                     </div>
                                     {activeLanguage === 'en' && lesson.esl_focus && (
-                                        <div>
+                                        <div className="bg-slate-50/80 dark:bg-slate-800/30 rounded-xl p-4">
                                             <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                                 <GraduationCap size={12} /> {t('cp.eslFocus')}
                                             </span>
@@ -218,7 +225,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                             </div>
                                         </div>
                                     )}
-                                    <div>
+                                    <div className="bg-slate-50/80 dark:bg-slate-800/30 rounded-xl p-4">
                                         <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1">
                                             <MapPin size={12} /> {t('cp.location')}
                                         </span>
@@ -226,31 +233,57 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                     </div>
                                 </div>
 
-                                {/* Activities */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-white/5">
-                                    <div className="flex items-start gap-2">
-                                        <Trees size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <span className="text-xs font-bold text-slate-400 uppercase">{t('cp.outdoor')}</span>
-                                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 space-y-1.5">
-                                                {lesson.outdoor_activity.split(/(?=\d+\.\s)/).filter(Boolean).map((step, i) => (
-                                                    <p key={i}>{step.trim().replace(/\*\*/g, '')}</p>
+                                {/* Activities — tab toggle */}
+                                {(() => {
+                                    const currentTab = activityTab[index] || 'outdoor';
+                                    const activityText = currentTab === 'outdoor'
+                                        ? lesson.outdoor_activity
+                                        : lesson.indoor_alternative;
+                                    // Split on Chinese 【环节...】 or ### headings or numbered steps like "1. "
+                                    const stages = activityText
+                                        .split(/(?=【[^】]+】)|(?=###\s)|(?=\*\s\*\*)/)
+                                        .filter(s => s.trim());
+                                    return (
+                                        <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                                            {/* Tab bar */}
+                                            <div className="flex bg-slate-100 dark:bg-slate-800/40 rounded-xl p-1 mb-4">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setActivityTab(prev => ({ ...prev, [index]: 'outdoor' })); }}
+                                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${currentTab === 'outdoor'
+                                                        ? 'bg-white dark:bg-slate-900/80 text-emerald-700 shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                        }`}
+                                                >
+                                                    <Sun size={15} />
+                                                    {lang === 'zh' ? '户外活动' : 'Outdoor'}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setActivityTab(prev => ({ ...prev, [index]: 'indoor' })); }}
+                                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${currentTab === 'indoor'
+                                                        ? 'bg-white dark:bg-slate-900/80 text-blue-700 shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                        }`}
+                                                >
+                                                    <Cloud size={15} />
+                                                    {lang === 'zh' ? '雨天替代' : 'Indoor'}
+                                                </button>
+                                            </div>
+                                            {/* Content */}
+                                            <div className={`rounded-xl p-5 space-y-4 ${currentTab === 'outdoor'
+                                                ? 'bg-emerald-50/50 dark:bg-emerald-900/10'
+                                                : 'bg-blue-50/50 dark:bg-blue-900/10'
+                                                }`}>
+                                                {stages.map((stage, si) => (
+                                                    <div key={si} className="text-[14px] text-slate-700 dark:text-slate-300 leading-7">
+                                                        {stage.trim().replace(/\*\*/g, '').split(/\n/).filter(Boolean).map((line, li) => (
+                                                            <p key={li} className={li > 0 ? 'mt-1' : ''}>{line.trim()}</p>
+                                                        ))}
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <CloudRain size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                            <span className="text-xs font-bold text-slate-400 uppercase">{t('cp.indoor')}</span>
-                                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-1 space-y-1.5">
-                                                {lesson.indoor_alternative.split(/(?=\d+\.\s)/).filter(Boolean).map((step, i) => (
-                                                    <p key={i}>{step.trim().replace(/\*\*/g, '')}</p>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                    );
+                                })()}
 
                                 {/* Vocab Tags — EN only */}
                                 {activeLanguage === 'en' && lesson.english_vocabulary.length > 0 && (
@@ -301,6 +334,7 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                     </div>
                 );
             })}
+
         </div>
     );
 };

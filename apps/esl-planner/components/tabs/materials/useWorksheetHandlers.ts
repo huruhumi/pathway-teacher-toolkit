@@ -8,14 +8,14 @@ import {
 } from '../../../types';
 import {
     generateWorksheet,
-    generateLessonImage,
     generateReadingPassage,
-} from '../../../services/geminiService';
+} from '../../../services/worksheetService';
+import { generateLessonImage } from '../../../services/lessonKitService';
 import { WorksheetLayoutActions } from './layouts';
 import { useLanguage } from '../../../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { handleError } from '@shared/services/logger';
-import * as edu from '@shared/services/educationService';
+import * as edu from '@pathway/education';
 
 interface UseWorksheetHandlersArgs {
     worksheets: Worksheet[];

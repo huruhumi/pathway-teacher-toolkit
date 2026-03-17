@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
-import * as edu from '@shared/services/educationService';
-import type { BookLoan, Student } from '@shared/types/education';
+import * as edu from '@pathway/education';
+import type { BookLoan, Student } from '@pathway/education';
 import {
     Plus, Trash2, X, Loader2, BookOpen, Search, Undo2, AlertTriangle,
 } from 'lucide-react';

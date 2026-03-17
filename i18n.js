@@ -1,174 +1,156 @@
-/**
- * Pathway Academy Toolkit — Landing Page i18n
- * Lightweight translation system for static HTML.
- */
 (function () {
-    const STORAGE_KEY = 'pathway_uiLang';
+    const runtime = window.pathwayLandingRuntime;
 
-    const translations = {
-        'badge': {
-            en: '✨ Global Learning, Elevated',
-            zh: '✨ 全球化学习，卓越赋能',
-        },
-        'hero.title.before': {
-            en: 'Empowering Educators with',
-            zh: '以 AI 驱动精准赋能教育者',
-        },
-        'hero.highlight': {
-            en: 'AI-Driven Precision',
-            zh: '',
-        },
-        'hero.desc': {
-            en: 'Welcome to the Teacher Toolkit. Explore our holistic suite of pedagogical tools designed for modern, immersive learning experiences.',
-            zh: '欢迎使用教师工具箱。探索我们为现代沉浸式学习体验打造的全方位教学工具套件。',
-        },
-        'hero.cta': {
-            en: 'Explore Tools',
-            zh: '探索工具',
-        },
-        'status': {
-            en: 'TOOLKIT ACTIVE',
-            zh: '工具箱已激活',
-        },
+    let appRegistry = [];
 
-        // Tool Cards
-        'tool.esl.title': {
-            en: 'ESL Smart Planner',
-            zh: 'ESL 智能备课',
-        },
-        'tool.esl.desc': {
-            en: 'Holistic lesson planning suite designed specifically for English language educators.',
-            zh: '专为英语教育者打造的全方位课程规划套件。',
-        },
-        'tool.esl.btn': {
-            en: 'Launch Planner',
-            zh: '启动规划器',
-        },
-        'tool.essay.title': {
-            en: 'Essay Correction Lab',
-            zh: '作文批改实验室',
-        },
-        'tool.essay.desc': {
-            en: 'Advanced AI grading and feedback system for professional English essay assessment.',
-            zh: '专业英语作文 AI 评分与深度反馈系统。',
-        },
-        'tool.essay.btn': {
-            en: 'Open Lab',
-            zh: '打开实验室',
-        },
-        'tool.nature.title': {
-            en: 'Nature Compass',
-            zh: '自然指南针',
-        },
-        'tool.nature.desc': {
-            en: 'STEAM curriculum planner & lesson kit generator for immersive outdoor learning experiences.',
-            zh: 'STEAM 课程规划与课件生成器，打造沉浸式户外学习体验。',
-        },
-        'tool.nature.btn': {
-            en: 'Design Lessons',
-            zh: '设计课程',
-        },
-        'tool.ops.title': {
-            en: 'Rednote Ops',
-            zh: '小红书运营',
-        },
-        'tool.ops.desc': {
-            en: 'Internal tools for social media operations and academy growth management.',
-            zh: '社交媒体运营与学院增长管理内部工具。',
-        },
-        'tool.ops.btn': {
-            en: 'Manage Ops',
-            zh: '管理运营',
-        },
-        'tool.eduhub.title': {
-            en: 'Edu Hub',
-            zh: '教务中心',
-        },
-        'tool.eduhub.desc': {
-            en: 'Education management system for classes, students, assignments, attendance, and book lending.',
-            zh: '教务管理系统：班级、学生、作业、考勤和借书管理。',
-        },
-        'tool.eduhub.btn': {
-            en: 'Open Edu Hub',
-            zh: '打开教务中心',
-        },
-        'tool.student.title': {
-            en: 'Student Portal',
-            zh: '学生端',
-        },
-        'tool.student.desc': {
-            en: 'Student-facing view for assignments, schedules, and classroom activities.',
-            zh: '学生端：查看作业、课表和课堂活动。',
-        },
-        'tool.student.btn': {
-            en: 'Open Portal',
-            zh: '打开学生端',
-        },
-
-        // Footer
-        'footer': {
-            en: '© 2026 Pathway Academy. Global Learning, Elevated.',
-            zh: '© 2026 Pathway Academy. 全球化学习，卓越赋能。',
-        },
-
-        // Lang toggle
-        'lang.label': {
-            en: 'EN',
-            zh: '中文',
-        },
-    };
+    const landingCopy = window.pathwayLandingCopy || {};
+    const staticTranslations = landingCopy.staticTranslations || {};
+    const authTranslations = landingCopy.authTranslations || {};
+    const toolTranslations = landingCopy.toolTranslations || {};
+    const appIconMeta = landingCopy.appIconMeta || {};
 
     function getLang() {
+        if (runtime?.getLang) return runtime.getLang();
         try {
-            return localStorage.getItem(STORAGE_KEY) || 'en';
+            return localStorage.getItem('pathway_uiLang') || 'en';
         } catch {
             return 'en';
         }
     }
 
     function setLang(lang) {
+        if (runtime?.setLang) {
+            runtime.setLang(lang);
+            return;
+        }
         try {
-            localStorage.setItem(STORAGE_KEY, lang);
-        } catch { }
-    }
-
-    function applyTranslations(lang) {
-        document.querySelectorAll('[data-i18n]').forEach(function (el) {
-            var key = el.getAttribute('data-i18n');
-            if (translations[key] && key in translations && lang in translations[key]) {
-                el.textContent = translations[key][lang];
-            }
-        });
-        // Update html lang attribute
-        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-        // Update toggle button state
-        var toggleBtn = document.getElementById('lang-toggle');
-        if (toggleBtn) {
-            toggleBtn.textContent = lang === 'en' ? '中文' : 'EN';
-            toggleBtn.setAttribute('data-current-lang', lang);
+            localStorage.setItem('pathway_uiLang', lang);
+        } catch {
+            // no-op
         }
     }
 
+    function getToolTranslation(appId, field, lang) {
+        const appCopy = toolTranslations[appId];
+        if (!appCopy || !appCopy[field]) return '';
+        return appCopy[field][lang] || appCopy[field].en || '';
+    }
+
+    function resolveTranslation(key, lang) {
+        if (staticTranslations[key]) {
+            return staticTranslations[key][lang] || staticTranslations[key].en;
+        }
+        if (authTranslations[key]) {
+            return authTranslations[key][lang] || authTranslations[key].en;
+        }
+
+        if (!key.startsWith('tool.')) return key;
+
+        const [, appId, field] = key.split('.');
+        return getToolTranslation(appId, field, lang) || key;
+    }
+
+    function getAppHref(app) {
+        if (runtime?.isDevLanding) {
+            return `http://localhost:${app.devPort}${app.scanPath}`;
+        }
+        return app.scanPath;
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function renderToolCards(lang) {
+        const container = document.getElementById('tools-container');
+        if (!container) return;
+
+        if (!appRegistry.length) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const cards = appRegistry
+            .map((app) => {
+                const iconMeta = appIconMeta[app.id] || { className: 'planner-icon', glyph: 'APP' };
+                const titleKey = `tool.${app.id}.title`;
+                const descKey = `tool.${app.id}.desc`;
+                const btnKey = `tool.${app.id}.btn`;
+                const href = getAppHref(app);
+
+                return `
+                    <article class="tool-card">
+                        <div class="tool-icon-wrapper">
+                            <div class="tool-icon ${iconMeta.className}">${escapeHtml(iconMeta.glyph)}</div>
+                        </div>
+                        <h3 data-i18n="${titleKey}">${escapeHtml(resolveTranslation(titleKey, lang))}</h3>
+                        <p data-i18n="${descKey}">${escapeHtml(resolveTranslation(descKey, lang))}</p>
+                        <div class="card-footer">
+                            <a
+                                href="${escapeHtml(href)}"
+                                data-original-href="${escapeHtml(href)}"
+                                target="_blank"
+                                class="btn btn-outline"
+                                data-i18n="${btnKey}"
+                            >${escapeHtml(resolveTranslation(btnKey, lang))}</a>
+                        </div>
+                    </article>
+                `;
+            })
+            .join('');
+
+        container.innerHTML = cards;
+        window.dispatchEvent(new CustomEvent('pathway:tools-rendered'));
+    }
+
+    function applyTranslations(lang) {
+        renderToolCards(lang);
+
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+            const key = el.getAttribute('data-i18n');
+            if (!key) return;
+            el.textContent = resolveTranslation(key, lang);
+        });
+
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+        const toggleBtn = document.getElementById('lang-toggle');
+        if (toggleBtn) {
+            toggleBtn.textContent = lang === 'en' ? '\u4e2d\u6587' : 'EN';
+            toggleBtn.setAttribute('data-current-lang', lang);
+        }
+
+        window.dispatchEvent(new CustomEvent('pathway:language-changed', { detail: { lang } }));
+    }
+
     function toggleLanguage() {
-        var current = getLang();
-        var next = current === 'en' ? 'zh' : 'en';
+        const next = getLang() === 'en' ? 'zh' : 'en';
         setLang(next);
         applyTranslations(next);
     }
 
-    // Expose globally for the toggle button
     window.pathwayI18n = {
         toggle: toggleLanguage,
         apply: applyTranslations,
-        getLang: getLang,
+        getLang,
+        resolve(key, lang) {
+            return resolveTranslation(key, lang || getLang());
+        },
     };
 
-    // Auto-apply on DOM ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            applyTranslations(getLang());
-        });
-    } else {
+    async function init() {
+        appRegistry = (await runtime?.loadAppRegistry?.()) || [];
         applyTranslations(getLang());
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();

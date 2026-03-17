@@ -1,6 +1,6 @@
-import { createLanguageContext } from '@shared/i18n/LanguageContext';
+import { createAppLanguageContext } from '@pathway/i18n';
 import { translations, TranslationKey } from './translations';
 export type { TranslationKey };
 
-const { LanguageProvider, useLanguage } = createLanguageContext<TranslationKey>(translations);
+const { LanguageProvider, useLanguage } = createAppLanguageContext(translations);
 export { LanguageProvider, useLanguage };

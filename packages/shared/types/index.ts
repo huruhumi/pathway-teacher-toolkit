@@ -15,3 +15,20 @@ export interface UploadedFile {
     type: string;
     data: string; // Base64 string without prefix
 }
+
+export type { GroundingStatus, QualityGate } from './quality';
+export type {
+    SaveResult,
+    RecordEnvelope,
+    RecordQuery,
+    RecordRepository,
+    RecordIndexEntry,
+    RecordQualityStatus,
+} from './storage';
+export type {
+    ScoreReport,
+    DimensionScore,
+    TeacherReview,
+    ScoreDimensionKey,
+    ScoringCalibrationProfile,
+} from './scoring';

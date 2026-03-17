@@ -4,7 +4,7 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 
 interface UseAutoSaveProps<T> {
     getCurrentContentObject: () => T;
-    onSave: (content: T) => void;
+    onSave: (content: T) => void | Promise<unknown>;
     editablePlan: any;
     debounceMs?: number;
 }
@@ -20,6 +20,7 @@ export const useAutoSave = <T>({
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSnapshotRef = useRef<string>('');
     const isMountedRef = useRef(true);
+    const isSavingRef = useRef(false);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -30,12 +31,16 @@ export const useAutoSave = <T>({
         };
     }, []);
 
-    const performSave = useCallback(() => {
-        if (!editablePlan || !isMountedRef.current) return;
+    const performSave = useCallback(async () => {
+        if (!editablePlan || !isMountedRef.current || isSavingRef.current) return;
+        isSavingRef.current = true;
         setSaveStatus('saving');
         try {
             const currentData = getCurrentContentObject();
-            onSave(currentData);
+            const result = await onSave(currentData) as { ok?: boolean; message?: string } | void;
+            if (result && typeof result === 'object' && 'ok' in result && result.ok === false) {
+                throw new Error(result.message || 'Save failed.');
+            }
 
             const snapshot = JSON.stringify(currentData);
             lastSnapshotRef.current = snapshot;
@@ -49,12 +54,15 @@ export const useAutoSave = <T>({
             if (isMountedRef.current) {
                 setSaveStatus('unsaved');
             }
+        } finally {
+            isSavingRef.current = false;
         }
     }, [editablePlan, getCurrentContentObject, onSave]);
 
     // Watch for changes and debounce
     useEffect(() => {
         if (!editablePlan) return;
+        if (isSavingRef.current) return;
 
         let currentSnapshot: string;
         try {
@@ -75,10 +83,10 @@ export const useAutoSave = <T>({
 
             if (timerRef.current) clearTimeout(timerRef.current);
             timerRef.current = setTimeout(() => {
-                performSave();
+                void performSave();
             }, debounceMs);
         }
-    });
+    }, [debounceMs, editablePlan, getCurrentContentObject, performSave]);
 
     // beforeunload warning
     useEffect(() => {
@@ -94,7 +102,7 @@ export const useAutoSave = <T>({
 
     const saveNow = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);
-        performSave();
+        void performSave();
     }, [performSave]);
 
     return { saveStatus, lastSaved, saveNow };

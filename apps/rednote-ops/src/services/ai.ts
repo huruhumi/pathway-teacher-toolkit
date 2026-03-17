@@ -60,7 +60,7 @@ export const generateContent = async (prompt: string, systemInstruction?: string
   }
 };
 
-import { generateAIImage } from '@shared/ai/image';
+import { generateAIImage } from '@pathway/ai';
 
 export const generateImage = (prompt: string, aspectRatio: "1:1" | "3:4" | "4:3" | "9:16" | "16:9" = "3:4") =>
   generateAIImage(prompt, aspectRatio);

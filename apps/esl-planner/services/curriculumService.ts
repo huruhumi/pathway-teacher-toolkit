@@ -2,8 +2,9 @@
 
 import { Type, GenerateContentResponse } from "@google/genai";
 import { ESLCurriculum, CurriculumParams } from '../types';
-import { createAIClient } from '@shared/ai/client';
-import { retryApiCall } from './geminiService';
+import { createAIClient } from '@pathway/ai';
+import { retryApiCall } from './gemini/shared';
+import { mapSentenceCitations } from './gemini/citationMapper';
 
 const CURRICULUM_SCHEMA = {
     type: Type.OBJECT,
@@ -38,10 +39,19 @@ const CURRICULUM_SCHEMA = {
     required: ["textbookTitle", "seriesName", "overview", "totalLessons", "targetLevel", "lessons"]
 };
 
+interface CurriculumGroundingOptions {
+    textbookLevelLabel?: string;
+    notebookId?: string;
+    groundingFactSheet?: string;
+    groundingUrls?: string[];
+    groundingSources?: Array<{ id?: string; title?: string; url?: string; status?: string; type?: string }>;
+}
+
 export const generateESLCurriculum = async (
     textbookText: string,
     params: CurriculumParams,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    grounding: CurriculumGroundingOptions = {},
 ): Promise<ESLCurriculum> => {
     const ai = createAIClient();
 
@@ -69,6 +79,21 @@ CRITICAL INSTRUCTIONS:
         prompt += `\n\nAdditional Instructions from Teacher:\n${params.customInstructions}`;
     }
 
+    if (grounding.groundingFactSheet) {
+        prompt += `\n\n--- NOTEBOOKLM GROUNDING CONTEXT (PRIORITY) ---\n${grounding.groundingFactSheet}`;
+        prompt += `\nUse this grounding context as a strict curriculum guardrail for scope/sequence, unit coherence, vocabulary progression, and assessment alignment.`;
+        prompt += `\nCRITICAL: Keep unit names/order aligned to this grounding context. Prefer grounded vocabulary/grammar evidence over generic ESL defaults.`;
+    }
+    if (grounding.textbookLevelLabel) {
+        prompt += `\nSelected textbook level standard: ${grounding.textbookLevelLabel}`;
+    }
+    if (grounding.notebookId) {
+        prompt += `\nKnowledge notebook ID: ${grounding.notebookId}`;
+    }
+    if (grounding.groundingUrls?.length) {
+        prompt += `\nGrounding source URLs: ${grounding.groundingUrls.join(', ')}`;
+    }
+
     prompt += `\n\n--- TEXTBOOK CONTENT ---\n${textbookText}`;
 
     const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
@@ -79,8 +104,53 @@ CRITICAL INSTRUCTIONS:
             responseSchema: CURRICULUM_SCHEMA,
         }
     }), 5, 3000, signal);
+    const curriculum = JSON.parse(response.text || "{}") as ESLCurriculum;
 
-    return JSON.parse(response.text || "{}");
+    if (grounding.groundingSources && grounding.groundingSources.length > 0) {
+        try {
+            const targets: Array<{ section: string; text: string }> = [];
+            if (curriculum.overview) {
+                targets.push({ section: 'curriculum.overview', text: curriculum.overview });
+            }
+            (curriculum.lessons || []).forEach((lesson, lessonIndex) => {
+                if (lesson.description) {
+                    targets.push({
+                        section: `lessons.${lessonIndex}.description`,
+                        text: lesson.description,
+                    });
+                }
+                (lesson.objectives || []).forEach((objective, objectiveIndex) => {
+                    targets.push({
+                        section: `lessons.${lessonIndex}.objectives.${objectiveIndex}`,
+                        text: objective,
+                    });
+                });
+                if (lesson.grammarFocus) {
+                    targets.push({
+                        section: `lessons.${lessonIndex}.grammarFocus`,
+                        text: lesson.grammarFocus,
+                    });
+                }
+                (lesson.suggestedActivities || []).forEach((activity, activityIndex) => {
+                    targets.push({
+                        section: `lessons.${lessonIndex}.suggestedActivities.${activityIndex}`,
+                        text: activity,
+                    });
+                });
+            });
+
+            curriculum.sentenceCitations = await mapSentenceCitations({
+                targets,
+                sources: grounding.groundingSources,
+                factSheet: grounding.groundingFactSheet,
+                signal,
+            });
+        } catch (citationError) {
+            console.warn('Curriculum citation mapping skipped:', citationError);
+        }
+    }
+
+    return curriculum;
 };
 
 export const translateLessonKit = async (content: any, targetLanguage: string = "Chinese"): Promise<any> => {
