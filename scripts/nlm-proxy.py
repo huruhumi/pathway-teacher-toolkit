@@ -246,11 +246,18 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     raise ValueError("Missing topic or lessonPrompts")
                 result = asyncio.run(full_pipeline(topic, prompts))
                 notebook_id_ctx = result.get("notebookId")
-            elif action == "resume":
+            elif action in ("resume", "notebook-query"):
                 notebook_id_ctx = data.get("notebookId", "")
                 if not notebook_id_ctx or not prompts:
                     raise ValueError("Missing notebookId or lessonPrompts")
                 result = asyncio.run(resume_pipeline(notebook_id_ctx, prompts))
+            elif action == "ensure-resource-guide":
+                notebook_id_ctx = data.get("notebookId", "")
+                if not notebook_id_ctx:
+                    raise ValueError("Missing notebookId")
+                result = asyncio.run(
+                    _ensure_resource_guide(notebook_id_ctx, data.get("userInput"))
+                )
             else:
                 raise ValueError(f"Unknown action: {action}")
 
@@ -281,6 +288,44 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def log_message(self, *_args: Any) -> None:
         pass
+
+
+async def _ensure_resource_guide(
+    notebook_id: str, user_input: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Check if resource guide exists; generate if missing."""
+    import subprocess, os
+    from pathlib import Path
+
+    script = str(Path(__file__).parent / "nlm-resource-guide.py")
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+    # Step 1: check
+    print(f"[guide] Checking resource guide for {notebook_id}...")
+    check = subprocess.run(
+        [sys.executable, script, "check", notebook_id],
+        capture_output=True, text=True, env=env, timeout=60,
+    )
+    if check.returncode != 0:
+        return {"status": "error", "error": f"Check failed: {check.stderr.strip()}"}
+    check_result = json.loads(check.stdout.strip())
+    if check_result.get("exists"):
+        print(f"[guide] Guide already exists: {check_result.get('sourceId')}")
+        return {"status": "exists", "sourceId": check_result.get("sourceId")}
+
+    # Step 2: generate
+    print(f"[guide] Generating guide for {check_result.get('sourcesCount', '?')} sources...")
+    cmd = [sys.executable, script, "generate", notebook_id]
+    if user_input:
+        cmd += ["--user-input", json.dumps(user_input)]
+    gen = subprocess.run(
+        cmd, capture_output=True, text=True, env=env, timeout=300,
+    )
+    if gen.returncode != 0:
+        return {"status": "error", "error": f"Generate failed: {gen.stderr.strip()[-500:]}"}
+    gen_result = json.loads(gen.stdout.strip())
+    print(f"[guide] Guide created: {gen_result.get('sourceId')}")
+    return gen_result
 
 
 async def check_auth() -> bool:
