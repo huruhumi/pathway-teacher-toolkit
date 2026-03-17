@@ -128,15 +128,23 @@ async def _generate_guide_with_gemini(
         # Try loading from .env
         env_path = Path(__file__).parent.parent / '.env'
         if env_path.exists():
-            for line in env_path.read_text().splitlines():
-                if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
-                    api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
-                    break
+            for line in env_path.read_text(encoding='utf-8').splitlines():
+                for prefix in ('VITE_GEMINI_API_KEY=', 'GEMINI_API_KEY=', 'GOOGLE_API_KEY='):
+                    if line.startswith(prefix):
+                        api_key = line.split('=', 1)[1].strip().strip('"').strip("'")
+                        break
     if not api_key:
         raise ValueError("No GEMINI_API_KEY or GOOGLE_API_KEY found")
 
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
+
+    # Load the reference example guide for few-shot prompting
+    example_path = Path(__file__).parent.parent / 'packages' / 'shared' / 'config' / 'resource-guide-example.md'
+    example_text = ""
+    if example_path.exists():
+        example_text = example_path.read_text(encoding='utf-8')
+        print(f"[guide] Loaded example guide: {len(example_text)} chars", file=sys.stderr)
 
     user_context = ""
     if user_input:
@@ -154,103 +162,38 @@ async def _generate_guide_with_gemini(
         if parts:
             user_context = "\n\nTeacher's Input:\n" + "\n".join(parts)
 
-    prompt = f"""You are an expert ESL curriculum designer. Based on the analysis of a NotebookLM notebook's source materials, generate a comprehensive **Resource Guide** for AI-assisted lesson planning.
+    prompt = f"""You are an expert ESL curriculum designer. Generate a comprehensive **Resource Guide** for AI-assisted lesson planning.
 
-## Notebook Analysis Results:
+## YOUR TASK
+
+Based on the notebook analysis below, generate a Resource Guide that is **AT LEAST as detailed** as the reference example.
+
+## REFERENCE EXAMPLE (follow this format and level of detail EXACTLY):
+
+{example_text}
+
+---
+
+## NOTEBOOK ANALYSIS (use this data to generate the guide):
+
 {analysis_text}
 
-## Source Files in Notebook:
+## SOURCE FILES IN THIS NOTEBOOK:
+
 {json.dumps(source_names, ensure_ascii=False, indent=2)}
 {user_context}
 
-## Required Output Format:
+## CRITICAL REQUIREMENTS:
 
-Generate the guide following this EXACT structure:
-
-# \U0001f4da Resource Guide: [Textbook Name] ([Level])
-
-**Notebook ID**: `{notebook_id}`
-**Textbook**: [Full textbook name, edition, level]
-**Structure**: [X thematic units + Y review lessons, structure per unit]
-**Recommended Teaching Period**: [X weeks]
-
----
-
-## 1. Source File Inventory & Usage Rules
-
-### \U0001f534 Core Sources (MUST reference for curriculum/lesson plan generation)
-
-Table with columns: #, Filename, Type, Usage Scenario
-
-### \U0001f7e1 Auxiliary Sources (reference as needed)
-
-Similar table.
-
-### \u26aa Reference Sources (rarely needed)
-
-Similar table.
-
----
-
-## 2. Unit Internal Structure
-
-Show the internal structure of each unit (trails, sections, etc.) as a tree diagram.
-
----
-
-## 3. Lesson Scheduling Options
-
-### Plan A: [schedule option, e.g. 2 sessions/week]
-### Plan B: [schedule option, e.g. 3 sessions/week]
-### Plan C: Adaptive (custom lesson count)
-
-For each session, provide a detailed table with columns: Stage, Duration, Objective, Activity Design
-
----
-
-## 4. Learning Companion Interactive Tasks (Interactive type only)
-
-Table with: Task Type, Example, Trigger Timing
-
----
-
-## 5. Scope & Sequence
-
-For EACH unit, create a table with Trail 1 and Trail 2 (or equivalent), listing:
-- Vocabulary
-- Grammar
-- Phonics
-- Reading
-- Listening
-- Output (speaking/project)
-
----
-
-## 6. Review Lessons
-
-Table with: Review, Week, Coverage, Structure Focus
-
----
-
-## 7. AI Generation Strategy
-
-### When generating Curriculum
-### When generating Lesson Plans
-### When generating Assignments
-### When generating LC Interactive Tasks
-
----
-
-## 8. Cross-Level Adaptation Notes
-
-CRITICAL RULES:
-1. ALL content must be derived from the actual source materials analysis — do NOT invent vocabulary, grammar points, or unit topics
-2. Use the EXACT source file names from the notebook
-3. The guide must be in ENGLISH
-4. Be thorough — include ALL units from the textbook
-5. Vocabulary lists should contain the ACTUAL words found in the source materials
-6. Grammar points should match what's taught in each unit
-7. Reading titles should be the EXACT titles from the textbook
+1. **Match the reference example's detail level** — every unit must have ACTUAL vocabulary words, grammar points, phonics, reading titles, listening topics, and output activities extracted from the analysis
+2. **Use EXACT source file names** from the notebook
+3. **Include complete Scope & Sequence** with real vocabulary lists (10+ words per trail per unit)
+4. **Include full lesson scheduling tables** with specific stage-by-stage breakdowns (Plan A, B, C)
+5. **Include AI Generation Strategy** with specific step-by-step instructions for curriculum, lesson plan, and assignment generation
+6. **The guide MUST be in English** (the reference uses Chinese section headers — translate those to English equivalents)
+7. **Notebook ID**: `{notebook_id}`
+8. Do NOT invent content — all vocabulary, grammar, reading titles must come from the analysis data
+9. If the analysis doesn't provide enough detail for a section, query will be needed — mark those sections with [NEEDS VERIFICATION] but still include your best extraction from available data
 """
 
     response = await model.generate_content_async(prompt)
