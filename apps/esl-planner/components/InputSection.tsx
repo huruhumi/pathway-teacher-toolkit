@@ -112,6 +112,8 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
     () => textbookGroups.find((group) => group.textbookId === textbookId) || null,
     [textbookGroups, textbookId],
   );
+  const hasVideoUrlInText = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i.test(text);
+  const hasTranscriptHintInText = /(transcript|caption|lyrics|summary|key points|字幕|歌词|台词|视频要点|视频摘要)/i.test(text);
 
   // Pre-fill fields when initialValues changes (from curriculum)
   useEffect(() => {
@@ -298,6 +300,13 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
           placeholder={t('input.textPlaceholder')}
           className="py-3 h-32 resize-none"
         />
+        {hasVideoUrlInText && !hasTranscriptHintInText && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+            {lang === 'zh'
+              ? '检测到视频链接：当前系统不会自动解析视频内容。请补充字幕/歌词/关键要点，避免 AI 编造视频细节。'
+              : 'Video URL detected: the planner does not auto-parse video content yet. Add transcript/lyrics/key points to avoid hallucinated details.'}
+          </p>
+        )}
 
         <FileUploadDropzone
           label={t('input.uploadMaterials')}
