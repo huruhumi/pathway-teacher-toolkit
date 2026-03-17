@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 
-GUIDE_TITLE = "📚 资源调用指南"
-GUIDE_TITLE_ALT = "资源调用指南"  # Without emoji fallback
+GUIDE_TITLE = "\U0001f4da Resource Guide"
+GUIDE_TITLE_ALT = "Resource Guide"  # Without emoji fallback
 
 
 async def get_client():
@@ -154,7 +154,7 @@ async def _generate_guide_with_gemini(
         if parts:
             user_context = "\n\nTeacher's Input:\n" + "\n".join(parts)
 
-    prompt = f"""You are an expert ESL curriculum designer. Based on the analysis of a NotebookLM notebook's source materials, generate a comprehensive **资源调用指南** (Resource Guide).
+    prompt = f"""You are an expert ESL curriculum designer. Based on the analysis of a NotebookLM notebook's source materials, generate a comprehensive **Resource Guide** for AI-assisted lesson planning.
 
 ## Notebook Analysis Results:
 {analysis_text}
@@ -163,90 +163,90 @@ async def _generate_guide_with_gemini(
 {json.dumps(source_names, ensure_ascii=False, indent=2)}
 {user_context}
 
-## Required Output Format (in Chinese):
+## Required Output Format:
 
 Generate the guide following this EXACT structure:
 
-# 📚 资源调用指南：[Textbook Name] ([Level])
+# \U0001f4da Resource Guide: [Textbook Name] ([Level])
 
 **Notebook ID**: `{notebook_id}`
-**教材**: [Full textbook name, edition, level]
-**结构**: [X 个主题单元 + Y 个复习课, structure per unit]
-**推荐教学周期**: [X 周]
+**Textbook**: [Full textbook name, edition, level]
+**Structure**: [X thematic units + Y review lessons, structure per unit]
+**Recommended Teaching Period**: [X weeks]
 
 ---
 
-## 一、来源文件清单与调用规则
+## 1. Source File Inventory & Usage Rules
 
-### 🔴 核心来源（生成大纲/课件必须调用）
+### \U0001f534 Core Sources (MUST reference for curriculum/lesson plan generation)
 
-Table with columns: #, 文件名, 类型, 调用场景
+Table with columns: #, Filename, Type, Usage Scenario
 
-### 🟡 辅助来源（按需调用）
+### \U0001f7e1 Auxiliary Sources (reference as needed)
 
 Similar table.
 
-### ⚪ 参考来源（一般不需调用）
+### \u26aa Reference Sources (rarely needed)
 
 Similar table.
 
 ---
 
-## 二、单元内部结构
+## 2. Unit Internal Structure
 
 Show the internal structure of each unit (trails, sections, etc.) as a tree diagram.
 
 ---
 
-## 三、课时安排方案
+## 3. Lesson Scheduling Options
 
-### 方案 A: [schedule option]
-### 方案 B: [schedule option]
-### 方案 C: 智能判断（自定义课时）
+### Plan A: [schedule option, e.g. 2 sessions/week]
+### Plan B: [schedule option, e.g. 3 sessions/week]
+### Plan C: Adaptive (custom lesson count)
 
-For each session, provide a detailed table with columns: 阶段, 时长, 目标, 活动设计
-
----
-
-## 四、Learning Companion 互动任务（仅互动型）
-
-Table with: 任务类型, 示例, 触发时机
+For each session, provide a detailed table with columns: Stage, Duration, Objective, Activity Design
 
 ---
 
-## 五、Scope & Sequence
+## 4. Learning Companion Interactive Tasks (Interactive type only)
+
+Table with: Task Type, Example, Trigger Timing
+
+---
+
+## 5. Scope & Sequence
 
 For EACH unit, create a table with Trail 1 and Trail 2 (or equivalent), listing:
-- 词汇 (vocabulary)
-- 语法 (grammar)
-- 语音 (phonics)
-- 阅读 (reading)
-- 听力 (listening)
-- 输出 (output: speaking/project)
+- Vocabulary
+- Grammar
+- Phonics
+- Reading
+- Listening
+- Output (speaking/project)
 
 ---
 
-## 六、复习课
+## 6. Review Lessons
 
-Table with: 复习, 周次, 覆盖, 结构重点
-
----
-
-## 七、AI 生成调用策略
-
-### 生成大纲（Curriculum）时
-### 生成 Lesson Plan 时
-### 生成 Assignment 时
-### 生成 LC 互动任务时
+Table with: Review, Week, Coverage, Structure Focus
 
 ---
 
-## 八、跨级别适配说明
+## 7. AI Generation Strategy
+
+### When generating Curriculum
+### When generating Lesson Plans
+### When generating Assignments
+### When generating LC Interactive Tasks
+
+---
+
+## 8. Cross-Level Adaptation Notes
 
 CRITICAL RULES:
 1. ALL content must be derived from the actual source materials analysis — do NOT invent vocabulary, grammar points, or unit topics
 2. Use the EXACT source file names from the notebook
-3. The guide must be in Chinese (中文)
+3. The guide must be in ENGLISH
 4. Be thorough — include ALL units from the textbook
 5. Vocabulary lists should contain the ACTUAL words found in the source materials
 6. Grammar points should match what's taught in each unit
