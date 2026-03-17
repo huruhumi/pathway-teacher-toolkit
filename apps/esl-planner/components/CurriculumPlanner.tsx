@@ -70,7 +70,7 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
 }) => {
     // PDF state
     const { t, lang } = useLanguage();
-    const { startRAG, checkBackends, ensureResourceGuide } = useNotebookLMRAG();
+    const { startRAG, checkBackends, ensureResourceGuide, readResourceGuide } = useNotebookLMRAG();
     const { pendingFallback, askFallbackConfirm, handleFallbackChoice, resetFallback } = useFallbackConfirm();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfText, setPdfText] = useState('');
@@ -456,76 +456,72 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                         3,
                         38,
                         lang === 'zh'
-                            ? `已连接 ${backend} 后端，正在分析对应笔记资料...`
-                            : `Connected to ${backend} backend, analyzing notebook sources...`,
-                    );
-                    const rag = await startRAG(
-                        `Curriculum grounding for ${levelEntry.displayName}.`,
-                        [
-                            `You are helping create a curriculum for "${levelEntry.displayName}" (${params.lessonCount} lessons, ${params.duration} min each, ${params.studentCount} students).
-
-IMPORTANT STRUCTURAL RULE: Each unit has 2 Trails (Trail 1 and Trail 2). Each Trail = 1 lesson. So each unit = 2 lessons.
-
-Using ONLY the notebook sources (especially the Resource Guide, Lesson Planner, and Student's Book), provide a comprehensive fact sheet with:
-
-1. TEXTBOOK INFO: Exact textbook title, edition, level, total number of units, number of review lessons
-2. UNIT STRUCTURE: Confirm each unit has Trail 1 + Trail 2 structure
-3. FOR EACH UNIT, list SEPARATELY for Trail 1 AND Trail 2:
-   - Unit Big Question
-   - Trail 1 sub-theme and Trail 2 sub-theme
-   - Trail 1 vocabulary list (ALL words, 8-10 minimum)
-   - Trail 2 vocabulary list (ALL words, 8-10 minimum)
-   - Trail 1 grammar point
-   - Trail 2 grammar point
-   - Trail 1 phonics target
-   - Trail 2 phonics target
-   - Trail 1 reading text title and type (fiction/nonfiction)
-   - Trail 2 reading text title and type
-   - Trail 1 output activity (Speaking)
-   - Trail 2 output activity (Project)
-   - Page references from Student's Book
-4. REVIEW LESSONS: When they occur and what they cover
-5. PACING: Any official pacing guide recommendations
-
-CRITICAL: Trail 1 and Trail 2 must be SEPARATE lessons with DIFFERENT content. Do NOT combine them.
-If sources are missing/insufficient, include the marker: NO_USABLE_SOURCE.`,
-                        ],
-                        backend,
-                        {
-                            notebookId: levelEntry.notebookId || undefined,
-                            tolerateErrors: true,
-                            allowEmptyFactSheets: true,
-                        },
+                            ? '正在读取资源调用指南全文...'
+                            : 'Reading Resource Guide for curriculum grounding...',
                     );
 
-                    groundingFactSheet = rag.factSheets.get(0)?.content;
-                    groundingUrls = rag.validUrls;
-                    groundingSources = rag.sources;
-                    knowledgeNotebookId = rag.notebookId || levelEntry.notebookId || undefined;
-                    const factSheetCount = rag.factSheets.size;
-                    const sourceCount = rag.sources.length;
-                    const urlCount = rag.validUrls.length;
-                    const hasNoUsableSourceMarker = /NO_USABLE_SOURCE/i.test(groundingFactSheet || '');
-                    if (hasNoUsableSourceMarker) {
-                        groundingFactSheet = undefined;
-                    }
+                    // --- Two-Layer Grounding: Curriculum uses Resource Guide directly ---
+                    // The Resource Guide is a structured index pre-generated from all PDF sources.
+                    // Reading it directly is more reliable than NLM search for curriculum scope/sequence.
+                    const guideRead = await readResourceGuide(levelEntry.notebookId!);
+                    knowledgeNotebookId = levelEntry.notebookId || undefined;
 
-                    if (groundingFactSheet) {
+                    if (guideRead.status === 'ok' && guideRead.content) {
+                        groundingFactSheet = guideRead.content;
+                        console.log(`[curriculum] Resource Guide loaded: ${guideRead.content.length} chars`);
                         setGroundingBanner({
                             kind: 'connected',
-                            title: lang === 'zh' ? 'NotebookLM 已连接并命中资料' : 'NotebookLM connected and grounded',
+                            title: lang === 'zh' ? '资源调用指南已加载' : 'Resource Guide loaded',
                             detail: lang === 'zh'
-                                ? `级别 ${levelEntry.displayName} 使用 notebook ${knowledgeNotebookId || levelEntry.notebookId}，提取 ${factSheetCount} 份事实表，命中 ${sourceCount} 个笔记来源（其中 URL ${urlCount} 条）。`
-                                : `Level ${levelEntry.displayName} used notebook ${knowledgeNotebookId || levelEntry.notebookId}, extracted ${factSheetCount} fact sheet(s), matched ${sourceCount} notebook source(s) (${urlCount} URL).`,
+                                ? `已从 notebook ${knowledgeNotebookId} 直接读取资源调用指南（${guideRead.content.length} 字符），用于课程大纲 grounding。`
+                                : `Loaded Resource Guide (${guideRead.content.length} chars) from notebook ${knowledgeNotebookId} for curriculum grounding.`,
                         });
                     } else {
-                        const fbTitle = lang === 'zh' ? '未提取到笔记事实表' : 'No notebook fact sheet extracted';
-                        const fbDetail = lang === 'zh'
-                            ? `已连接 notebook ${knowledgeNotebookId || levelEntry.notebookId}，但未返回可用事实表（笔记来源 ${sourceCount} 个，URL ${urlCount} 条）。是否使用 fallback 无笔记模式继续生成？`
-                            : `Connected to notebook ${knowledgeNotebookId || levelEntry.notebookId}, but no usable fact sheet was returned (${sourceCount} source(s), ${urlCount} URL). Continue with fallback?`;
-                        const choice = await askFallbackConfirm(fbTitle, fbDetail);
-                        if (choice === 'cancel') throw new Error('AbortError');
-                        setGroundingBanner({ kind: 'fallback', title: fbTitle, detail: fbDetail });
+                        console.warn('[curriculum] Resource Guide not available, falling back to NLM query');
+                        // Fallback: try NLM query if Resource Guide is missing
+                        const rag = await startRAG(
+                            `Curriculum grounding for ${levelEntry.displayName}.`,
+                            [
+                                `Using ONLY the notebook sources, provide a comprehensive curriculum fact sheet for "${levelEntry.displayName}" with:
+- Textbook title, total units, unit structure (Trail 1 + Trail 2)
+- For each unit: vocabulary lists, grammar points, phonics targets, reading texts (separately for Trail 1 and Trail 2)
+- Review lesson schedule
+If sources are missing, include the marker: NO_USABLE_SOURCE.`,
+                            ],
+                            backend,
+                            {
+                                notebookId: levelEntry.notebookId || undefined,
+                                tolerateErrors: true,
+                                allowEmptyFactSheets: true,
+                            },
+                        );
+
+                        groundingFactSheet = rag.factSheets.get(0)?.content;
+                        groundingUrls = rag.validUrls;
+                        groundingSources = rag.sources;
+                        knowledgeNotebookId = rag.notebookId || levelEntry.notebookId || undefined;
+                        const hasNoUsableSourceMarker = /NO_USABLE_SOURCE/i.test(groundingFactSheet || '');
+                        if (hasNoUsableSourceMarker) {
+                            groundingFactSheet = undefined;
+                        }
+
+                        if (groundingFactSheet) {
+                            setGroundingBanner({
+                                kind: 'connected',
+                                title: lang === 'zh' ? 'NotebookLM 查询已命中' : 'NotebookLM query matched',
+                                detail: lang === 'zh'
+                                    ? `通过 NLM 查询获取了 grounding 数据（Resource Guide 不可用作为回退）。`
+                                    : `Grounding data retrieved via NLM query (Resource Guide unavailable, used as fallback).`,
+                            });
+                        } else {
+                            const fbTitle = lang === 'zh' ? '未提取到笔记事实表' : 'No notebook fact sheet extracted';
+                            const fbDetail = lang === 'zh'
+                                ? `已连接 notebook ${knowledgeNotebookId || levelEntry.notebookId}，但 Resource Guide 和 NLM 查询均未返回可用数据。是否使用 fallback 模式？`
+                                : `Connected to notebook ${knowledgeNotebookId || levelEntry.notebookId}, but neither Resource Guide nor NLM query returned usable data. Continue with fallback?`;
+                            const choice = await askFallbackConfirm(fbTitle, fbDetail);
+                            if (choice === 'cancel') throw new Error('AbortError');
+                            setGroundingBanner({ kind: 'fallback', title: fbTitle, detail: fbDetail });
+                        }
                     }
 
                     updateGenerationProgress(

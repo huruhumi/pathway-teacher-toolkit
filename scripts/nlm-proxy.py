@@ -258,6 +258,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 result = asyncio.run(
                     _ensure_resource_guide(notebook_id_ctx, data.get("userInput"))
                 )
+            elif action == "read-resource-guide":
+                notebook_id_ctx = data.get("notebookId", "")
+                if not notebook_id_ctx:
+                    raise ValueError("Missing notebookId")
+                result = asyncio.run(_read_resource_guide(notebook_id_ctx))
             else:
                 raise ValueError(f"Unknown action: {action}")
 
@@ -288,6 +293,35 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
     def log_message(self, *_args: Any) -> None:
         pass
+
+
+GUIDE_TITLE = "\U0001f4da Resource Guide"
+GUIDE_TITLE_ALT = "Resource Guide"
+
+
+async def _read_resource_guide(notebook_id: str) -> dict[str, Any]:
+    """Read the full text content of the Resource Guide source."""
+    async with await NotebookLMClient.from_storage(timeout=CLIENT_TIMEOUT) as client:
+        sources = await list_notebook_sources(client, notebook_id)
+        guide_src = None
+        for s in sources:
+            title = s.get("title", "")
+            if GUIDE_TITLE in title or GUIDE_TITLE_ALT in title:
+                guide_src = s
+                break
+        if not guide_src:
+            return {"status": "not_found", "content": None}
+
+        source_id = guide_src["id"]
+        print(f"[guide] Reading Resource Guide content: {source_id}")
+        try:
+            result = await client.sources.get_content(source_id)
+            content = getattr(result, "content", None) or str(result)
+            print(f"[guide] Read {len(content)} chars")
+            return {"status": "ok", "content": content, "sourceId": source_id}
+        except Exception as exc:
+            print(f"[guide] Failed to read content: {exc}")
+            return {"status": "error", "error": str(exc)}
 
 
 async def _ensure_resource_guide(

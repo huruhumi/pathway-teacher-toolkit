@@ -299,6 +299,22 @@ export function useNotebookLMRAG() {
         }
     }, []);
 
+    /** Read the full text content of the Resource Guide source from the notebook. */
+    const readResourceGuide = useCallback(async (
+        notebookId: string,
+    ): Promise<{ status: string; content?: string; sourceId?: string; error?: string }> => {
+        try {
+            const result = await callLocal({
+                action: 'read-resource-guide',
+                notebookId,
+            });
+            return result;
+        } catch (error: any) {
+            console.warn('[readResourceGuide] Failed:', error?.message);
+            return { status: 'error', error: error?.message || 'Unknown error' };
+        }
+    }, []);
+
     return {
         ragProgress,
         startRAG,
@@ -306,6 +322,7 @@ export function useNotebookLMRAG() {
         cancelRAG,
         resetRAG,
         ensureResourceGuide,
+        readResourceGuide,
         isRAGAvailable,
         checkBackends,
     };
