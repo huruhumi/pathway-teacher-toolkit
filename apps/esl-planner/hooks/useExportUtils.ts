@@ -6,6 +6,32 @@ import { downloadBlob } from '@shared/utils/download';
 
 const INDIGO_COLOR = '#4f46e5';
 
+// Cached base64 logo for embedding in popup viewer HTML
+let _logoBase64Cache: string | null = null;
+function getLogoBase64(): string {
+    if (_logoBase64Cache) return _logoBase64Cache;
+    try {
+        // Extract from already-loaded <img id="pathway-logo"> in the DOM
+        const img = document.getElementById('pathway-logo') as HTMLImageElement | null;
+        if (img && img.naturalWidth > 0) {
+            const size = 160;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d')!;
+            const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight);
+            const w = img.naturalWidth * scale;
+            const h = img.naturalHeight * scale;
+            ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+            _logoBase64Cache = canvas.toDataURL('image/png');
+            return _logoBase64Cache;
+        }
+    } catch {
+        // ignore
+    }
+    return '';
+}
+
 export interface UseExportUtilsProps {
     editablePlan: StructuredLessonPlan | null;
     editableSlides: Slide[];
@@ -43,6 +69,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         const win = window.open('', '_blank');
         if (!win) return;
 
+        const logoDataUri = getLogoBase64();
+        const logoImgTag = logoDataUri ? `<img src="${logoDataUri}" class="viewer-title-logo" alt="" />` : '';
         let contentHtml = '';
         let title = 'Lesson Kit Viewer';
 
@@ -60,7 +88,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             <!-- Lesson Details Card -->
             <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-5">
                 <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <span class="text-violet-600">ℹ</span> Lesson Details
+                    ${logoImgTag} Lesson Details
                 </h3>
                 <!-- Topic — own row -->
                 <div class="mb-4">
@@ -250,7 +278,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         } else if (tabId === 'slides') {
             title = `Slides: ${editablePlan?.classInformation.topic || 'Lesson'}`;
             contentHtml = `
-            <h1 class="text-3xl font-bold text-indigo-900 mb-8 border-b-4 border-indigo-500 pb-4">PPT Outline</h1>
+            <div class="flex items-center gap-3 mb-8 border-b-4 border-indigo-500 pb-4">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">PPT Outline</h1></div>
             <div class="space-y-12">
                 ${editableSlides.map((s, i) => `
                     <div class="p-8 bg-white border-2 border-indigo-100 rounded-3xl shadow-sm relative overflow-hidden">
@@ -282,7 +310,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         } else if (tabId === 'games') {
             title = `Activities: ${editablePlan?.classInformation.topic || 'Lesson'}`;
             contentHtml = `
-            <h1 class="text-3xl font-bold text-indigo-900 mb-8">Classroom Games & Activities</h1>
+            <div class="flex items-center gap-3 mb-8">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">Classroom Games & Activities</h1></div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 ${editableGames.map((g, i) => `
                     <div class="bg-white border border-indigo-100 p-6 rounded-2xl shadow-sm">
@@ -303,16 +331,14 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             </div>
         `;
         } else if (tabId === 'companion') {
-            title = `Review Plan: ${editablePlan?.classInformation.topic || 'Lesson'}`;
+            title = `Learning Companion: ${editablePlan?.classInformation.topic || 'Lesson'}`;
 
             // Generate HTML for a single card
             const renderCard = (d: any, isTitle: boolean = false) => {
                 if (isTitle) {
                     return `
                         <div class="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 flex flex-col justify-center items-center text-center shadow-sm print:shadow-none h-full w-full box-border">
-                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-orange-100 print:shadow-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
-                            </div>
+                            <img src="${logoDataUri}" alt="Pathway Academy" style="width:80px; height:80px; object-fit:contain; margin-bottom:16px;" />
                             <h1 class="text-3xl font-black text-orange-900 mb-4 uppercase tracking-tight">7-Day Learning Companion</h1>
                             <p class="text-base font-bold text-orange-700 bg-white px-6 py-2 rounded-full shadow-sm print:shadow-none border border-orange-100 truncate w-full max-w-[90%]">${editablePlan?.classInformation.topic || 'Lesson Overview'}</p>
                         </div>
@@ -334,20 +360,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
 
                         <!-- Body: 2 columns -->
                         <div style="padding:12px; display:flex; flex-direction:row; gap:12px; flex:1; min-height:0;">
-                            <!-- LEFT COLUMN: Core Task + Step-by-Step -->
+                            <!-- LEFT COLUMN: Step-by-Step -->
                             <div style="flex:1; display:flex; flex-direction:column; min-height:0; min-width:0;">
-                                <!-- Core Task (max 40% height) -->
-                                <div style="background:#f8fafc; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:10px; max-height:40%; overflow:hidden; flex-shrink:0;">
-                                    <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
-                                        <div style="background:#dbeafe; color:#2563eb; padding:4px; border-radius:6px; display:flex; align-items:center; justify-content:center;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                                        </div>
-                                        <span style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Core Task</span>
-                                    </div>
-                                    <div style="font-size:15px; font-weight:600; color:#1e293b; line-height:1.5; white-space:pre-wrap; overflow:hidden;">${d.activity || 'No task defined.'}</div>
-                                    <div style="font-size:13px; color:#64748b; margin-top:4px; line-height:1.4; overflow:hidden;">${d.activity_cn || ''}</div>
-                                </div>
-
                                 <!-- Step-by-Step Tasks -->
                                 <div style="flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column;">
                                     <div style="display:flex; align-items:center; gap:6px; padding-bottom:6px; margin-bottom:6px; border-bottom:1px solid #f1f5f9; flex-shrink:0;">
@@ -406,7 +420,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                                                 </div>
                                                 <div style="min-width:0; display:flex; flex-direction:column; justify-content:center; overflow:hidden;">
                                                     <span style="font-size:13px; font-weight:600; color:#312e81; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.title || r.title_cn}</span>
-                                                    <span style="font-size:10px; color:#6366f1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px;">${r.url.replace('https://', '').replace('www.', '')}</span>
+                                                    <span style="font-size:10px; color:#64748b; line-height:1.4; margin-top:2px;">${r.description_cn || r.description || ''}</span>
                                                 </div>
                                             </div>
                                         `).join('') : '<p style="font-size:13px; color:#94a3b8; font-style:italic;">No external resources added.</p>'}
@@ -495,7 +509,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             if (subTabId === 'flashcards') {
                 title = `Flashcards: ${editablePlan?.classInformation.topic || 'Lesson'}`;
                 contentHtml = `
-                <h1 class="text-3xl font-bold text-indigo-900 mb-8">Teaching Flashcards</h1>
+                <div class="flex items-center gap-3 mb-8">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">Teaching Flashcards</h1></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     ${localFlashcards.map((c, i) => `
                         <div class="flex border-2 border-indigo-100 rounded-3xl overflow-hidden h-72 shadow-sm bg-white">
@@ -620,6 +634,24 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                             }).join('')}
                                 </div>
                             `;
+                        } else if (sec.layout === 'tracing') {
+                            secContent = `
+                                <div class="grid grid-cols-1 gap-8">
+                                    ${sec.items.map((item, iIdx) => `
+                                        <div class="space-y-2">
+                                            <div class="text-sm text-gray-500 font-bold">${iIdx + 1}.</div>
+                                            <div style="font-size:2rem; font-weight:700; letter-spacing:0.15em; text-align:center; color:transparent; -webkit-text-stroke:1.5px #c4b5a0; font-family:'Inter',sans-serif;">
+                                                ${item.question}
+                                            </div>
+                                            <div style="position:relative; height:50px; border-top:1px dashed #93c5fd80; margin-top:8px;">
+                                                <div style="position:absolute; top:33%; left:0; right:0; border-top:1px dashed #fca5a580;"></div>
+                                                <div style="position:absolute; top:66%; left:0; right:0; border-top:2px solid #60a5fa99;"></div>
+                                                <div style="position:absolute; bottom:0; left:0; right:0; border-top:1px dashed #93c5fd80;"></div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
                         } else {
                             secContent = `
                                 <div class="grid grid-cols-1 gap-8">
@@ -656,7 +688,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                     return `
                         <div class="mb-20">
                             <div class="text-center mb-12">
-                                <h1 class="text-4xl font-black text-indigo-900 mb-2">${ws.title}</h1>
+                                <div class="flex items-center gap-3 mb-2">${logoImgTag}<h1 class="text-4xl font-black text-indigo-900">${ws.title}</h1></div>
                                 <p class="text-gray-500 italic">${ws.instructions}</p>
                             </div>
                             <div class="space-y-16">
@@ -684,7 +716,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             } else if (subTabId === 'grammar') {
                 title = `Infographic: ${editablePlan?.classInformation.topic || 'Lesson'}`;
                 contentHtml = `
-                <h1 class="text-3xl font-bold text-indigo-900 mb-8">Lesson Infographic Handout</h1>
+                <div class="flex items-center gap-3 mb-8">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">Lesson Infographic Handout</h1></div>
                 <div class="space-y-12">
                     ${grammarInfographicUrl ? `
                         <div class="bg-white p-4 rounded-3xl border-4 border-indigo-50 shadow-xl overflow-hidden text-center">
@@ -713,7 +745,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             } else if (subTabId === 'whiteboard') {
                 title = `Whiteboard Design: ${editablePlan?.classInformation.topic || 'Lesson'}`;
                 contentHtml = `
-                <h1 class="text-3xl font-bold text-indigo-900 mb-8">Whiteboard Design Reference</h1>
+                <div class="flex items-center gap-3 mb-8">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">Whiteboard Design Reference</h1></div>
                 <div class="space-y-12">
                     ${blackboardImageUrl ? `
                         <div class="bg-white p-6 rounded-[2.5rem] border-[12px] border-gray-100 shadow-2xl overflow-hidden text-center">
@@ -726,7 +758,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             } else if (subTabId === 'phonics') {
                 title = `Phonics: ${editablePlan?.classInformation.topic || 'Lesson'}`;
                 contentHtml = `
-                <h1 class="text-3xl font-bold text-indigo-900 mb-8">Phonics & Decodable Practice</h1>
+                <div class="flex items-center gap-3 mb-8">${logoImgTag}<h1 class="text-3xl font-bold text-indigo-900">Phonics & Decodable Practice</h1></div>
                 
                 <div class="grid grid-cols-2 gap-8 mb-12">
                     <div class="bg-purple-50 p-6 rounded-3xl border border-purple-100 shadow-sm">
@@ -790,9 +822,12 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                 }
             </style>
             <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #4f46e5; padding-bottom:10px; margin-bottom:10px;">
-                <div>
-                    <h1 style="font-size:22px; font-weight:900; color:#1e1b4b; margin:0;">📋 课后作业单</h1>
-                    <div style="font-size:12px; color:#64748b; margin-top:2px;">Pathway Academy · After-Class Assignment Sheet</div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <img src="${logoDataUri}" alt="Pathway Academy" style="width:48px; height:48px; object-fit:contain;" />
+                    <div>
+                        <h1 style="font-size:22px; font-weight:900; color:#1e1b4b; margin:0;">课后作业单</h1>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">Pathway Academy · After-Class Assignment Sheet</div>
+                    </div>
                 </div>
                 <div style="text-align:right; font-size:12px; color:#475569;">
                     <div style="font-size:15px; font-weight:800; color:#4f46e5; margin-bottom:2px;">👤 ${studentNameDisplay}</div>
@@ -839,20 +874,19 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                     `).join('')}
                 </div>
                 ${assignmentSheet.showComment ? `
-                <div style="background:#fff; border:1px solid #ede9fe; border-radius:8px; padding:8px 12px; min-height:40px;">
+                <div style="background:#fff; border:1px solid #ede9fe; border-radius:8px; padding:8px 12px; min-height:${assignmentSheet.feedback.overallComment ? '40px' : '80px'};">
                     <div style="font-size:10px; font-weight:900; color:#a78bfa; text-transform:uppercase; margin-bottom:4px;">老师寄语</div>
-                    <div style="font-size:12px; color:#334155; line-height:1.6; white-space:pre-wrap;">${assignmentSheet.feedback.overallComment || '（待填写）'}</div>
+                    <div style="font-size:12px; color:#334155; line-height:1.6; white-space:pre-wrap;">${assignmentSheet.feedback.overallComment || ''}</div>
                 </div>
                 ` : ''}
             </div>
-            <div style="margin-top:12px; padding-top:8px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8;">
+            <div style="position:fixed; bottom:10mm; left:15mm; right:15mm; padding-top:8px; border-top:1px solid #e2e8f0; font-size:10px; color:#94a3b8;">
                 <span>Pathway Academy · 课后作业单</span>
-                <span>家长签名: ____________________</span>
             </div>
             `;
         }
 
-        const fullHtml = wrapViewerHtml(title, contentHtml);
+        const fullHtml = wrapViewerHtml(title, contentHtml, logoDataUri);
 
         win.document.write(fullHtml);
         win.document.close();
@@ -1063,59 +1097,235 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
     };
 
     const handleDownloadAllFlashcards = async () => {
-        const { default: JSZip } = await import('jszip');
-        const zip = new JSZip();
-        const folder = zip.folder("flashcards_bundle");
+        const W = 210; // A4 portrait width mm
+        const H = 297; // A4 portrait height mm
+        const IMG = 120; // 1:1 image size mm
+        const M = (H - 2 * IMG) / 4; // equal margin ≈ 14.25mm
 
-        for (let i = 0; i < localFlashcards.length; i++) {
-            const card = localFlashcards[i];
-            const imgData = flashcardImages?.[i];
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-            const doc = new jsPDF({
-                orientation: "landscape",
-                unit: "mm",
-                format: [148, 105], // A6 Landscape
-            });
+        // Process pairs of flashcards
+        for (let p = 0; p < localFlashcards.length; p += 2) {
+            if (p > 0) doc.addPage();
 
-            // Front Side (Image or Placeholder)
-            if (imgData) {
-                doc.addImage(imgData, "PNG", 10, 10, 128, 85);
+            const card1 = localFlashcards[p];
+            const card2 = p + 1 < localFlashcards.length ? localFlashcards[p + 1] : null;
+            const img1 = flashcardImages?.[p];
+            const img2 = p + 1 < localFlashcards.length ? flashcardImages?.[p + 1] : undefined;
+
+            // --- Page 1: Two images ---
+            const imgX = (W - IMG) / 2; // center horizontally
+            const y1 = M; // top image
+            const y2 = M + IMG + 2 * M; // bottom image (M + IMG + M + M)
+
+            // Image 1
+            if (img1 && (img1.startsWith('data:') || img1.startsWith('http'))) {
+                doc.addImage(img1, "PNG", imgX, y1, IMG, IMG);
             } else {
-                doc.setFontSize(20);
-                doc.text("Ready for Image", 148 / 2, 105 / 2, {
-                    align: "center",
-                } as any);
+                doc.setDrawColor(220, 220, 230);
+                doc.setLineWidth(0.4);
+                doc.rect(imgX, y1, IMG, IMG);
+                doc.setFontSize(18);
+                doc.setTextColor(200, 200, 200);
+                doc.text("No Image", W / 2, y1 + IMG / 2, { align: "center" } as any);
             }
 
+            // Image 2
+            if (card2) {
+                if (img2 && (img2.startsWith('data:') || img2.startsWith('http'))) {
+                    doc.addImage(img2, "PNG", imgX, y2, IMG, IMG);
+                } else {
+                    doc.setDrawColor(220, 220, 230);
+                    doc.setLineWidth(0.4);
+                    doc.rect(imgX, y2, IMG, IMG);
+                    doc.setFontSize(18);
+                    doc.setTextColor(200, 200, 200);
+                    doc.text("No Image", W / 2, y2 + IMG / 2, { align: "center" } as any);
+                }
+            }
+
+            // Dashed cut line at center
+            doc.setDrawColor(200, 200, 210);
+            doc.setLineWidth(0.3);
+            doc.setLineDashPattern([3, 3], 0);
+            doc.line(10, H / 2, W - 10, H / 2);
+            // Scissors icon hint
+            doc.setFontSize(7);
+            doc.setTextColor(180, 180, 190);
+            doc.text("✂", 6, H / 2 + 0.5);
+            doc.setLineDashPattern([], 0);
+
+            // --- Page 2: Two text cards ---
             doc.addPage();
 
-            // Back Side (Explanation)
-            doc.setFontSize(28);
-            doc.setTextColor(79, 70, 229); // indigo-600
-            doc.text(card.word, 148 / 2, 40, { align: "center" } as any);
+            // Text card helper
+            const renderTextCard = (card: typeof card1, cy: number) => {
+                // Word — large bold
+                doc.setFontSize(72);
+                doc.setTextColor(79, 70, 229);
+                doc.setFont("helvetica", "bold");
+                doc.text(card.word, W / 2, cy - 10, { align: "center" } as any);
 
-            doc.setFontSize(14);
-            doc.setTextColor(107, 114, 128); // slate-500
-            doc.setFont("helvetica", "italic");
-            const splitText = doc.splitTextToSize(card.definition, 120);
-            doc.text(splitText, 148 / 2, 60, { align: "center" } as any);
+                // Divider
+                doc.setDrawColor(200, 200, 220);
+                doc.setLineWidth(0.4);
+                doc.setLineDashPattern([], 0);
+                doc.line(W * 0.2, cy + 4, W * 0.8, cy + 4);
 
-            const pdfData = doc.output("arraybuffer");
-            folder?.file(
-                `${card.word.replace(/\s+/g, "_")}_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}_flashcard.pdf`,
-                pdfData,
-            );
+                // Definition
+                doc.setFontSize(22);
+                doc.setTextColor(107, 114, 128);
+                doc.setFont("helvetica", "italic");
+                const splitDef = doc.splitTextToSize(card.definition, W * 0.75);
+                doc.text(splitDef, W / 2, cy + 18, { align: "center" } as any);
+            };
+
+            // Card 1 text — centered in top half
+            renderTextCard(card1, y1 + IMG / 2);
+
+            // Card 2 text — centered in bottom half
+            if (card2) renderTextCard(card2, y2 + IMG / 2);
+
+            // Dashed cut line at center (same as image page)
+            doc.setDrawColor(200, 200, 210);
+            doc.setLineWidth(0.3);
+            doc.setLineDashPattern([3, 3], 0);
+            doc.line(10, H / 2, W - 10, H / 2);
+            doc.setFontSize(7);
+            doc.setTextColor(180, 180, 190);
+            doc.text("✂", 6, H / 2 + 0.5);
+            doc.setLineDashPattern([], 0);
         }
 
-        const blob = await zip.generateAsync({ type: "blob" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `Flashcards_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        doc.save(`Flashcards_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`);
+    };
+
+    /** Download all flashcard images as a 2×2 grid PDF, 8cm cards with borders, A4 landscape */
+    const handleDownloadFlashcardImageGrid = () => {
+        const W = 297; // A4 landscape mm
+        const H = 210;
+        const CARD = 80; // 8cm inner border
+        const OUTER = 85; // 8.5cm dashed outer border (cut guide)
+        const COLS = 2;
+        const ROWS = 2;
+        const PER_PAGE = COLS * ROWS;
+        const gapX = (W - COLS * OUTER) / (COLS + 1);
+        const gapY = (H - ROWS * OUTER) / (ROWS + 1);
+
+        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+        localFlashcards.forEach((card, i) => {
+            if (i > 0 && i % PER_PAGE === 0) doc.addPage();
+            const slot = i % PER_PAGE;
+            const col = slot % COLS;
+            const row = Math.floor(slot / COLS);
+            // Center of this card slot
+            const cx = gapX + OUTER / 2 + col * (OUTER + gapX);
+            const cy = gapY + OUTER / 2 + row * (OUTER + gapY);
+
+            // Dashed outer border (cut guide)
+            doc.setDrawColor(200, 200, 210);
+            doc.setLineWidth(0.3);
+            doc.setLineDashPattern([2, 2], 0);
+            doc.rect(cx - OUTER / 2, cy - OUTER / 2, OUTER, OUTER);
+
+            // Solid inner border
+            doc.setDrawColor(180, 180, 200);
+            doc.setLineWidth(0.6);
+            doc.setLineDashPattern([], 0);
+            doc.rect(cx - CARD / 2, cy - CARD / 2, CARD, CARD);
+
+            const x = cx - CARD / 2;
+            const y = cy - CARD / 2;
+
+            const imgData = flashcardImages?.[i];
+            if (imgData && (imgData.startsWith('data:') || imgData.startsWith('http'))) {
+                const pad = 3;
+                doc.addImage(imgData, "PNG", x + pad, y + pad, CARD - pad * 2, CARD - pad * 2);
+            } else {
+                doc.setFontSize(12);
+                doc.setTextColor(200, 200, 200);
+                doc.text("No Image", x + CARD / 2, y + CARD / 2, { align: "center" } as any);
+            }
+        });
+
+        doc.save(`Flashcard_Images_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`);
+    };
+
+    /** Download all flashcard text (word + definition) as a 2×2 grid PDF, 8cm cards with borders, A4 landscape */
+    const handleDownloadFlashcardTextGrid = () => {
+        const W = 297;
+        const H = 210;
+        const CARD = 80;
+        const OUTER = 85;
+        const COLS = 2;
+        const ROWS = 2;
+        const PER_PAGE = COLS * ROWS;
+        const gapX = (W - COLS * OUTER) / (COLS + 1);
+        const gapY = (H - ROWS * OUTER) / (ROWS + 1);
+
+        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+        localFlashcards.forEach((card, i) => {
+            if (i > 0 && i % PER_PAGE === 0) doc.addPage();
+            const slot = i % PER_PAGE;
+            const col = slot % COLS;
+            const row = Math.floor(slot / COLS);
+            const cx = gapX + OUTER / 2 + col * (OUTER + gapX);
+            const cy = gapY + OUTER / 2 + row * (OUTER + gapY);
+
+            // Dashed outer border (cut guide)
+            doc.setDrawColor(200, 200, 210);
+            doc.setLineWidth(0.3);
+            doc.setLineDashPattern([2, 2], 0);
+            doc.rect(cx - OUTER / 2, cy - OUTER / 2, OUTER, OUTER);
+
+            // Solid inner border
+            doc.setDrawColor(180, 180, 200);
+            doc.setLineWidth(0.6);
+            doc.setLineDashPattern([], 0);
+            doc.rect(cx - CARD / 2, cy - CARD / 2, CARD, CARD);
+
+            const x = cx - CARD / 2;
+            const y = cy - CARD / 2;
+
+            // Word — auto-shrink to fit card width
+            let wordFontSize = 32;
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(79, 70, 229);
+            while (wordFontSize > 14) {
+                doc.setFontSize(wordFontSize);
+                const tw = doc.getTextWidth(card.word);
+                if (tw <= CARD - 10) break;
+                wordFontSize -= 2;
+            }
+            doc.text(card.word, x + CARD / 2, y + CARD * 0.38, { align: "center" } as any);
+
+            // Divider
+            doc.setDrawColor(200, 200, 220);
+            doc.setLineWidth(0.3);
+            doc.setLineDashPattern([], 0);
+            doc.line(x + 10, y + CARD * 0.45, x + CARD - 10, y + CARD * 0.45);
+
+            // Definition — auto-shrink to fit remaining card area
+            let defFontSize = 12;
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(107, 114, 128);
+            const maxDefHeight = CARD * 0.45; // available space below divider
+            let splitDef: string[];
+            while (defFontSize > 7) {
+                doc.setFontSize(defFontSize);
+                splitDef = doc.splitTextToSize(card.definition, CARD - 14);
+                const lineH = defFontSize * 0.5;
+                if (splitDef.length * lineH <= maxDefHeight) break;
+                defFontSize -= 1;
+            }
+            doc.setFontSize(defFontSize);
+            splitDef = doc.splitTextToSize(card.definition, CARD - 14);
+            doc.text(splitDef!, x + CARD / 2, y + CARD * 0.55, { align: "center" } as any);
+        });
+
+        doc.save(`Flashcard_Text_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`);
     };
 
     return {
@@ -1127,6 +1337,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         handleDownloadCompanionMd,
         handleDownloadGamesMd,
         handleDownloadFlashcardPDF,
-        handleDownloadAllFlashcards
+        handleDownloadAllFlashcards,
+        handleDownloadFlashcardImageGrid,
+        handleDownloadFlashcardTextGrid,
     };
 };

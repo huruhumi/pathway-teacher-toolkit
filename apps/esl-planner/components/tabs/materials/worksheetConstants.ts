@@ -34,6 +34,7 @@ export const QUESTION_TYPES = [
     "Essay",
     "Categorization",
     "Synonyms/Antonyms",
+    "Tracing / Handwriting",
 ] as const;
 
 export const ARTICLE_TYPES = [

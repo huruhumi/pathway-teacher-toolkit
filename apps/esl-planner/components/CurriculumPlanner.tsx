@@ -427,14 +427,24 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
                 try {
                     const backends = await checkBackends();
                     if (!backends.local) {
-                        const fbTitle = lang === 'zh' ? '本地 NotebookLM 未连接' : 'Local NotebookLM unavailable';
-                        const fbDetail = lang === 'zh'
-                            ? `主线级别 ${levelEntry.displayName} 绑定 notebook ${levelEntry.notebookId}，需使用本地 dev:nlm 才能命中该笔记。请先运行 npm run dev:nlm。是否改用 fallback 无笔记模式继续生成？`
-                            : `Mainline level ${levelEntry.displayName} is bound to notebook ${levelEntry.notebookId}. Local dev:nlm is required. Switch to fallback mode?`;
-                        const choice = await askFallbackConfirm(fbTitle, fbDetail);
-                        if (choice === 'cancel') throw new Error('AbortError');
-                        setGroundingBanner({ kind: 'fallback', title: fbTitle, detail: fbDetail });
-                        throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
+                        // eslint-disable-next-line no-constant-condition
+                        while (true) {
+                            const fbTitle = lang === 'zh' ? '本地 NotebookLM 未连接' : 'Local NotebookLM unavailable';
+                            const fbDetail = lang === 'zh'
+                                ? `主线级别 ${levelEntry.displayName} 绑定 notebook ${levelEntry.notebookId}，需使用本地 dev:nlm 才能命中该笔记。请先运行 npm run dev:nlm。是否改用 fallback 无笔记模式继续生成？`
+                                : `Mainline level ${levelEntry.displayName} is bound to notebook ${levelEntry.notebookId}. Local dev:nlm is required. Switch to fallback mode?`;
+                            const choice = await askFallbackConfirm(fbTitle, fbDetail);
+                            if (choice === 'cancel') throw new Error('AbortError');
+                            if (choice === 'retry') {
+                                updateGenerationProgress(1, 22, lang === 'zh' ? '正在重试连接 NLM proxy...' : 'Retrying NLM proxy connection...');
+                                const retryBackends = await checkBackends();
+                                if (retryBackends.local) break; // proxy is back
+                                continue; // still down
+                            }
+                            // choice === 'continue' → fallback
+                            setGroundingBanner({ kind: 'fallback', title: fbTitle, detail: fbDetail });
+                            throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
+                        }
                     }
                     const backend = 'local';
 
@@ -956,8 +966,10 @@ If sources are missing, include the marker: NO_USABLE_SOURCE.`,
                                                 detail={pendingFallback.detail}
                                                 onContinue={() => handleFallbackChoice('continue')}
                                                 onCancel={() => handleFallbackChoice('cancel')}
+                                                onRetry={() => handleFallbackChoice('retry')}
                                                 continueLabel={lang === 'zh' ? '继续 Fallback 生成' : 'Continue with Fallback'}
                                                 cancelLabel={lang === 'zh' ? '停止生成' : 'Stop Generation'}
+                                                retryLabel={lang === 'zh' ? '重新连接' : 'Retry Connection'}
                                             />
                                         )}
                                     </>

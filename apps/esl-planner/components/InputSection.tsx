@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { CEFRLevel } from '../types';
 import { FileText, Loader2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -61,7 +61,7 @@ interface InputSectionProps {
     stages: string[];
   };
   pendingFallback?: FallbackPromptContent | null;
-  onFallbackChoice?: (choice: 'continue' | 'cancel') => void;
+  onFallbackChoice?: (choice: 'continue' | 'cancel' | 'retry') => void;
 }
 
 export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoading, initialValues, onStop, generationProgress, pendingFallback, onFallbackChoice }) => {
@@ -86,7 +86,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
         levelKey: item.levelKey,
         status: 'ready',
         textbookId: OTHER_TEXTBOOK_ID,
-        textbookName: lang === 'zh' ? 'Other（其他教材）' : 'Other',
+        textbookName: lang === 'zh' ? 'Other锛堝叾浠栨暀鏉愶級' : 'Other',
         volumeLabel: item.label,
         levelLabel: item.label,
         levelDisplayName: item.label,
@@ -98,7 +98,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
       ...textbookGroupsBase,
       {
         textbookId: OTHER_TEXTBOOK_ID,
-        textbookName: lang === 'zh' ? 'Other（其他教材）' : 'Other',
+        textbookName: lang === 'zh' ? 'Other锛堝叾浠栨暀鏉愶級' : 'Other',
         options: customLevelOptions,
       },
     ],
@@ -113,7 +113,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
     [textbookGroups, textbookId],
   );
   const hasVideoUrlInText = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i.test(text);
-  const hasTranscriptHintInText = /(transcript|caption|lyrics|summary|key points|字幕|歌词|台词|视频要点|视频摘要)/i.test(text);
+  const hasTranscriptHintInText = /(transcript|caption|lyrics|summary|key points|瀛楀箷|姝岃瘝|鍙拌瘝|瑙嗛瑕佺偣|瑙嗛鎽樿)/i.test(text);
 
   // Pre-fill fields when initialValues changes (from curriculum)
   useEffect(() => {
@@ -200,7 +200,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
-            label={lang === 'zh' ? '教材名称' : 'Textbook'}
+            label={lang === 'zh' ? '鏁欐潗鍚嶇О' : 'Textbook'}
             value={textbookId}
             onChange={(e) => {
               const nextTextbookId = e.target.value;
@@ -217,7 +217,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             }))}
           />
           <Select
-            label={lang === 'zh' ? '级别' : 'Level'}
+            label={lang === 'zh' ? '绾у埆' : 'Level'}
             value={textbookLevelKey}
             onChange={(e) => setTextbookLevelKey(e.target.value)}
             className="py-3"
@@ -276,13 +276,13 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
             options={[5, 8, 10, 12, 15, 20, 25, 30].map(num => ({ label: `${num} ${t('input.slidesUnit')}`, value: num }))}
           />
           <Select
-            label={lang === 'zh' ? 'Age Group（年龄段）' : 'Age Group'}
+            label={'Age Group'}
             containerClassName="order-1"
             value={ageGroup}
             onChange={(e) => setAgeGroup(e.target.value)}
             className="py-3"
             options={[
-              { label: lang === 'zh' ? '自动（根据级别推断）' : 'Auto (infer from level)', value: '' },
+              { label: lang === 'zh' ? '鑷姩锛堟牴鎹骇鍒帹鏂級' : 'Auto (infer from level)', value: '' },
               { label: '4-6 (K)', value: '4-6' },
               { label: '6-8 (G1-G2)', value: '6-8' },
               { label: '8-10 (G3-G4)', value: '8-10' },
@@ -304,9 +304,7 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
         />
         {hasVideoUrlInText && !hasTranscriptHintInText && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-            {lang === 'zh'
-              ? '检测到视频链接：系统会先尝试提取字幕；若失败会自动检索回退证据，并在继续生成前让你确认歌词/要点。建议仍补充关键要点以提升准确性。'
-              : 'Video URL detected: the planner will first try transcript extraction. If it fails, it will auto-find fallback evidence and ask for your confirmation before generation. Adding key points still improves accuracy.'}
+            Video URL detected: automatic extraction is disabled. Please paste lyrics/transcript/key points manually before generation.
           </p>
         )}
 
@@ -349,8 +347,10 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
                   detail={pendingFallback.detail}
                   onContinue={() => onFallbackChoice('continue')}
                   onCancel={() => onFallbackChoice('cancel')}
+                  onRetry={() => onFallbackChoice('retry')}
                   continueLabel={lang === 'zh' ? '继续 Fallback 生成' : 'Continue with Fallback'}
                   cancelLabel={lang === 'zh' ? '停止生成' : 'Stop Generation'}
+                  retryLabel={lang === 'zh' ? '重新连接' : 'Retry Connection'}
                 />
               )}
             </>
@@ -370,3 +370,4 @@ export const InputSection: React.FC<InputSectionProps> = ({ onGenerate, isLoadin
     </div>
   );
 };
+

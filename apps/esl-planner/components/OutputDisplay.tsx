@@ -75,6 +75,7 @@ import {
   generateSingleVocabItem,
   generateSingleAnticipatedProblem,
   generateSingleStage,
+  generateVocabDefinition,
 } from "../services/itemGenerators";
 import {
   generateReadingTask,
@@ -253,6 +254,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const stopGeneratingRef = useRef(false);
   const [imageStyle, setImageStyle] = useState<'cartoon' | 'realistic'>('cartoon');
+  const [customStylePrompt, setCustomStylePrompt] = useState('');
   const [isGeneratingSupporting, setIsGeneratingSupporting] = useState(false);
   const [supportingError, setSupportingError] = useState<string | null>(null);
   const supportingAbortRef = useRef<AbortController | null>(null);
@@ -302,8 +304,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     const kp: string[] = [];
     if (plan) {
       // 课程简介：topic + 所有 objectives
-      const objs = plan.lessonDetails.objectives || [];
-      const objLines = objs.map((o, i) => `${i + 1}. ${o}`).join('\n');
+      const introSummary = String(content.summary?.objectives || '').trim();
+      const objLines = introSummary || (plan.lessonDetails.objectives || []).map((o, i) => `${i + 1}. ${o}`).join('\n');
       kp.push(`【课程简介】${plan.classInformation.topic}${objLines ? '\n' + objLines : ''}`);
       // 词汇：全部展示
       if (plan.lessonDetails.targetVocab?.length > 0)
@@ -385,6 +387,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     triggerDownloadMd,
     handleDownloadFlashcardPDF,
     handleDownloadAllFlashcards,
+    handleDownloadFlashcardImageGrid,
+    handleDownloadFlashcardTextGrid,
   } = useExportUtils({
     editablePlan,
     editableSlides,
@@ -503,29 +507,29 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     setLocalFlashcards(updated);
   };
 
-  const addFlashcard = async () => {
-    if (!editablePlan || isAddingFlashcard) return;
-    setIsAddingFlashcard(true);
+  const addFlashcard = () => {
+    const blankCard: Flashcard = {
+      word: "",
+      definition: "",
+      visualPrompt: "",
+      type: "vocabulary",
+    };
+    setLocalFlashcards([...localFlashcards, blankCard]);
+  };
+
+  const handleGenerateDefinition = async (index: number) => {
+    const word = localFlashcards[index]?.word?.trim();
+    if (!word || !editablePlan) return;
     try {
-      const existingWords = localFlashcards.map((c) => c.word);
-      const newCard = await generateSingleFlashcard(
-        editablePlan.classInformation.level as CEFRLevel,
-        editablePlan.classInformation.topic,
-        existingWords,
-      );
-      setLocalFlashcards([...localFlashcards, newCard]);
-    } catch (e: unknown) {
-      console.error("Failed to generate flashcard", e);
-      // Fallback to manual if API fails
-      const manualCard: Flashcard = {
-        word: "New Word",
-        definition: "Definition goes here...",
-        visualPrompt: "Describe image here...",
-        type: "vocabulary",
-      };
-      setLocalFlashcards([...localFlashcards, manualCard]);
-    } finally {
-      setIsAddingFlashcard(false);
+      const level = editablePlan.classInformation.level as CEFRLevel;
+      const definition = await generateVocabDefinition(word, level);
+      if (definition) {
+        const updated = [...localFlashcards];
+        updated[index] = { ...updated[index], definition };
+        setLocalFlashcards(updated);
+      }
+    } catch (e) {
+      console.error('Failed to generate definition', e);
     }
   };
 
@@ -533,11 +537,22 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     e.stopPropagation();
     const newCards = localFlashcards.filter((_, i) => i !== index);
     setLocalFlashcards(newCards);
+    // Rebuild image mapping: remove deleted index, shift keys above it down by 1
+    setFlashcardImages((prev) => {
+      const rebuilt: Record<number, string> = {};
+      for (const [key, val] of Object.entries(prev) as [string, string][]) {
+        const k = Number(key);
+        if (k < index) rebuilt[k] = val;
+        else if (k > index) rebuilt[k - 1] = val;
+        // k === index is the deleted card's image, skip it
+      }
+      return rebuilt;
+    });
   };
 
   // --- Flashcard Helper Functions ---
   const getCardConfig = (index: number) =>
-    cardConfigs[index] || { ratio: "4:3", isEditing: false };
+    cardConfigs[index] || { ratio: "1:1", isEditing: false };
   const updateCardConfig = (
     index: number,
     updates: Partial<{ ratio: string; isEditing: boolean }>,
@@ -562,13 +577,16 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
       const safePrompt = imageStyle === 'realistic'
         ? rawPrompt.replace(/\b(cartoon|vector|illustrated|2d|flat|anime|pixar|animated|drawing|sketch)\b/gi, '').replace(/\s{2,}/g, ' ').trim()
         : rawPrompt;
-      const enhancedPrompt = imageStyle === 'cartoon'
-        ? `High-quality educational illustration of "${safePrompt}" for a children's vocabulary flashcard. Plain white background, unified 2D flat vector style. Use Pathway Academy brand palette (hot pink #E84C8A, sky blue #2E9FD9, golden yellow #F5C518, deep navy #1A2B58) as the primary color scheme for clothing, accessories, backgrounds, and decorative elements. Keep inherently natural colors realistic (skin tones, food colors like yellow bananas, animal fur, plant greens). Clean lines, consistent character proportions, centered, no text.`
-        : `Real photograph of "${safePrompt}" for an educational vocabulary flashcard. Shot with a DSLR camera, natural lighting, clean white studio background, sharp focus, centered composition. NOT a 3D render, NOT a cartoon, NOT CGI — must look like an actual photo. No text or watermarks.`;
+      const basePrompt = imageStyle === 'cartoon'
+        ? `Simple, clean educational illustration showing the action or meaning of "${safePrompt}". Show only the subject clearly performing the action described. Plain white background, 2D flat vector style, clean lines, centered composition. No text, no banners, no ribbons, no decorative borders, no confetti, no ornamental elements. Use Pathway Academy palette (hot pink #E84C8A, sky blue #2E9FD9, golden yellow #F5C518, deep navy #1A2B58) for clothing and accessories. Keep natural colors realistic (skin tones, food, animals, plants).`
+        : `Real photograph clearly showing the action or meaning of "${safePrompt}". Clean white studio background, DSLR camera, natural lighting, sharp focus, centered. No decorative elements, no text, no watermarks, no banners. NOT a 3D render, NOT a cartoon.`;
+      const enhancedPrompt = customStylePrompt.trim() ? `${basePrompt} Additional style: ${customStylePrompt.trim()}` : basePrompt;
       console.log('[FlashcardGen] imageStyle:', imageStyle, '| prompt:', enhancedPrompt.substring(0, 80));
       const imageUrl = await generateLessonImage(enhancedPrompt, config.ratio);
       setFlashcardImages((prev) => ({ ...prev, [index]: imageUrl }));
       updateCardConfig(index, { isEditing: false });
+      // Force immediate save so images survive refresh
+      setTimeout(() => saveNow(), 100);
     } catch (error) {
       console.error("Flashcard generation error", error);
     } finally {
@@ -584,7 +602,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
     for (let i = 0; i < localFlashcards.length; i++) {
       if (stopGeneratingRef.current) break;
-      if (flashcardImages[i]) continue;
+      if (flashcardImages[i] && (flashcardImages[i].startsWith('data:') || flashcardImages[i].startsWith('http'))) continue;
 
       await handleGenerateFlashcardImage(i, localFlashcards[i].visualPrompt);
     }
@@ -633,9 +651,10 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         phonicsContent.decodableTextPrompts[index] ||
         phonicsContent.decodableTexts[index];
       const safePrompt = promptText.trim().substring(0, 300);
-      const enhancedPrompt = imageStyle === 'cartoon'
+      const dtBasePrompt = imageStyle === 'cartoon'
         ? `A four-panel comic strip reflecting the plot of the story: ${safePrompt}. Unified 2D flat vector style. Use Pathway Academy brand palette (hot pink #E84C8A, sky blue #2E9FD9, golden yellow #F5C518, deep navy #1A2B58) as the primary color scheme for character outfits, speech bubbles, panel borders, and background elements. Keep skin tones and inherently natural-colored objects realistic. Consistent character design, clean lines, professional children's book illustration.`
         : `A four-panel photographic storyboard reflecting the plot: ${safePrompt}. Real photography style, DSLR camera quality, cinematic lighting, detailed and vivid. NOT 3D rendered, NOT cartoon. High-quality editorial children's book photography.`;
+      const enhancedPrompt = customStylePrompt.trim() ? `${dtBasePrompt} Additional style: ${customStylePrompt.trim()}` : dtBasePrompt;
       const imageUrl = await generateLessonImage(enhancedPrompt, "3:4");
       setDecodableTextImages((prev) => ({ ...prev, [index]: imageUrl }));
     } catch (error) {
@@ -662,7 +681,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         Topic: ${editablePlan.classInformation.topic}. 
         Include visual representations for these Grammar Points: ${grammarText}.
         Include visual representations for this Target Vocabulary: ${vocabText}.
-        Style: ${infographicStyle} Combine these elements into a single cohesive handout. No complex sentences, focus on clear icons and simple labels.`;
+        Style: ${infographicStyle}${customStylePrompt.trim() ? ` Additional style: ${customStylePrompt.trim()}.` : ''} Combine these elements into a single cohesive handout. No complex sentences, focus on clear icons and simple labels.`;
 
       if (customGrammarPrompt.trim()) {
         prompt += ` Specifically incorporate these instructions: ${customGrammarPrompt.trim()}`;
@@ -695,7 +714,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         Topic: ${topic}. 
         Content context: Grammar (${grammarText}), Vocabulary (${vocabText}).
         Requirement: Combine illustrations and text, clear structured layout with sections like 'Vocabulary', 'Grammar', and 'Conversation'. 
-        Style: ${wbStyle} Rich in images and text, with a clear logical structure.`;
+        Style: ${wbStyle}${customStylePrompt.trim() ? ` Additional style: ${customStylePrompt.trim()}.` : ''} Rich in images and text, with a clear logical structure.`;
 
       if (customWhiteboardPrompt.trim()) {
         prompt += ` Extra instructions: ${customWhiteboardPrompt.trim()}`;
@@ -1116,6 +1135,21 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
                 {imageStyle === 'cartoon' ? 'Unified vector style with brand colors' : 'Photorealistic images'}
               </span>
             </div>
+            <div className="flex items-center gap-2 mb-4 no-print">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide shrink-0">Style Hint</span>
+              <input
+                value={customStylePrompt}
+                onChange={(e) => setCustomStylePrompt(e.target.value)}
+                placeholder="e.g. Disney Pixar style, anime style, watercolor..."
+                className="flex-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all placeholder:text-slate-300"
+                title="Custom style hint for image generation"
+              />
+              {customStylePrompt && (
+                <button onClick={() => setCustomStylePrompt('')} className="text-slate-300 hover:text-red-500 transition-colors" title="Clear style hint">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              )}
+            </div>
 
             {materialTab === "flashcards" && (
               <FlashcardsTab
@@ -1125,6 +1159,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
                 isAddingFlashcard={isAddingFlashcard}
                 generatingCardIndex={generatingCardIndex}
                 handleDownloadAllFlashcards={handleDownloadAllFlashcards}
+                handleDownloadFlashcardImageGrid={handleDownloadFlashcardImageGrid}
+                handleDownloadFlashcardTextGrid={handleDownloadFlashcardTextGrid}
                 handleStopGenerating={handleStopGenerating}
                 handleGenerateAllImages={handleGenerateAllImages}
                 addFlashcard={addFlashcard}
@@ -1134,6 +1170,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
                 handleDownloadFlashcardPDF={handleDownloadFlashcardPDF}
                 removeFlashcard={removeFlashcard}
                 handleFlashcardChange={handleFlashcardChange}
+                onGenerateDefinition={handleGenerateDefinition}
               />
             )}
 
@@ -1206,6 +1243,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             editableReadingCompanion={editableReadingCompanion}
             setEditableReadingCompanion={setEditableReadingCompanion as any}
             editablePlan={editablePlan}
+            ageGroup={content.ageGroup || content._generationContext?.ageGroup}
             sentenceCitations={content.sentenceCitations}
           />
         )}

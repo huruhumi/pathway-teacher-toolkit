@@ -4,3 +4,4 @@ export * from './MultipleChoiceLayout';
 export * from './ErrorCorrectionLayout';
 export * from './EssayLayout';
 export * from './StandardLayout';
+export * from './TracingLayout';

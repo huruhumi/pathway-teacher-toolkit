@@ -32,6 +32,7 @@ import { AssignModal } from "../../AssignModal";
 import { AutoResizeTextarea } from "../../common/AutoResizeTextarea";
 import {
   MatchingLayout,
+  TracingLayout,
   MultipleChoiceLayout,
   ErrorCorrectionLayout,
   EssayLayout,
@@ -80,7 +81,10 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 no-print">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Custom Worksheets</h3>
+        <div className="flex items-center gap-3">
+          <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Custom Worksheets</h3>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setIsAssignOpen(true)}
@@ -341,6 +345,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
                             Error Correction
                           </option>
                           <option value="essay">Essay / Writing</option>
+                          <option value="tracing">Tracing</option>
                         </select>
                         <button
                           onClick={() =>
@@ -442,6 +447,8 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
                         <ErrorCorrectionLayout {...layoutProps} />
                       ) : sec.layout === "essay" ? (
                         <EssayLayout {...layoutProps} />
+                      ) : sec.layout === "tracing" ? (
+                        <TracingLayout {...layoutProps} />
                       ) : (
                         <StandardLayout {...layoutProps} />
                       )}

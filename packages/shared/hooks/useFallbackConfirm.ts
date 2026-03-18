@@ -17,11 +17,11 @@ export interface FallbackPromptContent {
  * `pendingFallback` is non-null.
  */
 export function useFallbackConfirm() {
-    const resolverRef = useRef<((choice: 'continue' | 'cancel') => void) | null>(null);
+    const resolverRef = useRef<((choice: 'continue' | 'cancel' | 'retry') => void) | null>(null);
     const [pendingFallback, setPendingFallback] = useState<FallbackPromptContent | null>(null);
 
     const askFallbackConfirm = useCallback(
-        (title: string, detail: string): Promise<'continue' | 'cancel'> => {
+        (title: string, detail: string): Promise<'continue' | 'cancel' | 'retry'> => {
             return new Promise((resolve) => {
                 setPendingFallback({ title, detail });
                 resolverRef.current = resolve;
@@ -31,7 +31,7 @@ export function useFallbackConfirm() {
     );
 
     const handleFallbackChoice = useCallback(
-        (choice: 'continue' | 'cancel') => {
+        (choice: 'continue' | 'cancel' | 'retry') => {
             setPendingFallback(null);
             if (resolverRef.current) {
                 resolverRef.current(choice);

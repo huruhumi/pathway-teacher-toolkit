@@ -9,7 +9,7 @@ import { useAuthStore } from '@pathway/platform';
 import { mapLessonToInput } from './utils/curriculumMapper';
 import { migrateSavedPlan, migrateSavedCurriculum } from './utils/schemaMigration';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
-import { imageStore } from '@shared/imageStore';
+import { imageStorage } from '@shared/imageStorage';
 import { AppFooter, AppLayout, BodyContainer, ErrorBoundary, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import { useAppStore, useSessionStore } from './stores/appStore';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
@@ -163,11 +163,17 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Load cover images from IndexedDB
+  // Load cover images from Storage / IndexedDB
   useEffect(() => {
     savedPlans.forEach(p => {
       if (p.coverImage && !p.coverImage.startsWith('data:')) {
-        imageStore.get(p.coverImage).then(img => {
+        // If already a URL, use directly
+        if (p.coverImage.startsWith('http')) {
+          // Already a URL, no action needed
+          return;
+        }
+        // Otherwise it's an IndexedDB key — resolve it
+        imageStorage.get(p.coverImage).then(img => {
           if (img) {
             setSavedPlans(prev => prev.map(pp =>
               pp.id === p.id ? { ...pp, coverImage: img } : pp
@@ -268,8 +274,8 @@ export const App: React.FC = () => {
     let coverRef: string | undefined;
     if (coverImage) {
       const imgKey = `nc-${planId}-cover`;
-      await imageStore.save(imgKey, coverImage);
-      coverRef = imgKey;
+      const coverUrl = await imageStorage.save(imgKey, coverImage);
+      coverRef = coverUrl.startsWith('http') ? coverUrl : imgKey;
     }
 
 
@@ -309,7 +315,7 @@ export const App: React.FC = () => {
 
   const handleDeletePlan = async (id: string) => {
     await deletePlanDb(id);
-    await imageStore.removeByPrefix(`nc-${id}-`);
+    await imageStorage.removeByPrefix(`nc-${id}-`);
     if (currentPlanId === id) setCurrentPlanId(null);
   };
 

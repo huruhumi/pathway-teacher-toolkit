@@ -18,6 +18,7 @@ import { useFallbackConfirm } from '@shared/hooks/useFallbackConfirm';
 import { isCustomTextbookLevelKey } from '../utils/customTextbookLevels';
 import { useAppStore, useSessionStore } from '../stores/appStore';
 import { useLessonHistory } from '../hooks/useLessonHistory';
+import { extractVideoEvidenceWithDirectGemini } from '../services/videoEvidenceGemini';
 
 export interface CreatePageProps { }
 
@@ -76,6 +77,14 @@ type VideoTranscriptEvidenceReview = {
 
 type VideoEvidenceMode = 'none' | 'transcript_verified' | 'manual_verified' | 'fallback_web_unverified';
 type VideoReviewAction = 'normal' | 'force_fallback_search';
+type VideoUrlEvidencePreview = {
+    inputUrl: string;
+    status: 'ready' | 'unavailable';
+    sourceUrl?: string;
+    charCount?: number;
+    reason?: string;
+    excerpt?: string;
+};
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/gi;
 const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)/i;
@@ -164,6 +173,87 @@ const mergeGroundingSources = (
         map.set(key, item);
     }
     return [...map.values()];
+};
+
+const parseVideoUrlEvidencePreview = (
+    factSheet: string,
+    inputUrls: string[],
+): VideoUrlEvidencePreview[] => {
+    if (!factSheet || !/VIDEO_URL_ONLY_MODE=TRUE/i.test(factSheet)) return [];
+
+    const sourceSnippetByUrl = new Map<string, { excerpt: string; charCount?: number }>();
+    const sourceSnippetByVideoId = new Map<string, { excerpt: string; charCount?: number; sourceUrl: string }>();
+    const sourceBlocks = factSheet.match(/\[Source\s+\d+\][\s\S]*?(?=\n\[Source\s+\d+\]|\s*$)/g) || [];
+    for (const block of sourceBlocks) {
+        const urlMatch = block.match(/^\s*URL:\s*(.+)$/m);
+        const charCountMatch = block.match(/^\s*char_count:\s*(\d+)\s*$/m);
+        const excerptMatch = block.match(/excerpt:\s*([\s\S]*)$/m);
+        const sourceUrl = (urlMatch?.[1] || '').trim();
+        const excerpt = (excerptMatch?.[1] || '').trim();
+        const charCount = Number(charCountMatch?.[1] || 0) || undefined;
+        if (!sourceUrl || !excerpt) continue;
+        sourceSnippetByUrl.set(normalizeUrlForCompare(sourceUrl), { excerpt, charCount });
+        const sourceVideoId = extractYouTubeVideoId(sourceUrl);
+        if (sourceVideoId) {
+            sourceSnippetByVideoId.set(sourceVideoId, { excerpt, charCount, sourceUrl });
+        }
+    }
+
+    const previewByInputUrl = new Map<string, VideoUrlEvidencePreview>();
+    const lines = factSheet.split(/\r?\n/);
+    for (const line of lines) {
+        const readyMatch = line.match(/^\s*-\s*READY\s*\|\s*input=(.+?)\s*\|\s*source=(.+?)\s*\|\s*char_count=(\d+)\s*$/i);
+        if (readyMatch) {
+            const inputUrl = readyMatch[1].trim();
+            const sourceUrl = readyMatch[2].trim();
+            const charCount = Number(readyMatch[3]) || undefined;
+            const sourceByUrl = sourceSnippetByUrl.get(normalizeUrlForCompare(sourceUrl));
+            const sourceById = extractYouTubeVideoId(sourceUrl)
+                ? sourceSnippetByVideoId.get(extractYouTubeVideoId(sourceUrl) as string)
+                : undefined;
+            previewByInputUrl.set(inputUrl, {
+                inputUrl,
+                status: 'ready',
+                sourceUrl,
+                charCount,
+                excerpt: sourceByUrl?.excerpt || sourceById?.excerpt,
+            });
+            continue;
+        }
+
+        const unavailableMatch = line.match(/^\s*-\s*VIDEO_SOURCE_UNAVAILABLE\s*\|\s*input=(.+?)\s*\|\s*reason=(.+)\s*$/i);
+        if (unavailableMatch) {
+            const inputUrl = unavailableMatch[1].trim();
+            previewByInputUrl.set(inputUrl, {
+                inputUrl,
+                status: 'unavailable',
+                reason: unavailableMatch[2].trim(),
+            });
+        }
+    }
+
+    return inputUrls.map((inputUrl) => {
+        const fromLine = previewByInputUrl.get(inputUrl);
+        if (fromLine) return fromLine;
+
+        const videoId = extractYouTubeVideoId(inputUrl);
+        if (videoId && sourceSnippetByVideoId.has(videoId)) {
+            const matched = sourceSnippetByVideoId.get(videoId)!;
+            return {
+                inputUrl,
+                status: 'ready',
+                sourceUrl: matched.sourceUrl,
+                charCount: matched.charCount,
+                excerpt: matched.excerpt,
+            };
+        }
+
+        return {
+            inputUrl,
+            status: 'unavailable',
+            reason: 'No strict transcript evidence found for this URL.',
+        };
+    });
 };
 
 export const CreatePage: React.FC<CreatePageProps> = () => {
@@ -453,6 +543,58 @@ Never invent exact lines without a cited source URL.`,
                     return false;
                 };
 
+                const tryDirectGeminiVideoEvidence = async (
+                    reason: string,
+                ): Promise<boolean> => {
+                    setVideoGroundingSummary({
+                        status: 'processing',
+                        message: 'Using direct Gemini URL analysis for your video links...',
+                        urlCount: videoUrls.length,
+                    });
+                    updateProgress(
+                        sourceMode === 'direct' ? 1 : 2,
+                        sourceMode === 'direct' ? 54 : 57,
+                        'Running direct Gemini URL evidence extraction...',
+                        stages,
+                    );
+
+                    const direct = await extractVideoEvidenceWithDirectGemini(videoUrls, lessonTitle, level);
+                    if (direct.error) {
+                        qualityIssues.push(`Direct Gemini URL evidence warning: ${direct.error}`);
+                    }
+
+                    const factSheet = (direct.factSheet || '').trim();
+                    const evidenceUrls = mergeUnique([], direct.evidenceUrls || []);
+                    const looksDirectMode = /DIRECT_GEMINI_URL_MODE=TRUE/i.test(factSheet);
+                    const readyMatches = factSheet.match(/^\s*-\s*READY\s*\|\s*input=/gim) || [];
+                    const readyCount = readyMatches.length;
+                    const usableEvidenceUrls = evidenceUrls.length > 0 ? evidenceUrls : (readyCount > 0 ? videoUrls : []);
+                    const noUsable = (
+                        !factSheet
+                        || /NO_USABLE_SOURCE/i.test(factSheet)
+                        || readyCount === 0
+                        || !looksDirectMode
+                    );
+
+                    if (noUsable) return false;
+
+                    const directSources: GroundingSourceItem[] = usableEvidenceUrls.map((url) => ({
+                        url,
+                        title: url,
+                        status: 'ready',
+                        type: 'web',
+                    }));
+                    requestFallbackEvidenceReview(reason, factSheet, usableEvidenceUrls, directSources);
+                    return true;
+                };
+
+                if (!normalizedManualEvidence) {
+                    requireManualVideoEvidence(
+                        'Video URL detected. Automatic transcript/evidence extraction is disabled. Paste transcript/lyrics/key points manually to continue.',
+                    );
+                    return;
+                }
+
                 if (normalizedManualEvidence) {
                     videoEvidenceMode = manualEvidenceKind === 'fallback_web' ? 'fallback_web_unverified' : 'manual_verified';
                     videoFactSheet = manualEvidenceKind === 'fallback_web'
@@ -477,6 +619,10 @@ ${normalizedManualEvidence}`;
                 } else {
                     if (videoReviewAction === 'force_fallback_search') {
                         const backends = await checkBackends();
+                        const directReady = await tryDirectGeminiVideoEvidence(
+                            'Transcript review marked as incorrect. Direct Gemini URL analysis needs your confirmation.',
+                        );
+                        if (directReady) return;
                         const videoBackend = backends.cloud ? 'cloud' : (backends.local ? 'local' : null);
                         if (!videoBackend) {
                             requireManualVideoEvidence('No NotebookLM backend available for fallback evidence extraction.');
@@ -504,44 +650,61 @@ ${normalizedManualEvidence}`;
                     );
 
                     const backends = await checkBackends();
-                    const videoBackend = backends.cloud ? 'cloud' : (backends.local ? 'local' : null);
+                    const videoBackend = backends.local ? 'local' : null;
                     if (!videoBackend) {
-                        requireManualVideoEvidence('No NotebookLM backend available for transcript extraction.');
+                        const directReady = await tryDirectGeminiVideoEvidence(
+                            'Local NotebookLM backend unavailable. Direct Gemini URL analysis needs your confirmation.',
+                        );
+                        if (directReady) return;
+                        if (backends.cloud) {
+                            const fallbackReady = await tryAutoWebFallbackEvidence(
+                                'cloud',
+                                'Local NotebookLM backend unavailable; switched to cloud fallback evidence search for your confirmation.',
+                            );
+                            if (fallbackReady) return;
+                        }
+                        requireManualVideoEvidence('Local NotebookLM backend unavailable. Run `notebooklm auth check --test`; if token fetch fails, fix network/proxy then start `npm run dev:nlm`.');
                         return;
                     }
 
                     const videoRag = await startRAG(
                         `Video evidence for lesson "${lessonTitle}" (${level})`,
                         [
-                            `Analyze ONLY these video URLs and generate one concise evidence sheet for ESL teaching:
+                            `Analyze ONLY these video URLs and extract transcript/key-point evidence from the imported video sources:
 ${videoUrls.map((url, idx) => `${idx + 1}. ${url}`).join('\n')}
 
 Output requirements:
-- "Video summary": 5-8 bullet points about teachable content
-- "Target vocabulary candidates": 8-15 items from video content
-- "TPR / classroom command ideas": 5-8 actionable commands
-- "Warm-up and wrap-up ideas": 2-4 items each
-- If any URL cannot be accessed or transcript is unavailable, mark: VIDEO_SOURCE_UNAVAILABLE (with URL).
-Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
+- Return only transcript-backed evidence from these URLs.
+- Include VIDEO_SOURCE_UNAVAILABLE for any URL without usable transcript/fulltext.
+- Never invent lyrics or exact lines.`,
                         ],
                         videoBackend,
-                        { tolerateErrors: true, allowEmptyFactSheets: true },
+                        {
+                            tolerateErrors: true,
+                            allowEmptyFactSheets: true,
+                            action: 'video-url-only',
+                            videoUrls,
+                        },
                     );
 
                     const rawVideoFactSheet = videoRag.factSheets.get(0)?.content;
+                    const strictVideoMode = /VIDEO_URL_ONLY_MODE=TRUE/i.test(rawVideoFactSheet || '');
                     const unavailable = /VIDEO_SOURCE_UNAVAILABLE|NO_USABLE_SOURCE/i.test(rawVideoFactSheet || '');
+                    const transcriptEvidenceUrls = mergeUnique(
+                        [],
+                        (videoRag.validUrls || []).filter((url) => isUrlFromInputVideos(url, videoUrls)),
+                    );
+                    const transcriptSources = (videoRag.sources || []).filter(
+                        (source) => !source.url || isUrlFromInputVideos(source.url, videoUrls),
+                    );
+                    const hasInputCoverage = videoUrls.every((url) =>
+                        transcriptEvidenceUrls.some((evidenceUrl) => isUrlFromInputVideos(evidenceUrl, [url]))
+                    );
 
-                    if (rawVideoFactSheet && !unavailable) {
+                    if (rawVideoFactSheet && strictVideoMode && !unavailable && hasInputCoverage) {
                         if ((videoRag.validUrls || []).some((url) => !isUrlFromInputVideos(url, videoUrls))) {
                             qualityIssues.push('Transcript extraction returned non-input URLs. Ignored in strict input-video mode.');
                         }
-                        const transcriptEvidenceUrls = mergeUnique(
-                            [],
-                            (videoRag.validUrls || []).filter((url) => isUrlFromInputVideos(url, videoUrls)),
-                        );
-                        const transcriptSources = (videoRag.sources || []).filter(
-                            (source) => !source.url || isUrlFromInputVideos(source.url, videoUrls),
-                        );
                         requestTranscriptEvidenceReview(
                             'Auto transcript evidence extracted from your input URLs. Please verify correctness before continuing.',
                             rawVideoFactSheet,
@@ -550,8 +713,18 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                         );
                         return;
                     } else {
+                        if (!strictVideoMode) {
+                            qualityIssues.push('Transcript extraction did not return strict NotebookLM video-url-only evidence format.');
+                        }
+                        if (!hasInputCoverage) {
+                            qualityIssues.push('Transcript extraction result did not cover all input video URLs.');
+                        }
+                        const directReady = await tryDirectGeminiVideoEvidence(
+                            'Strict transcript extraction failed. Direct Gemini URL analysis needs your confirmation.',
+                        );
+                        if (directReady) return;
                         const fallbackReady = await tryAutoWebFallbackEvidence(
-                            videoBackend,
+                            backends.cloud ? 'cloud' : 'local',
                             'Transcript extraction failed; fallback web evidence needs your confirmation.',
                         );
                         if (fallbackReady) return;
@@ -579,15 +752,26 @@ Do NOT invent lyrics or exact lines when transcript evidence is missing.`,
                     updateProgress(1, 24, lang === 'zh' ? 'Connecting to NotebookLM...' : 'Connecting to NotebookLM...', stages);
                     const backends = await checkBackends();
                     if (!backends.local) {
-                        const fbTitle = lang === 'zh' ? 'Local NotebookLM unavailable' : 'Local NotebookLM unavailable';
-                        const fbDetail = lang === 'zh'
-                            ? `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`
-                            : `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`;
-                        const choice = await askFallbackConfirm(fbTitle, fbDetail);
-                        if (choice === 'cancel') throw new Error('AbortError');
-                        qualityIssues.push(`Fallback: ${fbTitle} - ${fbDetail}`);
-                        updateProgress(2, 40, lang === 'zh' ? 'NotebookLM unavailable, switching to fallback...' : 'NotebookLM unavailable, switching to fallback...', stages);
-                        throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
+                        let retryBackends = backends;
+                        // eslint-disable-next-line no-constant-condition
+                        while (true) {
+                            const fbTitle = lang === 'zh' ? 'Local NotebookLM unavailable' : 'Local NotebookLM unavailable';
+                            const fbDetail = lang === 'zh'
+                                ? `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`
+                                : `Notebook "${levelEntry.notebookId}" requires local dev:nlm. Switch to fallback mode?`;
+                            const choice = await askFallbackConfirm(fbTitle, fbDetail);
+                            if (choice === 'cancel') throw new Error('AbortError');
+                            if (choice === 'retry') {
+                                updateProgress(1, 28, lang === 'zh' ? 'Retrying NLM proxy connection...' : 'Retrying NLM proxy connection...', stages);
+                                retryBackends = await checkBackends();
+                                if (retryBackends.local) break; // proxy is back, continue normal flow
+                                continue; // still down, show prompt again
+                            }
+                            // choice === 'continue' → fallback
+                            qualityIssues.push(`Fallback: ${fbTitle} - ${fbDetail}`);
+                            updateProgress(2, 40, lang === 'zh' ? 'NotebookLM unavailable, switching to fallback...' : 'NotebookLM unavailable, switching to fallback...', stages);
+                            throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
+                        }
                     }
 
                     const backend = 'local';
@@ -732,6 +916,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             );
 
             // Fix A: Save generation context for Phase 2
+            lessonContent.ageGroup = ageGroup;
             lessonContent._generationContext = {
                 level,
                 topic,
@@ -924,6 +1109,10 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
 
     const renderVideoTranscriptEvidenceReviewPanel = () => {
         if (!videoTranscriptEvidenceReview || state.generatedContent) return null;
+        const previewItems = parseVideoUrlEvidencePreview(
+            manualVideoEvidence || videoTranscriptEvidenceReview.factSheet,
+            videoTranscriptEvidenceReview.inputUrls,
+        );
         return (
             <div className="mb-4 rounded-lg border border-sky-300 bg-sky-50 p-4">
                 <p className="text-sm font-semibold text-sky-900">
@@ -946,6 +1135,48 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                         <li key={url} className="break-all">{url}</li>
                     ))}
                 </ul>
+                {previewItems.length > 0 && (
+                    <div className="mt-3 rounded-md border border-sky-200 bg-white/80 p-3">
+                        <p className="text-xs font-semibold text-sky-900">
+                            URL-by-URL extracted evidence preview
+                        </p>
+                        <div className="mt-2 space-y-2">
+                            {previewItems.map((item) => (
+                                <div key={item.inputUrl} className="rounded-md border border-sky-100 bg-sky-50/40 p-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <a
+                                            href={item.inputUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="max-w-full break-all text-xs font-medium text-sky-900 underline"
+                                        >
+                                            {item.inputUrl}
+                                        </a>
+                                        <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${item.status === 'ready' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                            {item.status === 'ready' ? 'READY' : 'UNAVAILABLE'}
+                                        </span>
+                                    </div>
+                                    {item.sourceUrl && (
+                                        <p className="mt-1 break-all text-[11px] text-slate-700">
+                                            source: {item.sourceUrl}
+                                            {typeof item.charCount === 'number' ? ` (char_count=${item.charCount})` : ''}
+                                        </p>
+                                    )}
+                                    {item.reason && (
+                                        <p className="mt-1 break-all text-[11px] text-rose-700">
+                                            reason: {item.reason}
+                                        </p>
+                                    )}
+                                    {item.excerpt && (
+                                        <div className="mt-1 rounded border border-slate-200 bg-white p-2 text-[11px] leading-5 text-slate-800">
+                                            {item.excerpt}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 <textarea
                     value={manualVideoEvidence}
                     onChange={(event) => setManualVideoEvidence(event.target.value)}

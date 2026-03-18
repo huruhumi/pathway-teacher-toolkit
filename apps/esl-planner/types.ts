@@ -108,7 +108,7 @@ export interface WorksheetSection {
   description?: string;
   passageTitle?: string;
   passage?: string;
-  layout?: 'standard' | 'matching' | 'grid' | 'multiple-choice' | 'essay' | 'error-correction'; // Layout hints
+  layout?: 'standard' | 'matching' | 'grid' | 'multiple-choice' | 'essay' | 'error-correction' | 'tracing'; // Layout hints
   items: WorksheetItem[];
 }
 
@@ -186,6 +186,7 @@ export interface GenerationContext {
 export interface GeneratedContent {
   lessonPlanMarkdown: string;
   structuredLessonPlan: StructuredLessonPlan;
+  ageGroup?: string;
   slides: Slide[];
   flashcards: Flashcard[];
   games: Game[];

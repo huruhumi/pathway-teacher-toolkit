@@ -12,6 +12,7 @@ import type { TeacherReview } from '@shared/types/scoring';
 import { assessESLCurriculumQuality } from '@shared/config/recordQuality';
 import { findTextbookLevelEntry } from '@shared/config/eslAssessmentRegistry';
 import { getCustomTextbookLevelLabel } from '../utils/customTextbookLevels';
+import { ImageMigrationButton } from '@shared/components/ImageMigrationButton';
 
 import type { SavedLesson, SavedCurriculum, CurriculumLesson } from '../types';
 
@@ -1138,6 +1139,10 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             )}
                         </>
                     ) : null}
+                    {/* Image Migration Utility */}
+                    <div className="mt-8">
+                        <ImageMigrationButton />
+                    </div>
                 </div>
             )}
 

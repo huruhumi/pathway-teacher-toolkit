@@ -33,9 +33,9 @@ export const formatGamesMd = (games: Game[]) => {
 };
 
 export const formatCompanionMd = (companion: ReadingCompanionContent) => {
-    let md = `# 📅 Post-Class Review Plan\n\n`;
+    let md = `# 📅 Learning Companion\n\n`;
     companion.days.forEach(day => {
-        md += `## Day ${day.day}: ${day.focus} (${day.focus_cn})\n### 🏋️ Main Activity\n${day.activity} (${day.activity_cn})\n\n### ✅ Tasks\n`;
+        md += `## Day ${day.day}: ${day.focus} (${day.focus_cn})\n### ✅ Tasks\n`;
         day.tasks?.forEach(t => md += `- [ ] ${t.text} (${t.text_cn})\n`);
         if (day.trivia) md += `\n### 💡 Day Trivia Fact\n- **EN:** ${day.trivia.en}\n- **CN:** ${day.trivia.cn}\n`;
         md += `\n### 🔗 Resources\n`;

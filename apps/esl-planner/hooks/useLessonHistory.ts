@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { GeneratedContent, SavedLesson, SavedCurriculum, ESLCurriculum, CurriculumParams } from '../types';
 
+import { imageStorage } from '@shared/imageStorage';
 import { imageStore } from '@shared/imageStore';
 import { isToday, isThisWeek, isThisMonth } from '../utils/dateHelpers';
 import { useAppStore } from '../stores/appStore';
@@ -192,7 +193,52 @@ async function stripImages(lessonId: string, content: GeneratedContent): Promise
         }));
     }
 
-    if (entries.length > 0) await imageStore.saveBatch(entries);
+    if (entries.length > 0) {
+        const urlMap = await imageStorage.saveBatch(entries);
+        // Replace key refs with URLs where upload succeeded
+        if (stripped.flashcardImages) {
+            for (const [idx, val] of Object.entries(stripped.flashcardImages)) {
+                const key = val as string;
+                if (urlMap[key] && urlMap[key] !== entries.find(e => e.key === key)?.data) {
+                    (stripped.flashcardImages as Record<number, string>)[Number(idx)] = urlMap[key];
+                }
+            }
+        }
+        if (stripped.decodableTextImages) {
+            for (const [idx, val] of Object.entries(stripped.decodableTextImages)) {
+                const key = val as string;
+                if (urlMap[key] && urlMap[key] !== entries.find(e => e.key === key)?.data) {
+                    (stripped.decodableTextImages as Record<number, string>)[Number(idx)] = urlMap[key];
+                }
+            }
+        }
+        if (stripped.grammarInfographicUrl && urlMap[stripped.grammarInfographicUrl]) {
+            stripped.grammarInfographicUrl = urlMap[stripped.grammarInfographicUrl];
+        }
+        if (stripped.blackboardImageUrl && urlMap[stripped.blackboardImageUrl]) {
+            stripped.blackboardImageUrl = urlMap[stripped.blackboardImageUrl];
+        }
+        if (stripped.worksheets) {
+            stripped.worksheets = stripped.worksheets.map(ws => ({
+                ...ws,
+                sections: ws.sections?.map(sec => ({
+                    ...sec,
+                    items: sec.items.map(item => {
+                        if (item.imageUrl && urlMap[item.imageUrl]) {
+                            return { ...item, imageUrl: urlMap[item.imageUrl] };
+                        }
+                        return item;
+                    })
+                })),
+                items: ws.items?.map(item => {
+                    if (item.imageUrl && urlMap[item.imageUrl]) {
+                        return { ...item, imageUrl: urlMap[item.imageUrl] };
+                    }
+                    return item;
+                })
+            }));
+        }
+    }
     return stripped;
 }
 
@@ -218,7 +264,7 @@ async function hydrateImages(lesson: SavedLesson): Promise<SavedLesson> {
 
     if (keys.length === 0) return lesson;
 
-    const images = await imageStore.getBatch(keys);
+    const images = await imageStorage.getBatch(keys);
     const resolve = (ref?: string) => (ref && images[ref]) || ref;
 
     // Hydrate
@@ -518,13 +564,18 @@ function useLessonHistoryState() {
         const lesson = savedLessons.find(l => l.id === activeLessonId);
         if (!lesson) return;
         // Skip if already hydrated (has base64 data)
-        const hasImages = lesson.content.flashcardImages && Object.values(lesson.content.flashcardImages).some(v => typeof v === 'string' && v.startsWith('data:'));
+        const fc = lesson.content.flashcardImages;
+        const hasImages = fc && Object.values(fc).some(v => typeof v === 'string' && (v.startsWith('data:') || v.startsWith('http')));
         if (hasImages) return;
+        // Check if there are any refs to hydrate
+        const hasRefs = fc && Object.values(fc).some(v => typeof v === 'string' && !v.startsWith('data:') && v.length > 0);
+        if (!fc && !lesson.content.grammarInfographicUrl && !lesson.content.blackboardImageUrl) return;
+        console.log('[Hydrate] Starting hydration for lesson', activeLessonId, hasRefs ? '(has refs)' : '(no refs)');
         hydrateImages(lesson).then(hydrated => {
             setSavedLessons(prev => prev.map(l => l.id === hydrated.id ? hydrated : l));
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeLessonId]);
+    }, [activeLessonId, savedLessons.length]);
 
     // Dehydrate images for the previously active lesson to avoid memory buildup
     useEffect(() => {
@@ -728,7 +779,7 @@ function useLessonHistoryState() {
         const result = await deleteLessonDb(id);
         if (activeLessonId === id) setActiveLessonId(null);
         // Clean up IndexedDB images
-        await imageStore.removeByPrefix(`esl-${id}-`);
+        await imageStorage.removeByPrefix(`esl-${id}-`);
         // Clean up record_index so sidebar Review Queue stays in sync
         const currentUser = useAuthStore.getState().user;
         if (currentUser) {

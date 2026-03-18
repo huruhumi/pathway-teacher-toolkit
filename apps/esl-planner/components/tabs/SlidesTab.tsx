@@ -57,7 +57,7 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
         <div className="space-y-5">
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                    <FileText size={18} className="text-indigo-600" />
+                    <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
                     Presentation Slides Outline
                 </h3>
                 <div className="flex gap-2 no-print">

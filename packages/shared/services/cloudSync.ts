@@ -105,17 +105,30 @@ export async function upsertCloudRecord<T extends CloudRecord>(
     if (!isSupabaseEnabled() || !supabase) return disabledResult();
 
     try {
-        const { error } = await supabase
+        const payload = { ...record, user_id: userId, updated_at: new Date().toISOString() };
+        const { error, count } = await supabase
             .from(tableName)
-            .upsert(
-                { ...record, user_id: userId, updated_at: new Date().toISOString() },
-                { onConflict: 'id' },
-            );
+            .upsert(payload, { onConflict: 'id', count: 'exact' });
 
         if (error) {
             console.error(`[cloudSync] upsert ${tableName}:`, error.message);
+            return fromSupabaseError(error);
         }
-        return fromSupabaseError(error);
+
+        // Supabase/PostgREST silently drops upserts when RLS blocks them (returns 200 with 0 rows).
+        // Detect this and return an explicit error so callers don't assume success.
+        if (typeof count === 'number' && count === 0) {
+            console.error(`[cloudSync] upsert ${tableName}: 0 rows affected (RLS or conflict mismatch). record.id=${record.id}`);
+            return {
+                ok: false,
+                source: 'cloud',
+                errorCode: 'ZERO_ROWS_AFFECTED',
+                message: `Save appeared to succeed but 0 rows were written to ${tableName}. This usually means RLS blocked the operation.`,
+                retryable: true,
+            };
+        }
+
+        return { ok: true, source: 'cloud' };
     } catch (err: any) {
         console.error(`[cloudSync] network error upserting ${tableName}:`, err?.message);
         return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };

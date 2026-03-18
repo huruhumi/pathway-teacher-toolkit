@@ -46,6 +46,7 @@ const READING_COMPANION_DAY_SCHEMA = {
     activity_cn: { type: Type.STRING, description: "Chinese translation of activity" },
     tasks: {
       type: Type.ARRAY,
+      description: "Exactly 3 hands-on parent-child tasks per day.",
       items: {
         type: Type.OBJECT,
         properties: {
@@ -74,7 +75,7 @@ const READING_COMPANION_DAY_SCHEMA = {
     trivia: {
       type: Type.OBJECT,
       properties: {
-        en: { type: Type.STRING, description: "A short, engaging trivia fact in English related to the day's focus." },
+        en: { type: Type.STRING, description: "A short fun fact in English related to the day's focus. Must be factual style only, not a study tip or advice." },
         cn: { type: Type.STRING, description: "Chinese translation of the trivia fact." }
       },
       required: ["en", "cn"]

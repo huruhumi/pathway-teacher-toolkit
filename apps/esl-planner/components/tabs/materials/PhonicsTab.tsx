@@ -33,7 +33,10 @@ export const PhonicsTab: React.FC<PhonicsTabProps> = React.memo(({
     return (
         <div className="space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Phonics & Decodable Practice</h3>
+                <div className="flex items-center gap-3">
+                    <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Phonics & Decodable Practice</h3>
+                </div>
             </div>
 
             <div className="flex flex-col space-y-12">

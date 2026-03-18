@@ -139,7 +139,11 @@ export const generateLessonPlan = async (
 
 8. ANTICIPATED PROBLEMS: Include 3-4 realistic problems with concrete solutions
 
-9. In teacherActivity/studentActivity, do not use HTML tags.`;
+9. In teacherActivity/studentActivity, do not use HTML tags.
+
+10. SUMMARY LANGUAGE:
+   - summary.objectives MUST be in Simplified Chinese, parent-friendly, and concise
+   - summary.objectives should summarize lesson theme + key outcomes in 2-4 lines`;
 
   const planOnlyInstructions = `You are an expert ESL lesson planner with 10+ years of classroom experience designing lessons for K-12 students. Generate a detailed, classroom-ready lesson plan.${ageLine}
 
@@ -160,7 +164,8 @@ ${sharedPlanRules}
 - Slides 2-3: Vocabulary presentation (one word per slide with image description)
 - Middle slides: Grammar explanation, practice exercises, dialogues
 - Final slides: Review/assessment activity, homework/extension
-- Each slide "content" must contain substantive teaching content (not just a title restatement)
+- Each slide "content" must contain substantive on-screen learning text for students (not just a title restatement)
+- Each slide "content" must be STUDENT-FACING ONLY: no teacher notes, no teacher script, no speaker notes, no classroom management directions
 - Each slide "visual" must describe a specific, relevant illustration suitable for the age group
 - Each slide "layoutDesign" must specify practical layout (e.g., "Image left 40%, text right 60%")
 ${slideCount > 15 ? '- Prepend a "Global Style & Formatting Guidelines" section at the start of "notebookLMPrompt" with strict color palette hex values, typography, and illustration style.' : ''}
@@ -176,12 +181,20 @@ ${slideCount > 15 ? '- Prepend a "Global Style & Formatting Guidelines" section 
 - Include materials list and variation suggestions
 
 === READING COMPANION (7-Day Home Review) ===
-- EXACTLY 7 days, each with distinct focus, 2-3 tasks, and at least 1 web resource
-- Day 1-2: Vocabulary review and flashcard practice
-- Day 3-4: Grammar pattern drilling with family members
-- Day 5-6: Reading/listening with recommended resources
-- Day 7: Mini-assessment and self-reflection
+- EXACTLY 7 days, each with distinct focus, 3-5 tasks, and at least 1 web resource
+- MUST follow fixed routine:
+  Day 1 = Vocabulary Recall
+  Day 2 = Phonics and Pronunciation
+  Day 3 = Sentence Patterns and Grammar
+  Day 4 = Listening and Comprehension
+  Day 5 = Speaking Interaction
+  Day 6 = Reading and Mini Writing
+  Day 7 = Integrated Review and Performance
+- Each day should have one clear main routine focus and 3-5 varied sub-tasks that directly align with that day focus and lesson topic
+- Tasks must be age-appropriate for the selected age group and language-load-appropriate for the selected level
+- Every task must be a game-like mini activity (challenge/race/hunt/match/guess/role-play), easy to run with minimal setup (no worksheet-style homework)
 - All resources must have real, working URLs (YouTube, educational sites)
+- Daily trivia must be a fact-style fun fact related to topic/focus only (no study tips, no methods, no encouragement text)
 
 CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactly for "structuredLessonPlan.classInformation.topic" and all main headers.`;
 

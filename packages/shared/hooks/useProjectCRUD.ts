@@ -228,12 +228,23 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 }
 
                 if (!cancelled) {
-                    // Keep non-empty local cache when cloud/repository returns empty.
-                    // This avoids accidental data loss on transient auth/network issues.
-                    const shouldKeepLocalCache = localItems.length > 0 && mapped.length === 0;
-                    const nextItems = shouldKeepLocalCache ? localItems : mapped;
-                    setItemsState(nextItems);
-                    await persistLocal(nextItems);
+                    // Merge strategy: cloud records take precedence, but keep local-only
+                    // records that are missing from cloud (they may be pending sync).
+                    // This prevents data loss when a cloud save silently failed.
+                    if (mapped.length === 0 && localItems.length > 0) {
+                        // Cloud returned empty — keep local cache (transient auth/network issue)
+                        setItemsState(localItems);
+                        await persistLocal(localItems);
+                    } else if (mapped.length > 0) {
+                        const cloudIds = new Set(mapped.map((m) => m.id));
+                        const localOnly = localItems.filter((l) => !cloudIds.has(l.id));
+                        const merged = [...mapped, ...localOnly].slice(0, limit);
+                        setItemsState(merged);
+                        await persistLocal(merged);
+                    } else {
+                        setItemsState(mapped);
+                        await persistLocal(mapped);
+                    }
                 }
             } catch (err: any) {
                 if (!cancelled) {

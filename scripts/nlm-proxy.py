@@ -1,10 +1,11 @@
 """
 Local NotebookLM deep research proxy.
 
-Runs on http://localhost:3099
+Runs on http://localhost:3199
 
 Actions:
   - full-pipeline: create notebook -> deep research -> import -> query
+  - video-url-only: create notebook -> import ONLY input video URLs -> extract transcript evidence
   - resume: reuse existing notebook and query
 """
 
@@ -17,12 +18,14 @@ import sys
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from notebooklm.client import NotebookLMClient
 
-PORT = 3099
+PORT = 3199
 BATCH_SIZE = 5
 CLIENT_TIMEOUT = 120
+MAX_EXCERPT_CHARS = 1800
 
 
 class PipelineError(Exception):
@@ -138,6 +141,198 @@ async def list_notebook_sources(
     return sources
 
 
+def _normalize_text_excerpt(content: str, limit: int = MAX_EXCERPT_CHARS) -> str:
+    compact = re.sub(r"\s+", " ", content or "").strip()
+    if len(compact) <= limit:
+        return compact
+    return f"{compact[:limit]}..."
+
+
+def _extract_youtube_video_id(raw_url: str) -> str | None:
+    try:
+        parsed = urlparse(raw_url)
+    except Exception:
+        return None
+
+    host = (parsed.netloc or "").replace("www.", "").lower()
+    if host == "youtu.be":
+        candidate = parsed.path.strip("/")
+        return candidate or None
+    if host == "youtube.com" or host.endswith(".youtube.com"):
+        values = parse_qs(parsed.query).get("v", [])
+        if values:
+            return values[0].strip() or None
+    return None
+
+
+def _url_from_input_videos(candidate_url: str, input_urls: list[str]) -> bool:
+    input_ids = {vid for vid in (_extract_youtube_video_id(u) for u in input_urls) if vid}
+    candidate_id = _extract_youtube_video_id(candidate_url)
+    if candidate_id and candidate_id in input_ids:
+        return True
+    return candidate_url in input_urls
+
+
+async def video_url_only_pipeline(
+    topic: str,
+    lesson_prompts: list[str],
+    video_urls: list[str],
+) -> dict[str, Any]:
+    notebook_id = ""
+    async with await NotebookLMClient.from_storage(timeout=CLIENT_TIMEOUT) as client:
+        try:
+            print(f"[NLM][video] creating notebook: {topic}")
+            notebook = await client.notebooks.create(title=f"Video URL Evidence: {topic}")
+            notebook_id = notebook.id
+            print(f"[NLM][video] notebook id: {notebook_id}")
+
+            processed_rows: list[dict[str, Any]] = []
+            imported_sources: list[dict[str, Any]] = []
+
+            for raw_url in video_urls:
+                print(f"[NLM][video] importing URL: {raw_url}")
+                row: dict[str, Any] = {
+                    "inputUrl": raw_url,
+                    "status": "VIDEO_SOURCE_UNAVAILABLE",
+                    "reason": "unknown",
+                    "sourceId": "",
+                    "sourceTitle": "",
+                    "sourceUrl": raw_url,
+                    "charCount": 0,
+                    "excerpt": "",
+                }
+                try:
+                    source = await client.sources.add_url(
+                        notebook_id=notebook_id,
+                        url=raw_url,
+                        wait=True,
+                        wait_timeout=180,
+                    )
+                    source_id = str(getattr(source, "id", "") or "")
+                    source_title = str(getattr(source, "title", "") or "")
+                    source_url = str(getattr(source, "url", "") or raw_url)
+
+                    if source_url and not _url_from_input_videos(source_url, video_urls):
+                        row.update(
+                            {
+                                "reason": f"non_input_source_url:{source_url}",
+                                "sourceId": source_id,
+                                "sourceTitle": source_title,
+                                "sourceUrl": source_url,
+                            }
+                        )
+                        processed_rows.append(row)
+                        print(f"[NLM][video] rejected non-input source url for {raw_url}: {source_url}")
+                        continue
+
+                    fulltext = await client.sources.get_fulltext(notebook_id, source_id)
+                    content = str(getattr(fulltext, "content", "") or "")
+                    char_count = int(getattr(fulltext, "char_count", len(content)) or len(content))
+
+                    if content.strip():
+                        row.update(
+                            {
+                                "status": "READY",
+                                "reason": "",
+                                "sourceId": source_id,
+                                "sourceTitle": source_title,
+                                "sourceUrl": source_url,
+                                "charCount": char_count,
+                                "excerpt": _normalize_text_excerpt(content, MAX_EXCERPT_CHARS),
+                            }
+                        )
+                    else:
+                        row.update(
+                            {
+                                "reason": "empty_fulltext",
+                                "sourceId": source_id,
+                                "sourceTitle": source_title,
+                                "sourceUrl": source_url,
+                            }
+                        )
+                except Exception as exc:
+                    row["reason"] = str(exc)
+                    print(f"[NLM][video] import/get_fulltext failed for {raw_url}: {exc}")
+
+                processed_rows.append(row)
+                if row.get("status") == "READY":
+                    imported_sources.append(
+                        {
+                            "id": row.get("sourceId", ""),
+                            "title": row.get("sourceTitle", ""),
+                            "url": row.get("sourceUrl", raw_url),
+                            "status": "ready",
+                            "type": "youtube",
+                        }
+                    )
+
+            has_unavailable = any(r.get("status") != "READY" for r in processed_rows)
+            ready_count = sum(1 for r in processed_rows if r.get("status") == "READY")
+
+            lines: list[str] = []
+            lines.append("VIDEO_URL_ONLY_MODE=TRUE")
+            lines.append("Source policy: ONLY user-provided video URLs were imported via NotebookLM sources.add_url.")
+            lines.append("")
+            lines.append("Input URL verification:")
+            for row in processed_rows:
+                if row.get("status") == "READY":
+                    lines.append(
+                        f"- READY | input={row.get('inputUrl')} | source={row.get('sourceUrl')} | char_count={row.get('charCount')}"
+                    )
+                else:
+                    lines.append(
+                        f"- VIDEO_SOURCE_UNAVAILABLE | input={row.get('inputUrl')} | reason={row.get('reason')}"
+                    )
+            if has_unavailable:
+                lines.append("")
+                lines.append("VIDEO_SOURCE_UNAVAILABLE")
+
+            lines.append("")
+            lines.append("Transcript/key evidence excerpts (verbatim from NotebookLM indexed fulltext):")
+            for idx, row in enumerate(processed_rows, start=1):
+                if row.get("status") != "READY":
+                    continue
+                lines.append("")
+                lines.append(f"[Source {idx}] {row.get('sourceTitle') or 'Untitled'}")
+                lines.append(f"URL: {row.get('sourceUrl') or row.get('inputUrl')}")
+                lines.append(f"char_count: {row.get('charCount')}")
+                lines.append("excerpt:")
+                lines.append(row.get("excerpt") or "")
+
+            if ready_count == 0:
+                lines.append("")
+                lines.append("NO_USABLE_SOURCE")
+
+            fact_content = "\n".join(lines)[:20000]
+            quality = "good" if ready_count == len(video_urls) and ready_count > 0 else ("low" if ready_count > 0 else "insufficient")
+            citation_count = ready_count
+            source_refs = [s.get("url", "") for s in imported_sources if s.get("url")]
+            fact_sheets = [
+                {
+                    "content": fact_content,
+                    "citationCount": citation_count,
+                    "quality": quality,
+                    "sourceRefs": source_refs[:50],
+                    "groundingUrls": source_refs[:50],
+                }
+                for _ in lesson_prompts
+            ]
+            if not fact_sheets:
+                fact_sheets = [
+                    {
+                        "content": fact_content,
+                        "citationCount": citation_count,
+                        "quality": quality,
+                        "sourceRefs": source_refs[:50],
+                        "groundingUrls": source_refs[:50],
+                    }
+                ]
+            print(f"[NLM][video] done: {len(fact_sheets)} fact sheets, ready={ready_count}/{len(video_urls)}")
+            return {"notebookId": notebook_id, "factSheets": fact_sheets, "sources": imported_sources}
+        except Exception as exc:
+            raise PipelineError(str(exc), notebook_id) from exc
+
+
 async def full_pipeline(topic: str, lesson_prompts: list[str]) -> dict[str, Any]:
     notebook_id = ""
     async with await NotebookLMClient.from_storage(timeout=CLIENT_TIMEOUT) as client:
@@ -245,6 +440,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 if not topic or not prompts:
                     raise ValueError("Missing topic or lessonPrompts")
                 result = asyncio.run(full_pipeline(topic, prompts))
+                notebook_id_ctx = result.get("notebookId")
+            elif action == "video-url-only":
+                topic = data.get("topic", "")
+                video_urls = data.get("videoUrls", [])
+                if not topic or not prompts:
+                    raise ValueError("Missing topic or lessonPrompts")
+                if not isinstance(video_urls, list) or not video_urls:
+                    raise ValueError("Missing videoUrls")
+                result = asyncio.run(video_url_only_pipeline(topic, prompts, video_urls))
                 notebook_id_ctx = result.get("notebookId")
             elif action in ("resume", "notebook-query"):
                 notebook_id_ctx = data.get("notebookId", "")
@@ -381,6 +585,7 @@ def main() -> None:
     print(f"http://localhost:{PORT}")
     print("GET  /    - list notebooks")
     print("POST full-pipeline - create + research + query")
+    print("POST video-url-only - import ONLY input video URLs + extract transcript evidence")
     print("POST resume        - reuse existing notebook")
     print("")
 

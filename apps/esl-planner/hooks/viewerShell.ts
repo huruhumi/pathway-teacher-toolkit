@@ -3,8 +3,8 @@
  * Extracted from useExportUtils.openViewer to DRY the 80-line HTML wrapper.
  */
 
-export function wrapViewerHtml(title: string, contentHtml: string): string {
-    return `
+export function wrapViewerHtml(title: string, contentHtml: string, logoDataUri?: string): string {
+  return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -35,6 +35,8 @@ export function wrapViewerHtml(title: string, contentHtml: string): string {
             align-items: center;
             z-index: 100;
           }
+
+          .viewer-title-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
           @media print { 
             .no-print { display: none !important; } 
             body { padding: 0; } 
@@ -55,6 +57,7 @@ export function wrapViewerHtml(title: string, contentHtml: string): string {
               background-position: 0 3.2rem !important;
               line-height: 3.5 !important;
             }
+
           }
           .viewer-error-correction-passage {
             background-image: linear-gradient(#f1f5f9 1px, transparent 1px);
@@ -64,6 +67,7 @@ export function wrapViewerHtml(title: string, contentHtml: string): string {
         </style>
       </head>
       <body>
+
         <div class="print-header no-print">
           <div class="flex items-center gap-3">
             <div class="bg-indigo-600 p-2 rounded-lg text-white">

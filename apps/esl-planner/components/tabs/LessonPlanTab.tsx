@@ -495,7 +495,7 @@ Requirements:
                 {/* === Info Card === */}
                 <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
                     <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-                        <Info size={18} className="text-violet-600" />
+                        <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
                         Lesson Details
                     </h3>
                     {/* Topic �?own row */}

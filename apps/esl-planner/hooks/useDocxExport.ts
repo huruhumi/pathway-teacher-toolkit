@@ -243,7 +243,7 @@ export const useDocxExport = () => {
         // --- SECTION 3: READING COMPANION ---
         if (readingCompanion && readingCompanion.days && readingCompanion.days.length > 0) {
             children.push(
-                new Paragraph({ text: 'Reading Companion (5-Day Plan)', heading: HeadingLevel.HEADING_1, spacing: { before: 600, after: 200 } })
+                new Paragraph({ text: 'Reading Companion (7-Day Plan)', heading: HeadingLevel.HEADING_1, spacing: { before: 600, after: 200 } })
             );
 
             for (const day of readingCompanion.days) {
@@ -251,12 +251,6 @@ export const useDocxExport = () => {
                     new Paragraph({
                         children: [new TextRun({ text: `Day ${day.day}: ${day.focus}`, bold: true, size: 22 })],
                         spacing: { before: 150, after: 100 }
-                    })
-                );
-                children.push(
-                    new Paragraph({
-                        children: [new TextRun({ text: 'Activity: ', bold: true }), new TextRun({ text: day.activity })],
-                        spacing: { after: 100 }
                     })
                 );
                 if (day.tasks && day.tasks.length > 0) {

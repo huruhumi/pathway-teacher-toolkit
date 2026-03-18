@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { Game, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateSingleGame } from '../../services/worksheetService';
-import { Sparkles, Loader2, Bot, CheckSquare, Gamepad2, Trash2, Plus, X, ExternalLink } from 'lucide-react';
+import { Sparkles, Loader2, Bot, Trash2, Plus, X, ExternalLink, GripVertical, RefreshCw } from 'lucide-react';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
 
@@ -31,6 +31,9 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     const [isGeneratingGame, setIsGeneratingGame] = useState(false);
     const [gameFilterSkill, setGameFilterSkill] = useState('Random');
     const [gameFilterType, setGameFilterType] = useState('Random');
+    const [dragIdx, setDragIdx] = useState<number | null>(null);
+    const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+    const [regeneratingIdx, setRegeneratingIdx] = useState<number | null>(null);
 
     const handleGameChange = (index: number, field: keyof Game, value: any) => {
         const newGames = [...editableGames];
@@ -46,6 +49,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
 
     const removeGame = (index: number) => {
         setEditableGames(editableGames.filter((_, i) => i !== index));
+    };
+
+    const handleGameDragEnd = (fromIdx: number, toIdx: number) => {
+        if (fromIdx === toIdx) return;
+        const newGames = [...editableGames];
+        const [moved] = newGames.splice(fromIdx, 1);
+        newGames.splice(toIdx, 0, moved);
+        setEditableGames(newGames);
     };
 
     const handleGenerateNewGame = async () => {
@@ -80,7 +91,10 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Classroom Games & Activities</h3>
+                <div className="flex items-center gap-3">
+                    <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-10 h-10 object-contain" />
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Classroom Games & Activities</h3>
+                </div>
                 <div className="flex gap-2 no-print">
                 </div>
             </div>
@@ -126,11 +140,24 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {editableGames.map((game, idx) => (
-                    <div key={idx} className={`bg-white dark:bg-slate-900/80 border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full group relative ${game.isCompleted ? 'border-emerald-200 opacity-75' : 'border-slate-200 dark:border-white/10 hover:border-indigo-300'}`}>
-                        <button onClick={() => removeGame(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                            <Trash2 className="w-5 h-5" />
-                        </button>
+                    <div
+                        key={idx}
+                        draggable
+                        onDragStart={() => setDragIdx(idx)}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
+                        onDragEnd={() => {
+                            if (dragIdx !== null && dragOverIdx !== null) handleGameDragEnd(dragIdx, dragOverIdx);
+                            setDragIdx(null);
+                            setDragOverIdx(null);
+                        }}
+                        className={`bg-white dark:bg-slate-900/80 border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col h-full group relative ${dragOverIdx === idx ? 'border-violet-400 ring-2 ring-violet-200' : game.isCompleted ? 'border-emerald-200 opacity-75' : 'border-slate-200 dark:border-white/10 hover:border-indigo-300'}`}
+                    >
                         <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-2 mr-3">
+                                <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 no-print" title="Drag to reorder">
+                                    <GripVertical className="w-5 h-5" />
+                                </div>
+                            </div>
                             <div className="flex-1 mr-4">
                                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                                     <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">{game.type}</span>
@@ -147,13 +174,38 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                                     className="text-xl font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-[90%] transition-colors pb-1"
                                 />
                             </div>
-                            <button
-                                onClick={() => toggleGameCompletion(idx)}
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm shrink-0 no-print border ${game.isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200 dark:border-white/10 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'}`}
-                                title={game.isCompleted ? "Mark as Incomplete" : "Mark as Planned"}
-                            >
-                                {game.isCompleted ? <CheckSquare className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0 no-print">
+                                <button
+                                    onClick={async () => {
+                                        if (!editablePlan || regeneratingIdx !== null) return;
+                                        setRegeneratingIdx(idx);
+                                        try {
+                                            const newGame = await generateSingleGame(
+                                                editablePlan.classInformation.level as CEFRLevel,
+                                                editablePlan.classInformation.topic,
+                                                game.type || 'Random',
+                                                game.interactionType || 'Random',
+                                                JSON.stringify(editablePlan.lessonDetails)
+                                            );
+                                            const newGames = [...editableGames];
+                                            newGames[idx] = { ...newGame, linkedStage: game.linkedStage, isCompleted: false };
+                                            setEditableGames(newGames);
+                                        } catch (e) {
+                                            console.error('Failed to regenerate game', e);
+                                        } finally {
+                                            setRegeneratingIdx(null);
+                                        }
+                                    }}
+                                    disabled={regeneratingIdx !== null}
+                                    className="p-2 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                                    title="Regenerate this activity"
+                                >
+                                    {regeneratingIdx === idx ? <Loader2 className="w-5 h-5 animate-spin text-indigo-500" /> : <RefreshCw className="w-5 h-5" />}
+                                </button>
+                                <button onClick={() => removeGame(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all" title="Delete activity">
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex-1 space-y-6">
@@ -168,7 +220,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                             </div>
 
                             <div>
-                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><CheckSquare className="w-3 h-3" /> Materials</h5>
+                                <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1">📦 Materials</h5>
                                 <div className="flex flex-wrap gap-2">
                                     {game.materials.map((m, i) => (
                                         <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg group/mat shadow-sm">

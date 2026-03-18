@@ -23,7 +23,10 @@ export const WhiteboardTab: React.FC<WhiteboardTabProps> = React.memo(({
     return (
         <div className="max-w-5xl mx-auto space-y-12 animate-fade-in">
             <div className="flex justify-between items-center no-print">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Whiteboard Design Reference</h3>
+                <div className="flex items-center gap-3">
+                    <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Whiteboard Design Reference</h3>
+                </div>
                 <div className="flex gap-2">
                     {blackboardImageUrl && (
                         <button onClick={handleDownloadWhiteboardDesign} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all text-sm font-bold">

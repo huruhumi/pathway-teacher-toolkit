@@ -2,7 +2,7 @@
  * Hook for triggering NotebookLM RAG research workflow.
  *
  * Supports two backends:
- * - "local": local proxy at localhost:3099 (deep/multi-pass)
+ * - "local": local proxy at localhost:3199 (deep/multi-pass)
  * - "cloud": Supabase Edge Function (single-pass)
  */
 
@@ -34,9 +34,11 @@ export interface StartRAGOptions {
     notebookId?: string;
     tolerateErrors?: boolean;
     allowEmptyFactSheets?: boolean;
+    action?: 'full-pipeline' | 'notebook-query' | 'video-url-only';
+    videoUrls?: string[];
 }
 
-const LOCAL_PROXY_URL = 'http://localhost:3099';
+const LOCAL_PROXY_URL = 'http://localhost:3199';
 
 const INITIAL_PROGRESS: RAGProgress = {
     status: 'idle',
@@ -132,6 +134,8 @@ export function useNotebookLMRAG() {
             notebookId,
             tolerateErrors = false,
             allowEmptyFactSheets = false,
+            action,
+            videoUrls = [],
         } = options;
 
         setRagProgress({
@@ -149,9 +153,11 @@ export function useNotebookLMRAG() {
         try {
             const callFn = backend === 'local' ? callLocal : callCloud;
             const canResume = Boolean(notebookId);
-            const payload = canResume
-                ? { action: 'notebook-query', notebookId, lessonPrompts }
-                : { action: 'full-pipeline', topic, lessonPrompts };
+            const payload = action === 'video-url-only'
+                ? { action: 'video-url-only', topic, lessonPrompts, videoUrls }
+                : (canResume
+                    ? { action: 'notebook-query', notebookId, lessonPrompts }
+                    : { action: 'full-pipeline', topic, lessonPrompts });
 
             const result = await callFn(payload);
 

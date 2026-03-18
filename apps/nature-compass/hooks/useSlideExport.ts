@@ -1,13 +1,13 @@
 /**
  * Hook for exporting handbook pages to NotebookLM as slide decks.
  * 
- * Connects to the local nlm-proxy (localhost:3099) via SSE, spawns the 
+ * Connects to the local nlm-proxy (localhost:3199) via SSE, spawns the 
  * Python export worker, and streams real-time progress.
  */
 
 import { useState, useCallback, useRef } from 'react';
 
-const PROXY_URL = 'http://localhost:3099';
+const PROXY_URL = 'http://localhost:3199';
 
 export type ExportStatus =
     | 'idle'

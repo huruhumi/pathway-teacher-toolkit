@@ -84,7 +84,7 @@ export const RESPONSE_SCHEMA = {
         type: Type.OBJECT,
         properties: {
           title: { type: Type.STRING },
-          content: { type: Type.STRING, description: "Slide text content, expanding on the topic from an ESL expert perspective. Do not blindly copy uploaded materials." },
+          content: { type: Type.STRING, description: "Slide text content for STUDENTS to read on screen. Must be student-facing only: no teacher notes, no teacher script, no speaker notes." },
           visual: { type: Type.STRING, description: "Visual description (what the slide should show, such as images, diagrams, or illustrations), referencing uploaded context but creatively adapted." },
           layoutDesign: { type: Type.STRING, description: "Layout design instructions (how the content and visual should be arranged on the slide for maximum ESL learning impact)." }
         },
@@ -148,6 +148,7 @@ export const RESPONSE_SCHEMA = {
               activity_cn: { type: Type.STRING, description: "Chinese translation of activity" },
               tasks: {
                 type: Type.ARRAY,
+                description: "3-5 step-by-step tasks per day.",
                 items: {
                   type: Type.OBJECT,
                   properties: {
@@ -176,7 +177,7 @@ export const RESPONSE_SCHEMA = {
               trivia: {
                 type: Type.OBJECT,
                 properties: {
-                  en: { type: Type.STRING, description: "A short, engaging trivia fact in English related to the day's focus." },
+                  en: { type: Type.STRING, description: "A short fun fact in English related to the day's focus. Must be factual style only, not a study tip or advice." },
                   cn: { type: Type.STRING, description: "Chinese translation of the trivia fact." }
                 },
                 required: ["en", "cn"]
