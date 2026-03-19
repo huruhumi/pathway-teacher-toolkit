@@ -84,7 +84,7 @@ export const RESPONSE_SCHEMA = {
         type: Type.OBJECT,
         properties: {
           title: { type: Type.STRING },
-          content: { type: Type.STRING, description: "Slide text content for STUDENTS to read on screen. Must be student-facing only: no teacher notes, no teacher script, no speaker notes." },
+          content: { type: Type.STRING, description: "The exact text displayed ON THE SLIDE for students to read. This is NOT a teacher script. Write actual slide text: key vocabulary words, sentence patterns, example sentences, questions, fill-in-the-blank prompts, or bullet points. NEVER write teacher greetings like 'Hello everyone' or teacher narration like 'Let's learn'. Think of this as PowerPoint slide body text." },
           visual: { type: Type.STRING, description: "Visual description (what the slide should show, such as images, diagrams, or illustrations), referencing uploaded context but creatively adapted." },
           layoutDesign: { type: Type.STRING, description: "Layout design instructions (how the content and visual should be arranged on the slide for maximum ESL learning impact)." }
         },
@@ -206,7 +206,7 @@ export const RESPONSE_SCHEMA = {
     },
     notebookLMPrompt: {
       type: Type.STRING,
-      description: "A specialized prompt for NotebookLM to generate the slides. Must instruct NotebookLM to use the newly provided 'Visual' and 'Layout Design' for each slide. CRITICAL: Provide a 'Global Style & Formatting Guidelines' section at the top of this prompt to ensure consistent colors, fonts, and illustration styles across all slides."
+      description: "A specialized prompt for NotebookLM to generate the slides. Must instruct NotebookLM to use the newly provided 'Visual' and 'Layout Design' for each slide. CRITICAL: Always provide a 'Global Style & Formatting Guidelines' section at the top of this prompt specifying brand colors (Primary Violet #7C3AED, Secondary Purple #9333EA, Accent Fuchsia #C026D3), consistent fonts, and illustration styles across all slides."
     },
     summary: {
       type: Type.OBJECT,

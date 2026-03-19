@@ -168,7 +168,7 @@ ${sharedPlanRules}
 - Each slide "content" must be STUDENT-FACING ONLY: no teacher notes, no teacher script, no speaker notes, no classroom management directions
 - Each slide "visual" must describe a specific, relevant illustration suitable for the age group
 - Each slide "layoutDesign" must specify practical layout (e.g., "Image left 40%, text right 60%")
-${slideCount > 15 ? '- Prepend a "Global Style & Formatting Guidelines" section at the start of "notebookLMPrompt" with strict color palette hex values, typography, and illustration style.' : ''}
+- The "notebookLMPrompt" MUST always start with a "Global Style & Formatting Guidelines" section specifying brand colors: Primary Violet #7C3AED, Secondary Purple #9333EA, Accent Fuchsia #C026D3, consistent fonts, and illustration style.
 === FLASHCARDS REQUIREMENTS ===
 - Generate flashcards for ALL targetVocab words (every word must have a flashcard)
 - "definition" should be a simple sentence using the word in context

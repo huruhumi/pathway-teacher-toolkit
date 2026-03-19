@@ -553,6 +553,11 @@ function useLessonHistoryState() {
 
     useEffect(() => {
         if (activeLessonId && pendingLessonIdRef.current === activeLessonId) {
+            // Pending ID was promoted to active — clear it
+            pendingLessonIdRef.current = null;
+        } else if (!activeLessonId) {
+            // Active lesson cleared (new generation starting) — clear pending to avoid
+            // stale ID reuse that would overwrite a different lesson record
             pendingLessonIdRef.current = null;
         }
     }, [activeLessonId]);

@@ -16,8 +16,9 @@ import {
   PhonicsContent,
   CEFRLevel,
   AssignmentSheet,
+  GenerationContext,
 } from "../types";
-import { generateSupportingContent } from "../services/gemini/supportingContent";
+import { generateSupportingContent, regenerateSlides } from "../services/gemini/supportingContent";
 import {
   BookOpen,
   Presentation,
@@ -89,6 +90,7 @@ import {
 import { translateLessonKit } from "../services/curriculumService";
 import { generateLessonImage } from "../services/lessonKitService";
 import { useExportUtils } from "../hooks/useExportUtils";
+import { useSlideExport } from "../hooks/useSlideExport";
 import { useAutoSave } from "@shared/hooks/useAutoSave";
 import { LessonPlanTab } from "./tabs/LessonPlanTab";
 import { SlidesTab } from "./tabs/SlidesTab";
@@ -202,6 +204,42 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const [editablePlan, setEditablePlan] = useState<StructuredLessonPlan | null>(
     sanitizePlan(content.structuredLessonPlan || null),
   );
+
+  // --- NotebookLM Export ---
+  const { exportState, startExport, cancelExport, resetExport } = useSlideExport();
+  const handleExportSlides = useCallback(() => {
+    const title = editablePlan?.classInformation?.topic || content.structuredLessonPlan?.classInformation?.topic || 'ESL Lesson';
+    startExport(title, editableSlides, content.notebookLMPrompt || '');
+  }, [editableSlides, content.notebookLMPrompt, editablePlan, content.structuredLessonPlan, startExport]);
+
+  // --- Regenerate Slides Only ---
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const handleRegenerateSlides = useCallback(async () => {
+    if (!editablePlan) return;
+    setIsRegenerating(true);
+    try {
+      // Build fallback context if _generationContext is missing (old lesson kits)
+      const ctx: GenerationContext = content._generationContext || {
+        level: (editablePlan.classInformation.level || 'A1') as CEFRLevel,
+        topic: editablePlan.classInformation.topic || '',
+        lessonTitle: editablePlan.classInformation.topic || 'ESL Lesson',
+        ageGroup: content.ageGroup || undefined,
+        duration: '40',
+        studentCount: editablePlan.classInformation.students || '20',
+        slideCount: editableSlides.length || 15,
+        sourceMode: 'direct',
+      };
+      const result = await regenerateSlides(editablePlan, ctx);
+      setEditableSlides(result.slides || []);
+      // Update content with new slides + prompt, then save
+      const updated = { ...content, slides: result.slides, notebookLMPrompt: result.notebookLMPrompt };
+      await onSave(updated);
+    } catch (err: any) {
+      console.error('Slide regeneration failed:', err);
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [editablePlan, editableSlides, content, onSave]);
   const [editableReadingCompanion, setEditableReadingCompanion] =
     useState<ReadingCompanionContent>(content.readingCompanion);
   const [editableGames, setEditableGames] = useState<Game[]>(
@@ -354,7 +392,12 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
   useEffect(() => {
     setEditableSlides(content.slides || []);
-    setEditablePlan(content.structuredLessonPlan || null);
+    const plan = content.structuredLessonPlan || null;
+    if (plan) {
+      const today = new Date().toISOString().slice(0, 10);
+      plan.classInformation = { ...plan.classInformation, date: today };
+    }
+    setEditablePlan(plan);
     setEditableReadingCompanion(content.readingCompanion);
     setLocalFlashcards(content.flashcards || []);
     setEditableGames(
@@ -1090,6 +1133,11 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             editableSlides={editableSlides}
             setEditableSlides={setEditableSlides as any}
             notebookLMPrompt={content.notebookLMPrompt}
+            onExportSlides={handleExportSlides}
+            exportState={exportState}
+            onCancelExport={cancelExport}
+            onRegenerateSlides={handleRegenerateSlides}
+            isRegenerating={isRegenerating}
           />
         )}
 

@@ -1,17 +1,28 @@
 import React, { useState } from 'react';
 import { Slide } from '../../types';
-import { FileText, Clipboard, ImageIcon, Info, Check, Trash2, ExternalLink, Sparkles } from 'lucide-react';
+import { FileText, Clipboard, ImageIcon, Info, Check, Trash2, Sparkles, Loader2, AlertCircle, ExternalLink, X, RefreshCw } from 'lucide-react';
+import type { ExportProgress } from '../../hooks/useSlideExport';
 
 interface SlidesTabProps {
     editableSlides: Slide[];
     setEditableSlides: (slides: Slide[]) => void;
     notebookLMPrompt: string;
+    onExportSlides?: () => void;
+    exportState?: ExportProgress;
+    onCancelExport?: () => void;
+    onRegenerateSlides?: () => void;
+    isRegenerating?: boolean;
 }
 
 export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
     editableSlides,
     setEditableSlides,
     notebookLMPrompt,
+    onExportSlides,
+    exportState,
+    onCancelExport,
+    onRegenerateSlides,
+    isRegenerating,
 }) => {
     const [copiedPrompt, setCopiedPrompt] = useState(false);
     const [copiedVisual, setCopiedVisual] = useState<number | null>(null);
@@ -53,6 +64,8 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
         copyToClipboard(allPrompts, 'prompt');
     };
 
+    const isExporting = exportState && exportState.status !== 'idle' && exportState.status !== 'done' && exportState.status !== 'error';
+
     return (
         <div className="space-y-5">
             <div className="flex justify-between items-center mb-4">
@@ -60,7 +73,34 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
                     <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-8 h-8 object-contain" />
                     Presentation Slides Outline
                 </h3>
-                <div className="flex gap-2 no-print">
+                <div className="flex items-center gap-2 no-print">
+                    {onRegenerateSlides && (
+                        <button
+                            onClick={onRegenerateSlides}
+                            disabled={!!isRegenerating}
+                            className="text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+                            title="重新生成所有 Slides（仅生成 Slides，不影响其他内容）"
+                        >
+                            {isRegenerating
+                                ? <Loader2 size={14} className="animate-spin" />
+                                : <RefreshCw size={14} />
+                            }
+                            {isRegenerating ? '生成中...' : 'Regenerate'}
+                        </button>
+                    )}
+                    {onExportSlides && (
+                        <button
+                            onClick={onExportSlides}
+                            disabled={!!isExporting}
+                            className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+                        >
+                            {isExporting
+                                ? <Loader2 size={14} className="animate-spin" />
+                                : <Sparkles size={14} />
+                            }
+                            导出到 NotebookLM
+                        </button>
+                    )}
                     <button
                         onClick={handleCopyAllPrompts}
                         className="text-xs font-bold px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-2"
@@ -69,6 +109,57 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
                     </button>
                 </div>
             </div>
+
+            {/* Inline Export Progress */}
+            {exportState && exportState.status !== 'idle' && (
+                <div className={`mb-4 rounded-xl border overflow-hidden animate-fade-in ${exportState.status === 'error' ? 'border-red-200 bg-red-50' : exportState.status === 'done' ? 'border-emerald-200 bg-emerald-50' : 'border-indigo-200 bg-indigo-50/50'
+                    }`}>
+                    <div className="px-4 py-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                                {exportState.status === 'error' ? (
+                                    <><AlertCircle size={16} className="text-red-500" /><span className="text-red-700">导出失败</span></>
+                                ) : exportState.status === 'done' ? (
+                                    <><Check size={16} className="text-emerald-600" /><span className="text-emerald-700">导出完成</span></>
+                                ) : (
+                                    <><Loader2 size={16} className="text-indigo-600 animate-spin" /><span className="text-indigo-700">{exportState.message || '处理中...'}</span></>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {exportState.status === 'done' && exportState.notebookUrl && (
+                                    <a href={exportState.notebookUrl} target="_blank" rel="noopener noreferrer"
+                                        className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                                        <ExternalLink size={12} /> 打开 NotebookLM
+                                    </a>
+                                )}
+                                {(exportState.status === 'done' || exportState.status === 'error') && onCancelExport && (
+                                    <button onClick={onCancelExport} className="p-0.5 rounded hover:bg-black/10 transition-colors">
+                                        <X size={14} className="text-slate-500" />
+                                    </button>
+                                )}
+                                {exportState.status !== 'done' && exportState.status !== 'error' && onCancelExport && (
+                                    <button onClick={onCancelExport} className="text-xs text-slate-500 hover:text-red-600">
+                                        取消
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        {/* Progress bar */}
+                        {exportState.status !== 'error' && (
+                            <div className="w-full bg-white/60 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${exportState.status === 'done' ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                    style={{ width: `${Math.round((exportState.progress || 0) * 100)}%` }}
+                                />
+                            </div>
+                        )}
+                        {/* Error detail */}
+                        {exportState.status === 'error' && exportState.error && (
+                            <p className="text-xs text-red-600 mt-1 line-clamp-2">{exportState.error}</p>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {notebookLMPrompt && (
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 mb-4 shadow-sm">
@@ -87,7 +178,7 @@ export const SlidesTab: React.FC<SlidesTabProps> = React.memo(({
                             {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
                         </button>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono italic leading-relaxed line-clamp-3">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono italic leading-relaxed whitespace-pre-wrap break-words">
                         {notebookLMPrompt}
                     </p>
                     <div className="mt-2 text-xs text-indigo-500 font-medium">

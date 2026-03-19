@@ -25,7 +25,7 @@ const AppContent: React.FC = () => {
     const [viewMode, setViewMode] = useHashTab<'curriculum' | 'create' | 'history'>('curriculum', ['curriculum', 'create', 'history']);
 
     // Global stores
-    const { clearSessionState, setState } = useSessionStore();
+    const { clearSessionState, setState, activeLessonId: sessionLessonId } = useSessionStore();
     const { setActiveLessonId, setPrefilledValues } = useAppStore();
 
     // Initialize data from local storage to AppStore
@@ -37,6 +37,21 @@ const AppContent: React.FC = () => {
             clearSessionState();
         }
     }, [clearSessionState]);
+
+    // Restore lesson after page refresh: sessionStore persists activeLessonId
+    // but strips generatedContent (too large). Re-hydrate from savedLessons.
+    useEffect(() => {
+        if (!sessionLessonId) return;
+        const { state: currentState } = useSessionStore.getState();
+        if (currentState.generatedContent) return; // already loaded
+        const lesson = savedLessons.find(l => l.id === sessionLessonId);
+        if (lesson?.content) {
+            setActiveLessonId(sessionLessonId);
+            setState(prev => ({ ...prev, generatedContent: lesson.content }));
+            if (viewMode !== 'create') setViewMode('create');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionLessonId, savedLessons.length]);
 
     // Cross-page navigation handlers
     const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, curriculum?: ESLCurriculum, curriculumId?: string) => {

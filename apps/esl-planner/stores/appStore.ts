@@ -7,6 +7,9 @@ interface SessionState {
     state: ESLAppState;
     setState: (state: ESLAppState | ((prev: ESLAppState) => ESLAppState)) => void;
 
+    activeLessonId: string | null;
+    setActiveLessonId: (id: string | null) => void;
+
     loadedCurriculum: { curriculum: ESLCurriculum; params: CurriculumParams } | null;
     setLoadedCurriculum: (cur: { curriculum: ESLCurriculum; params: CurriculumParams } | null) => void;
 
@@ -21,11 +24,15 @@ export const useSessionStore = create<SessionState>()(
                 state: typeof stateArg === 'function' ? stateArg(get().state) : stateArg
             }),
 
+            activeLessonId: null,
+            setActiveLessonId: (id) => set({ activeLessonId: id }),
+
             loadedCurriculum: null,
             setLoadedCurriculum: (cur) => set({ loadedCurriculum: cur }),
 
             clearSessionState: () => set({
                 state: { isLoading: false, generatedContent: null, error: null },
+                activeLessonId: null,
                 loadedCurriculum: null
             })
         }),
@@ -38,6 +45,7 @@ export const useSessionStore = create<SessionState>()(
                     // Strip generatedContent from persistence — it can be very large
                     generatedContent: null,
                 },
+                activeLessonId: state.activeLessonId,
                 loadedCurriculum: state.loadedCurriculum,
             }),
         }
@@ -69,7 +77,11 @@ interface AppStoreState {
 
 export const useAppStore = create<AppStoreState>((set, get) => ({
     activeLessonId: null,
-    setActiveLessonId: (id) => set({ activeLessonId: id }),
+    setActiveLessonId: (id) => {
+        set({ activeLessonId: id });
+        // Sync to sessionStore for persistence across refresh
+        useSessionStore.getState().setActiveLessonId(id);
+    },
 
     prefilledValues: null,
     setPrefilledValues: (val) => set({ prefilledValues: val }),

@@ -1,16 +1,17 @@
 ﻿import React, { useState } from 'react';
 import { Game, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateSingleGame } from '../../services/worksheetService';
-import { Sparkles, Loader2, Bot, Trash2, Plus, X, ExternalLink, GripVertical, RefreshCw } from 'lucide-react';
+import { generateLessonImage } from '../../services/lessonKitService';
+import {
+    Sparkles, Loader2, Bot, X, Plus, Trash2, GripVertical, RefreshCw,
+    Image as ImageIcon,
+} from 'lucide-react';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 
 
 const skills = [
-    "Random", "Vocabulary", "Grammar", "Phonics", "Reading", "Listening", "Speaking",
-    "Writing", "Pronunciation", "Critical Thinking", "Idioms & Slang",
-    "Presentation Skills", "Culture & Etiquette", "Problem Solving", "Social English"
+    "Random", "Listening", "Speaking", "Reading", "Writing", "Vocabulary", "Grammar", "Phonics", "Pronunciation"
 ];
-
 const gameTypes = [
     "Random", "Warm-up", "Icebreaker", "Review", "Practice", "Production", "Role-play",
     "Information Gap", "Memory Game", "Relay Race", "Scavenger Hunt",
@@ -34,10 +35,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     const [dragIdx, setDragIdx] = useState<number | null>(null);
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
     const [regeneratingIdx, setRegeneratingIdx] = useState<number | null>(null);
+    const [generatingImageIdx, setGeneratingImageIdx] = useState<number | null>(null);
+    const [gameImages, setGameImages] = useState<Record<number, string>>({});
 
     const handleGameChange = (index: number, field: keyof Game, value: any) => {
         const newGames = [...editableGames];
-        newGames[index] = { ...newGames[index], [field]: value };
+        (newGames[index] as any)[field] = value;
         setEditableGames(newGames);
     };
 
@@ -60,31 +63,36 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     };
 
     const handleGenerateNewGame = async () => {
-        if (!editablePlan || isGeneratingGame) return;
+        if (!editablePlan) return;
         setIsGeneratingGame(true);
         try {
-            let finalSkill = gameFilterSkill;
-            let finalType = gameFilterType;
-            if (finalSkill === 'Random') {
-                const availableSkills = skills.filter(s => s !== 'Random');
-                finalSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
-            }
-            if (finalType === 'Random') {
-                const availableTypes = gameTypes.filter(t => t !== 'Random');
-                finalType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-            }
             const newGame = await generateSingleGame(
                 editablePlan.classInformation.level as CEFRLevel,
                 editablePlan.classInformation.topic,
-                finalSkill,
-                finalType,
+                gameFilterType,
+                gameFilterSkill,
                 JSON.stringify(editablePlan.lessonDetails)
             );
             setEditableGames([...editableGames, { ...newGame, isCompleted: false }]);
-        } catch (e: unknown) {
-            console.error("Failed to generate new game", e);
+        } catch (err) {
+            console.error('Failed to generate game', err);
         } finally {
             setIsGeneratingGame(false);
+        }
+    };
+
+    const handleGenerateGameImage = async (idx: number) => {
+        const game = editableGames[idx];
+        if (!game || generatingImageIdx !== null) return;
+        setGeneratingImageIdx(idx);
+        try {
+            const prompt = `Create a clean, professional instructional illustration showing the rules of a classroom game called "${game.name}". The illustration should visually explain these steps using icons, arrows, numbered visual cues, and simple cartoon figures: ${game.instructions}. Style requirements: Use a unified flat illustration style with soft rounded shapes. Primary color palette: Violet #7C3AED, Purple #9333EA, Fuchsia #C026D3, with white background. Show the game flow as a visual diagram or step sequence. Use simple stick figures or cartoon children to represent students and teacher. DO NOT include any text or words in the image AT ALL — only visual elements, icons, arrows, and figures. Make it look like a professional infographic instruction card. Clean, minimal, child-friendly aesthetic.`;
+            const imageUrl = await generateLessonImage(prompt, '4:3');
+            setGameImages(prev => ({ ...prev, [idx]: imageUrl }));
+        } catch (err) {
+            console.error('Failed to generate game image:', err);
+        } finally {
+            setGeneratingImageIdx(null);
         }
     };
 
@@ -93,7 +101,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                     <img id="pathway-logo" src={`${import.meta.env.BASE_URL}logo.png`} alt="Pathway Academy" className="w-10 h-10 object-contain" />
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Classroom Games & Activities</h3>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Classroom Games &amp; Activities</h3>
                 </div>
                 <div className="flex gap-2 no-print">
                 </div>
@@ -168,10 +176,11 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                                         </span>
                                     )}
                                 </div>
-                                <input
+                                <AutoResizeTextarea
                                     value={game.name}
                                     onChange={(e) => handleGameChange(idx, 'name', e.target.value)}
-                                    className="text-xl font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-[90%] transition-colors pb-1"
+                                    className="text-xl font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none w-full transition-colors pb-1 resize-none"
+                                    minRows={1}
                                 />
                             </div>
                             <div className="flex items-center gap-1 shrink-0 no-print">
@@ -202,6 +211,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                                 >
                                     {regeneratingIdx === idx ? <Loader2 className="w-5 h-5 animate-spin text-indigo-500" /> : <RefreshCw className="w-5 h-5" />}
                                 </button>
+                                <button
+                                    onClick={() => handleGenerateGameImage(idx)}
+                                    disabled={generatingImageIdx !== null}
+                                    className="p-2 text-slate-300 hover:text-violet-500 hover:bg-violet-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                                    title="生成游戏规则指示图"
+                                >
+                                    {generatingImageIdx === idx ? <Loader2 className="w-5 h-5 animate-spin text-violet-500" /> : <ImageIcon className="w-5 h-5" />}
+                                </button>
                                 <button onClick={() => removeGame(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl opacity-0 group-hover:opacity-100 transition-all" title="Delete activity">
                                     <Trash2 className="w-5 h-5" />
                                 </button>
@@ -209,6 +226,23 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                         </div>
 
                         <div className="flex-1 space-y-6">
+                            {/* Generated Game Rule Image */}
+                            {gameImages[idx] && (
+                                <div className="relative group/img">
+                                    <img
+                                        src={gameImages[idx]}
+                                        alt={`${game.name} - Game Rules`}
+                                        className="w-full rounded-xl border border-violet-200 shadow-sm"
+                                    />
+                                    <button
+                                        onClick={() => setGameImages(prev => { const n = { ...prev }; delete n[idx]; return n; })}
+                                        className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg opacity-0 group-hover/img:opacity-100 transition-all shadow-sm no-print"
+                                        title="Remove image"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                             <div>
                                 <h5 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Instructions</h5>
                                 <AutoResizeTextarea

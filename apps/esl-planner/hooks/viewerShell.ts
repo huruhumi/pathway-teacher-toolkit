@@ -42,6 +42,9 @@ export function wrapViewerHtml(title: string, contentHtml: string, logoDataUri?:
             body { padding: 0; } 
             .print-header { display: none; }
             .page-break { page-break-before: always; }
+            .print-row { break-inside: avoid; }
+            .print-section-header { break-inside: avoid; break-after: avoid; }
+            p, li, .flex { orphans: 2; widows: 2; }
             .flex-col { flex-direction: column !important; }
             .md\\:flex-row { flex-direction: column !important; }
             .w-full { width: 100% !important; }

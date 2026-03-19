@@ -75,7 +75,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         let title = 'Lesson Kit Viewer';
 
         if (tabId === 'plan' && editablePlan) {
-            title = `Plan: ${editablePlan.classInformation.topic}`;
+            title = `Lesson Plan: ${editablePlan.classInformation.topic}`;
             // Split stages into step rows (mirroring editor logic)
             const splitSteps = (text: string): string[] => {
                 const parts = text.split(/(?=\d+\.\s)/).map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
@@ -86,8 +86,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
 
             contentHtml = `
             <!-- Lesson Details Card -->
-            <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-5">
-                <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm mb-5">
+                <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2 print-section-header">
                     ${logoImgTag} Lesson Details
                 </h3>
                 <!-- Topic — own row -->
@@ -120,7 +120,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                     <div class="text-[10px] font-black text-gray-400 uppercase mb-2">LEARNING OBJECTIVES</div>
                     <div class="space-y-1.5">
                         ${editablePlan.lessonDetails.objectives.map(o => `
-                            <div class="flex items-start gap-2">
+                            <div class="flex items-start gap-2 print-row">
                                 <span class="text-violet-500 mt-0.5">●</span>
                                 <span class="text-sm text-gray-700">${o}</span>
                             </div>
@@ -130,7 +130,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             </div>
 
             <!-- Vocab & Grammar side-by-side -->
-            <div style="break-inside: avoid;" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                 <!-- Vocabulary -->
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
@@ -140,7 +140,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                     </div>
                     <div class="divide-y divide-gray-100">
                         ${editablePlan.lessonDetails.targetVocab.map(v => `
-                            <div class="p-3">
+                            <div class="p-3 print-row">
                                 <div class="font-bold text-sm text-gray-800">${v.word}</div>
                                 <div class="text-xs text-gray-500">${v.definition}</div>
                             </div>
@@ -156,7 +156,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                     </div>
                     <div class="divide-y divide-gray-100">
                         ${editablePlan.lessonDetails.grammarSentences.map(s => `
-                            <div class="flex gap-2 items-start p-3">
+                            <div class="flex gap-2 items-start p-3 print-row">
                                 <span class="text-indigo-400 mt-0.5">●</span>
                                 <span class="text-sm text-gray-700">${s}</span>
                             </div>
@@ -166,8 +166,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             </div>
 
             <!-- Materials & Equipment -->
-            <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-5">
-                <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2 mb-3">
+            <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-5">
+                <h4 class="font-bold text-gray-800 text-sm flex items-center gap-2 mb-3 print-section-header">
                     <span class="text-violet-500">📋</span> Materials & Equipment
                 </h4>
                 <div class="space-y-1.5">
@@ -181,8 +181,8 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
             </div>
 
             <!-- Anticipated Problems & Solutions -->
-            <div style="break-inside: avoid;" class="bg-amber-50 rounded-xl p-4 border border-amber-100 mb-5">
-                <div class="text-xs font-bold text-amber-600 uppercase flex items-center gap-1 mb-3">
+            <div class="bg-amber-50 rounded-xl p-4 border border-amber-100 mb-5">
+                <div class="text-xs font-bold text-amber-600 uppercase flex items-center gap-1 mb-3 print-section-header">
                     ⚠ Anticipated Problems & Solutions
                 </div>
                 <div class="space-y-3">
@@ -212,9 +212,9 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                 const interactionParts = splitInteractions(stage.interaction);
                 const maxLen = Math.max(teacherSteps.length, studentSteps.length);
                 return `
-                    <div style="break-inside: avoid;" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
                         <!-- Stage Header -->
-                        <div class="p-3 bg-gray-50 border-b border-gray-100">
+                        <div class="p-3 bg-gray-50 border-b border-gray-100 print-section-header">
                             <div class="flex flex-wrap items-center gap-3">
                                 <span class="text-sm font-bold text-violet-700 bg-violet-50 border border-violet-100 rounded px-2 py-1">${stage.timing}</span>
                                 <span class="font-bold text-gray-800 uppercase tracking-wide">${stage.stage}</span>
@@ -231,7 +231,7 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
                                 <div class="text-[10px] font-black text-emerald-500 uppercase tracking-widest text-center">STUDENT ACTIVITY</div>
                             </div>
                             ${Array.from({ length: maxLen }).map((_, si) => `
-                                <div class="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-1.5 items-start">
+                                <div class="grid grid-cols-[1.5rem_4.5rem_1fr_1fr] gap-x-2 mb-1.5 items-start print-row">
                                     <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-[11px] font-bold flex items-center justify-center">${si + 1}</span>
                                     <div class="text-[10px] font-semibold text-blue-600 bg-blue-50 rounded-lg px-2 py-1.5 text-center">${interactionParts[si] ?? interactionParts[interactionParts.length - 1] ?? ''}</div>
                                     <div class="text-sm text-violet-900 bg-violet-50/30 rounded-lg px-2.5 py-1.5 leading-relaxed">${teacherSteps[si] || ''}</div>
@@ -1200,19 +1200,19 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         doc.save(`Flashcards_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`);
     };
 
-    /** Download all flashcard images as a 2×2 grid PDF, 8cm cards with borders, A4 landscape */
+    /** Download all flashcard images as a 2×3 grid PDF, 8.5cm cards with borders, A4 portrait */
     const handleDownloadFlashcardImageGrid = () => {
-        const W = 297; // A4 landscape mm
-        const H = 210;
+        const W = 210; // A4 portrait mm
+        const H = 297;
         const CARD = 80; // 8cm inner border
         const OUTER = 85; // 8.5cm dashed outer border (cut guide)
         const COLS = 2;
-        const ROWS = 2;
+        const ROWS = 3;
         const PER_PAGE = COLS * ROWS;
         const gapX = (W - COLS * OUTER) / (COLS + 1);
         const gapY = (H - ROWS * OUTER) / (ROWS + 1);
 
-        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
         localFlashcards.forEach((card, i) => {
             if (i > 0 && i % PER_PAGE === 0) doc.addPage();
@@ -1252,19 +1252,19 @@ export const useExportUtils = (props: UseExportUtilsProps) => {
         doc.save(`Flashcard_Images_${editablePlan?.classInformation.topic.replace(/\s+/g, "_") || "Lesson"}.pdf`);
     };
 
-    /** Download all flashcard text (word + definition) as a 2×2 grid PDF, 8cm cards with borders, A4 landscape */
+    /** Download all flashcard text (word + definition) as a 2×3 grid PDF, 8.5cm cards with borders, A4 portrait */
     const handleDownloadFlashcardTextGrid = () => {
-        const W = 297;
-        const H = 210;
+        const W = 210;
+        const H = 297;
         const CARD = 80;
         const OUTER = 85;
         const COLS = 2;
-        const ROWS = 2;
+        const ROWS = 3;
         const PER_PAGE = COLS * ROWS;
         const gapX = (W - COLS * OUTER) / (COLS + 1);
         const gapY = (H - ROWS * OUTER) / (ROWS + 1);
 
-        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
         localFlashcards.forEach((card, i) => {
             if (i > 0 && i % PER_PAGE === 0) doc.addPage();

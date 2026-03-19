@@ -785,10 +785,11 @@ Requirements:
                                                                 onChange={(e) => handleStageChange(i, 'timing', e.target.value)}
                                                                 className="w-20 text-sm font-bold text-violet-700 dark:text-violet-300 bg-violet-50/50 dark:bg-violet-500/10 border border-transparent hover:border-violet-200 dark:hover:border-violet-700 rounded px-2 py-1 outline-none flex-shrink-0 text-center"
                                                             />
-                                                            <input
+                                                            <AutoResizeTextarea
                                                                 value={stage.stage}
                                                                 onChange={(e) => handleStageChange(i, 'stage', e.target.value)}
-                                                                className="flex-1 min-w-[100px] font-bold text-slate-800 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none uppercase tracking-wide"
+                                                                className="flex-1 min-w-[100px] font-bold text-slate-800 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-violet-500 outline-none uppercase tracking-wide resize-none"
+                                                                minRows={1}
                                                             />
                                                         </div>
                                                         {/* Row 2: Aim */}

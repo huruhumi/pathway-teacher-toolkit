@@ -35,7 +35,7 @@ export interface Slide {
 export interface ReadingTask {
   text: string;
   text_cn: string;
-  isCompleted: boolean;
+  isCompleted?: boolean;
 }
 
 export interface WebResource {
