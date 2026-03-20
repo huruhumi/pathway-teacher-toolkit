@@ -260,10 +260,15 @@ const AppContent: React.FC = () => {
     const [view, setView] = useState<View>('assignments');
     const { t, lang, setLang } = useLanguage();
     const user = useAuthStore(s => s.user);
+    const isStandalone = import.meta.env.BASE_URL === '/';
+
+    const Wrapper = isStandalone
+        ? ({ children }: { children: React.ReactNode }) => <>{children}</>
+        : ({ children }: { children: React.ReactNode }) => <AppLayout currentApp="student-portal" userName="Student">{children}</AppLayout>;
 
     return (
         <ErrorBoundary>
-            <AppLayout currentApp="student-portal" userName="Student">
+            <Wrapper>
                 <div className="min-h-screen h-full w-full overflow-y-auto bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
                     <AppHeader
                         appName={lang === 'zh' ? '学生端通' : 'Student Portal'}
@@ -302,7 +307,7 @@ const AppContent: React.FC = () => {
 
                     <AppFooter appName="Student Portal" />
                 </div>
-            </AppLayout>
+            </Wrapper>
             <ToastContainer />
         </ErrorBoundary>
     );
