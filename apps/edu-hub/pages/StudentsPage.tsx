@@ -3,10 +3,190 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { useToast } from '@shared/stores/useToast';
 import * as edu from '@pathway/education';
-import type { Student, EduClass } from '@pathway/education';
-import { Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw } from 'lucide-react';
+import type { Student, EduClass, StudentSubmissionView, BookLoan, ReadingLog } from '@pathway/education';
+import {
+    Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw,
+    ChevronDown, ChevronUp, User, ClipboardList, Library, BookOpen,
+    Link as LinkIcon, Copy,
+} from 'lucide-react';
 
 const AVATAR_COLORS = ['bg-amber-500', 'bg-teal-500', 'bg-violet-500', 'bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-orange-500'];
+
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+    active: { label: '在读', cls: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+    paused: { label: '暂停', cls: 'bg-yellow-50 text-yellow-600 border-yellow-200' },
+    graduated: { label: '毕业', cls: 'bg-blue-50 text-blue-600 border-blue-200' },
+    withdrawn: { label: '退出', cls: 'bg-slate-100 text-slate-500 border-slate-200' },
+};
+
+/* ── Student 360 Detail Panel ─────────────────────────── */
+type DetailTab = 'info' | 'assignments' | 'books' | 'reading';
+
+const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; studentClassIds: string[]; lang: string }> = ({ student, classes, studentClassIds, lang }) => {
+    const [tab, setTab] = useState<DetailTab>('info');
+    const [submissions, setSubmissions] = useState<StudentSubmissionView[]>([]);
+    const [loans, setLoans] = useState<BookLoan[]>([]);
+    const [logs, setLogs] = useState<ReadingLog[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
+    const toast = useToast();
+
+    useEffect(() => {
+        if (tab === 'assignments' && submissions.length === 0) {
+            setLoadingData(true);
+            edu.fetchStudentSubmissions(student.id).then(d => { setSubmissions(d); setLoadingData(false); });
+        } else if (tab === 'books' && loans.length === 0) {
+            setLoadingData(true);
+            edu.fetchStudentBookLoans(student.id).then(d => { setLoans(d); setLoadingData(false); });
+        } else if (tab === 'reading' && logs.length === 0) {
+            setLoadingData(true);
+            edu.fetchStudentReadingLogs(student.id).then(d => { setLogs(d); setLoadingData(false); });
+        }
+    }, [tab, student.id]);
+
+    const tabs = [
+        { key: 'info' as DetailTab, label: lang === 'zh' ? '基本信息' : 'Info', icon: <User size={13} /> },
+        { key: 'assignments' as DetailTab, label: lang === 'zh' ? '作业' : 'Assignments', icon: <ClipboardList size={13} />, count: submissions.length },
+        { key: 'books' as DetailTab, label: lang === 'zh' ? '借书' : 'Books', icon: <Library size={13} />, count: loans.length },
+        { key: 'reading' as DetailTab, label: lang === 'zh' ? '阅读日志' : 'Reading', icon: <BookOpen size={13} />, count: logs.length },
+    ];
+
+    const copyFormLink = () => {
+        const url = `${window.location.origin}/edu-hub/parent-form?code=${student.invite_code}`;
+        navigator.clipboard.writeText(url);
+        toast.success(lang === 'zh' ? '链接已复制' : 'Link copied');
+    };
+
+    const studentClasses = classes.filter(c => studentClassIds.includes(c.id));
+
+    return (
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+            {/* Tab bar */}
+            <div className="flex gap-0.5 mb-3 overflow-x-auto">
+                {tabs.map(t => (
+                    <button key={t.key} onClick={() => setTab(t.key)}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${tab === t.key ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600'
+                            }`}>
+                        {t.icon} {t.label}{t.count !== undefined && t.count > 0 ? ` (${t.count})` : ''}
+                    </button>
+                ))}
+            </div>
+
+            {loadingData && <div className="py-4 flex justify-center"><Loader2 size={16} className="animate-spin text-amber-500" /></div>}
+
+            {/* Info Tab */}
+            {tab === 'info' && (
+                <div className="space-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                        {student.date_of_birth && <InfoRow label={lang === 'zh' ? '生日' : 'Birthday'} value={student.date_of_birth} />}
+                        {student.gender && <InfoRow label={lang === 'zh' ? '性别' : 'Gender'} value={student.gender === 'male' ? '男' : student.gender === 'female' ? '女' : '其他'} />}
+                        {student.level && <InfoRow label={lang === 'zh' ? '年级' : 'Level'} value={student.level} />}
+                        {student.proficiency && <InfoRow label={lang === 'zh' ? '英语水平' : 'Proficiency'} value={student.proficiency} />}
+                        {student.enrolled_at && <InfoRow label={lang === 'zh' ? '入学日期' : 'Enrolled'} value={student.enrolled_at} />}
+                        {student.parent_name && <InfoRow label={lang === 'zh' ? '家长' : 'Parent'} value={student.parent_name} />}
+                        {student.parent_wechat && <InfoRow label="WeChat" value={student.parent_wechat} />}
+                        {student.parent_phone && <InfoRow label={lang === 'zh' ? '手机' : 'Phone'} value={student.parent_phone} />}
+                    </div>
+                    {student.health_notes && <InfoRow label={lang === 'zh' ? '健康信息' : 'Health'} value={student.health_notes} full />}
+                    {student.learning_notes && <InfoRow label={lang === 'zh' ? '学习偏好' : 'Learning'} value={student.learning_notes} full />}
+                    {student.interests && student.interests.length > 0 && (
+                        <div>
+                            <span className="text-xs text-slate-400">{lang === 'zh' ? '兴趣' : 'Interests'}</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {student.interests.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded border border-violet-200">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {studentClasses.length > 0 && (
+                        <div>
+                            <span className="text-xs text-slate-400">{lang === 'zh' ? '所属班级' : 'Classes'}</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {studentClasses.map(c => (
+                                    <span key={c.id} className="text-[10px] px-1.5 py-0.5 bg-sky-50 text-sky-600 rounded border border-sky-200">{c.name}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {student.invite_code && (
+                        <button onClick={copyFormLink} className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 font-semibold mt-2">
+                            <LinkIcon size={12} /> {lang === 'zh' ? '复制家长信息收集链接' : 'Copy parent form link'}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Assignments Tab */}
+            {tab === 'assignments' && !loadingData && (
+                <div className="space-y-1.5">
+                    {submissions.length === 0 ? <div className="text-xs text-slate-400 py-2">{lang === 'zh' ? '暂无作业' : 'No assignments'}</div> : (
+                        submissions.map(s => (
+                            <div key={s.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-xs">
+                                <StatusDot status={s.status} />
+                                <span className="flex-1 font-medium text-slate-700 dark:text-slate-200 truncate">{s.assignment_title}</span>
+                                {s.score != null && <span className="font-bold text-amber-600">{s.score}</span>}
+                                {s.assignment_due_date && <span className="text-slate-400">{s.assignment_due_date}</span>}
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {/* Books Tab */}
+            {tab === 'books' && !loadingData && (
+                <div className="space-y-1.5">
+                    {loans.length === 0 ? <div className="text-xs text-slate-400 py-2">{lang === 'zh' ? '暂无借阅' : 'No loans'}</div> : (
+                        loans.map(l => (
+                            <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-xs">
+                                <Library size={12} className={l.returned_at ? 'text-emerald-500' : 'text-amber-500'} />
+                                <span className="flex-1 font-medium text-slate-700 dark:text-slate-200 truncate">{l.book_title}</span>
+                                <span className="text-slate-400">{l.borrowed_at}</span>
+                                {l.returned_at ? (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded">{lang === 'zh' ? '已还' : 'Returned'}</span>
+                                ) : (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded">{lang === 'zh' ? '借阅中' : 'Active'}</span>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {/* Reading Logs Tab */}
+            {tab === 'reading' && !loadingData && (
+                <div className="space-y-1.5">
+                    {logs.length === 0 ? <div className="text-xs text-slate-400 py-2">{lang === 'zh' ? '暂无日志' : 'No logs'}</div> : (
+                        logs.map(l => (
+                            <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-xs">
+                                <BookOpen size={12} className={l.status === 'reviewed' ? 'text-emerald-500' : 'text-slate-400'} />
+                                <span className="flex-1 font-medium text-slate-700 dark:text-slate-200 truncate">{l.book_title}</span>
+                                <span className="text-slate-400">{l.duration_minutes}min</span>
+                                <span className="text-slate-400">{l.pages_read}p</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${l.status === 'reviewed' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    {l.status === 'reviewed' ? (lang === 'zh' ? '已审' : '✓') : (lang === 'zh' ? '待审' : '⏳')}
+                                </span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const InfoRow: React.FC<{ label: string; value: string; full?: boolean }> = ({ label, value, full }) => (
+    <div className={full ? 'col-span-2' : ''}>
+        <span className="text-xs text-slate-400">{label}</span>
+        <div className="text-slate-700 dark:text-slate-200">{value}</div>
+    </div>
+);
+
+const StatusDot: React.FC<{ status: string }> = ({ status }) => {
+    const colors: Record<string, string> = {
+        pending: 'bg-slate-300', submitted: 'bg-blue-400', completed: 'bg-emerald-400', returned: 'bg-amber-400',
+    };
+    return <div className={`w-2 h-2 rounded-full flex-shrink-0 ${colors[status] || 'bg-slate-300'}`} />;
+};
 
 /* ── Student List (inline sub-view) ─────────────────────────── */
 const StudentListView: React.FC = () => {
@@ -19,6 +199,7 @@ const StudentListView: React.FC = () => {
     const [classes, setClasses] = useState<EduClass[]>([]);
     const [studentClassMap, setStudentClassMap] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
@@ -34,7 +215,6 @@ const StudentListView: React.FC = () => {
         ]);
         setStudents(stuData);
         setClasses(clsData);
-        // Build student→classes map
         const map: Record<string, string[]> = {};
         for (const cls of clsData) {
             const members = await edu.fetchClassStudents(cls.id);
@@ -52,83 +232,51 @@ const StudentListView: React.FC = () => {
     const handleSave = async (e?: React.FormEvent) => {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         if (!form.name.trim()) { toast.error('Name is required'); return; }
-        if (!teacherId) { toast.error('Authentication error. Please refresh.'); return; }
-
+        if (!teacherId) { toast.error('Please sign in first'); return; }
         setSaving(true);
         try {
             const payload: any = { teacher_id: teacherId, name: form.name.trim(), english_name: form.english_name.trim(), contact_info: form.contact_info.trim(), notes: form.notes.trim() };
             if (editingId) payload.id = editingId;
             const res = await edu.upsertStudent(payload);
-            if (!res) throw new Error('Failed to save student');
-
+            if (!res) throw new Error('Failed to save');
             // Sync class memberships
-            const studentId = res.id;
-            const currentClassIds = studentClassMap[studentId] || [];
-            const toAdd = form.classIds.filter(cid => !currentClassIds.includes(cid));
-            const toRemove = currentClassIds.filter(cid => !form.classIds.includes(cid));
-            for (const classId of toAdd) {
-                const members = await edu.fetchClassStudents(classId);
-                await edu.setClassStudents(classId, [...members.map(m => m.student_id), studentId]);
+            const sid = res.id;
+            const cur = studentClassMap[sid] || [];
+            for (const cid of form.classIds.filter(c => !cur.includes(c))) {
+                const m = await edu.fetchClassStudents(cid);
+                await edu.setClassStudents(cid, [...m.map(x => x.student_id), sid]);
             }
-            for (const classId of toRemove) {
-                const members = await edu.fetchClassStudents(classId);
-                await edu.setClassStudents(classId, members.map(m => m.student_id).filter(id => id !== studentId));
+            for (const cid of cur.filter(c => !form.classIds.includes(c))) {
+                const m = await edu.fetchClassStudents(cid);
+                await edu.setClassStudents(cid, m.map(x => x.student_id).filter(x => x !== sid));
             }
-
-            toast.success(editingId ? 'Updated successfully' : 'Added successfully');
+            toast.success(editingId ? 'Updated' : 'Added');
             await load();
             resetForm();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to save student');
-        } finally {
-            setSaving(false);
-        }
+        } catch (err: any) { toast.error(err.message); }
+        finally { setSaving(false); }
     };
 
     const resetForm = () => { setForm({ name: '', english_name: '', contact_info: '', notes: '', classIds: [] }); setEditingId(null); setShowForm(false); };
 
     const handleEdit = (stu: Student) => {
-        setForm({
-            name: stu.name,
-            english_name: stu.english_name || '',
-            contact_info: stu.contact_info || '',
-            notes: stu.notes || '',
-            classIds: studentClassMap[stu.id] || [],
-        });
+        setForm({ name: stu.name, english_name: stu.english_name || '', contact_info: stu.contact_info || '', notes: stu.notes || '', classIds: studentClassMap[stu.id] || [] });
         setEditingId(stu.id);
         setShowForm(true);
     };
 
-    const handleDelete = async (id: string) => {
-        await edu.deleteStudent(id);
-        await load();
-    };
+    const handleDelete = async (id: string) => { await edu.deleteStudent(id); await load(); };
 
     const handleRegenerateCode = async (id: string) => {
-        if (!teacherId || !confirm(lang === 'zh' ? '确定要重新生成邀请码？' : 'Regenerate invite code?')) return;
-        setLoading(true);
-        const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-        await edu.upsertStudent({ id, teacher_id: teacherId, invite_code: newCode } as any);
+        if (!teacherId || !confirm(lang === 'zh' ? '确定重新生成邀请码？' : 'Regenerate?')) return;
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        await edu.upsertStudent({ id, teacher_id: teacherId, invite_code: code } as any);
         await load();
     };
 
-    const toggleClass = (classId: string) => {
-        setForm(f => ({
-            ...f,
-            classIds: f.classIds.includes(classId)
-                ? f.classIds.filter(id => id !== classId)
-                : [...f.classIds, classId],
-        }));
-    };
+    const toggleClass = (cid: string) => setForm(f => ({ ...f, classIds: f.classIds.includes(cid) ? f.classIds.filter(x => x !== cid) : [...f.classIds, cid] }));
 
-    const filtered = students.filter(s =>
-        s.name.includes(search) || (s.english_name || '').toLowerCase().includes(search.toLowerCase())
-    );
-
-    const getStudentClassNames = (studentId: string) => {
-        const classIds = studentClassMap[studentId] || [];
-        return classIds.map(cid => classes.find(c => c.id === cid)?.name).filter(Boolean);
-    };
+    const filtered = students.filter(s => s.name.includes(search) || (s.english_name || '').toLowerCase().includes(search.toLowerCase()));
 
     if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-500" size={24} /></div>;
 
@@ -137,12 +285,11 @@ const StudentListView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="relative flex-1 sm:flex-initial">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input value={search} onChange={e => setSearch(e.target.value)}
-                        placeholder={t('stu.search')}
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('stu.search')}
                         className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
                 </div>
                 <button onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-600 transition-colors shadow-md whitespace-nowrap">
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-600 shadow-md whitespace-nowrap">
                     <Plus size={16} /> {t('stu.addStudent')}
                 </button>
             </div>
@@ -154,64 +301,37 @@ const StudentListView: React.FC = () => {
                         <button type="button" onClick={resetForm} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.name')}</label>
-                            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                                placeholder="张三"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.englishName')}</label>
-                            <input value={form.english_name} onChange={e => setForm({ ...form, english_name: e.target.value })}
-                                placeholder="Emma"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.contact')}</label>
-                            <input value={form.contact_info} onChange={e => setForm({ ...form, contact_info: e.target.value })}
-                                placeholder="WeChat / Phone"
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.notes')}</label>
+                        <div><label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.name')}</label>
+                            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="张三"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" /></div>
+                        <div><label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.englishName')}</label>
+                            <input value={form.english_name} onChange={e => setForm({ ...form, english_name: e.target.value })} placeholder="Emma"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" /></div>
+                        <div><label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.contact')}</label>
+                            <input value={form.contact_info} onChange={e => setForm({ ...form, contact_info: e.target.value })} placeholder="WeChat / Phone"
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" /></div>
+                        <div><label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.notes')}</label>
                             <input value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
-                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
-                        </div>
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" /></div>
                     </div>
 
-                    {/* Class selector */}
                     {classes.length > 0 && (
                         <div className="mt-4">
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">
-                                {lang === 'zh' ? '所属班级' : 'Assign to Class'}
-                            </label>
+                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">{lang === 'zh' ? '所属班级' : 'Assign to Class'}</label>
                             <div className="flex flex-wrap gap-2">
-                                {classes.map(cls => {
-                                    const selected = form.classIds.includes(cls.id);
-                                    return (
-                                        <button
-                                            key={cls.id}
-                                            type="button"
-                                            onClick={() => toggleClass(cls.id)}
-                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${selected
-                                                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                                                    : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-amber-300'
-                                                }`}
-                                        >
-                                            {cls.name}
-                                        </button>
-                                    );
-                                })}
+                                {classes.map(cls => (
+                                    <button key={cls.id} type="button" onClick={() => toggleClass(cls.id)}
+                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${form.classIds.includes(cls.id) ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-amber-300'
+                                            }`}>{cls.name}</button>
+                                ))}
                             </div>
                         </div>
                     )}
-
                     <div className="flex justify-end gap-2 mt-4">
                         <button type="button" onClick={resetForm} className="px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 rounded-lg">{t('common.cancel')}</button>
                         <button type="submit" disabled={saving}
                             className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-sm">
-                            {saving && <Loader2 size={14} className="animate-spin" />}
-                            {t('common.save')}
+                            {saving && <Loader2 size={14} className="animate-spin" />} {t('common.save')}
                         </button>
                     </div>
                 </form>
@@ -224,76 +344,84 @@ const StudentListView: React.FC = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filtered.map((stu, i) => (
-                        <div key={stu.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:shadow-md transition-all">
-                            {/* Top row: avatar + name + actions */}
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white font-bold text-base flex-shrink-0`}>
-                                    {(stu.english_name?.[0] || stu.name[0]).toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-sm text-slate-800 dark:text-white truncate">{stu.name}</div>
-                                    {stu.english_name && <div className="text-xs text-slate-400 truncate">{stu.english_name}</div>}
-                                </div>
-                                <div className="flex gap-0.5 flex-shrink-0">
-                                    <button onClick={() => handleEdit(stu)} className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10"><Edit3 size={14} /></button>
-                                    <button onClick={() => handleDelete(stu.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"><Trash2 size={14} /></button>
-                                </div>
-                            </div>
-
-                            {/* Class badges */}
-                            {getStudentClassNames(stu.id).length > 0 && (
-                                <div className="flex flex-wrap gap-1 mb-2">
-                                    {getStudentClassNames(stu.id).map((name, idx) => (
-                                        <span key={idx} className="text-[10px] font-medium px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded border border-sky-200 dark:border-sky-500/20">
-                                            {name}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Status row: invite code or linked badge */}
-                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                                {stu.auth_user_id ? (
-                                    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                                        ✓ {lang === 'zh' ? '已绑定学生账号' : 'Student account linked'}
+                    {filtered.map((stu, i) => {
+                        const isExpanded = expandedId === stu.id;
+                        const stuClasses = studentClassMap[stu.id] || [];
+                        const statusInfo = STATUS_BADGE[stu.status || 'active'];
+                        return (
+                            <div key={stu.id} className={`bg-white dark:bg-slate-800 rounded-xl border p-4 transition-all ${isExpanded ? 'border-amber-300 dark:border-amber-500/50 shadow-lg col-span-1 sm:col-span-2 lg:col-span-3' : 'border-slate-200 dark:border-slate-700 hover:shadow-md'
+                                }`}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white font-bold text-base flex-shrink-0`}>
+                                        {(stu.english_name?.[0] || stu.name[0]).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-sm text-slate-800 dark:text-white truncate">{stu.name}</div>
+                                        {stu.english_name && <div className="text-xs text-slate-400 truncate">{stu.english_name}</div>}
+                                    </div>
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${statusInfo?.cls || ''}`}>
+                                        {lang === 'zh' ? statusInfo?.label : (stu.status || 'active')}
                                     </span>
-                                ) : (
-                                    <div className="flex items-center gap-1.5">
-                                        <div
-                                            className="cursor-pointer inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-sky-50 dark:hover:bg-sky-500/10 hover:border-sky-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
-                                            onClick={() => { navigator.clipboard.writeText(stu.invite_code || ''); }}
-                                            title={lang === 'zh' ? '点击复制邀请码' : 'Click to copy invite code'}
-                                        >
-                                            🔑 {stu.invite_code || '------'}
-                                        </div>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleRegenerateCode(stu.id); }}
-                                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-slate-400 hover:text-sky-500 transition-colors"
-                                            title={lang === 'zh' ? '重新生成邀请码' : 'Regenerate Code'}
-                                        >
-                                            <RotateCcw size={12} />
+                                    <div className="flex gap-0.5 flex-shrink-0">
+                                        <button onClick={() => setExpandedId(isExpanded ? null : stu.id)} title="Details"
+                                            className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10">
+                                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                         </button>
+                                        <button onClick={() => handleEdit(stu)} title="Edit" className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50"><Edit3 size={14} /></button>
+                                        <button onClick={() => handleDelete(stu.id)} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"><Trash2 size={14} /></button>
+                                    </div>
+                                </div>
+
+                                {/* Class badges */}
+                                {stuClasses.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                        {stuClasses.map(cid => {
+                                            const cls = classes.find(c => c.id === cid);
+                                            return cls ? <span key={cid} className="text-[10px] font-medium px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded border border-sky-200 dark:border-sky-500/20">{cls.name}</span> : null;
+                                        })}
                                     </div>
                                 )}
-                            </div>
 
-                            {/* Contact info */}
-                            {stu.contact_info && (
-                                <div className="text-xs text-slate-400 mt-2 truncate">📱 {stu.contact_info}</div>
-                            )}
-                        </div>
-                    ))}
+                                {/* Invite code / linked status */}
+                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                                    {stu.auth_user_id ? (
+                                        <span className="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                            ✓ {lang === 'zh' ? '已绑定学生账号' : 'Student account linked'}
+                                        </span>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="cursor-pointer inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-600 transition-colors"
+                                                onClick={() => { navigator.clipboard.writeText(stu.invite_code || ''); toast.success('Copied'); }}
+                                                title={lang === 'zh' ? '点击复制邀请码' : 'Copy invite code'}>
+                                                🔑 {stu.invite_code || '------'}
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); handleRegenerateCode(stu.id); }}
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-slate-400 hover:text-sky-500"
+                                                title={lang === 'zh' ? '重新生成邀请码' : 'Regenerate'}>
+                                                <RotateCcw size={12} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {stu.contact_info && <div className="text-xs text-slate-400 mt-2 truncate">📱 {stu.contact_info}</div>}
+
+                                {/* Expanded 360 Panel */}
+                                {isExpanded && (
+                                    <Student360Panel student={stu} classes={classes} studentClassIds={stuClasses} lang={lang} />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
     );
 };
 
-/* ── Main Students Page with Sub-Tabs ─────────────────────────── */
+/* ── Main Students Page ─────────────────────────── */
 const StudentsPage: React.FC = () => {
     const { t } = useLanguage();
-
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t('stu.title')}</h2>

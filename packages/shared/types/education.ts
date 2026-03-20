@@ -10,6 +10,10 @@ export interface EduClass {
     created_at: string;
 }
 
+export interface EduClassWithCount extends EduClass {
+    student_count: number;
+}
+
 export interface Student {
     id: string;
     teacher_id: string;
@@ -20,6 +24,19 @@ export interface Student {
     avatar_url?: string;
     contact_info?: string;
     notes?: string;
+    // Extended profile fields
+    date_of_birth?: string;
+    gender?: 'male' | 'female' | 'other';
+    level?: string;
+    enrolled_at?: string;
+    status?: 'active' | 'paused' | 'graduated' | 'withdrawn';
+    parent_name?: string;
+    parent_wechat?: string;
+    parent_phone?: string;
+    health_notes?: string;
+    learning_notes?: string;
+    proficiency?: 'beginner' | 'elementary' | 'intermediate' | 'advanced';
+    interests?: string[];
     created_at: string;
 }
 
@@ -106,4 +123,9 @@ export interface StudentWithClasses extends Student {
 export interface AssignmentWithSubmissions extends Assignment {
     submissions: Submission[];
     class_name?: string;
+}
+
+export interface StudentSubmissionView extends Submission {
+    assignment_title: string;
+    assignment_due_date?: string;
 }

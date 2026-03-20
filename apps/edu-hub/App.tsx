@@ -14,12 +14,28 @@ const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
 const AssignmentsPage = React.lazy(() => import('./pages/AssignmentsPage'));
 const BooksPage = React.lazy(() => import('./pages/BooksPage'));
 const ReadingLogsPage = React.lazy(() => import('./pages/ReadingLogsPage'));
+const ParentFormPage = React.lazy(() => import('./pages/ParentFormPage'));
 
 type View = 'dashboard' | 'classes' | 'calendar' | 'assignments' | 'books' | 'reading';
+
+// Check if this is a parent form request
+const isParentForm = () => {
+    const hash = window.location.hash;
+    return hash.startsWith('#parent-form') || new URLSearchParams(window.location.search).has('code');
+};
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
     const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'classes', 'calendar', 'assignments', 'books', 'reading']);
+
+    // If parent form route, render standalone
+    if (isParentForm()) {
+        return (
+            <React.Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" /></div>}>
+                <ParentFormPage />
+            </React.Suspense>
+        );
+    }
 
     const NAV_TABS = [
         { key: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },

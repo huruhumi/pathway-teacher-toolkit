@@ -4,8 +4,9 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import type {
-    EduClass, Student, ClassStudent, ClassSession,
-    Attendance, Assignment, Submission, BookLoan,
+    EduClass, EduClassWithCount, Student, ClassStudent, ClassSession,
+    Attendance, Assignment, Submission, BookLoan, ReadingLog,
+    StudentSubmissionView,
 } from '../types/education';
 
 // ── Helper ──
@@ -224,7 +225,10 @@ export async function fetchBookLoans(teacherId: string): Promise<BookLoan[]> {
 
 export async function upsertBookLoan(loan: Partial<BookLoan> & { teacher_id: string }): Promise<BookLoan | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('book_loans').upsert(loan, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = loan as any;
+    const { data, error } = id
+        ? await sb.from('book_loans').update(rest).eq('id', id).select().single()
+        : await sb.from('book_loans').insert(rest).select().single();
     if (error) { console.error('[edu] upsertBookLoan:', error.message); return null; }
     return data;
 }
@@ -259,7 +263,10 @@ export async function fetchReadingLogsByStudent(studentId: string): Promise<any[
 
 export async function upsertReadingLog(log: any): Promise<any | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('reading_logs').upsert(log, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = log;
+    const { data, error } = id
+        ? await sb.from('reading_logs').update(rest).eq('id', id).select().single()
+        : await sb.from('reading_logs').insert(rest).select().single();
     if (error) { console.error('[edu] upsertReadingLog:', error.message); return null; }
     return data;
 }
@@ -287,4 +294,50 @@ export async function fetchStudentSessions(studentId: string): Promise<ClassSess
         .order('start_time');
     if (error) { console.error('[edu] fetchStudentSessions:', error.message); return []; }
     return (data ?? []) as ClassSessionWithClass[];
+}
+
+// ====== ENRICHED QUERIES ======
+
+export async function fetchClassesWithCount(teacherId: string): Promise<EduClassWithCount[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('classes').select('*, class_students(count)').eq('teacher_id', teacherId).order('created_at');
+    if (error) { console.error('[edu] fetchClassesWithCount:', error.message); return []; }
+    return (data ?? []).map((c: any) => ({
+        ...c,
+        student_count: c.class_students?.[0]?.count ?? 0,
+        class_students: undefined,
+    }));
+}
+
+export async function fetchClassStudentsWithDetails(classId: string): Promise<Student[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('class_students').select('student:students(*)').eq('class_id', classId);
+    if (error) { console.error('[edu] fetchClassStudentsWithDetails:', error.message); return []; }
+    return (data ?? []).map((row: any) => row.student).filter(Boolean);
+}
+
+export async function fetchStudentSubmissions(studentId: string): Promise<StudentSubmissionView[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('submissions').select('*, assignment:assignments(title, due_date)').eq('student_id', studentId).order('submitted_at', { ascending: false });
+    if (error) { console.error('[edu] fetchStudentSubmissions:', error.message); return []; }
+    return (data ?? []).map((s: any) => ({
+        ...s,
+        assignment_title: s.assignment?.title ?? '',
+        assignment_due_date: s.assignment?.due_date,
+        assignment: undefined,
+    }));
+}
+
+export async function fetchStudentBookLoans(studentId: string): Promise<BookLoan[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('book_loans').select('*').eq('student_id', studentId).order('borrowed_at', { ascending: false });
+    if (error) { console.error('[edu] fetchStudentBookLoans:', error.message); return []; }
+    return data ?? [];
+}
+
+export async function fetchStudentReadingLogs(studentId: string): Promise<ReadingLog[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('reading_logs').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+    if (error) { console.error('[edu] fetchStudentReadingLogs:', error.message); return []; }
+    return data ?? [];
 }

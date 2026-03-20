@@ -7,8 +7,10 @@ export type {
   ClassSession,
   ClassStudent,
   EduClass,
+  EduClassWithCount,
   ReadingLog,
   Student,
+  StudentSubmissionView,
   StudentWithClasses,
   Submission,
 } from '../../shared/types/education';
