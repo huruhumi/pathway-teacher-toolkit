@@ -3,29 +3,27 @@ import { useHashTab } from '@shared/hooks/useHashTab';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import {
-    LayoutDashboard, Users, School, CalendarDays, GraduationCap,
+    LayoutDashboard, School, CalendarDays, GraduationCap,
     ClipboardList, Library, BookOpen,
 } from 'lucide-react';
 
 // Lazy-loaded pages
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
-const StudentsPage = React.lazy(() => import('./pages/StudentsPage'));
 const ClassesPage = React.lazy(() => import('./pages/ClassesPage'));
 const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
 const AssignmentsPage = React.lazy(() => import('./pages/AssignmentsPage'));
 const BooksPage = React.lazy(() => import('./pages/BooksPage'));
 const ReadingLogsPage = React.lazy(() => import('./pages/ReadingLogsPage'));
 
-type View = 'dashboard' | 'classes' | 'students' | 'calendar' | 'assignments' | 'books' | 'reading';
+type View = 'dashboard' | 'classes' | 'calendar' | 'assignments' | 'books' | 'reading';
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
-    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'classes', 'students', 'calendar', 'assignments', 'books', 'reading']);
+    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'classes', 'calendar', 'assignments', 'books', 'reading']);
 
     const NAV_TABS = [
         { key: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
         { key: 'classes', label: t('nav.classes'), icon: <School className="w-4 h-4" /> },
-        { key: 'students', label: t('nav.students'), icon: <Users className="w-4 h-4" /> },
         { key: 'assignments', label: t('nav.assignments'), icon: <ClipboardList className="w-4 h-4" /> },
         { key: 'books', label: t('nav.books'), icon: <Library className="w-4 h-4" /> },
         { key: 'reading', label: t('nav.reading') || (lang === 'zh' ? '阅读日志' : 'Reading'), icon: <BookOpen className="w-4 h-4" /> },
@@ -62,7 +60,6 @@ const AppContent: React.FC = () => {
                         gradient="from-amber-500 via-orange-500 to-red-500"
                         tags={[
                             { label: t('nav.classes') as string },
-                            { label: t('nav.students') as string },
                             { label: t('nav.assignments') as string },
                             { label: t('nav.reading') as string },
                         ]}
@@ -71,7 +68,6 @@ const AppContent: React.FC = () => {
                         <BodyContainer>
                             {view === 'dashboard' && <DashboardPage onNav={setView} />}
                             {view === 'classes' && <RouteGuard><ClassesPage /></RouteGuard>}
-                            {view === 'students' && <RouteGuard><StudentsPage /></RouteGuard>}
                             {view === 'assignments' && <RouteGuard><AssignmentsPage /></RouteGuard>}
                             {view === 'books' && <RouteGuard><BooksPage /></RouteGuard>}
                             {view === 'reading' && <RouteGuard><ReadingLogsPage /></RouteGuard>}

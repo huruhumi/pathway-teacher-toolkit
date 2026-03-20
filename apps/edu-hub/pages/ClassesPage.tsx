@@ -3,9 +3,15 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import * as edu from '@pathway/education';
 import type { EduClass } from '@pathway/education';
-import { Plus, Edit3, Trash2, X, Loader2, School } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, Loader2, School, Users } from 'lucide-react';
 
-const ClassesPage: React.FC = () => {
+// Lazy-load StudentsPage
+const StudentsPage = React.lazy(() => import('./StudentsPage'));
+
+type SubTab = 'classes' | 'students';
+
+/* ── Classes List Sub-View ─────────────────────────── */
+const ClassesListView: React.FC = () => {
     const { t } = useLanguage();
     const user = useAuthStore(s => s.user);
     const teacherId = user?.id ?? '';
@@ -30,19 +36,17 @@ const ClassesPage: React.FC = () => {
     const handleSave = async () => {
         if (!form.name.trim()) return;
         if (!teacherId) {
-            console.error('[ClassesPage] teacherId is empty – user not logged in?', { user });
-            alert('Error: Not logged in (teacherId is empty). Please sign in first.');
+            console.error('[ClassesPage] teacherId is empty');
+            alert('Error: Not logged in (teacherId is empty).');
             return;
         }
         setSaving(true);
         try {
             const payload: any = { teacher_id: teacherId, name: form.name, description: form.description, max_students: form.max_students };
             if (editingId) payload.id = editingId;
-            console.log('[ClassesPage] saving class:', JSON.stringify(payload));
             const result = await edu.upsertClass(payload);
-            console.log('[ClassesPage] upsertClass result:', result);
             if (!result) {
-                alert('Save failed — check browser console (F12) for [edu] error details');
+                alert('Save failed — check browser console (F12) for details');
             }
             await load();
             resetForm();
@@ -137,6 +141,46 @@ const ClassesPage: React.FC = () => {
                     ))}
                 </div>
             )}
+        </div>
+    );
+};
+
+/* ── Main Classes Page with Sub-Tabs ─────────────────────────── */
+const ClassesPage: React.FC = () => {
+    const { lang } = useLanguage();
+    const [subTab, setSubTab] = useState<SubTab>('classes');
+
+    return (
+        <div className="space-y-4">
+            {/* Sub-tab switcher */}
+            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
+                <button
+                    onClick={() => setSubTab('classes')}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${subTab === 'classes'
+                            ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                >
+                    <School size={15} />
+                    {lang === 'zh' ? '班级管理' : 'Classes'}
+                </button>
+                <button
+                    onClick={() => setSubTab('students')}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${subTab === 'students'
+                            ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                >
+                    <Users size={15} />
+                    {lang === 'zh' ? '学生管理' : 'Students'}
+                </button>
+            </div>
+
+            {/* Content */}
+            <React.Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-500" size={24} /></div>}>
+                {subTab === 'classes' && <ClassesListView />}
+                {subTab === 'students' && <StudentsPage />}
+            </React.Suspense>
         </div>
     );
 };
