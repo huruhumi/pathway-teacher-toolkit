@@ -25,7 +25,10 @@ export async function fetchClasses(teacherId: string): Promise<EduClass[]> {
 
 export async function upsertClass(cls: Partial<EduClass> & { teacher_id: string }): Promise<EduClass | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('classes').upsert(cls, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = cls as any;
+    const { data, error } = id
+        ? await sb.from('classes').update(rest).eq('id', id).select().single()
+        : await sb.from('classes').insert(rest).select().single();
     if (error) { console.error('[edu] upsertClass:', error.message); return null; }
     return data;
 }
@@ -48,16 +51,19 @@ export async function fetchStudents(teacherId: string): Promise<Student[]> {
 export async function upsertStudent(student: Partial<Student> & { teacher_id: string }): Promise<Student | null> {
     const sb = ensureSupabase();
     const payload = { ...student };
-    // Auto-generate a random 6-character invite code for new students
     if (!payload.id && !payload.invite_code) {
         payload.invite_code = Math.random().toString(36).substring(2, 8).toUpperCase();
     }
-    // Try with invite_code first; if column doesn't exist yet, retry without it
-    let { data, error } = await sb.from('students').upsert(payload, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = payload as any;
+    let { data, error } = id
+        ? await sb.from('students').update(rest).eq('id', id).select().single()
+        : await sb.from('students').insert(rest).select().single();
     if (error && error.message?.includes('invite_code')) {
         console.warn('[edu] invite_code column not found, retrying without it');
-        const { invite_code, ...payloadWithout } = payload;
-        ({ data, error } = await sb.from('students').upsert(payloadWithout, { onConflict: 'id' }).select().single());
+        const { invite_code, ...restWithout } = rest;
+        ({ data, error } = id
+            ? await sb.from('students').update(restWithout).eq('id', id).select().single()
+            : await sb.from('students').insert(restWithout).select().single());
     }
     if (error) { console.error('[edu] upsertStudent:', error.message); return null; }
     return data;
@@ -110,7 +116,10 @@ export async function fetchSessions(teacherId: string, dateFrom?: string, dateTo
 
 export async function upsertSession(session: Partial<ClassSession> & { teacher_id: string }): Promise<ClassSession | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('class_sessions').upsert(session, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = session as any;
+    const { data, error } = id
+        ? await sb.from('class_sessions').update(rest).eq('id', id).select().single()
+        : await sb.from('class_sessions').insert(rest).select().single();
     if (error) { console.error('[edu] upsertSession:', error.message); return null; }
     return data;
 }
@@ -159,7 +168,10 @@ export async function fetchStudentAssignments(studentId: string): Promise<(Assig
 
 export async function upsertAssignment(assignment: Partial<Assignment> & { teacher_id: string }): Promise<Assignment | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('assignments').upsert(assignment, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = assignment as any;
+    const { data, error } = id
+        ? await sb.from('assignments').update(rest).eq('id', id).select().single()
+        : await sb.from('assignments').insert(rest).select().single();
     if (error) { console.error('[edu] upsertAssignment:', error.message); return null; }
     return data;
 }
@@ -181,7 +193,10 @@ export async function fetchSubmissions(assignmentId: string): Promise<Submission
 
 export async function upsertSubmission(sub: Partial<Submission>): Promise<Submission | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('submissions').upsert(sub, { onConflict: 'id' }).select().single();
+    const { id, ...rest } = sub as any;
+    const { data, error } = id
+        ? await sb.from('submissions').update(rest).eq('id', id).select().single()
+        : await sb.from('submissions').insert(rest).select().single();
     if (error) { console.error('[edu] upsertSubmission:', error.message); return null; }
     return data;
 }
