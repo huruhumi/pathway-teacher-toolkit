@@ -55,7 +55,7 @@ export interface Assignment {
     title: string;
     description?: string;
     content_type: 'worksheet' | 'companion' | 'custom';
-    content?: any;
+    content_data?: any;
     source_app?: string;
     source_lesson_id?: string;
     due_date?: string;
@@ -71,6 +71,7 @@ export interface Submission {
     submitted_at?: string;
     completed_at?: string;
     teacher_notes?: string;
+    score?: number;
 }
 
 export interface BookLoan {

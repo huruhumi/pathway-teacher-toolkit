@@ -145,7 +145,7 @@ const ReadingLogsPage: React.FC = () => {
 
                                     {log.notes && (
                                         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 p-3 rounded-xl mb-4 text-sm text-slate-700 dark:text-slate-300 max-h-32 overflow-y-auto custom-scrollbar italic leading-relaxed">
-                                            "{log.notes}"
+                                            &ldquo;{log.notes}&rdquo;
                                         </div>
                                     )}
                                 </div>

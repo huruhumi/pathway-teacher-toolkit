@@ -187,23 +187,23 @@ const CalendarPage: React.FC = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Date</label>
+                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('cal.date')}</label>
                             <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Start</label>
+                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('cal.start')}</label>
                             <input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">End</label>
+                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('cal.end')}</label>
                             <input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })}
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
                         </div>
                     </div>
                     <div className="mt-4">
-                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">Topic</label>
+                        <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('cal.topic')}</label>
                         <input value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })}
                             placeholder="Unit 3 — Animals"
                             className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
@@ -284,7 +284,7 @@ const CalendarPage: React.FC = () => {
                     ) : (
                         <div className="space-y-2">
                             {sessionStudents(activeSession).length === 0 ? (
-                                <div className="text-center py-8 text-slate-400 text-sm">No students in this class yet</div>
+                                <div className="text-center py-8 text-slate-400 text-sm">{t('cal.noStudents')}</div>
                             ) : (
                                 sessionStudents(activeSession).map(stu => {
                                     const att = attendance.find(a => a.student_id === stu.id);

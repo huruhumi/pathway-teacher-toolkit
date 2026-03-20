@@ -197,7 +197,7 @@ export const ReadingView: React.FC = () => {
                                 </div>
                                 {log.notes && (
                                     <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl italic">
-                                        "{log.notes}"
+                                        &ldquo;{log.notes}&rdquo;
                                     </p>
                                 )}
                             </div>
@@ -212,8 +212,7 @@ export const ReadingView: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                        </div>
-                    ))
+                        </div>))
                 )}
             </div>
         </div>

@@ -153,7 +153,7 @@ export async function fetchStudentAssignments(studentId: string): Promise<(Assig
     if (subErr) { console.error('[edu] fetchStudentAssignments:', subErr.message); return []; }
     return (subs ?? []).map((s: any) => ({
         ...s.assignment,
-        submission: { id: s.id, assignment_id: s.assignment_id, student_id: s.student_id, status: s.status, content: s.content, submitted_at: s.submitted_at, completed_at: s.completed_at, teacher_notes: s.teacher_notes },
+        submission: { id: s.id, assignment_id: s.assignment_id, student_id: s.student_id, status: s.status, content: s.content, submitted_at: s.submitted_at, completed_at: s.completed_at, teacher_notes: s.teacher_notes, score: s.score },
     }));
 }
 
@@ -253,4 +253,23 @@ export async function deleteReadingLog(id: string): Promise<void> {
     const sb = ensureSupabase();
     const { error } = await sb.from('reading_logs').delete().eq('id', id);
     if (error) console.error('[edu] deleteReadingLog:', error.message);
+}
+
+// ====== STUDENT SCHEDULE ======
+export type ClassSessionWithClass = ClassSession & { class: { name: string } | null };
+
+export async function fetchStudentSessions(studentId: string): Promise<ClassSessionWithClass[]> {
+    const sb = ensureSupabase();
+    const { data: cs } = await sb.from('class_students').select('class_id').eq('student_id', studentId);
+    if (!cs?.length) return [];
+    const classIds = cs.map((c: any) => c.class_id);
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await sb.from('class_sessions')
+        .select('*, class:classes(name)')
+        .in('class_id', classIds)
+        .gte('date', today)
+        .order('date')
+        .order('start_time');
+    if (error) { console.error('[edu] fetchStudentSessions:', error.message); return []; }
+    return (data ?? []) as ClassSessionWithClass[];
 }

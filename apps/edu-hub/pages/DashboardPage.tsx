@@ -32,8 +32,8 @@ const DashboardPage: React.FC<{ onNav?: (tab: string) => void }> = ({ onNav }) =
         { key: 'students', icon: Users, color: 'amber', val: counts.students, tab: 'students' },
         { key: 'classes', icon: School, color: 'teal', val: counts.classes, tab: 'classes' },
         { key: 'sessions', icon: CalendarDays, color: 'violet', val: counts.sessions, tab: 'calendar' },
-        { key: 'assignments', icon: ClipboardList, color: 'indigo', val: counts.assignments, tab: 'students' },
-        { key: 'books', icon: BookOpen, color: 'rose', val: counts.books, tab: 'students' },
+        { key: 'assignments', icon: ClipboardList, color: 'indigo', val: counts.assignments, tab: 'assignments' },
+        { key: 'books', icon: BookOpen, color: 'rose', val: counts.books, tab: 'books' },
     ];
 
     const colorMap: Record<string, string> = {

@@ -61,6 +61,11 @@ export const translations = {
     'cal.present': { en: 'Present', zh: '出勤' },
     'cal.absent': { en: 'Absent', zh: '缺勤' },
     'cal.late': { en: 'Late', zh: '迟到' },
+    'cal.date': { en: 'Date', zh: '日期' },
+    'cal.start': { en: 'Start', zh: '开始时间' },
+    'cal.end': { en: 'End', zh: '结束时间' },
+    'cal.topic': { en: 'Topic', zh: '主题' },
+    'cal.noStudents': { en: 'No students in this class yet', zh: '此班级暂无学生' },
 
     // Assignments
     'asg.title': { en: 'Assignment Management', zh: '作业管理' },
@@ -76,6 +81,9 @@ export const translations = {
     'asg.returned': { en: 'Returned', zh: '已退回' },
     'asg.markComplete': { en: 'Mark Complete', zh: '标记完成' },
     'asg.dueDate': { en: 'Due Date', zh: '截止日期' },
+    'asg.feedback': { en: 'Feedback', zh: '评语' },
+    'asg.score': { en: 'Score', zh: '评分' },
+    'asg.feedbackPlaceholder': { en: 'Write feedback for this student...', zh: '给这位同学写评语...' },
 
     // Books
     'bk.title': { en: 'Book Lending', zh: '借书记录' },

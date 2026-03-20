@@ -48,6 +48,30 @@ export const translations = {
 
     // Footer
     'footer': { en: `© ${new Date().getFullYear()} Student Portal. Pathway Academy.`, zh: `© ${new Date().getFullYear()} 学生端. Pathway Academy.` },
+
+    // Interactive Renderer
+    'render.previous': { en: 'Previous', zh: '上一页' },
+    'render.next': { en: 'Next', zh: '下一页' },
+    'render.turnIn': { en: 'Turn In', zh: '提交' },
+    'render.submitted': { en: 'Submitted', zh: '已提交' },
+    'render.completed': { en: 'COMPLETED', zh: '已完成' },
+    'render.prevDay': { en: 'Prev Day', zh: '上一天' },
+    'render.nextDay': { en: 'Next Day', zh: '下一天' },
+    'render.taskChecklist': { en: 'Task Checklist', zh: '任务清单' },
+    'render.cancel': { en: 'Cancel', zh: '取消' },
+    'render.markDone': { en: 'Mark as Done', zh: '标记完成' },
+    'render.submitting': { en: 'Submitting...', zh: '提交中...' },
+    'render.answerPlaceholder': { en: 'Type your answer here...', zh: '在此输入你的答案...' },
+    'render.offlineMsg': { en: 'This assignment type cannot be completed interactively. Please complete it offline and mark as done.', zh: '此作业类型无法在线互动完成，请线下完成后标记为已完成。' },
+    'render.sectionOf': { en: 'of', zh: '/' },
+    'render.day': { en: 'Day', zh: '第' },
+    'render.dayUnit': { en: '', zh: '天' },
+    'render.teacherFeedback': { en: 'Teacher Feedback', zh: '老师评语' },
+    'render.score': { en: 'Score', zh: '评分' },
+    'render.noFeedback': { en: 'No feedback yet', zh: '暂无评语' },
+    'render.saved': { en: 'Saved ✓', zh: '已保存 ✓' },
+    'render.saving': { en: 'Saving...', zh: '保存中...' },
+    'render.autoSave': { en: 'Auto-saved', zh: '自动保存' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

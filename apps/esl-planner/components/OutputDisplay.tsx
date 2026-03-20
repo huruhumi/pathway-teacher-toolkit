@@ -229,13 +229,16 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
         slideCount: editableSlides.length || 15,
         sourceMode: 'direct',
       };
-      const result = await regenerateSlides(editablePlan, ctx);
+      const inputPrompt = (content as any).inputPrompt as string | undefined;
+      const result = await regenerateSlides(editablePlan, ctx, inputPrompt, ctx.factSheet);
       setEditableSlides(result.slides || []);
       // Update content with new slides + prompt, then save
       const updated = { ...content, slides: result.slides, notebookLMPrompt: result.notebookLMPrompt };
       await onSave(updated);
+      alert('Slides Regenerated Successfully');
     } catch (err: any) {
       console.error('Slide regeneration failed:', err);
+      alert(`Slide regeneration failed: ${err.message || 'Unknown error'}`);
     } finally {
       setIsRegenerating(false);
     }
@@ -286,6 +289,9 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const [flashcardImages, setFlashcardImages] = useState<
     Record<number, string>
   >(content.flashcardImages || {});
+  const [gameImageUrls, setGameImageUrls] = useState<
+    Record<number, string>
+  >(content.gameImageUrls || {});
   const [generatingCardIndex, setGeneratingCardIndex] = useState<number | null>(
     null,
   );
@@ -460,6 +466,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     phonics: phonicsContent,
     flashcardImages: flashcardImages,
     decodableTextImages: decodableTextImages,
+    gameImageUrls: gameImageUrls,
     assignmentSheet: assignmentSheet,
   });
 
@@ -1283,6 +1290,8 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             editableGames={editableGames}
             setEditableGames={setEditableGames as any}
             editablePlan={editablePlan}
+            gameImages={gameImageUrls}
+            onGameImagesChange={setGameImageUrls}
           />
         )}
 

@@ -180,21 +180,78 @@ const AssignmentsView: React.FC = () => {
 const ScheduleView: React.FC = () => {
     const { t, lang } = useLanguage();
     const user = useAuthStore(s => s.user);
-    const [sessions, setSessions] = useState<ClassSession[]>([]);
+    const authUserId = user?.id ?? '';
+    const [sessions, setSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Students don't have sessions directly — would need a join through class_students
-        // For now, show empty state
-        setLoading(false);
-    }, []);
+        if (!authUserId) { setLoading(false); return; }
+        (async () => {
+            try {
+                const profile = await edu.fetchStudentProfile(authUserId);
+                if (profile) {
+                    const data = await edu.fetchStudentSessions(profile.id);
+                    setSessions(data);
+                }
+            } catch (err) {
+                console.error('[ScheduleView] load error:', err);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [authUserId]);
 
     if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-sky-500" size={28} /></div>;
 
+    if (sessions.length === 0) {
+        return (
+            <div className="text-center py-16">
+                <div className="text-4xl mb-3">📅</div>
+                <div className="text-slate-400">{t('sch.noClasses')}</div>
+            </div>
+        );
+    }
+
+    // Group sessions by date
+    const grouped: Record<string, any[]> = {};
+    sessions.forEach(s => {
+        const key = s.date;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(s);
+    });
+
+    const formatDate = (d: string) => {
+        const date = new Date(d + 'T00:00:00');
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+        if (date.getTime() === today.getTime()) return lang === 'zh' ? '今天' : 'Today';
+        if (date.getTime() === tomorrow.getTime()) return lang === 'zh' ? '明天' : 'Tomorrow';
+        return date.toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    };
+
     return (
-        <div className="text-center py-16">
-            <div className="text-4xl mb-3">📅</div>
-            <div className="text-slate-400">{t('sch.noClasses')}</div>
+        <div className="space-y-6">
+            {Object.entries(grouped).map(([date, items]) => (
+                <div key={date}>
+                    <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">{formatDate(date)}</h3>
+                    <div className="space-y-2">
+                        {items.map((s: any) => (
+                            <div key={s.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+                                <div className="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 font-bold text-sm shrink-0">
+                                    {s.start_time ? s.start_time.slice(0, 5) : '—'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-semibold text-slate-800 dark:text-white truncate">{s.class?.name || '—'}</div>
+                                    <div className="text-xs text-slate-400 mt-0.5">
+                                        {s.start_time && s.end_time ? `${s.start_time.slice(0, 5)} – ${s.end_time.slice(0, 5)}` : ''}
+                                        {s.topic && <span className="ml-2">• {s.topic}</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

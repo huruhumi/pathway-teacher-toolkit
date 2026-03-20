@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
+import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle, MessageSquare, Star } from 'lucide-react';
 import type { Assignment, Submission } from '@pathway/education';
-import { Worksheet, ReadingCompanionContent } from '../../esl-planner/types'; // Assuming we can import types, wait we should copy or move them to shared, but for now we can import or define locally.
+import type { Worksheet, ReadingCompanionContent } from '@shared/types/assignmentContent';
 import { Button } from '@shared/components/ui/Button';
 import { Textarea } from '@shared/components/ui/Textarea';
+import { useAutoSave } from '../hooks/useAutoSave';
 
 interface Props {
     assignment: Assignment & { submission?: Submission };
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onClose, onSubmit }) => {
+    const { t } = useLanguage();
     const isWorksheet = assignment.content_type === 'worksheet';
     const isCompanion = assignment.content_type === 'companion';
 
@@ -33,9 +36,34 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
     };
 
     const isCompleted = assignment.submission?.status === 'completed' || assignment.submission?.status === 'submitted';
+    const isReturned = assignment.submission?.status === 'returned' || assignment.submission?.status === 'completed';
+    const scoreLabel = (s?: number) => s ? ['', 'F', 'D', 'C', 'B', 'A'][s] || '' : '';
+    const { isSaving, lastSaved } = useAutoSave(assignment.submission?.id, answers, !isCompleted);
+
+    const FeedbackCard = () => {
+        if (!isReturned) return null;
+        const notes = assignment.submission?.teacher_notes;
+        const score = assignment.submission?.score;
+        if (!notes && !score) return null;
+        return (
+            <div className="max-w-3xl mx-auto mt-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare size={16} className="text-amber-600" />
+                    <h4 className="font-bold text-amber-800 dark:text-amber-300 text-sm">{t('render.teacherFeedback')}</h4>
+                    {score && (
+                        <span className="ml-auto flex items-center gap-1 px-2.5 py-0.5 bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-100 rounded-full text-xs font-bold">
+                            <Star size={12} fill="currentColor" /> {scoreLabel(score)}
+                        </span>
+                    )}
+                </div>
+                {notes && <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed whitespace-pre-wrap">{notes}</p>}
+                {!notes && <p className="text-xs text-amber-500 italic">{t('render.noFeedback')}</p>}
+            </div>
+        );
+    };
 
     if (isWorksheet) {
-        const ws = assignment.content as Worksheet;
+        const ws = assignment.content_data as Worksheet;
         const sections = ws.sections || [];
         const section = sections[currentStep];
 
@@ -44,21 +72,28 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                 {/* Header */}
                 <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shrink-0 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button onClick={onClose} title={t('render.cancel')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
                             <X size={20} />
                         </button>
                         <div>
                             <h2 className="font-bold text-slate-800 dark:text-white leading-tight">{assignment.title}</h2>
                             <div className="text-xs font-medium text-slate-500">
-                                {currentStep + 1} of {sections.length} • {section?.title}
+                                {currentStep + 1} {t('render.sectionOf')} {sections.length} • {section?.title}
                             </div>
                         </div>
                     </div>
                     {isCompleted && (
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 rounded-full text-xs font-bold uppercase tracking-wider">
-                            <CheckCircle2 size={14} /> Submitted
+                            <CheckCircle2 size={14} /> {t('render.submitted')}
                         </div>
                     )}
+                    {!isCompleted && (isSaving ? (
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300 rounded-full text-xs font-medium">
+                            <Loader2 size={12} className="animate-spin" /> {t('render.saving')}
+                        </div>
+                    ) : lastSaved ? (
+                        <div className="px-3 py-1 text-slate-400 text-xs">{t('render.saved')}</div>
+                    ) : null)}
                 </header>
 
                 {/* Content */}
@@ -116,7 +151,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                                                 value={val}
                                                                 onChange={e => handleAnswerChange(answerKey, e.target.value)}
                                                                 disabled={isCompleted}
-                                                                placeholder="Type your answer here..."
+                                                                placeholder={t('render.answerPlaceholder')}
                                                                 className="min-h-[100px] py-3 text-base dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-sky-500 bg-slate-50 w-full"
                                                             />
                                                         )}
@@ -129,6 +164,8 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                             </div>
                         )}
                     </div>
+
+                    <FeedbackCard />
                 </div>
 
                 {/* Footer Navigation */}
@@ -141,7 +178,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                             leftIcon={<ChevronLeft size={18} />}
                             className="dark:text-slate-300 dark:hover:bg-slate-800"
                         >
-                            Previous
+                            {t('render.previous')}
                         </Button>
 
                         <div className="flex gap-1">
@@ -158,7 +195,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                 leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                 className="shadow-md font-bold"
                             >
-                                {isCompleted ? 'Submitted' : 'Turn In'}
+                                {isCompleted ? t('render.submitted') : t('render.turnIn')}
                             </Button>
                         ) : (
                             <Button
@@ -167,7 +204,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                 rightIcon={<ChevronRight size={18} />}
                                 className="dark:bg-slate-700 dark:hover:bg-slate-600 font-bold"
                             >
-                                Next
+                                {t('render.next')}
                             </Button>
                         )}
                     </div>
@@ -178,7 +215,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
 
     if (isCompanion) {
         // Simplified Companion Renderer (Just mark tasks as done)
-        const comp = assignment.content as ReadingCompanionContent;
+        const comp = assignment.content_data as ReadingCompanionContent;
         const days = comp.days || [];
         const day = days[currentStep];
 
@@ -186,17 +223,17 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
             <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-[100] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shrink-0 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button onClick={onClose} title={t('render.cancel')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
                             <X size={20} />
                         </button>
                         <div>
                             <h2 className="font-bold text-slate-800 dark:text-white leading-tight">{assignment.title}</h2>
-                            <div className="text-xs font-medium text-slate-500">Day {currentStep + 1} of {days.length} • {day?.focus}</div>
+                            <div className="text-xs font-medium text-slate-500">{t('render.day')} {currentStep + 1}{t('render.dayUnit')} {t('render.sectionOf')} {days.length} • {day?.focus}</div>
                         </div>
                     </div>
                     {isCompleted && (
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-wider">
-                            <CheckCircle2 size={14} /> COMPLETED
+                            <CheckCircle2 size={14} /> {t('render.completed')}
                         </div>
                     )}
                 </header>
@@ -210,7 +247,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                     {day.activity_cn && <p className="text-sm text-slate-500">{day.activity_cn}</p>}
                                 </div>
                                 <div className="p-6">
-                                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Task Checklist</h4>
+                                    <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">{t('render.taskChecklist')}</h4>
                                     <div className="space-y-3">
                                         {day.tasks?.map((task, idx) => {
                                             const key = `d${currentStep}_t${idx}`;
@@ -237,6 +274,8 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                             </div>
                         )}
                     </div>
+
+                    <FeedbackCard />
                 </div>
 
                 <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
@@ -248,10 +287,10 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                             leftIcon={<ChevronLeft size={18} />}
                             className="dark:text-slate-300 dark:hover:bg-slate-800 font-bold"
                         >
-                            Prev Day
+                            {t('render.prevDay')}
                         </Button>
 
-                        <div className="text-sm font-bold text-slate-400">Day {currentStep + 1}</div>
+                        <div className="text-sm font-bold text-slate-400">{t('render.day')} {currentStep + 1}{t('render.dayUnit')}</div>
 
                         {currentStep === days.length - 1 ? (
                             <Button
@@ -261,7 +300,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                 leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                 className="shadow-md font-bold"
                             >
-                                Turn In
+                                {t('render.turnIn')}
                             </Button>
                         ) : (
                             <Button
@@ -283,9 +322,9 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-xl">
                 <h3 className="text-xl font-bold mb-4">{assignment.title}</h3>
-                <p className="text-slate-500 mb-6">This assignment type ({assignment.content_type}) cannot be completed interactively. Please complete it offline and mark as done.</p>
+                <p className="text-slate-500 mb-6">{t('render.offlineMsg')}</p>
                 <div className="flex gap-3 justify-end">
-                    <Button variant="ghost" onClick={onClose} className="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white font-bold">Cancel</Button>
+                    <Button variant="ghost" onClick={onClose} className="dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white font-bold">{t('render.cancel')}</Button>
                     {!isCompleted && (
                         <Button
                             theme="indigo"
@@ -294,7 +333,7 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                             loading={isSubmitting}
                             className="font-bold"
                         >
-                            {isSubmitting ? 'Submitting...' : 'Mark as Done'}
+                            {isSubmitting ? t('render.submitting') : t('render.markDone')}
                         </Button>
                     )}
                 </div>

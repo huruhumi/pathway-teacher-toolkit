@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { Game, StructuredLessonPlan, CEFRLevel } from '../../types';
 import { generateSingleGame } from '../../services/worksheetService';
 import { generateLessonImage } from '../../services/lessonKitService';
@@ -22,12 +22,16 @@ interface ActivitiesTabProps {
     editableGames: Game[];
     setEditableGames: (games: Game[]) => void;
     editablePlan: StructuredLessonPlan | null;
+    gameImages: Record<number, string>;
+    onGameImagesChange: (imgs: Record<number, string>) => void;
 }
 
 export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     editableGames,
     setEditableGames,
     editablePlan,
+    gameImages,
+    onGameImagesChange,
 }) => {
     const [isGeneratingGame, setIsGeneratingGame] = useState(false);
     const [gameFilterSkill, setGameFilterSkill] = useState('Random');
@@ -36,7 +40,8 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
     const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
     const [regeneratingIdx, setRegeneratingIdx] = useState<number | null>(null);
     const [generatingImageIdx, setGeneratingImageIdx] = useState<number | null>(null);
-    const [gameImages, setGameImages] = useState<Record<number, string>>({});
+    const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+    const stopGeneratingRef = useRef(false);
 
     const handleGameChange = (index: number, field: keyof Game, value: any) => {
         const newGames = [...editableGames];
@@ -52,6 +57,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
 
     const removeGame = (index: number) => {
         setEditableGames(editableGames.filter((_, i) => i !== index));
+        // Rebuild image mapping
+        const rebuilt: Record<number, string> = {};
+        for (const [key, val] of Object.entries(gameImages) as [string, string][]) {
+            const k = Number(key);
+            if (k < index) rebuilt[k] = val;
+            else if (k > index) rebuilt[k - 1] = val;
+        }
+        onGameImagesChange(rebuilt);
     };
 
     const handleGameDragEnd = (fromIdx: number, toIdx: number) => {
@@ -60,6 +73,22 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
         const [moved] = newGames.splice(fromIdx, 1);
         newGames.splice(toIdx, 0, moved);
         setEditableGames(newGames);
+
+        // Rebuild image mapping based on array permutation
+        const rebuilt: Record<number, string> = {};
+        for (const [key, val] of Object.entries(gameImages) as [string, string][]) {
+            const k = Number(key);
+            let newIndex = k;
+            if (k === fromIdx) {
+                newIndex = toIdx;
+            } else if (fromIdx < toIdx && k > fromIdx && k <= toIdx) {
+                newIndex = k - 1;
+            } else if (fromIdx > toIdx && k >= toIdx && k < fromIdx) {
+                newIndex = k + 1;
+            }
+            rebuilt[newIndex] = val;
+        }
+        onGameImagesChange(rebuilt);
     };
 
     const handleGenerateNewGame = async () => {
@@ -88,11 +117,48 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
         try {
             const prompt = `Create a clean, professional instructional illustration showing the rules of a classroom game called "${game.name}". The illustration should visually explain these steps using icons, arrows, numbered visual cues, and simple cartoon figures: ${game.instructions}. Style requirements: Use a unified flat illustration style with soft rounded shapes. Primary color palette: Violet #7C3AED, Purple #9333EA, Fuchsia #C026D3, with white background. Show the game flow as a visual diagram or step sequence. Use simple stick figures or cartoon children to represent students and teacher. DO NOT include any text or words in the image AT ALL — only visual elements, icons, arrows, and figures. Make it look like a professional infographic instruction card. Clean, minimal, child-friendly aesthetic.`;
             const imageUrl = await generateLessonImage(prompt, '4:3');
-            setGameImages(prev => ({ ...prev, [idx]: imageUrl }));
+            onGameImagesChange({ ...gameImages, [idx]: imageUrl });
         } catch (err) {
             console.error('Failed to generate game image:', err);
+            alert(`Failed to generate game image for "${game.name}": ${(err as Error).message}`);
         } finally {
             setGeneratingImageIdx(null);
+        }
+    };
+
+    const handleStopGenerating = () => {
+        stopGeneratingRef.current = true;
+    };
+
+    const handleGenerateAllGameImages = async () => {
+        if (isGeneratingAll) {
+            handleStopGenerating();
+            return;
+        }
+        setIsGeneratingAll(true);
+        stopGeneratingRef.current = false;
+        try {
+            const newImages = { ...gameImages };
+            for (let i = 0; i < editableGames.length; i++) {
+                if (stopGeneratingRef.current) break;
+                if (!newImages[i]) {
+                    setGeneratingImageIdx(i);
+                    const game = editableGames[i];
+                    const prompt = `Create a clean, professional instructional illustration showing the rules of a classroom game called "${game.name}". The illustration should visually explain these steps using icons, arrows, numbered visual cues, and simple cartoon figures: ${game.instructions}. Style requirements: Use a unified flat illustration style with soft rounded shapes. Primary color palette: Violet #7C3AED, Purple #9333EA, Fuchsia #C026D3, with white background. Show the game flow as a visual diagram or step sequence. Use simple stick figures or cartoon children to represent students and teacher. DO NOT include any text or words in the image AT ALL — only visual elements, icons, arrows, and figures. Make it look like a professional infographic instruction card. Clean, minimal, child-friendly aesthetic.`;
+                    try {
+                        const imageUrl = await generateLessonImage(prompt, '4:3');
+                        newImages[i] = imageUrl;
+                        onGameImagesChange({ ...newImages });
+                    } catch (err) {
+                        console.error('Failed to generate game image for', game.name, err);
+                        alert(`Failed to generate game image for "${game.name}": ${(err as Error).message}`);
+                    }
+                }
+            }
+        } finally {
+            setIsGeneratingAll(false);
+            setGeneratingImageIdx(null);
+            stopGeneratingRef.current = false;
         }
     };
 
@@ -104,6 +170,16 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Classroom Games &amp; Activities</h3>
                 </div>
                 <div className="flex gap-2 no-print">
+                    <button
+                        onClick={handleGenerateAllGameImages}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 ${isGeneratingAll
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                            : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                            }`}
+                    >
+                        {isGeneratingAll ? <X size={14} /> : <ImageIcon size={14} />}
+                        {isGeneratingAll ? 'Stop' : 'Generate All Images'}
+                    </button>
                 </div>
             </div>
 
@@ -235,7 +311,11 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = React.memo(({
                                         className="w-full rounded-xl border border-violet-200 shadow-sm"
                                     />
                                     <button
-                                        onClick={() => setGameImages(prev => { const n = { ...prev }; delete n[idx]; return n; })}
+                                        onClick={() => {
+                                            const n = { ...gameImages };
+                                            delete n[idx];
+                                            onGameImagesChange(n);
+                                        }}
                                         className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg opacity-0 group-hover/img:opacity-100 transition-all shadow-sm no-print"
                                         title="Remove image"
                                     >

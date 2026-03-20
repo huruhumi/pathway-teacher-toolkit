@@ -203,6 +203,7 @@ export interface GeneratedContent {
   phonics?: PhonicsContent;
   flashcardImages?: Record<number, string>;
   decodableTextImages?: Record<number, string>;
+  gameImageUrls?: Record<number, string>;
   textbookLevelKey?: string;
   assessmentPackId?: string;
   knowledgeNotebookId?: string;

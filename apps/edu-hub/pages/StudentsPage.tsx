@@ -4,14 +4,7 @@ import { useAuthStore } from '@shared/stores/useAuthStore';
 import { useToast } from '@shared/stores/useToast';
 import * as edu from '@pathway/education';
 import type { Student } from '@pathway/education';
-import { Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw, ClipboardList, BookOpen, Library } from 'lucide-react';
-
-// Lazy-load sub-pages
-const AssignmentsPage = React.lazy(() => import('./AssignmentsPage'));
-const BooksPage = React.lazy(() => import('./BooksPage'));
-const ReadingLogsPage = React.lazy(() => import('./ReadingLogsPage'));
-
-type SubTab = 'list' | 'assignments' | 'books' | 'reading';
+import { Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw } from 'lucide-react';
 
 const AVATAR_COLORS = ['bg-amber-500', 'bg-teal-500', 'bg-violet-500', 'bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-orange-500'];
 
@@ -209,44 +202,12 @@ const StudentListView: React.FC = () => {
 
 /* ── Main Students Page with Sub-Tabs ─────────────────────────── */
 const StudentsPage: React.FC = () => {
-    const { t, lang } = useLanguage();
-    const [subTab, setSubTab] = useState<SubTab>('list');
-
-    const SUB_TABS: { key: SubTab; label: string; icon: React.ReactNode }[] = [
-        { key: 'list', label: lang === 'zh' ? '学生列表' : 'Student List', icon: <Users size={15} /> },
-        { key: 'assignments', label: t('nav.assignments'), icon: <ClipboardList size={15} /> },
-        { key: 'books', label: t('nav.books'), icon: <Library size={15} /> },
-        { key: 'reading', label: lang === 'zh' ? '阅读记录' : 'Reading Logs', icon: <BookOpen size={15} /> },
-    ];
+    const { t } = useLanguage();
 
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">{t('stu.title')}</h2>
-
-            {/* Sub-tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/50 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
-                {SUB_TABS.map(tab => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setSubTab(tab.key)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${subTab === tab.key
-                            ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                            }`}
-                    >
-                        {tab.icon}
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
-            </div>
-
-            {/* Sub-tab content */}
-            <React.Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-500" size={24} /></div>}>
-                {subTab === 'list' && <StudentListView />}
-                {subTab === 'assignments' && <AssignmentsPage />}
-                {subTab === 'books' && <BooksPage />}
-                {subTab === 'reading' && <ReadingLogsPage />}
-            </React.Suspense>
+            <StudentListView />
         </div>
     );
 };

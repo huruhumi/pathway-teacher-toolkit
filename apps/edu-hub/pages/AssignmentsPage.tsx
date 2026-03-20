@@ -5,7 +5,7 @@ import * as edu from '@pathway/education';
 import type { Assignment, Submission, EduClass, Student } from '@pathway/education';
 import {
     Plus, Edit3, Trash2, X, Loader2, ClipboardList,
-    CheckCircle2, Clock, Send, RotateCcw, ChevronDown, ChevronUp, Users,
+    CheckCircle2, Clock, Send, RotateCcw, ChevronDown, ChevronUp, Users, MessageSquare,
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.FC<any>; bg: string }> = {
@@ -124,6 +124,12 @@ const AssignmentsPage: React.FC = () => {
         setSubmissions(prev => ({ ...prev, [sub.assignment_id]: subs }));
     };
 
+    const saveFeedback = async (sub: Submission, field: 'teacher_notes' | 'score', value: string | number | null) => {
+        await edu.upsertSubmission({ id: sub.id, [field]: value });
+        const subs = await edu.fetchSubmissions(sub.assignment_id);
+        setSubmissions(prev => ({ ...prev, [sub.assignment_id]: subs }));
+    };
+
     const studentName = (id: string) => students.find(s => s.id === id);
     const className = (id: string) => classes.find(c => c.id === id)?.name || '—';
 
@@ -215,8 +221,8 @@ const AssignmentsPage: React.FC = () => {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h4 className="font-bold text-slate-800 dark:text-white truncate">{a.title}</h4>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.content_type === 'worksheet' ? 'bg-violet-100 text-violet-700' :
-                                                        a.content_type === 'companion' ? 'bg-teal-100 text-teal-700' :
-                                                            'bg-slate-100 text-slate-600 dark:text-slate-400'
+                                                    a.content_type === 'companion' ? 'bg-teal-100 text-teal-700' :
+                                                        'bg-slate-100 text-slate-600 dark:text-slate-400'
                                                     }`}>{a.content_type}</span>
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-slate-400">
@@ -256,32 +262,66 @@ const AssignmentsPage: React.FC = () => {
                                                     const cfg = STATUS_CONFIG[sub.status] || STATUS_CONFIG.pending;
                                                     const StatusIcon = cfg.icon;
                                                     return (
-                                                        <div key={sub.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">
-                                                                    {(stu?.english_name?.[0] || stu?.name?.[0] || '?').toUpperCase()}
+                                                        <div key={sub.id} className="rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-colors">
+                                                            <div className="flex items-center justify-between py-2 px-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">
+                                                                        {(stu?.english_name?.[0] || stu?.name?.[0] || '?').toUpperCase()}
+                                                                    </div>
+                                                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{stu?.name || sub.student_id}</span>
+                                                                    {stu?.english_name && <span className="text-xs text-slate-400">{stu.english_name}</span>}
                                                                 </div>
-                                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{stu?.name || sub.student_id}</span>
-                                                                {stu?.english_name && <span className="text-xs text-slate-400">{stu.english_name}</span>}
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Score selector */}
+                                                                    {(sub.status === 'submitted' || sub.status === 'completed' || sub.status === 'returned') && (
+                                                                        <select
+                                                                            value={sub.score ?? ''}
+                                                                            onChange={e => saveFeedback(sub, 'score', e.target.value ? Number(e.target.value) : null)}
+                                                                            title={t('asg.score')}
+                                                                            className="text-xs px-1.5 py-1 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                                                        >
+                                                                            <option value="">{t('asg.score')}</option>
+                                                                            <option value="5">A</option>
+                                                                            <option value="4">B</option>
+                                                                            <option value="3">C</option>
+                                                                            <option value="2">D</option>
+                                                                            <option value="1">F</option>
+                                                                        </select>
+                                                                    )}
+                                                                    <span className={`flex items-center gap-1 text-xs font-medium ${cfg.color}`}>
+                                                                        <StatusIcon size={13} />
+                                                                        {t(`asg.${sub.status}`)}
+                                                                    </span>
+                                                                    {sub.status === 'submitted' && (
+                                                                        <button onClick={() => updateSubmissionStatus(sub, 'completed')}
+                                                                            className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-md hover:bg-emerald-200 font-medium">
+                                                                            {t('asg.markComplete')}
+                                                                        </button>
+                                                                    )}
+                                                                    {sub.status === 'completed' && (
+                                                                        <button onClick={() => updateSubmissionStatus(sub, 'returned')}
+                                                                            className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 font-medium">
+                                                                            {t('asg.returned')}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`flex items-center gap-1 text-xs font-medium ${cfg.color}`}>
-                                                                    <StatusIcon size={13} />
-                                                                    {t(`asg.${sub.status}`)}
-                                                                </span>
-                                                                {sub.status === 'submitted' && (
-                                                                    <button onClick={() => updateSubmissionStatus(sub, 'completed')}
-                                                                        className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-md hover:bg-emerald-200 font-medium">
-                                                                        {t('asg.markComplete')}
-                                                                    </button>
-                                                                )}
-                                                                {sub.status === 'completed' && (
-                                                                    <button onClick={() => updateSubmissionStatus(sub, 'returned')}
-                                                                        className="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 font-medium">
-                                                                        {t('asg.returned')}
-                                                                    </button>
-                                                                )}
-                                                            </div>
+                                                            {/* Feedback row */}
+                                                            {(sub.status === 'submitted' || sub.status === 'completed' || sub.status === 'returned') && (
+                                                                <div className="px-3 pb-2 flex items-start gap-2">
+                                                                    <MessageSquare size={13} className="text-slate-300 mt-1.5 shrink-0" />
+                                                                    <textarea
+                                                                        defaultValue={sub.teacher_notes || ''}
+                                                                        onBlur={e => {
+                                                                            const val = e.target.value.trim();
+                                                                            if (val !== (sub.teacher_notes || '')) saveFeedback(sub, 'teacher_notes', val || null);
+                                                                        }}
+                                                                        placeholder={t('asg.feedbackPlaceholder')}
+                                                                        rows={1}
+                                                                        className="flex-1 text-xs px-2 py-1.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 resize-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400"
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
