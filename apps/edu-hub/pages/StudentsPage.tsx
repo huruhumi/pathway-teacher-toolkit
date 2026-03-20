@@ -3,7 +3,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { useToast } from '@shared/stores/useToast';
 import * as edu from '@pathway/education';
-import type { Student } from '@pathway/education';
+import type { Student, EduClass } from '@pathway/education';
 import { Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw } from 'lucide-react';
 
 const AVATAR_COLORS = ['bg-amber-500', 'bg-teal-500', 'bg-violet-500', 'bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-orange-500'];
@@ -16,18 +16,34 @@ const StudentListView: React.FC = () => {
     const toast = useToast();
 
     const [students, setStudents] = useState<Student[]>([]);
+    const [classes, setClasses] = useState<EduClass[]>([]);
+    const [studentClassMap, setStudentClassMap] = useState<Record<string, string[]>>({});
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
-    const [form, setForm] = useState({ name: '', english_name: '', contact_info: '', notes: '' });
+    const [form, setForm] = useState({ name: '', english_name: '', contact_info: '', notes: '', classIds: [] as string[] });
 
     const load = useCallback(async () => {
         if (!teacherId) { setLoading(false); return; }
         setLoading(true);
-        const data = await edu.fetchStudents(teacherId);
-        setStudents(data);
+        const [stuData, clsData] = await Promise.all([
+            edu.fetchStudents(teacherId),
+            edu.fetchClasses(teacherId),
+        ]);
+        setStudents(stuData);
+        setClasses(clsData);
+        // Build student→classes map
+        const map: Record<string, string[]> = {};
+        for (const cls of clsData) {
+            const members = await edu.fetchClassStudents(cls.id);
+            for (const m of members) {
+                if (!map[m.student_id]) map[m.student_id] = [];
+                map[m.student_id].push(cls.id);
+            }
+        }
+        setStudentClassMap(map);
         setLoading(false);
     }, [teacherId]);
 
@@ -44,6 +60,21 @@ const StudentListView: React.FC = () => {
             if (editingId) payload.id = editingId;
             const res = await edu.upsertStudent(payload);
             if (!res) throw new Error('Failed to save student');
+
+            // Sync class memberships
+            const studentId = res.id;
+            const currentClassIds = studentClassMap[studentId] || [];
+            const toAdd = form.classIds.filter(cid => !currentClassIds.includes(cid));
+            const toRemove = currentClassIds.filter(cid => !form.classIds.includes(cid));
+            for (const classId of toAdd) {
+                const members = await edu.fetchClassStudents(classId);
+                await edu.setClassStudents(classId, [...members.map(m => m.student_id), studentId]);
+            }
+            for (const classId of toRemove) {
+                const members = await edu.fetchClassStudents(classId);
+                await edu.setClassStudents(classId, members.map(m => m.student_id).filter(id => id !== studentId));
+            }
+
             toast.success(editingId ? 'Updated successfully' : 'Added successfully');
             await load();
             resetForm();
@@ -54,10 +85,16 @@ const StudentListView: React.FC = () => {
         }
     };
 
-    const resetForm = () => { setForm({ name: '', english_name: '', contact_info: '', notes: '' }); setEditingId(null); setShowForm(false); };
+    const resetForm = () => { setForm({ name: '', english_name: '', contact_info: '', notes: '', classIds: [] }); setEditingId(null); setShowForm(false); };
 
     const handleEdit = (stu: Student) => {
-        setForm({ name: stu.name, english_name: stu.english_name || '', contact_info: stu.contact_info || '', notes: stu.notes || '' });
+        setForm({
+            name: stu.name,
+            english_name: stu.english_name || '',
+            contact_info: stu.contact_info || '',
+            notes: stu.notes || '',
+            classIds: studentClassMap[stu.id] || [],
+        });
         setEditingId(stu.id);
         setShowForm(true);
     };
@@ -75,9 +112,23 @@ const StudentListView: React.FC = () => {
         await load();
     };
 
+    const toggleClass = (classId: string) => {
+        setForm(f => ({
+            ...f,
+            classIds: f.classIds.includes(classId)
+                ? f.classIds.filter(id => id !== classId)
+                : [...f.classIds, classId],
+        }));
+    };
+
     const filtered = students.filter(s =>
         s.name.includes(search) || (s.english_name || '').toLowerCase().includes(search.toLowerCase())
     );
+
+    const getStudentClassNames = (studentId: string) => {
+        const classIds = studentClassMap[studentId] || [];
+        return classIds.map(cid => classes.find(c => c.id === cid)?.name).filter(Boolean);
+    };
 
     if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-amber-500" size={24} /></div>;
 
@@ -127,6 +178,34 @@ const StudentListView: React.FC = () => {
                                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
                         </div>
                     </div>
+
+                    {/* Class selector */}
+                    {classes.length > 0 && (
+                        <div className="mt-4">
+                            <label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">
+                                {lang === 'zh' ? '所属班级' : 'Assign to Class'}
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {classes.map(cls => {
+                                    const selected = form.classIds.includes(cls.id);
+                                    return (
+                                        <button
+                                            key={cls.id}
+                                            type="button"
+                                            onClick={() => toggleClass(cls.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${selected
+                                                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                                                    : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-amber-300'
+                                                }`}
+                                        >
+                                            {cls.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-2 mt-4">
                         <button type="button" onClick={resetForm} className="px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 rounded-lg">{t('common.cancel')}</button>
                         <button type="submit" disabled={saving}
@@ -161,6 +240,17 @@ const StudentListView: React.FC = () => {
                                     <button onClick={() => handleDelete(stu.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"><Trash2 size={14} /></button>
                                 </div>
                             </div>
+
+                            {/* Class badges */}
+                            {getStudentClassNames(stu.id).length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                    {getStudentClassNames(stu.id).map((name, idx) => (
+                                        <span key={idx} className="text-[10px] font-medium px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded border border-sky-200 dark:border-sky-500/20">
+                                            {name}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Status row: invite code or linked badge */}
                             <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
