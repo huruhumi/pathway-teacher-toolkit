@@ -271,10 +271,10 @@ const AppContent: React.FC = () => {
             <Wrapper>
                 <div className="min-h-screen h-full w-full overflow-y-auto bg-slate-50 dark:bg-slate-950 dark:text-slate-300 flex flex-col">
                     <AppHeader
-                        appName={lang === 'zh' ? '学生端通' : 'Student Portal'}
-                        logoIcon={<GraduationCap className="w-5 h-5 text-white" />}
+                        appName={<span className="flex flex-col leading-tight"><span className="text-xs font-bold tracking-wide">Pathway Academy</span><span className="text-[10px] font-medium opacity-70 uppercase tracking-widest">Student</span></span>}
+                        logoIcon={<img src={`${import.meta.env.BASE_URL}assets/logo.png`} alt="Pathway Academy" className="w-7 h-7 object-contain" />}
                         brand={{
-                            logoBg: 'bg-gradient-to-br from-sky-400 to-blue-600',
+                            logoBg: 'bg-white',
                             activeBg: 'bg-sky-100 dark:bg-sky-500/20',
                             activeText: 'text-sky-700 dark:text-sky-300',
                         }}
