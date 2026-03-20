@@ -28,13 +28,28 @@ const ClassesPage: React.FC = () => {
     useEffect(() => { load(); }, [load]);
 
     const handleSave = async () => {
-        if (!form.name.trim() || !teacherId) return;
+        if (!form.name.trim()) return;
+        if (!teacherId) {
+            console.error('[ClassesPage] teacherId is empty – user not logged in?', { user });
+            alert('Error: Not logged in (teacherId is empty). Please sign in first.');
+            return;
+        }
         setSaving(true);
-        const payload: any = { teacher_id: teacherId, name: form.name, description: form.description, max_students: form.max_students };
-        if (editingId) payload.id = editingId;
-        await edu.upsertClass(payload);
-        await load();
-        resetForm();
+        try {
+            const payload: any = { teacher_id: teacherId, name: form.name, description: form.description, max_students: form.max_students };
+            if (editingId) payload.id = editingId;
+            console.log('[ClassesPage] saving class:', JSON.stringify(payload));
+            const result = await edu.upsertClass(payload);
+            console.log('[ClassesPage] upsertClass result:', result);
+            if (!result) {
+                alert('Save failed — check browser console (F12) for [edu] error details');
+            }
+            await load();
+            resetForm();
+        } catch (err: any) {
+            console.error('[ClassesPage] handleSave error:', err);
+            alert('Save error: ' + (err?.message || String(err)));
+        }
         setSaving(false);
     };
 
