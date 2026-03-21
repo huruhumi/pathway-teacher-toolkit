@@ -186,17 +186,24 @@ const ActivateTab: React.FC = () => {
         if (!/^[a-z0-9_]{3,20}$/.test(username.toLowerCase()))
             return setError('用户名 3-20 位，只能含字母、数字、下划线');
         setLoading(true);
+
+        // PRE-EMPTIVELY set the flag to avoid race condition with onAuthStateChange.
+        // signUp inside activateStudentAccount fires the auth listener instantly,
+        // which unmounts this page and mounts AppContent BEFORE this function finishes.
+        sessionStorage.setItem('pathway_needs_profile', studentId);
+
         try {
             const res = await edu.activateStudentAccount({
                 inviteCode, username, password,
                 email: email || undefined,
             });
-            if (!res.success) return setError(te(res.error ?? ''));
-            // Store student ID so AppContent can show profile setup overlay
-            // after signUp fires onAuthStateChange and replaces this page
-            sessionStorage.setItem('pathway_needs_profile', studentId);
-            // signUp already triggered onAuthStateChange → AppContent takes over
+            if (!res.success) {
+                sessionStorage.removeItem('pathway_needs_profile');
+                return setError(te(res.error ?? ''));
+            }
+            // AppContent will take over from here.
         } catch {
+            sessionStorage.removeItem('pathway_needs_profile');
             setError('激活失败，请稍后重试');
         } finally {
             setLoading(false);
