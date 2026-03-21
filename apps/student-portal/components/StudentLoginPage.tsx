@@ -180,7 +180,7 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
 };
 
 /* ─── Activate Tab ─────────────────────────────────────────────────────────── */
-const ActivateTab: React.FC = () => {
+const ActivateTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({ onToggle }) => {
     const [step, setStep] = useState<ActivateStep>('code');
     const [inviteCode, setInviteCode] = useState('');
     const [studentName, setStudentName] = useState('');
@@ -253,6 +253,11 @@ const ActivateTab: React.FC = () => {
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
                         验证邀请码
                     </button>
+                    <div className="mt-4 text-center">
+                        <button type="button" onClick={() => onToggle('login')} className="text-xs text-slate-400 font-medium hover:text-sky-500 transition-colors">
+                            已有账号？点击登录
+                        </button>
+                    </div>
                 </>
             ) : (
                 <>
@@ -276,6 +281,11 @@ const ActivateTab: React.FC = () => {
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                         完成激活
                     </button>
+                    <div className="mt-4 text-center">
+                        <button type="button" onClick={() => onToggle('login')} className="text-xs text-slate-400 font-medium hover:text-sky-500 transition-colors">
+                            已有账号？点击登录
+                        </button>
+                    </div>
                 </>
             )}
         </div>
@@ -283,41 +293,58 @@ const ActivateTab: React.FC = () => {
 };
 
 /* ─── Login Tab ────────────────────────────────────────────────────────────── */
-const LoginTab: React.FC = () => {
-    const [cred, setCred] = useState('');
+const LoginTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({ onToggle }) => {
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleLogin = async () => {
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault(); // Prevent default form submission
         setError(''); setLoading(true);
-        const res = await edu.loginStudent({ usernameOrEmail: cred, password });
+        const res = await edu.loginStudent({ usernameOrEmail: identifier, password });
         setLoading(false);
         if (!res.success) setError(te(res.error ?? ''));
         // On success, AuthGate's useAuthStore picks up the session via onAuthStateChange
     };
 
     return (
-        <div className="flex flex-col gap-4 animate-fade-in">
-            <Field label="用户名 / 邮箱" type="text" placeholder="输入用户名或邮箱"
-                value={cred} onChange={e => setCred(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleLogin()} />
-            <Field label="密码" type="password" placeholder="输入密码"
-                value={password} onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <Field
+                label="用户名 / 邮箱"
+                type="text"
+                placeholder="输入用户名或邮箱"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+            />
+            <Field
+                label="密码"
+                type="password"
+                placeholder="输入密码"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+            />
+
             {error && <p className="text-red-500 text-xs flex items-center gap-1.5"><AlertCircle size={14} />{error}</p>}
-            <button onClick={handleLogin} disabled={loading || !cred || !password}
-                className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
+
+            <button type="submit" disabled={loading || !identifier || !password}
+                className="w-full mt-2 py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-500 text-white font-bold tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-sky-400/30">
+                {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
                 登录
             </button>
-        </div>
+
+            <div className="mt-4 text-center">
+                <button type="button" onClick={() => onToggle('activate')} className="text-xs text-slate-400 font-medium hover:text-sky-500 transition-colors">
+                    新同学？点击使用邀请码激活账号
+                </button>
+            </div>
+        </form>
     );
 };
 
 /* ─── Page Shell ───────────────────────────────────────────────────────────── */
 export const StudentLoginPage: React.FC = () => {
-    const [tab, setTab] = useState<Tab>('login');
+    const [activeTab, setActiveTab] = useState<Tab>('login');
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
@@ -336,21 +363,7 @@ export const StudentLoginPage: React.FC = () => {
 
                 {/* Card */}
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-white/10 p-6">
-                    {/* Tabs */}
-                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 mb-6">
-                        {([['login', '登录', LogIn], ['activate', '首次激活', UserPlus]] as const).map(([key, label, Icon]) => (
-                            <button key={key} onClick={() => setTab(key)}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all ${tab === key
-                                    ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}>
-                                <Icon size={14} />
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {tab === 'login' ? <LoginTab /> : <ActivateTab />}
+                    {activeTab === 'login' ? <LoginTab onToggle={setActiveTab} /> : <ActivateTab onToggle={setActiveTab} />}
                 </div>
 
                 <p className="text-center text-[10px] text-slate-400 mt-6">没有邀请码？请联系你的老师</p>
