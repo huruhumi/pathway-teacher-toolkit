@@ -76,20 +76,28 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const handleSave = async (skip = false) => {
-        if (skip) { onDone(); return; }
-        setLoading(true); setError('');
+    const handleSave = async () => {
+        setError('');
+
+        // Validation
+        if (!englishName.trim()) return setError('请填写英文名');
+        if (!dob) return setError('请选择出生日期');
+        if (!gender) return setError('请选择性别');
+        if (!parentName.trim()) return setError('请填写家长姓名');
+        if (!parentPhone.trim()) return setError('请填写家长电话');
+
+        setLoading(true);
         try {
             const ok = await edu.updateStudentProfile(studentId, {
-                english_name: englishName || undefined,
-                date_of_birth: dob || undefined,
-                gender: gender || undefined,
-                parent_name: parentName || undefined,
-                parent_wechat: parentWechat || undefined,
-                parent_phone: parentPhone || undefined,
-                health_notes: healthNotes || undefined,
+                english_name: englishName.trim(),
+                date_of_birth: dob,
+                gender,
+                parent_name: parentName.trim(),
+                parent_wechat: parentWechat.trim() || undefined,
+                parent_phone: parentPhone.trim(),
+                health_notes: healthNotes.trim() || undefined,
             });
-            if (!ok) setError('保存失败，请稍后在个人资料中补充');
+            if (!ok) setError('保存失败，请稍后重试');
             else onDone();
         } catch {
             setError('网络错误，请稍后重试');
@@ -102,28 +110,28 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
         <div className="flex flex-col gap-4 animate-fade-in">
             <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-xl px-4 py-2.5 text-sm text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2">
                 <CheckCircle2 size={16} />
-                账号已激活！请完善基本资料（可跳过，稍后再填）
+                账号已激活！请完善基本资料
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-                <Field label="英文名" type="text" placeholder="English Name"
+                <Field label="英文名 *" type="text" placeholder="English Name"
                     value={englishName} onChange={e => setEnglishName(e.target.value)} />
-                <Field label="出生日期" type="date"
+                <Field label="出生日期 *" type="date"
                     value={dob} onChange={e => setDob(e.target.value)} />
             </div>
 
-            <SelectField label="性别" value={gender} onChange={setGender}
+            <SelectField label="性别 *" value={gender} onChange={setGender}
                 options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }, { value: 'other', label: '其他' }]} />
 
             <div className="border-t border-slate-100 dark:border-white/10 pt-3">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">家长信息</p>
                 <div className="flex flex-col gap-3">
-                    <Field label="家长姓名" type="text" placeholder="家长/监护人姓名"
+                    <Field label="家长姓名 *" type="text" placeholder="家长/监护人姓名"
                         value={parentName} onChange={e => setParentName(e.target.value)} />
                     <div className="grid grid-cols-2 gap-3">
-                        <Field label="家长微信" type="text" placeholder="微信号"
+                        <Field label="家长微信（可选）" type="text" placeholder="微信号"
                             value={parentWechat} onChange={e => setParentWechat(e.target.value)} />
-                        <Field label="家长电话" type="tel" placeholder="手机号"
+                        <Field label="家长电话 *" type="tel" placeholder="手机号"
                             value={parentPhone} onChange={e => setParentPhone(e.target.value)} />
                     </div>
                 </div>
@@ -134,14 +142,9 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
 
             {error && <p className="text-red-500 text-xs flex items-center gap-1.5"><AlertCircle size={14} />{error}</p>}
 
-            <div className="flex gap-2 pt-1">
-                <button onClick={() => handleSave(true)} disabled={loading}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-500 text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                    <SkipForward size={14} />
-                    稍后再填
-                </button>
-                <button onClick={() => handleSave(false)} disabled={loading}
-                    className="flex-[2] py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all">
+            <div className="pt-1">
+                <button onClick={handleSave} disabled={loading}
+                    className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all">
                     {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                     保存并进入
                 </button>
