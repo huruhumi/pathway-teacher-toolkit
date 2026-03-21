@@ -43,6 +43,10 @@ export interface AppHeaderProps {
     homeUrl?: string;
     /** If true, hide the Sign In button (only show status when logged in) */
     hideSignIn?: boolean;
+    /** Optional points balance to display next to the user profile */
+    pointsBalance?: number;
+    /** Optional callback when points balance is clicked */
+    onPointsClick?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
@@ -58,6 +62,8 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
     signInLabel,
     homeUrl,
     hideSignIn,
+    pointsBalance,
+    onPointsClick,
 }) => {
     const { user, signOut, session } = useAuthStore();
     const displayName = useAuthStore(s => s.displayName)();
@@ -162,6 +168,16 @@ export const AppHeader: React.FC<AppHeaderProps> = React.memo(({
                             <div className="h-4 w-px bg-slate-200 dark:bg-slate-600 mx-1 hidden sm:block" />
                             {user ? (
                                 <div className="flex items-center gap-2">
+                                    {pointsBalance !== undefined && (
+                                        <div
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm shadow-sm transition-all hover:scale-105 ${onPointsClick ? 'cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-500/20' : 'cursor-default'}`}
+                                            title="Your Points Balance"
+                                            onClick={onPointsClick}
+                                        >
+                                            <span>🪙</span>
+                                            <span>{pointsBalance}</span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-pathway-navy)] dark:text-sky-300 bg-[var(--color-pathway-sky)]/15 dark:bg-sky-500/10 px-2.5 py-1.5 rounded-xl border border-[var(--color-pathway-sky)]/30 dark:border-sky-500/20">
                                         <Cloud size={14} />
                                         <span className="hidden sm:inline max-w-[120px] truncate">{displayName}</span>

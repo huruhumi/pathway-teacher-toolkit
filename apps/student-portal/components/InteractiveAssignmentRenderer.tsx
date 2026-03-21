@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle, MessageSquare, Star } from 'lucide-react';
+import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, PlayCircle, MessageSquare, Star, BookOpen, ClipboardList, Send } from 'lucide-react';
 import type { Assignment, Submission } from '@pathway/education';
 import type { Worksheet, ReadingCompanionContent } from '@shared/types/assignmentContent';
 import { Button } from '@shared/components/ui/Button';
@@ -17,6 +17,8 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
     const { t } = useLanguage();
     const isWorksheet = assignment.content_type === 'worksheet';
     const isCompanion = assignment.content_type === 'companion';
+    const isAssignmentSheet = assignment.content_type === 'assignment_sheet';
+    const isEssay = assignment.content_type === 'essay';
 
     const [answers, setAnswers] = useState<any>(assignment.submission?.content || {});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -215,9 +217,14 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
 
     if (isCompanion) {
         // Simplified Companion Renderer (Just mark tasks as done)
-        const comp = assignment.content_data as ReadingCompanionContent;
-        const days = comp.days || [];
+        const comp = assignment?.content_data as ReadingCompanionContent | undefined;
+        const days = comp?.days || [];
         const day = days[currentStep];
+
+        // Smart date
+        const startDate = new Date(assignment.created_at);
+        const actualDate = new Date(startDate.getTime() + currentStep * 86400000);
+        const dateString = actualDate.toLocaleDateString('zh-CN', { weekday: 'short', month: 'short', day: 'numeric' });
 
         return (
             <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-[100] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -228,7 +235,9 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                         </button>
                         <div>
                             <h2 className="font-bold text-slate-800 dark:text-white leading-tight">{assignment.title}</h2>
-                            <div className="text-xs font-medium text-slate-500">{t('render.day')} {currentStep + 1}{t('render.dayUnit')} {t('render.sectionOf')} {days.length} • {day?.focus}</div>
+                            <div className="text-xs font-medium text-slate-500">
+                                {dateString} • {t('render.day')} {currentStep + 1}{t('render.dayUnit')} {t('render.sectionOf')} {days.length} • {day?.focus}
+                            </div>
                         </div>
                     </div>
                     {isCompleted && (
@@ -271,6 +280,37 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                         })}
                                     </div>
                                 </div>
+
+                                {/* Resources */}
+                                {day.resources && day.resources.length > 0 && (
+                                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <PlayCircle className="w-4 h-4" /> 今日资源
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {day.resources.map((res: any, idx: number) => (
+                                                <a href={res.url || '#'} target="_blank" rel="noreferrer" key={idx} className="flex flex-col p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-300 hover:shadow-md transition-all group">
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 mb-1 line-clamp-2">{res.title}</span>
+                                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{res.type}</span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Trivia */}
+                                {day.trivia && (
+                                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-900/20">
+                                        <h4 className="text-sm font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Star className="w-4 h-4" /> 每日趣味冷知识
+                                        </h4>
+                                        <div className="p-5 rounded-xl bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700/50 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">{day.trivia.en}</p>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">{day.trivia.cn}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -300,20 +340,232 @@ export const InteractiveAssignmentRenderer: React.FC<Props> = ({ assignment, onC
                                 leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                 className="shadow-md font-bold"
                             >
-                                {t('render.turnIn')}
+                                {isCompleted ? t('render.submitted') : "✔ 上交整个打卡副本"}
                             </Button>
                         ) : (
                             <Button
-                                variant="primary"
+                                theme="indigo"
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 rightIcon={<ChevronRight size={18} />}
-                                className="font-bold dark:bg-slate-700 dark:hover:bg-slate-600"
+                                className="font-bold shadow-md"
                             >
-                                Next Day
+                                ✔ 完成今日任务
                             </Button>
                         )}
                     </div>
                 </footer>
+            </div>
+        );
+    }
+
+    if (isAssignmentSheet) {
+        const sheet = assignment?.content_data as any || {};
+        const keyPoints = sheet?.keyPoints || [];
+        const assignments = sheet?.assignments || [];
+        const feedback = sheet?.feedback || { ratings: [] };
+
+        // Helper to get category style for key points, matches ESL planner
+        const getCategoryStyle = (text: string) => {
+            if (text.startsWith('【课程简介】')) return { color: 'text-violet-600', bg: 'bg-violet-50', label: '📖' };
+            if (text.startsWith('【本课词汇】')) return { color: 'text-teal-600', bg: 'bg-teal-50', label: '📝' };
+            if (text.startsWith('【语法/句型】')) return { color: 'text-indigo-600', bg: 'bg-indigo-50', label: '📐' };
+            if (text.startsWith('【Phonics】')) return { color: 'text-pink-600', bg: 'bg-pink-50', label: '🔤' };
+            return { color: 'text-slate-600', bg: 'bg-slate-50', label: '•' };
+        };
+
+        const StarRatingReadOnly = ({ score }: { score: number }) => (
+            <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                        key={s}
+                        className={`w-3 h-3 md:w-4 md:h-4 ${s <= score ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}`}
+                    />
+                ))}
+            </div>
+        );
+
+        return (
+            <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-[100] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shrink-0 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} title={t('render.cancel')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <X size={20} />
+                        </button>
+                        <div>
+                            <h2 className="font-bold text-slate-800 dark:text-white leading-tight truncate max-w-[200px] md:max-w-md">{assignment.title}</h2>
+                            <div className="text-xs font-medium text-slate-500">
+                                作业清单
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                    <div className="max-w-2xl mx-auto space-y-6">
+
+                        {/* Section 1: Lesson Summary */}
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                            <h4 className="text-sm font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-indigo-500" />
+                                本课内容总结
+                            </h4>
+                            {sheet.lessonSummary && (
+                                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap mb-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                                    {sheet.lessonSummary}
+                                </p>
+                            )}
+
+                            {keyPoints.length > 0 && (
+                                <div className="space-y-2 mt-4">
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">学习重点</div>
+                                    {keyPoints.map((kp: string, i: number) => {
+                                        const style = getCategoryStyle(kp);
+                                        return (
+                                            <div key={i} className={`flex items-start gap-2 p-3 rounded-xl ${style.bg} border border-transparent`}>
+                                                <span className="text-sm flex-shrink-0 mt-0.5">{style.label}</span>
+                                                <div className={`flex-1 text-sm ${style.color} leading-relaxed whitespace-pre-wrap`}>
+                                                    {kp}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Section 2: Assignments Checklist */}
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                            <h4 className="text-sm font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4 text-indigo-500" />
+                                作业清单
+                            </h4>
+                            <div className="space-y-3">
+                                {assignments.map((item: any, i: number) => {
+                                    const key = `assign_t${i}`;
+                                    const isChecked = answers[key] === true;
+
+                                    return (
+                                        <label key={i} className={`flex items-start gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${item.isFixed ? 'bg-amber-50/30 border-amber-100 hover:bg-amber-50/60' : 'bg-slate-50/50 border-slate-100 dark:border-slate-800 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={e => !isCompleted && handleAnswerChange(key, e.target.checked)}
+                                                disabled={isCompleted}
+                                                className="mt-1 w-5 h-5 rounded border-slate-300 text-sky-500 focus:ring-sky-500 shrink-0"
+                                            />
+                                            <div className="flex-1 min-w-0 pt-0.5">
+                                                <p className={`font-bold text-sm ${isChecked ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                    {item.title}
+                                                </p>
+                                                {item.description && (
+                                                    <p className={`text-xs mt-1 ${isChecked ? 'text-slate-400 line-through' : 'text-slate-500'}`}>
+                                                        {item.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {item.isFixed && (
+                                                <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded uppercase flex-shrink-0 mt-0.5">固定</span>
+                                            )}
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Section 3: Teacher Feedback */}
+                        {sheet.showComment !== false && (feedback.ratings?.length > 0 || feedback.overallComment) && (
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                                <h4 className="text-sm font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <MessageSquare className="w-4 h-4 text-indigo-500" />
+                                    课堂表现反馈
+                                </h4>
+
+                                {feedback.ratings && feedback.ratings.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                                        {feedback.ratings.map((r: any, i: number) => (
+                                            <div key={i} className="flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-white/5">
+                                                <div>
+                                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-300">{r.dimension}</div>
+                                                    <div className="text-[10px] text-slate-400">{r.dimension_en}</div>
+                                                </div>
+                                                <StarRatingReadOnly score={r.score} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {feedback.overallComment && (
+                                    <div className="bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-xl p-4 relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-400"></div>
+                                        <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">老师寄语</div>
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed italic">
+                                            "{feedback.overallComment}"
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <FeedbackCard />
+                    </div>
+                </div>
+
+                <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                    <div className="max-w-2xl mx-auto flex items-center justify-between">
+                        <Button
+                            variant="ghost"
+                            onClick={onClose}
+                            className="dark:text-slate-300 dark:hover:bg-slate-800 font-bold"
+                        >
+                            {t('render.cancel')}
+                        </Button>
+
+                        <Button
+                            theme={isCompleted ? "emerald" : "indigo"}
+                            onClick={handleFinalSubmit}
+                            disabled={isCompleted || isSubmitting}
+                            leftIcon={isSubmitting ? <Loader2 size={18} className="animate-spin" /> : (isCompleted ? <CheckCircle2 size={18} /> : <Send size={18} />)}
+                            className="shadow-md font-bold min-w-[120px]"
+                        >
+                            {isCompleted ? t('render.submitted') : t('render.markDone')}
+                        </Button>
+                    </div>
+                </footer>
+            </div>
+        );
+    }
+
+    if (isEssay) {
+        return (
+            <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-[100] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between shrink-0 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} title={t('render.cancel')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <X size={20} />
+                        </button>
+                        <div>
+                            <h2 className="font-bold text-slate-800 dark:text-white leading-tight">{assignment.title}</h2>
+                            <div className="text-xs font-medium text-pink-500">Essay Writing Lab</div>
+                        </div>
+                    </div>
+                </header>
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 flex items-center justify-center">
+                    <div className="text-center space-y-4 max-w-md mx-auto">
+                        <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900/40 text-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <BookOpen size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white">Essay Lab Module</h3>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            This module is currently in development. The <code className="text-pink-500 font-bold">{'<EssayWritingCanvas />'}</code> hook has been successfully pre-installed in the Polymorphic Render Engine.
+                        </p>
+                        <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-mono text-slate-500 mt-4 shadow-inner">
+                            {`<EssayWritingCanvas \n  assignmentId="${assignment.id}" \n/>`}
+                        </div>
+                        <Button variant="ghost" onClick={onClose} className="mt-8 font-bold text-slate-500">
+                            {t('render.cancel')}
+                        </Button>
+                    </div>
+                </div>
             </div>
         );
     }

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { AssignmentSheet, StructuredLessonPlan } from '../../types';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
-import { Plus, Trash2, Star, BookOpen, ClipboardList, MessageSquare, Eye, EyeOff, User, RefreshCw, Loader2, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Star, BookOpen, ClipboardList, MessageSquare, Eye, EyeOff, User, RefreshCw, Loader2, Sparkles, Send } from 'lucide-react';
 import { createAIClient } from '@pathway/ai';
+import { AssignModal } from '../AssignModal';
+import * as edu from '@pathway/education';
+import { useAuthStore } from '@shared/stores/useAuthStore';
+import { useToast } from '@shared/stores/useToast';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 const PLACEHOLDER_PREFIX = '__KEEP_TERM_';
 
@@ -158,6 +163,50 @@ export const AssignmentTab: React.FC<AssignmentTabProps> = React.memo(({
     editablePlan,
     phonicsKeyPoints,
 }) => {
+    const { t } = useLanguage();
+    const teacherId = useAuthStore(s => s.user?.id);
+    const [isAssignOpen, setIsAssignOpen] = useState(false);
+    const [isAssigning, setIsAssigning] = useState(false);
+
+    const handleAssign = async (classId: string, dueDate: string, studentId?: string) => {
+        if (!teacherId || !assignmentSheet) return;
+        setIsAssigning(true);
+        try {
+            const contentData = {
+                ...assignmentSheet,
+                ...(studentId ? { target_student_id: studentId } : {}),
+            };
+            const assignment = await edu.upsertAssignment({
+                teacher_id: teacherId,
+                class_id: classId,
+                content_type: 'assignment_sheet',
+                title: editablePlan?.classInformation?.topic || 'Assignment Sheet',
+                content_data: contentData,
+                due_date: dueDate || null,
+            } as any);
+
+            if (assignment) {
+                // Create a submission row for each student so it shows on their portal
+                if (studentId) {
+                    await edu.createSubmissionsForClass(assignment.id, [studentId]);
+                } else {
+                    const clsStudents = await edu.fetchClassStudents(classId);
+                    const sids = clsStudents.map(cs => cs.student_id);
+                    await edu.createSubmissionsForClass(assignment.id, sids);
+                }
+                setIsAssignOpen(false);
+                useToast.getState().success(t('assign.success') as string);
+            } else {
+                useToast.getState().error(t('assign.error') as string);
+            }
+        } catch (error) {
+            console.error('Failed to assign', error);
+            useToast.getState().error(t('assign.error') as string);
+        } finally {
+            setIsAssigning(false);
+        }
+    };
+
     const update = (patch: Partial<AssignmentSheet>) =>
         setAssignmentSheet({ ...assignmentSheet, ...patch });
 
@@ -244,9 +293,25 @@ export const AssignmentTab: React.FC<AssignmentTabProps> = React.memo(({
                             placeholder="学生姓名"
                         />
                     </div>
+                    <button
+                        onClick={() => setIsAssignOpen(true)}
+                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors no-print flex items-center gap-1.5"
+                    >
+                        <Send className="w-3.5 h-3.5" />
+                        布置给学生
+                    </button>
                     <div className="text-xs text-slate-400">A4 打印</div>
                 </div>
             </div>
+
+            {/* Modal */}
+            <AssignModal
+                isOpen={isAssignOpen}
+                onClose={() => setIsAssignOpen(false)}
+                onAssign={handleAssign}
+                assignmentType="assignment_sheet"
+                isSaving={isAssigning}
+            />
 
             {/* Section 1: 课堂总结 & 重点 */}
             <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-white/10 p-5 shadow-sm">

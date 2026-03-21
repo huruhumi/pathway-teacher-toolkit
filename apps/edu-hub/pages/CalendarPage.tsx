@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import * as edu from '@pathway/education';
-import type { EduClass, ClassSession, Student, Attendance } from '@pathway/education';
+import type { EduClass, ClassSession, Student, Attendance, MakeupRequest } from '@pathway/education';
 import {
     Plus, ChevronLeft, ChevronRight, X, Loader2, Clock,
-    CalendarDays, CheckCircle2, XCircle, AlertCircle, Users,
+    CalendarDays, CheckCircle2, XCircle, AlertCircle, Users, PhoneOff, AlertTriangle,
+    Leaf, Layers, CalendarRange,
 } from 'lucide-react';
 
 // ── Date helpers ──
@@ -13,6 +14,7 @@ const DAY_MS = 86_400_000;
 const fmt = (d: Date) => d.toISOString().split('T')[0];
 const weekStart = (d: Date) => { const w = new Date(d); w.setDate(w.getDate() - w.getDay()); return w; };
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * DAY_MS);
+
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -20,11 +22,13 @@ const STATUS_ICON: Record<string, React.FC<any>> = {
     present: CheckCircle2,
     absent: XCircle,
     late: AlertCircle,
+    leave: PhoneOff,
 };
 const STATUS_COLOR: Record<string, string> = {
     present: 'text-emerald-500',
     absent: 'text-red-500',
     late: 'text-amber-500',
+    leave: 'text-sky-500',
 };
 
 const CalendarPage: React.FC = () => {
@@ -45,10 +49,16 @@ const CalendarPage: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({ class_id: '', date: fmt(new Date()), start_time: '09:00', end_time: '10:00', topic: '', notes: '' });
 
+    type TabType = 'single' | 'bulk' | 'nature-compass';
+    const [activeTab, setActiveTab] = useState<TabType>('single');
+    const [bulkForm, setBulkForm] = useState({ class_id: '', day_of_week: '1', first_date: fmt(new Date()), start_time: '18:00', end_time: '19:30', textbook: '', session_count: 10 });
+    const [ncForm, setNcForm] = useState({ class_id: '', date: fmt(new Date()), start_time: '10:00', end_time: '12:00', theme: '', age_group: '7-9' });
+
     // Attendance panel
     const [activeSession, setActiveSession] = useState<ClassSession | null>(null);
     const [attendance, setAttendance] = useState<Attendance[]>([]);
     const [attendanceLoading, setAttendanceLoading] = useState(false);
+    const [makeupRequests, setMakeupRequests] = useState<MakeupRequest[]>([]);
 
     const ws = useMemo(() => weekStart(currentDate), [currentDate]);
     const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(ws, i)), [ws]);
@@ -75,6 +85,9 @@ const CalendarPage: React.FC = () => {
             csMap[cls.id] = cs.map(r => r.student_id);
         }
         setClassStudentMap(csMap);
+        // Phase 5: load makeup requests
+        const mr = await edu.fetchMakeupRequests(teacherId);
+        setMakeupRequests(mr);
         setLoading(false);
     }, [teacherId, weekDays]);
 
@@ -83,6 +96,9 @@ const CalendarPage: React.FC = () => {
     // ── Session CRUD ──
     const handleSaveSession = async () => {
         if (!form.class_id || !form.date || !teacherId) return;
+        // Phase 5: Conflict check
+        const cw = checkConflicts(form.date, form.start_time, form.end_time, editingSession?.id);
+        if (cw.length > 0 && !window.confirm(`⚠️ 检测到排课冲突:\n${cw.join('\n')}\n\n是否强制保存？`)) return;
         setSaving(true);
         const payload: any = {
             teacher_id: teacherId, class_id: form.class_id, date: form.date,
@@ -125,14 +141,60 @@ const CalendarPage: React.FC = () => {
 
     const toggleAttendance = async (sessionId: string, studentId: string) => {
         const existing = attendance.find(a => a.student_id === studentId);
-        const cycle: Array<'present' | 'absent' | 'late'> = ['present', 'absent', 'late'];
+        const cycle: Array<'present' | 'absent' | 'late' | 'leave'> = ['present', 'absent', 'late', 'leave'];
         const next = cycle[(cycle.indexOf(existing?.status || 'present') + 1) % cycle.length];
         const updated = attendance.filter(a => a.student_id !== studentId);
         const record: Attendance = { session_id: sessionId, student_id: studentId, status: next };
         updated.push(record);
         setAttendance(updated);
         await edu.upsertAttendance([record]);
+        // Phase 5: auto-create makeup request when marking leave
+        if (next === 'leave' && activeSession) {
+            const existing = makeupRequests.find(m => m.student_id === studentId && m.original_session_id === sessionId);
+            if (!existing) {
+                const mr = await edu.createMakeupRequest({ student_id: studentId, teacher_id: teacherId, original_session_id: sessionId });
+                if (mr) setMakeupRequests(prev => [mr, ...prev]);
+            }
+        }
+        // Phase 6: auto-trigger attendance tokens (idempotent)
+        const ATTENDANCE_POINTS: Record<string, number> = { present: 20, late: 10, leave: 0, absent: 0 };
+        const pts = ATTENDANCE_POINTS[next] ?? 0;
+        if (pts > 0) {
+            edu.upsertTokenEvent({ student_id: studentId, source_type: 'attendance', source_id: `att_${sessionId}`, delta: pts });
+        }
     };
+
+    // ── Conflict Detection (Phase 5) ──
+    const [conflicts, setConflicts] = useState<string[]>([]);
+
+    /** Check if a time slot overlaps with existing sessions for the same teacher */
+    const checkConflicts = (targetDate: string, startTime: string, endTime: string, excludeId?: string): string[] => {
+        if (!startTime || !endTime) return [];
+        const warnings: string[] = [];
+        sessions
+            .filter(s => s.date === targetDate && s.id !== excludeId && s.start_time && s.end_time)
+            .forEach(s => {
+                if (startTime < s.end_time! && s.start_time! < endTime) {
+                    warnings.push(`教师时间冲突: ${className(s.class_id)} 在 ${s.start_time!.slice(0, 5)}-${s.end_time!.slice(0, 5)}`);
+                }
+            });
+        return warnings;
+    };
+
+    /** Bulk preview: compute all dates for bulk form */
+    const bulkPreviewDates = useMemo(() => {
+        if (activeTab !== 'bulk' || !bulkForm.first_date || bulkForm.session_count < 1) return [];
+        const dates: string[] = [];
+        let cur = new Date(bulkForm.first_date);
+        const dow = parseInt(bulkForm.day_of_week, 10);
+        while (cur.getDay() !== dow) cur = addDays(cur, 1);
+        for (let i = 0; i < bulkForm.session_count; i++) {
+            dates.push(fmt(new Date(cur)));
+            cur = addDays(cur, 7);
+        }
+        return dates;
+    }, [activeTab, bulkForm.first_date, bulkForm.day_of_week, bulkForm.session_count]);
+
 
     // ── Navigation ──
     const prevWeek = () => setCurrentDate(addDays(currentDate, -7));

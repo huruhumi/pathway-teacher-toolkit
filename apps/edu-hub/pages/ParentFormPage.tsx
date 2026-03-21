@@ -25,7 +25,7 @@ type FormState = {
 };
 
 const ParentFormPage: React.FC = () => {
-    const code = new URLSearchParams(window.location.search).get('code') || '';
+    const code = new URLSearchParams(window.location.search).get('invite_code') || '';
     const [lang, setLang] = useState<'zh' | 'en'>('zh');
     const [studentName, setStudentName] = useState('');
     const [loading, setLoading] = useState(true);

@@ -1,35 +1,33 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useHashTab } from '@shared/hooks/useHashTab';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import {
-    LayoutDashboard, School, CalendarDays, GraduationCap,
-    ClipboardList, Library, BookOpen,
+    LayoutDashboard, GraduationCap, Library, Gift,
 } from 'lucide-react';
 
 // Lazy-loaded pages
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
-const ClassesPage = React.lazy(() => import('./pages/ClassesPage'));
-const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
-const AssignmentsPage = React.lazy(() => import('./pages/AssignmentsPage'));
-const BooksPage = React.lazy(() => import('./pages/BooksPage'));
-const ReadingLogsPage = React.lazy(() => import('./pages/ReadingLogsPage'));
+const TeachingPage = React.lazy(() => import('./pages/TeachingPage'));
+const LibraryPage = React.lazy(() => import('./pages/LibraryPage'));
+const RewardsManagementPage = React.lazy(() => import('./pages/RewardsManagementPage'));
 const ParentFormPage = React.lazy(() => import('./pages/ParentFormPage'));
 
-type View = 'dashboard' | 'classes' | 'calendar' | 'assignments' | 'books' | 'reading';
+type View = 'dashboard' | 'teaching' | 'library' | 'rewards';
 
-// Check if this is a parent form request
-const isParentForm = () => {
-    const hash = window.location.hash;
-    return hash.startsWith('#parent-form') || new URLSearchParams(window.location.search).has('code');
-};
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
-    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'classes', 'calendar', 'assignments', 'books', 'reading']);
+    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'teaching', 'library', 'rewards']);
+
+    // Computed once on mount — parent form routes bypass the full app shell
+    const isParentForm = useMemo(() =>
+        window.location.hash.startsWith('#parent-form') ||
+        new URLSearchParams(window.location.search).has('invite_code')
+        , []);
 
     // If parent form route, render standalone
-    if (isParentForm()) {
+    if (isParentForm) {
         return (
             <React.Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" /></div>}>
                 <ParentFormPage />
@@ -39,11 +37,9 @@ const AppContent: React.FC = () => {
 
     const NAV_TABS = [
         { key: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
-        { key: 'classes', label: t('nav.classes'), icon: <School className="w-4 h-4" /> },
-        { key: 'assignments', label: t('nav.assignments'), icon: <ClipboardList className="w-4 h-4" /> },
-        { key: 'books', label: t('nav.books'), icon: <Library className="w-4 h-4" /> },
-        { key: 'reading', label: t('nav.reading') || (lang === 'zh' ? '阅读日志' : 'Reading'), icon: <BookOpen className="w-4 h-4" /> },
-        { key: 'calendar', label: t('nav.calendar'), icon: <CalendarDays className="w-4 h-4" /> },
+        { key: 'teaching', label: lang === 'zh' ? '教学' : 'Teaching', icon: <GraduationCap className="w-4 h-4" /> },
+        { key: 'library', label: lang === 'zh' ? '图书馆' : 'Library', icon: <Library className="w-4 h-4" /> },
+        { key: 'rewards', label: lang === 'zh' ? '积分' : 'Rewards', icon: <Gift className="w-4 h-4" /> },
     ];
 
     return (
@@ -75,19 +71,17 @@ const AppContent: React.FC = () => {
                         description={t('hero.desc')}
                         gradient="from-amber-500 via-orange-500 to-red-500"
                         tags={[
-                            { label: t('nav.classes') as string },
-                            { label: t('nav.assignments') as string },
-                            { label: t('nav.reading') as string },
+                            { label: lang === 'zh' ? '班级' : 'Classes' },
+                            { label: lang === 'zh' ? '作业' : 'Assignments' },
+                            { label: lang === 'zh' ? '阅读' : 'Reading' },
                         ]}
                     />
                     <React.Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" /></div>}>
                         <BodyContainer>
                             {view === 'dashboard' && <DashboardPage onNav={setView} />}
-                            {view === 'classes' && <RouteGuard><ClassesPage /></RouteGuard>}
-                            {view === 'assignments' && <RouteGuard><AssignmentsPage /></RouteGuard>}
-                            {view === 'books' && <RouteGuard><BooksPage /></RouteGuard>}
-                            {view === 'reading' && <RouteGuard><ReadingLogsPage /></RouteGuard>}
-                            {view === 'calendar' && <RouteGuard><CalendarPage /></RouteGuard>}
+                            {view === 'teaching' && <RouteGuard><TeachingPage /></RouteGuard>}
+                            {view === 'library' && <RouteGuard><LibraryPage /></RouteGuard>}
+                            {view === 'rewards' && <RouteGuard><RewardsManagementPage /></RouteGuard>}
                         </BodyContainer>
                     </React.Suspense>
                 </PageLayout>

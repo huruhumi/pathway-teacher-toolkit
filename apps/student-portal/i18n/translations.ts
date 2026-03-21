@@ -25,8 +25,10 @@ export const translations = {
     'asg.worksheet': { en: 'Worksheet', zh: '练习册' },
     'asg.companion': { en: 'Companion', zh: '配套资料' },
     'asg.custom': { en: 'Assignment', zh: '作业' },
+    'asg.assignment_sheet': { en: 'Task Sheet', zh: '任务清单' },
     'asg.submitted': { en: 'Submitted', zh: '已提交' },
     'asg.returned': { en: 'Returned', zh: '已退回' },
+    'asg.go': { en: 'Go', zh: '去完成' },
 
     // Schedule
     'sch.title': { en: 'My Class Schedule', zh: '我的课表' },

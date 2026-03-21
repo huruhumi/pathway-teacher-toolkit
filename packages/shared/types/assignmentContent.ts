@@ -62,3 +62,14 @@ export interface ReadingCompanionContent {
     days: ReadingPlanDay[];
     webResources: WebResource[];
 }
+
+export interface AssignmentSheetContent {
+    studentName: string;
+    lessonSummary: string;
+    keyPoints: string[];
+    assignments: { title: string; description: string; isFixed?: boolean }[];
+    feedback: {
+        ratings: { dimension: string; dimension_en: string; score: number }[];
+        overallComment: string;
+    };
+}

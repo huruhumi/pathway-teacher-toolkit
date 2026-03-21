@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel, SentenceCitation } from '../../types';
 import { generateWebResource, generateNewCompanionDay, generateTrivia, translateTaskText } from '../../services/worksheetService';
-import { Check, Trash2, Plus, X, ExternalLink, Loader2, Globe, Lightbulb, RefreshCw, List, AlertCircle, Languages, GripVertical } from 'lucide-react';
-import { handleError } from '@shared/services/logger';
-import { useLanguage } from '../../i18n/LanguageContext';
-import { AssignModal } from '../AssignModal';
-import * as edu from '@pathway/education';
+import { Settings2, BookOpen, Clock, Loader2, Sparkles, Plus, ExternalLink, RefreshCw, Layers, Book, Wand2, RefreshCcw, Save, MessageSquare, Download, Check, AlertCircle, Globe, Lightbulb, Trash2, X, List, Languages, GripVertical } from 'lucide-react';
 import { useAuthStore } from '@shared/stores/useAuthStore';
+import { AssignModal } from '../AssignModal';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { handleError } from '@shared/services/logger';
+import { useToast } from '@shared/stores/useToast';
+import * as edu from '@pathway/education';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
 import { getCitationTooltip } from '../../utils/citationTooltip';
 
@@ -36,8 +37,6 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     const teacherId = useAuthStore(s => s.user?.id);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
-    const [assignError, setAssignError] = useState('');
-    const [assignSuccess, setAssignSuccess] = useState('');
     const getCitationTitle = (section: string, text: string) => getCitationTooltip(sentenceCitations, section, text);
 
     const handleTaskChange = (dIdx: number, tIdx: number, field: keyof ReadingTask, value: any) => {
@@ -202,8 +201,6 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     const handleAssign = async (classId: string, dueDate: string) => {
         if (!teacherId || !editablePlan || !editableReadingCompanion) return;
         setIsAssigning(true);
-        setAssignError('');
-        setAssignSuccess('');
 
         try {
             const assignment = await edu.upsertAssignment({
@@ -221,17 +218,15 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                 const sids = clsStudents.map(cs => cs.student_id);
                 await edu.createSubmissionsForClass(assignment.id, sids);
 
-                setAssignSuccess(t('assign.success') as string);
-                setTimeout(() => {
-                    setIsAssignOpen(false);
-                    setAssignSuccess('');
-                }, 2000);
+                setIsAssignOpen(false);
+                useToast.getState().success(t('assign.success') as string);
             } else {
-                setAssignError(t('assign.error') as string);
+                useToast.getState().error(t('assign.error') as string);
             }
         } catch (e: any) {
             console.error("Assignment failed:", e);
-            setAssignError(handleError(e, t('assign.error'), 'CompanionTab'));
+            handleError(e, t('assign.error'), 'CompanionTab');
+            useToast.getState().error(t('assign.error') as string);
         } finally {
             setIsAssigning(false);
         }
@@ -470,17 +465,6 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                 assignmentType="companion"
                 isSaving={isAssigning}
             />
-
-            {assignSuccess && (
-                <div className="fixed bottom-6 right-6 bg-emerald-50 text-emerald-600 border border-emerald-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
-                    <Check className="w-4 h-4" /> {assignSuccess}
-                </div>
-            )}
-            {assignError && (
-                <div className="fixed bottom-6 right-6 bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
-                    <AlertCircle className="w-4 h-4" /> {assignError}
-                </div>
-            )}
         </div>
     );
 });

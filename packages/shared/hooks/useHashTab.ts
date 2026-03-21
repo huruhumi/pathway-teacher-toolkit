@@ -11,14 +11,14 @@ export function useHashTab<T extends string>(
     defaultTab: T,
     validTabs?: T[],
 ): [T, (tab: T) => void] {
-    const readHash = useCallback((): T => {
+    const getValidHash = useCallback((fallback: T): T => {
         const hash = window.location.hash.slice(1); // remove '#'
-        if (!hash) return defaultTab;
-        if (validTabs && !validTabs.includes(hash as T)) return defaultTab;
+        if (!hash) return fallback;
+        if (validTabs && !validTabs.includes(hash as T)) return fallback;
         return hash as T;
-    }, [defaultTab, validTabs]);
+    }, [validTabs]);
 
-    const [tab, setTabState] = useState<T>(readHash);
+    const [tab, setTabState] = useState<T>(() => getValidHash(defaultTab));
 
     const setTab = useCallback(
         (newTab: T) => {
@@ -29,14 +29,15 @@ export function useHashTab<T extends string>(
         [],
     );
 
-    // Listen for browser back/forward (popstate)
+    // Listen for browser back/forward (hashchange)
     useEffect(() => {
         const onHashChange = () => {
-            setTabState(readHash());
+            // On hash change, keep current tab as fallback — don't jump to defaultTab
+            setTabState(prev => getValidHash(prev));
         };
         window.addEventListener('hashchange', onHashChange);
         return () => window.removeEventListener('hashchange', onHashChange);
-    }, [readHash]);
+    }, [getValidHash]);
 
     return [tab, setTab];
 }

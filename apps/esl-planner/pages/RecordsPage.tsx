@@ -176,16 +176,19 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     };
 
     const handleBatchAssign = async () => {
-        if (!assignTextbook || assignUnit === null || selectedKitIds.size === 0) return;
+        const isStandalone = assignTextbook === 'Standalone';
+        if (!assignTextbook || (!isStandalone && assignUnit === null) || selectedKitIds.size === 0) return;
         const tb = textbookLevelTree.find(t => t.name === assignTextbook);
         if (!tb) return;
         // Collect all curriculumIds from all levels in this textbook
         const allCurriculumIds = new Set<string>();
         tb.levels.forEach(level => level.curriculumIds.forEach(id => allCurriculumIds.add(id)));
         const curriculumId = [...allCurriculumIds][0];
+        // For Standalone: no unit structure, use unitNumber 0
+        const targetUnit = isStandalone ? 0 : assignUnit!;
         // Determine existing max lessonIndex in target unit for proper ordering
         const existingInUnit = savedLessons.filter(
-            l => l.curriculumId === curriculumId && l.unitNumber === assignUnit
+            l => l.curriculumId === curriculumId && l.unitNumber === targetUnit
         );
         let nextIndex = existingInUnit.reduce((max, l) => Math.max(max, (l.lessonIndex ?? -1) + 1), 0);
         const ops: Promise<unknown>[] = [];
@@ -195,7 +198,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                 ops.push(history.saveLessonDb({
                     ...lesson,
                     curriculumId,
-                    unitNumber: assignUnit,
+                    unitNumber: targetUnit,
                     lessonIndex: lesson.lessonIndex ?? nextIndex++,
                     lastModified: Date.now(),
                 }));
@@ -204,7 +207,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         await Promise.all(ops);
         useToast.getState().success(
             lang === 'zh'
-                ? `已归档 ${ops.length} 个课件到 ${assignTextbook} Unit ${assignUnit}`
+                ? `已归档 ${ops.length} 个课件到 ${assignTextbook}${isStandalone ? '' : ` Unit ${assignUnit}`}`
                 : `Assigned ${ops.length} kit(s) to ${assignTextbook} Unit ${assignUnit}`
         );
         setSelectedKitIds(new Set());
@@ -427,6 +430,14 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     // --- Lessons filtered by tree selection (metadata-based) ---
     const treeFilteredKits = useMemo(() => {
         if (!selectedTextbook) return null;
+        // Standalone: flat list — bypass level/unit drill-down
+        if (selectedTextbook === 'Standalone' && selectedTextbookNode) {
+            const allCurrIds = new Set<string>();
+            selectedTextbookNode.levels.forEach(lvl => lvl.curriculumIds.forEach(id => allCurrIds.add(id)));
+            return history.filteredKits.filter(lk =>
+                lk.curriculumId && allCurrIds.has(lk.curriculumId)
+            );
+        }
         if (!selectedLevelNode) return null;
         if (selectedUnit === null) {
             // Level selected but no unit — show all kits for this level
@@ -437,7 +448,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         return history.filteredKits.filter(lk =>
             lk.curriculumId && selectedLevelNode.curriculumIds.has(lk.curriculumId) && lk.unitNumber === selectedUnit
         );
-    }, [selectedTextbook, selectedLevelNode, selectedUnit, history.filteredKits]);
+    }, [selectedTextbook, selectedTextbookNode, selectedLevelNode, selectedUnit, history.filteredKits]);
 
     const displayedCurriculaBase = history.filteredCurricula;
     const displayedCurricula = useMemo(() => {
@@ -487,7 +498,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     const displayedKits = riskViewOnly
         ? governanceRows.filter((item) => item.unresolved).map((item) => item.lesson)
         : displayedKitsBase;
-    const showKitCards = selectedUnit !== null || textbookLevelTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0);
+    const showKitCards = selectedUnit !== null || textbookLevelTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0) || selectedTextbook === 'Standalone';
     const reviewTargetLesson = useMemo(
         () => [...savedLessons, ...displayedKits].find((item) => item.id === reviewLessonId) ?? null,
         [savedLessons, displayedKits, reviewLessonId],
@@ -825,7 +836,12 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                                 <div>
                                                     <div className="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-violet-700">{tb.name}</div>
                                                     <div className="text-xs text-slate-400 mt-0.5">
-                                                        {levelCount} {lang === 'zh' ? '级别' : levelCount === 1 ? 'level' : 'levels'} · {unitCount} {lang === 'zh' ? '单元' : 'units'} · {lessonCount} {lang === 'zh' ? '课时' : 'lessons'}
+                                                        {tb.name === 'Standalone' ? (() => {
+                                                            const allCids = new Set<string>();
+                                                            tb.levels.forEach(lvl => lvl.curriculumIds.forEach(id => allCids.add(id)));
+                                                            const kitCount = history.filteredKits.filter(lk => lk.curriculumId && allCids.has(lk.curriculumId)).length;
+                                                            return `${kitCount} ${lang === 'zh' ? '课件' : kitCount === 1 ? 'kit' : 'kits'}`;
+                                                        })() : `${levelCount} ${lang === 'zh' ? '级别' : levelCount === 1 ? 'level' : 'levels'} · ${unitCount} ${lang === 'zh' ? '单元' : 'units'} · ${lessonCount} ${lang === 'zh' ? '课时' : 'lessons'}`}
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={16} className="text-slate-300 group-hover:text-violet-400 ml-auto" />
@@ -836,7 +852,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             )}
 
                             {/* Level 1: Level pills (within selected textbook) */}
-                            {selectedTextbook && !selectedLevelKey && selectedTextbookNode && (
+                            {selectedTextbook && selectedTextbook !== 'Standalone' && !selectedLevelKey && selectedTextbookNode && (
                                 <div className="flex flex-wrap gap-2">
                                     {selectedTextbookNode.levels.map(lvl => {
                                         const unitCount = lvl.units.size;
@@ -1106,7 +1122,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                                 <option value="">{lang === 'zh' ? '选择课本' : 'Select Textbook'}</option>
                                                 {textbookLevelTree.map(tb => <option key={tb.name} value={tb.name}>{tb.name}</option>)}
                                             </select>
-                                            {assignTextbook && (() => {
+                                            {assignTextbook && assignTextbook !== 'Standalone' && (() => {
                                                 const tb = textbookLevelTree.find(t => t.name === assignTextbook);
                                                 if (!tb) return null;
                                                 const allUnits = new Set<number>();
@@ -1125,7 +1141,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                             })()}
                                             <button
                                                 onClick={handleBatchAssign}
-                                                disabled={!assignTextbook || assignUnit === null}
+                                                disabled={!assignTextbook || (assignTextbook !== 'Standalone' && assignUnit === null)}
                                                 className="px-4 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
                                             >
                                                 {lang === 'zh' ? '确认' : 'Confirm'}

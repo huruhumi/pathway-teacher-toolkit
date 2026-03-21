@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
+import StudentRadarCard from '../components/StudentRadarCard';
 import { useToast } from '@shared/stores/useToast';
 import * as edu from '@pathway/education';
 import type { Student, EduClass, StudentSubmissionView, BookLoan, ReadingLog } from '@pathway/education';
 import {
     Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw,
-    ChevronDown, ChevronUp, User, ClipboardList, Library, BookOpen,
-    Link as LinkIcon, Copy,
+    User, ClipboardList, Library, BookOpen,
+    Link as LinkIcon, Copy, BarChart3,
 } from 'lucide-react';
+import { TeacherSubmissionViewer } from '../components/TeacherSubmissionViewer';
 
 const AVATAR_COLORS = ['bg-amber-500', 'bg-teal-500', 'bg-violet-500', 'bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-indigo-500', 'bg-orange-500'];
 
@@ -20,7 +22,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 /* ── Student 360 Detail Panel ─────────────────────────── */
-type DetailTab = 'info' | 'assignments' | 'books' | 'reading';
+type DetailTab = 'info' | 'assignments' | 'books' | 'reading' | 'diagnostics';
 
 const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; studentClassIds: string[]; lang: string }> = ({ student, classes, studentClassIds, lang }) => {
     const [tab, setTab] = useState<DetailTab>('info');
@@ -48,6 +50,7 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
         { key: 'assignments' as DetailTab, label: lang === 'zh' ? '作业' : 'Assignments', icon: <ClipboardList size={13} />, count: submissions.length },
         { key: 'books' as DetailTab, label: lang === 'zh' ? '借书' : 'Books', icon: <Library size={13} />, count: loans.length },
         { key: 'reading' as DetailTab, label: lang === 'zh' ? '阅读日志' : 'Reading', icon: <BookOpen size={13} />, count: logs.length },
+        { key: 'diagnostics' as DetailTab, label: lang === 'zh' ? '学情诊断' : 'Diagnostics', icon: <BarChart3 size={13} /> },
     ];
 
     const copyFormLink = () => {
@@ -58,12 +61,24 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
 
     const studentClasses = classes.filter(c => studentClassIds.includes(c.id));
 
+    const [viewingAssignment, setViewingAssignment] = useState<{ a: edu.Assignment, sub: edu.Submission } | null>(null);
+
+    const handleSubmissionClick = async (s: StudentSubmissionView) => {
+        const a = await edu.fetchAssignmentById(s.assignment_id);
+        const sub = await edu.fetchSubmissionById(s.id);
+        if (a && sub) {
+            setViewingAssignment({ a, sub });
+        } else {
+            toast.error('Failed to load full assignment details.');
+        }
+    };
+
     return (
-        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50" onClick={e => e.stopPropagation()}>
             {/* Tab bar */}
-            <div className="flex gap-0.5 mb-3 overflow-x-auto">
+            <div className="flex gap-0.5 mb-3 overflow-x-auto" onClick={e => e.stopPropagation()}>
                 {tabs.map(t => (
-                    <button key={t.key} onClick={() => setTab(t.key)}
+                    <button key={t.key} onClick={(e) => { e.stopPropagation(); setTab(t.key); }}
                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${tab === t.key ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'text-slate-400 hover:text-slate-600'
                             }`}>
                         {t.icon} {t.label}{t.count !== undefined && t.count > 0 ? ` (${t.count})` : ''}
@@ -121,9 +136,9 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
                 <div className="space-y-1.5">
                     {submissions.length === 0 ? <div className="text-xs text-slate-400 py-2">{lang === 'zh' ? '暂无作业' : 'No assignments'}</div> : (
                         submissions.map(s => (
-                            <div key={s.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 text-xs">
+                            <div key={s.id} onClick={() => handleSubmissionClick(s)} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-slate-50 dark:bg-slate-700/30 hover:bg-white dark:hover:bg-slate-700 hover:border-slate-200 border border-transparent transition-colors text-xs cursor-pointer group">
                                 <StatusDot status={s.status} />
-                                <span className="flex-1 font-medium text-slate-700 dark:text-slate-200 truncate">{s.assignment_title}</span>
+                                <span className="flex-1 font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-amber-600 transition-colors">{s.assignment_title}</span>
                                 {s.score != null && <span className="font-bold text-amber-600">{s.score}</span>}
                                 {s.assignment_due_date && <span className="text-slate-400">{s.assignment_due_date}</span>}
                             </div>
@@ -169,6 +184,24 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
                         ))
                     )}
                 </div>
+            )}
+
+            {tab === 'diagnostics' && (
+                <StudentRadarCard studentId={student.id} studentName={student.name} teacherId={student.teacher_id} />
+            )}
+
+            {/* Viewer Modal */}
+            {viewingAssignment && (
+                <TeacherSubmissionViewer
+                    assignment={viewingAssignment.a}
+                    submission={viewingAssignment.sub}
+                    onClose={() => setViewingAssignment(null)}
+                    onSubmissionUpdated={async (updatedSub) => {
+                        // Refresh the submissions list summary immediately
+                        setSubmissions(prev => prev.map(s => s.id === updatedSub.id ? { ...s, score: updatedSub.score, status: updatedSub.status, teacher_notes: updatedSub.teacher_notes } : s));
+                        setViewingAssignment(prev => prev ? { ...prev, sub: updatedSub } : null);
+                    }}
+                />
             )}
         </div>
     );
@@ -284,10 +317,15 @@ const StudentListView: React.FC = () => {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="relative flex-1 sm:flex-initial">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('stu.search')}
-                        className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm" />
-                </div>
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                        autoFocus
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder={lang === 'zh' ? '搜索学生姓名/表里...' : 'Search name/phone...'}
+                        className="w-full pl-8 pr-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-700/50 border border-transparent focus:border-violet-500 rounded-lg outline-none"
+                        title="Search students"
+                    /></div>
                 <button onClick={() => setShowForm(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-600 shadow-md whitespace-nowrap">
                     <Plus size={16} /> {t('stu.addStudent')}
@@ -298,7 +336,7 @@ const StudentListView: React.FC = () => {
                 <form onSubmit={handleSave} className="bg-white dark:bg-slate-800 rounded-xl border border-amber-200 dark:border-amber-500/30 p-6 shadow-lg relative z-10">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-slate-800 dark:text-white">{editingId ? t('common.edit') : t('stu.addStudent')}</h3>
-                        <button type="button" onClick={resetForm} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+                        <button type="button" onClick={resetForm} className="text-slate-400 hover:text-slate-600" title={t('common.cancel')}><X size={18} /></button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div><label className="block text-sm font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('stu.name')}</label>
@@ -349,7 +387,7 @@ const StudentListView: React.FC = () => {
                         const stuClasses = studentClassMap[stu.id] || [];
                         const statusInfo = STATUS_BADGE[stu.status || 'active'];
                         return (
-                            <div key={stu.id} className={`bg-white dark:bg-slate-800 rounded-xl border p-4 transition-all ${isExpanded ? 'border-amber-300 dark:border-amber-500/50 shadow-lg col-span-1 sm:col-span-2 lg:col-span-3' : 'border-slate-200 dark:border-slate-700 hover:shadow-md'
+                            <div key={stu.id} onClick={() => setExpandedId(isExpanded ? null : stu.id)} className={`bg-white dark:bg-slate-800 rounded-xl border p-4 transition-all cursor-pointer ${isExpanded ? 'border-amber-300 dark:border-amber-500/50 shadow-lg col-span-1 sm:col-span-2 lg:col-span-3' : 'border-slate-200 dark:border-slate-700 hover:shadow-md hover:border-amber-200 dark:hover:border-amber-500/30'
                                 }`}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className={`w-10 h-10 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center text-white font-bold text-base flex-shrink-0`}>
@@ -363,12 +401,8 @@ const StudentListView: React.FC = () => {
                                         {lang === 'zh' ? statusInfo?.label : (stu.status || 'active')}
                                     </span>
                                     <div className="flex gap-0.5 flex-shrink-0">
-                                        <button onClick={() => setExpandedId(isExpanded ? null : stu.id)} title="Details"
-                                            className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10">
-                                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                        </button>
-                                        <button onClick={() => handleEdit(stu)} title="Edit" className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50"><Edit3 size={14} /></button>
-                                        <button onClick={() => handleDelete(stu.id)} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"><Trash2 size={14} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(stu); }} title="Edit" className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50"><Edit3 size={14} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(stu.id); }} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50"><Trash2 size={14} /></button>
                                     </div>
                                 </div>
 

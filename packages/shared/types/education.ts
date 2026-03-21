@@ -62,7 +62,7 @@ export interface ClassSession {
 export interface Attendance {
     session_id: string;
     student_id: string;
-    status: 'present' | 'absent' | 'late';
+    status: 'present' | 'absent' | 'late' | 'leave';
 }
 
 export interface Assignment {
@@ -71,7 +71,7 @@ export interface Assignment {
     class_id: string;
     title: string;
     description?: string;
-    content_type: 'worksheet' | 'companion' | 'custom';
+    content_type: 'worksheet' | 'companion' | 'custom' | 'assignment_sheet' | 'essay';
     content_data?: any;
     source_app?: string;
     source_lesson_id?: string;
@@ -83,12 +83,13 @@ export interface Submission {
     id: string;
     assignment_id: string;
     student_id: string;
-    status: 'pending' | 'submitted' | 'completed' | 'returned';
+    status: 'pending' | 'submitted' | 'completed' | 'returned' | 'incomplete';
     content?: any;
     submitted_at?: string;
     completed_at?: string;
     teacher_notes?: string;
     score?: number;
+    points_earned?: number;
 }
 
 export interface BookLoan {

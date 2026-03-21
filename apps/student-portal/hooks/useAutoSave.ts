@@ -27,13 +27,22 @@ export function useAutoSave(
         const json = JSON.stringify(answersRef.current);
         // Skip if nothing changed since last save
         if (json === prevAnswersJson.current) return;
-        prevAnswersJson.current = json;
+
         setIsSaving(true);
         try {
+            // Fetch existing submission to prevent overwriting data from other days/devices
+            const existing = await edu.fetchSubmissionById(submissionId);
+            const mergedContent = {
+                ...(typeof existing?.content === 'object' && existing.content !== null ? existing.content : {}),
+                ...answersRef.current
+            };
+
             await edu.upsertSubmission({
                 id: submissionId,
-                content: answersRef.current,
+                content: mergedContent,
             });
+
+            prevAnswersJson.current = json; // ONLY update ref if successful
             setLastSaved(new Date());
         } catch (err) {
             console.error('[useAutoSave] save failed:', err);

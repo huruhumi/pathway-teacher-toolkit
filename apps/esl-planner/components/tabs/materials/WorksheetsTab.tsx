@@ -59,7 +59,7 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
     regeneratingSectionId,
     selectedId, setSelectedId,
     isAssignOpen, setIsAssignOpen,
-    isAssigning, assignError, assignSuccess,
+    isAssigning,
     isGeneratingPassageId,
     generatingWsImageKey,
     isQuickGenerating,
@@ -566,17 +566,6 @@ export const WorksheetsTab: React.FC<WorksheetsTabProps> = React.memo(({
         assignmentType="worksheet"
         isSaving={isAssigning}
       />
-
-      {assignSuccess && (
-        <div className="fixed bottom-6 right-6 bg-emerald-50 text-emerald-600 border border-emerald-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
-          <Check className="w-4 h-4" /> {assignSuccess}
-        </div>
-      )}
-      {assignError && (
-        <div className="fixed bottom-6 right-6 bg-red-50 text-red-600 border border-red-200 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 animate-in slide-in-from-bottom">
-          <AlertCircle className="w-4 h-4" /> {assignError}
-        </div>
-      )}
     </div>
   );
 });

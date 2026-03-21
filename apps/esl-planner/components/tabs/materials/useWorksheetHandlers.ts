@@ -15,6 +15,7 @@ import { WorksheetLayoutActions } from './layouts';
 import { useLanguage } from '../../../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { handleError } from '@shared/services/logger';
+import { useToast } from '@shared/stores/useToast';
 import * as edu from '@pathway/education';
 
 interface UseWorksheetHandlersArgs {
@@ -367,17 +368,21 @@ export function useWorksheetHandlers({
                 const sids = clsStudents.map((cs) => cs.student_id);
                 await edu.createSubmissionsForClass(assignment.id, sids);
 
-                setAssignSuccess(t('assign.success') as string);
-                setTimeout(() => {
-                    setIsAssignOpen(false);
-                    setAssignSuccess('');
-                }, 2000);
+                setIsAssignOpen(false);
+                // setAssignSuccess(''); // Removed as per instruction
+                // setTimeout(() => { // Removed as per instruction
+                //     setIsAssignOpen(false);
+                //     setAssignSuccess('');
+                // }, 2000); // Removed as per instruction
+                useToast.getState().success(t('assign.success') as string);
             } else {
-                setAssignError(t('assign.error') as string);
+                // setAssignError(t('assign.error') as string); // Removed as per instruction
+                useToast.getState().error(t('assign.error') as string);
             }
         } catch (e: unknown) {
             console.error('Assignment failed:', e);
-            setAssignError(handleError(e, t('assign.error'), 'WorksheetsTab'));
+            // setAssignError(handleError(e, t('assign.error'), 'WorksheetsTab')); // Removed as per instruction
+            useToast.getState().error(t('assign.error') as string);
         } finally {
             setIsAssigning(false);
         }
