@@ -690,17 +690,12 @@ export async function lookupStudentByInviteCode(
     inviteCode: string,
 ): Promise<{ id: string; name: string; is_activated: boolean } | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb
-        .from('students')
-        .select('id, name, auth_user_id, username')
-        .eq('invite_code', inviteCode.toUpperCase().trim())
-        .single();
-    if (error || !data) return null;
-    return {
-        id: data.id,
-        name: data.name,
-        is_activated: !!data.auth_user_id,
-    };
+    const { data, error } = await sb.rpc('lookup_student_by_invite_code', {
+        p_code: inviteCode.toUpperCase().trim(),
+    });
+    if (error || !data || data.length === 0) return null;
+    const row = data[0];
+    return { id: row.id, name: row.name, is_activated: row.is_activated };
 }
 
 /**

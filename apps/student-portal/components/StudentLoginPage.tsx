@@ -61,12 +61,18 @@ const ActivateTab: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
 
     const handleVerify = async () => {
         setError(''); setLoading(true);
-        const found = await edu.lookupStudentByInviteCode(inviteCode);
-        setLoading(false);
-        if (!found) return setError('邀请码无效，请检查后重试');
-        if (found.is_activated) return setError('该邀请码已激活，请直接登录');
-        setStudentName(found.name);
-        setStep('form');
+        try {
+            const found = await edu.lookupStudentByInviteCode(inviteCode);
+            if (!found) return setError('邀请码无效，请检查后重试');
+            if (found.is_activated) return setError('该邀请码已激活，请直接登录');
+            setStudentName(found.name);
+            setStep('form');
+        } catch (e) {
+            console.error('[lookupStudentByInviteCode]', e);
+            setError('网络错误，请稍后重试');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleActivate = async () => {
@@ -198,8 +204,8 @@ export const StudentLoginPage: React.FC = () => {
                                 key={key}
                                 onClick={() => setTab(key)}
                                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all ${tab === key
-                                        ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
                             >
                                 <Icon size={14} />
