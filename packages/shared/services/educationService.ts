@@ -680,3 +680,119 @@ export async function getStudentDiagnostics(studentId: string, teacherId: string
     };
 }
 
+// ====== STUDENT SELF-SERVICE AUTH ======
+
+/**
+ * Look up a student by invite code to verify identity before activation.
+ * Returns the student's display name so we can show a welcome message.
+ */
+export async function lookupStudentByInviteCode(
+    inviteCode: string,
+): Promise<{ id: string; name: string; is_activated: boolean } | null> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb
+        .from('students')
+        .select('id, name, auth_user_id, username')
+        .eq('invite_code', inviteCode.toUpperCase().trim())
+        .single();
+    if (error || !data) return null;
+    return {
+        id: data.id,
+        name: data.name,
+        is_activated: !!data.auth_user_id,
+    };
+}
+
+/**
+ * First-time account activation.
+ * Creates a Supabase Auth user, then links it to the student record.
+ * username is required; email is optional (can be added later).
+ */
+export async function activateStudentAccount(opts: {
+    inviteCode: string;
+    username: string;
+    password: string;
+    email?: string;
+}): Promise<{ success: boolean; error?: string }> {
+    const sb = ensureSupabase();
+
+    // 1. Verify invite code and check not already activated
+    const student = await lookupStudentByInviteCode(opts.inviteCode);
+    if (!student) return { success: false, error: 'invite_code_invalid' };
+    if (student.is_activated) return { success: false, error: 'already_activated' };
+
+    // 2. Check username uniqueness
+    const { data: existing } = await sb
+        .from('students')
+        .select('id')
+        .eq('username', opts.username.toLowerCase().trim())
+        .single();
+    if (existing) return { success: false, error: 'username_taken' };
+
+    // 3. Build internal email: username@pathway.internal (or use real email if provided)
+    const authEmail = opts.email?.trim() ||
+        `${opts.username.toLowerCase().trim()}@pathway.internal`;
+
+    // 4. Create Supabase Auth user
+    const { data: authData, error: signUpErr } = await sb.auth.signUp({
+        email: authEmail,
+        password: opts.password,
+    });
+    if (signUpErr || !authData.user) {
+        return { success: false, error: signUpErr?.message || 'signup_failed' };
+    }
+
+    // 5. Link auth_user_id back to students table
+    const { error: updateErr } = await sb
+        .from('students')
+        .update({
+            auth_user_id: authData.user.id,
+            username: opts.username.toLowerCase().trim(),
+            ...(opts.email ? { email: opts.email.trim().toLowerCase() } : {}),
+        })
+        .eq('id', student.id);
+
+    if (updateErr) {
+        console.error('[edu] activateStudentAccount update:', updateErr.message);
+        return { success: false, error: 'link_failed' };
+    }
+
+    return { success: true };
+}
+
+/**
+ * Login with username or email + password.
+ * Auto-detects if input is an email (contains '@') or username.
+ */
+export async function loginStudent(opts: {
+    usernameOrEmail: string;
+    password: string;
+}): Promise<{ success: boolean; error?: string }> {
+    const sb = ensureSupabase();
+    const input = opts.usernameOrEmail.trim().toLowerCase();
+    const isEmail = input.includes('@') && !input.endsWith('@pathway.internal');
+
+    let authEmail: string;
+
+    if (isEmail) {
+        // Direct email login
+        authEmail = input;
+    } else {
+        // Username → resolve to internal email
+        const { data: student } = await sb
+            .from('students')
+            .select('username')
+            .eq('username', input)
+            .single();
+        if (!student) return { success: false, error: 'user_not_found' };
+        authEmail = `${input}@pathway.internal`;
+    }
+
+    const { error } = await sb.auth.signInWithPassword({
+        email: authEmail,
+        password: opts.password,
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+}

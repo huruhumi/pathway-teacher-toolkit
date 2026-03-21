@@ -15,6 +15,7 @@ import { CoinAnimation } from './components/CoinAnimation';
 import { UpNextWidget } from './components/UpNextWidget';
 import { EmptyState } from './components/EmptyState';
 import { RewardCenter } from './components/RewardCenter';
+import { StudentLoginPage } from './components/StudentLoginPage';
 
 type View = 'assignments' | 'schedule' | 'reading';
 
@@ -262,7 +263,7 @@ const ScheduleView: React.FC = () => {
     const [selectedStep, setSelectedStep] = useState<number>(0);
 
     const fetchData = async () => {
-        if (!authUserId) return;
+        if (!authUserId) { setLoading(false); return; }
         setLoading(true);
         try {
             const profile = await edu.fetchStudentProfile(authUserId);
@@ -530,10 +531,16 @@ const AppContent: React.FC = () => {
     );
 };
 
-export const App: React.FC = () => {
-    return (
-        <LanguageProvider>
-            <AppContent />
-        </LanguageProvider>
-    );
+/** Guards standalone student portal — shows login page if unauthenticated */
+const AuthGate: React.FC = () => {
+    const isStandalone = import.meta.env.BASE_URL === '/';
+    const { isInitialized, user } = useAuthStore();
+    if (isStandalone && isInitialized && !user) return <StudentLoginPage />;
+    return <AppContent />;
 };
+
+export const App: React.FC = () => (
+    <LanguageProvider>
+        <AuthGate />
+    </LanguageProvider>
+);
