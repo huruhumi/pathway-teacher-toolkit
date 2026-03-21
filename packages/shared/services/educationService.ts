@@ -791,3 +791,28 @@ export async function loginStudent(opts: {
     if (error) return { success: false, error: error.message };
     return { success: true };
 }
+
+/**
+ * Update student's own profile fields after activation.
+ * Only self-service fields are accepted; teacher-only fields are excluded.
+ * RLS policy "Students update own profile" allows this.
+ */
+export async function updateStudentProfile(
+    studentId: string,
+    patch: {
+        english_name?: string;
+        date_of_birth?: string;
+        gender?: string;
+        parent_name?: string;
+        parent_wechat?: string;
+        parent_phone?: string;
+        health_notes?: string;
+        interests?: string[];
+    }
+): Promise<boolean> {
+    const sb = ensureSupabase();
+    const { error } = await sb.from('students').update(patch).eq('id', studentId);
+    if (error) { console.error('[edu] updateStudentProfile:', error.message); return false; }
+    return true;
+}
+
