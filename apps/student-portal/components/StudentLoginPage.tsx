@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KeyRound, UserPlus, LogIn, Eye, EyeOff, CheckCircle2, Loader2, AlertCircle, User, ArrowRight, SkipForward } from 'lucide-react';
 import * as edu from '@pathway/education';
 
@@ -66,6 +66,7 @@ interface ProfileStepProps {
     onDone: () => void;
 }
 export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName, onDone }) => {
+    const [chineseName, setChineseName] = useState(studentName || '');
     const [englishName, setEnglishName] = useState('');
     const [dob, setDob] = useState('');
     const [gender, setGender] = useState('');
@@ -76,10 +77,30 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    useEffect(() => {
+        let active = true;
+        setLoading(true);
+        edu.getStudentById(studentId).then(data => {
+            if (active && data) {
+                if (data.name) setChineseName(data.name);
+                if (data.english_name) setEnglishName(data.english_name);
+                if (data.date_of_birth) setDob(data.date_of_birth);
+                if (data.gender) setGender(data.gender);
+                if (data.parent_name) setParentName(data.parent_name);
+                if (data.parent_wechat) setParentWechat(data.parent_wechat);
+                if (data.parent_phone) setParentPhone(data.parent_phone);
+                if (data.health_notes) setHealthNotes(data.health_notes);
+            }
+            if (active) setLoading(false);
+        });
+        return () => { active = false; };
+    }, [studentId]);
+
     const handleSave = async () => {
         setError('');
 
         // Validation
+        if (!chineseName.trim()) return setError('请填写姓名 (中文)');
         if (!englishName.trim()) return setError('请填写英文名');
         if (!dob) return setError('请选择出生日期');
         if (!gender) return setError('请选择性别');
@@ -89,6 +110,7 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
         setLoading(true);
         try {
             const ok = await edu.updateStudentProfile(studentId, {
+                name: chineseName.trim(),
                 english_name: englishName.trim(),
                 date_of_birth: dob,
                 gender,
@@ -114,16 +136,20 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+                <Field label="姓名 (中文) *" type="text" placeholder="真实姓名"
+                    value={chineseName} onChange={e => setChineseName(e.target.value)} />
                 <Field label="英文名 *" type="text" placeholder="English Name"
                     value={englishName} onChange={e => setEnglishName(e.target.value)} />
-                <Field label="出生日期 *" type="date"
-                    value={dob} onChange={e => setDob(e.target.value)} />
             </div>
 
-            <SelectField label="性别 *" value={gender} onChange={setGender}
-                options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }, { value: 'other', label: '其他' }]} />
+            <div className="grid grid-cols-2 gap-3 border-b border-slate-100 dark:border-white/10 pb-3">
+                <Field label="出生日期 *" type="date"
+                    value={dob} onChange={e => setDob(e.target.value)} />
+                <SelectField label="性别 *" value={gender} onChange={setGender}
+                    options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }, { value: 'other', label: '其他' }]} />
+            </div>
 
-            <div className="border-t border-slate-100 dark:border-white/10 pt-3">
+            <div className="pt-1">
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">家长信息</p>
                 <div className="flex flex-col gap-3">
                     <Field label="家长姓名 *" type="text" placeholder="家长/监护人姓名"

@@ -72,9 +72,27 @@ export async function upsertStudent(student: Partial<Student> & { teacher_id: st
 
 export async function fetchStudentProfile(authUserId: string): Promise<Student | null> {
     const sb = ensureSupabase();
-    const { data, error } = await sb.from('students').select('*').eq('auth_user_id', authUserId).single();
+    const { data, error } = await sb
+        .from('students')
+        .select('*')
+        .eq('auth_user_id', authUserId)
+        .single();
     if (error) { console.error('[edu] fetchStudentProfile:', error.message); return null; }
-    return data;
+    return data as Student;
+}
+
+/**
+ * Fetch a student's profile by their student UUID.
+ */
+export async function getStudentById(studentId: string): Promise<Student | null> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb
+        .from('students')
+        .select('*')
+        .eq('id', studentId)
+        .single();
+    if (error) { console.error('[edu] getStudentById:', error.message); return null; }
+    return data as Student;
 }
 
 export async function deleteStudent(id: string): Promise<void> {
@@ -800,6 +818,7 @@ export async function loginStudent(opts: {
 export async function updateStudentProfile(
     studentId: string,
     patch: {
+        name?: string;
         english_name?: string;
         date_of_birth?: string;
         gender?: string;
