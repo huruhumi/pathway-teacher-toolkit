@@ -65,7 +65,7 @@ interface ProfileStepProps {
     studentName: string;
     onDone: () => void;
 }
-const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName, onDone }) => {
+export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName, onDone }) => {
     const [englishName, setEnglishName] = useState('');
     const [dob, setDob] = useState('');
     const [gender, setGender] = useState('');
@@ -192,26 +192,16 @@ const ActivateTab: React.FC = () => {
                 email: email || undefined,
             });
             if (!res.success) return setError(te(res.error ?? ''));
-            // Move to profile step
-            setStep('profile');
+            // Store student ID so AppContent can show profile setup overlay
+            // after signUp fires onAuthStateChange and replaces this page
+            sessionStorage.setItem('pathway_needs_profile', studentId);
+            // signUp already triggered onAuthStateChange → AppContent takes over
+        } catch {
+            setError('激活失败，请稍后重试');
         } finally {
             setLoading(false);
         }
     };
-
-    // Profile step fills in basic info, then onDone signs in automatically
-    if (step === 'profile') {
-        return (
-            <ProfileStep
-                studentId={studentId}
-                studentName={studentName}
-                onDone={async () => {
-                    // Auto-login after profile save
-                    await edu.loginStudent({ usernameOrEmail: username, password });
-                }}
-            />
-        );
-    }
 
     return (
         <div className="flex flex-col gap-4 animate-fade-in">
@@ -315,8 +305,8 @@ export const StudentLoginPage: React.FC = () => {
                         {([['login', '登录', LogIn], ['activate', '首次激活', UserPlus]] as const).map(([key, label, Icon]) => (
                             <button key={key} onClick={() => setTab(key)}
                                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-semibold transition-all ${tab === key
-                                        ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}>
                                 <Icon size={14} />
                                 {label}

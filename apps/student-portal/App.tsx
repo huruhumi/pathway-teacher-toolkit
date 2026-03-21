@@ -15,7 +15,7 @@ import { CoinAnimation } from './components/CoinAnimation';
 import { UpNextWidget } from './components/UpNextWidget';
 import { EmptyState } from './components/EmptyState';
 import { RewardCenter } from './components/RewardCenter';
-import { StudentLoginPage } from './components/StudentLoginPage';
+import { StudentLoginPage, ProfileStep } from './components/StudentLoginPage';
 
 type View = 'assignments' | 'schedule' | 'reading';
 
@@ -461,6 +461,10 @@ const AppContent: React.FC = () => {
     const [pointsBalance, setPointsBalance] = useState<number | undefined>();
     const [studentId, setStudentId] = useState<string>('');
     const [isRewardCenterOpen, setIsRewardCenterOpen] = useState(false);
+    // After activation: show profile setup overlay
+    const [profileSetupStudentId, setProfileSetupStudentId] = useState<string | null>(
+        () => sessionStorage.getItem('pathway_needs_profile')
+    );
 
     // Fetch student profile and real token balance
     useEffect(() => {
@@ -477,6 +481,26 @@ const AppContent: React.FC = () => {
     const Wrapper = isStandalone
         ? ({ children }: { children: React.ReactNode }) => <>{children}</>
         : ({ children }: { children: React.ReactNode }) => <AppLayout currentApp="student-portal" userName="Student">{children}</AppLayout>;
+
+    // When profile setup overlay is needed
+    if (profileSetupStudentId) {
+        const dismissProfile = () => {
+            sessionStorage.removeItem('pathway_needs_profile');
+            setProfileSetupStudentId(null);
+        };
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-white/10 p-6">
+                    <p className="text-xs font-bold tracking-widest text-sky-500 uppercase mb-4 text-center">Pathway Academy · 学生平台</p>
+                    <ProfileStep
+                        studentId={profileSetupStudentId}
+                        studentName=""
+                        onDone={dismissProfile}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ErrorBoundary>
