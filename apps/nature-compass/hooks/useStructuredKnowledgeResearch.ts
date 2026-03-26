@@ -72,6 +72,8 @@ export function useStructuredKnowledgeResearch(
         const searchedResults = await batchResearch(
           uncachedTopics.map((t) => t.topic),
           (completed, total) => setProgress({ completed, total }),
+          undefined,
+          structure,
         );
 
         indexedSearchResults = searchedResults.map((result, si) => {

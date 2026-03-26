@@ -20,13 +20,18 @@ interface CurriculumResultDisplayProps {
     onBack: () => void;
     onNew: () => void;
     onSave?: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void;
-    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => void;
+    onGenerateKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh', weather: 'Sunny' | 'Rainy') => void;
     // Batch generate
     batchStatus?: Record<number, BatchItemStatus>;
     batchLessonMap?: Record<number, string>;
     batchRunning?: boolean;
     batchProgress?: { done: number; total: number; errors: number };
-    onBatchGenerate?: (lessons: CurriculumLesson[], params: CurriculumParams, language: 'en' | 'zh') => void;
+    onBatchGenerate?: (
+        lessons: CurriculumLesson[],
+        params: CurriculumParams,
+        language: 'en' | 'zh',
+        weatherByLessonIndex: Record<number, 'Sunny' | 'Rainy'>,
+    ) => void;
     onCancelBatch?: () => void;
     onOpenPlan?: (savedId: string) => void;
     onCurriculumUpdate?: (curriculum: Curriculum, language: 'en' | 'zh') => void;
@@ -115,7 +120,14 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                             </>
                         ) : (
                             <button
-                                onClick={() => onBatchGenerate(curriculum.lessons, savedParams!, activeLanguage)}
+                                onClick={() => onBatchGenerate(
+                                    curriculum.lessons,
+                                    savedParams!,
+                                    activeLanguage,
+                                    Object.fromEntries(
+                                        curriculum.lessons.map((_, idx) => [idx, (activityTab[idx] || 'outdoor') === 'indoor' ? 'Rainy' : 'Sunny'])
+                                    ) as Record<number, 'Sunny' | 'Rainy'>,
+                                )}
                                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-semibold hover:from-emerald-600 hover:to-teal-600 shadow-sm transition-all"
                             >
                                 <Sparkles size={15} />
@@ -312,7 +324,10 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                     </button>
                                 ) : batchStatus[index] === 'error' ? (
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); onGenerateKit(lesson, savedParams!, activeLanguage); }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onGenerateKit(lesson, savedParams!, activeLanguage, (activityTab[index] || 'outdoor') === 'indoor' ? 'Rainy' : 'Sunny');
+                                        }}
                                         className="w-full mt-2 py-3 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <FileText size={18} />
@@ -321,7 +336,10 @@ export const CurriculumResultDisplay: React.FC<CurriculumResultDisplayProps> = (
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); onGenerateKit(lesson, savedParams!, activeLanguage); }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onGenerateKit(lesson, savedParams!, activeLanguage, (activityTab[index] || 'outdoor') === 'indoor' ? 'Rainy' : 'Sunny');
+                                        }}
                                         className="w-full mt-2 py-3 bg-slate-50 text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-white/10 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <FileText size={18} />

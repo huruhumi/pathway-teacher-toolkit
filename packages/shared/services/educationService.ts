@@ -776,6 +776,12 @@ export async function activateStudentAccount(opts: {
 /**
  * Login with username or email + password.
  * Auto-detects if input is an email (contains '@') or username.
+ *
+ * FIX (2026-03-22): Username login used to always reconstruct
+ * username@pathway.internal, which breaks permanently after the
+ * student binds a real email (Supabase auth.users email changes).
+ * Now we first look up students.email; only fall back to the
+ * internal suffix when no real email has been bound yet.
  */
 export async function loginStudent(opts: {
     usernameOrEmail: string;
@@ -791,14 +797,15 @@ export async function loginStudent(opts: {
         // Direct email login
         authEmail = input;
     } else {
-        // Username → resolve to internal email
+        // Username → look up students table for the current auth email
         const { data: student } = await sb
             .from('students')
-            .select('username')
+            .select('username, email')
             .eq('username', input)
             .single();
         if (!student) return { success: false, error: 'user_not_found' };
-        authEmail = `${input}@pathway.internal`;
+        // Prefer the real bound email; fall back to internal synthetic email
+        authEmail = student.email?.trim() || `${student.username}@pathway.internal`;
     }
 
     const { error } = await sb.auth.signInWithPassword({
@@ -806,8 +813,86 @@ export async function loginStudent(opts: {
         password: opts.password,
     });
 
+    if (error) {
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}
+
+/**
+ * Teacher resets student password securely via RPC
+ */
+export async function resetStudentPassword(
+    teacherId: string,
+    studentId: string,
+    newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+    const sb = ensureSupabase();
+    const { error } = await sb.rpc('reset_student_password', {
+        p_teacher_id: teacherId,
+        p_student_id: studentId,
+        p_new_password: newPassword,
+    });
+    if (error) {
+        console.error('[edu] resetStudentPassword:', error.message);
+        return { success: false, error: error.message };
+    }
+    return { success: true };
+}
+
+/**
+ * Send password reset email (Student self-service recovery)
+ */
+export async function sendPasswordResetEmail(
+    email: string
+): Promise<{ success: boolean; error?: string }> {
+    const sb = ensureSupabase();
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/student-portal`,
+    });
     if (error) return { success: false, error: error.message };
     return { success: true };
+}
+
+/**
+ * Student updates their own password (requires active session).
+ */
+export async function updateStudentPassword(
+    newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+    const sb = ensureSupabase();
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+}
+
+/**
+ * Student binds / updates their real email address.
+ * IMPORTANT: Supabase will send a confirmation link to the new address.
+ * We also write-back to students.email so username-login continues
+ * to work correctly after the email change is confirmed.
+ */
+export async function updateStudentEmail(
+    studentId: string,
+    newEmail: string
+): Promise<{ success: boolean; error?: string; needsConfirmation?: boolean }> {
+    const sb = ensureSupabase();
+
+    // 1. Kick off the Supabase Auth email-change flow (sends confirmation link)
+    const { error: authErr } = await sb.auth.updateUser({ email: newEmail });
+    if (authErr) return { success: false, error: authErr.message };
+
+    // 2. Eagerly write the new email to students.email so username login
+    //    still works even before the confirmation is clicked.
+    //    The teacher-visible display email also stays current.
+    const { error: dbErr } = await sb
+        .from('students')
+        .update({ email: newEmail.trim().toLowerCase() })
+        .eq('id', studentId);
+    if (dbErr) console.error('[edu] updateStudentEmail db write:', dbErr.message);
+
+    return { success: true, needsConfirmation: true };
 }
 
 /**

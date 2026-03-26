@@ -5,6 +5,7 @@ const {
     parsePositiveIntEnv,
     readAppSelection,
     spawnWorkspaceTask,
+    spawnNodeScript,
     runMain,
 } = require('./app-task-runner');
 const { createScriptLogger } = require('./script-logger');
@@ -52,6 +53,7 @@ const readyMarkers = parseReadyMarkers(process.env.DEV_READY_MARKERS, SCRIPT_DEF
 const isReadyOutput = createReadinessDetector({ markers: readyMarkers });
 
 const LANDING_COLOR = '\x1b[95m';
+const NLM_PROXY_COLOR = '\x1b[93m';
 const LANDING_PORT = SCRIPT_DEFAULTS.dev.landingPort;
 const MAX_WAIT_MS = SCRIPT_DEFAULTS.dev.startupWaitMs;
 
@@ -101,6 +103,59 @@ function startApp(app) {
     });
 }
 
+function shouldStartNlmProxy() {
+    const raw = String(process.env.DEV_NLM_PROXY ?? '1').trim().toLowerCase();
+    return raw !== '0' && raw !== 'false' && raw !== 'off';
+}
+
+function attachProxyLogs(proxy) {
+    proxy.stdout?.on('data', (chunk) => {
+        const message = String(chunk || '').trim();
+        if (!message) return;
+        logWithColoredTag({
+            color: NLM_PROXY_COLOR,
+            name: 'nlm-proxy',
+            message,
+        });
+    });
+    proxy.stderr?.on('data', (chunk) => {
+        const message = String(chunk || '').trim();
+        if (!message) return;
+        logErrorWithColoredTag({
+            color: NLM_PROXY_COLOR,
+            name: 'nlm-proxy',
+            suffix: ' ERR',
+            message,
+        });
+    });
+}
+
+function startNlmProxy() {
+    if (!shouldStartNlmProxy()) {
+        printSection('Skipping [nlm-proxy] (DEV_NLM_PROXY=0)');
+        return null;
+    }
+
+    printSection('Starting [nlm-proxy]...');
+    const proxy = spawnNodeScript({
+        scriptPath: 'scripts/nlm-proxy.mjs',
+        stdio: 'pipe',
+        cwd: ROOT,
+        env: process.env,
+    });
+
+    attachProxyLogs(proxy);
+    proxy.on('error', (err) => {
+        logErrorWithColoredTag({
+            color: NLM_PROXY_COLOR,
+            name: 'nlm-proxy',
+            suffix: ' ERR',
+            message: `failed to start: ${err.message}`,
+        });
+    });
+    return proxy;
+}
+
 async function main() {
     printSection(`Starting landing page + ${filteredApps.length} dev servers sequentially (${maxOldSpace}MB each)\n`);
     log.info(`Ready markers: ${readyMarkers.join(' | ')}`);
@@ -108,6 +163,8 @@ async function main() {
 
     const landingServer = await startLandingServer();
     const procs = [];
+    const proxy = startNlmProxy();
+    if (proxy) procs.push(proxy);
 
     for (const app of filteredApps) {
         printSection(`Starting [${app.name}]...`);

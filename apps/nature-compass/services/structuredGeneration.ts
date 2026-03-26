@@ -1,8 +1,12 @@
 import type { LessonInput, LessonPlanResponse, StructuredKnowledge } from '../types';
-import { generateStructuredPlan, generateStructuredHandbook } from './structuredHandbookService';
+import { generateStructuredPlan } from './structuredHandbookService';
 
 export type StructuredGenerationStage = 'plan' | 'handbook';
 
+/**
+ * Phase 1 only — generates the structured plan (roadmap, basicInfo, etc.)
+ * Handbook generation is deferred to Phase 2 via the UI trigger.
+ */
 export async function generateStructuredLessonPlan(
   input: LessonInput,
   structure: string,
@@ -14,12 +18,18 @@ export async function generateStructuredLessonPlan(
   onStage?.('plan');
   const plan = await generateStructuredPlan(input, structure, knowledge, language, signal);
 
-  onStage?.('handbook');
-  const handbookResult = await generateStructuredHandbook(input, structure, knowledge, plan, language, signal);
-
+  // Phase 1 output — handbook will be generated in Phase 2
   return {
     ...plan,
-    ...handbookResult,
-    handbookStructurePlan: `Structured mode: ${handbookResult.handbook?.length || 0} pages from custom outline`,
+    generationPhase: 'roadmap_only',
+    handbook: [],
+    supplies: plan.supplies || { permanent: [], consumables: [] },
+    imagePrompts: [],
+    notebookLMPrompt: '',
+    handbookStylePrompt: '',
+    handbookStructurePlan: `Structured mode: custom outline provided, handbook pages pending Phase 2 generation`,
   };
 }
+
+// Re-export generateStructuredHandbook for Phase 2 callers
+export { generateStructuredHandbook } from './structuredHandbookService';

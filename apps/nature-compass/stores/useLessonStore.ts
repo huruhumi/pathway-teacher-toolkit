@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { LessonPlanResponse, RoadmapItem, SupplyList, VocabularyItem, VisualReferenceItem, HandbookPage } from '../types';
-import type { ThemePalette } from '../services/gemini/poster';
+import type { ThemePalette, SteamCopyStyleOption, SteamHighlight, SteamHookItem } from '../services/gemini/poster';
 import localforage from 'localforage';
 
 // Dedicated localforage instance for poster assets (survives refresh, large capacity)
@@ -53,6 +53,7 @@ export interface LessonStore {
     badgePrompt: string;
 
     // --- Poster ---
+    posterMode: 'handbook' | 'steam';
     posterType: 'cover' | 'intro' | 'showcase' | 'allpages';
     posterPlatform: 'wechat' | 'xhs';
     posterLanguage: 'en' | 'zh';
@@ -65,6 +66,19 @@ export interface LessonStore {
     loadingPosterImage: boolean;
     posterPrompt: string;
     themePalette: ThemePalette | null;
+    // STEAM poster
+    steamHighlights: SteamHighlight[];
+    steamGoal: string;
+    steamEnglishLine: string;
+    steamHooks: SteamHookItem[];
+    steamTimeText: string;
+    steamDateText: string;
+    steamAgeText: string;
+    steamHighlightsTitle: string;
+    steamHooksText: string;
+    steamCopyStyles: SteamCopyStyleOption[];
+    steamInfoLine: string;
+    loadingSteamHighlights: boolean;
 
     // --- Flashcard Assets ---
     generatedImages: Record<number, string>;
@@ -104,6 +118,7 @@ export interface LessonStore {
     setBadgePrompt: (p: string) => void;
 
     // Poster setters
+    setPosterMode: (m: 'handbook' | 'steam') => void;
     setPosterType: (t: 'cover' | 'intro' | 'showcase') => void;
     setPosterPlatform: (pf: 'wechat' | 'xhs') => void;
     setPosterLanguage: (l: 'en' | 'zh') => void;
@@ -115,6 +130,18 @@ export interface LessonStore {
     setLoadingPosterImage: (b: boolean) => void;
     setPosterPrompt: (p: string) => void;
     setThemePalette: (p: ThemePalette | null) => void;
+    setSteamHighlights: (h: SteamHighlight[]) => void;
+    setSteamGoal: (g: string) => void;
+    setSteamEnglishLine: (l: string) => void;
+    setSteamHooks: (h: SteamHookItem[]) => void;
+    setSteamTimeText: (t: string) => void;
+    setSteamDateText: (t: string) => void;
+    setSteamAgeText: (t: string) => void;
+    setSteamHighlightsTitle: (t: string) => void;
+    setSteamHooksText: (t: string) => void;
+    setSteamCopyStyles: (styles: SteamCopyStyleOption[]) => void;
+    setSteamInfoLine: (l: string) => void;
+    setLoadingSteamHighlights: (b: boolean) => void;
     setGeneratedImages: (imgs: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => void;
     setLoadingImages: (s: Set<number> | ((prev: Set<number>) => Set<number>)) => void;
     setArtStyles: (s: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => void;
@@ -157,6 +184,7 @@ export const useLessonStore = create<LessonStore>((set, get) => {
         loadingBadge: false,
         badgePrompt: '',
 
+        posterMode: (sessionStorage.getItem('nc_posterMode') as any) || 'handbook',
         posterType: (sessionStorage.getItem('nc_posterType') as any) || 'cover',
         posterPlatform: (sessionStorage.getItem('nc_posterPlatform') as any) || 'xhs',
         posterLanguage: 'zh',
@@ -169,6 +197,18 @@ export const useLessonStore = create<LessonStore>((set, get) => {
         loadingPosterImage: false,
         posterPrompt: sessionStorage.getItem('nc_posterPrompt') || '',
         themePalette: (() => { try { const s = sessionStorage.getItem('nc_themePalette'); return s ? JSON.parse(s) : null; } catch { return null; } })(),
+        steamHighlights: (() => { try { const s = sessionStorage.getItem('nc_steamHighlights'); return s ? JSON.parse(s) : []; } catch { return []; } })() as SteamHighlight[],
+        steamGoal: sessionStorage.getItem('nc_steamGoal') || '',
+        steamEnglishLine: sessionStorage.getItem('nc_steamEnglishLine') || '',
+        steamHooks: (() => { try { const s = sessionStorage.getItem('nc_steamHooks'); return s ? JSON.parse(s) : []; } catch { return []; } })() as SteamHookItem[],
+        steamTimeText: sessionStorage.getItem('nc_steamTimeText') || '',
+        steamDateText: sessionStorage.getItem('nc_steamDateText') || '',
+        steamAgeText: sessionStorage.getItem('nc_steamAgeText') || '',
+        steamHighlightsTitle: sessionStorage.getItem('nc_steamHighlightsTitle') || '活动亮点',
+        steamHooksText: sessionStorage.getItem('nc_steamHooksText') || '',
+        steamCopyStyles: (() => { try { const s = sessionStorage.getItem('nc_steamCopyStyles'); return s ? JSON.parse(s) : []; } catch { return []; } })() as SteamCopyStyleOption[],
+        steamInfoLine: sessionStorage.getItem('nc_steamInfoLine') || '',
+        loadingSteamHighlights: false,
         generatedImages: {},
         loadingImages: new Set(),
         artStyles: {},
@@ -203,6 +243,7 @@ export const useLessonStore = create<LessonStore>((set, get) => {
         setBadgePrompt: (p) => set({ badgePrompt: p }),
 
         // Poster Setters
+        setPosterMode: (m) => { sessionStorage.setItem('nc_posterMode', m); set({ posterMode: m }); },
         setPosterType: (t) => set({ posterType: t }),
         setPosterPlatform: (pf) => { sessionStorage.setItem('nc_posterPlatform', pf); set({ posterPlatform: pf }); },
         setPosterLanguage: (l) => set({ posterLanguage: l }),
@@ -231,6 +272,18 @@ export const useLessonStore = create<LessonStore>((set, get) => {
         setLoadingPosterImage: (b) => set({ loadingPosterImage: b }),
         setPosterPrompt: (p) => { sessionStorage.setItem('nc_posterPrompt', p); set({ posterPrompt: p }); },
         setThemePalette: (p) => { try { if (p) sessionStorage.setItem('nc_themePalette', JSON.stringify(p)); else sessionStorage.removeItem('nc_themePalette'); } catch { } set({ themePalette: p }); },
+        setSteamHighlights: (h) => { try { sessionStorage.setItem('nc_steamHighlights', JSON.stringify(h)); } catch { } set({ steamHighlights: h }); },
+        setSteamGoal: (g) => { sessionStorage.setItem('nc_steamGoal', g); set({ steamGoal: g }); },
+        setSteamEnglishLine: (l) => { sessionStorage.setItem('nc_steamEnglishLine', l); set({ steamEnglishLine: l }); },
+        setSteamHooks: (h) => { try { sessionStorage.setItem('nc_steamHooks', JSON.stringify(h)); } catch { } set({ steamHooks: h }); },
+        setSteamTimeText: (t) => { sessionStorage.setItem('nc_steamTimeText', t); set({ steamTimeText: t }); },
+        setSteamDateText: (t) => { sessionStorage.setItem('nc_steamDateText', t); set({ steamDateText: t }); },
+        setSteamAgeText: (t) => { sessionStorage.setItem('nc_steamAgeText', t); set({ steamAgeText: t }); },
+        setSteamHighlightsTitle: (t) => { sessionStorage.setItem('nc_steamHighlightsTitle', t); set({ steamHighlightsTitle: t }); },
+        setSteamHooksText: (t) => { sessionStorage.setItem('nc_steamHooksText', t); set({ steamHooksText: t }); },
+        setSteamCopyStyles: (styles) => { try { sessionStorage.setItem('nc_steamCopyStyles', JSON.stringify(styles)); } catch { } set({ steamCopyStyles: styles }); },
+        setSteamInfoLine: (l) => { sessionStorage.setItem('nc_steamInfoLine', l); set({ steamInfoLine: l }); },
+        setLoadingSteamHighlights: (b) => set({ loadingSteamHighlights: b }),
 
         setGeneratedImages: (imgs) => set((s) => {
             const next = resolveValue(imgs, s.generatedImages);
@@ -301,7 +354,7 @@ export const useLessonStore = create<LessonStore>((set, get) => {
             Object.values(s.generatedVisuals).forEach(url => { if (url.startsWith('blob:')) URL.revokeObjectURL(url); });
 
             // Clear poster storage so new lesson starts fresh
-            ['nc_posterCopy', 'nc_posterPrompt', 'nc_themePalette', PLAN_KEY].forEach(k => sessionStorage.removeItem(k));
+            ['nc_posterCopy', 'nc_posterPrompt', 'nc_themePalette', 'nc_steamHighlights', 'nc_steamGoal', 'nc_steamEnglishLine', 'nc_steamHooks', 'nc_steamTimeText', 'nc_steamDateText', 'nc_steamAgeText', 'nc_steamHighlightsTitle', 'nc_steamHooksText', 'nc_steamCopyStyles', 'nc_steamInfoLine', PLAN_KEY].forEach(k => sessionStorage.removeItem(k));
             posterDB.clear().catch(() => { });
 
             return {
@@ -320,6 +373,17 @@ export const useLessonStore = create<LessonStore>((set, get) => {
                 posterCopy: '',
                 posterPrompt: '',
                 themePalette: null,
+                steamHighlights: [],
+                steamGoal: '',
+                steamEnglishLine: '',
+                steamHooks: [],
+                steamTimeText: '',
+                steamDateText: '',
+                steamAgeText: '',
+                steamHighlightsTitle: '活动亮点',
+                steamHooksText: '',
+                steamCopyStyles: [],
+                steamInfoLine: '',
                 showcaseImages: [],
                 gridImages: [],
                 loadingPosterImage: false,

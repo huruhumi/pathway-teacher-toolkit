@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { KeyRound, UserPlus, LogIn, Eye, EyeOff, CheckCircle2, Loader2, AlertCircle, User, ArrowRight, SkipForward } from 'lucide-react';
 import * as edu from '@pathway/education';
 
-type Tab = 'login' | 'activate';
+type Tab = 'login' | 'activate' | 'forgot_password';
 type ActivateStep = 'code' | 'form' | 'profile';
 
 const ERROR_MSG: Record<string, string> = {
@@ -180,7 +180,7 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({ studentId, studentName
 };
 
 /* ─── Activate Tab ─────────────────────────────────────────────────────────── */
-const ActivateTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({ onToggle }) => {
+const ActivateTab: React.FC<{ onToggle: (tab: Tab) => void }> = ({ onToggle }) => {
     const [step, setStep] = useState<ActivateStep>('code');
     const [inviteCode, setInviteCode] = useState('');
     const [studentName, setStudentName] = useState('');
@@ -293,7 +293,7 @@ const ActivateTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> =
 };
 
 /* ─── Login Tab ────────────────────────────────────────────────────────────── */
-const LoginTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({ onToggle }) => {
+const LoginTab: React.FC<{ onToggle: (tab: Tab) => void }> = ({ onToggle }) => {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -327,6 +327,12 @@ const LoginTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({
 
             {error && <p className="text-red-500 text-xs flex items-center gap-1.5"><AlertCircle size={14} />{error}</p>}
 
+            <div className="flex justify-end -mt-1 mb-2">
+                <button type="button" onClick={() => onToggle('forgot_password')} className="text-xs text-sky-500 hover:text-sky-600 font-medium">
+                    忘记密码？
+                </button>
+            </div>
+
             <button type="submit" disabled={loading || !identifier || !password}
                 className="w-full mt-2 py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-500 text-white font-bold tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-sky-400/30">
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <LogIn size={18} />}
@@ -336,6 +342,67 @@ const LoginTab: React.FC<{ onToggle: (tab: 'login' | 'activate') => void }> = ({
             <div className="mt-4 text-center">
                 <button type="button" onClick={() => onToggle('activate')} className="text-xs text-slate-400 font-medium hover:text-sky-500 transition-colors">
                     新同学？点击使用邀请码激活账号
+                </button>
+            </div>
+        </form>
+    );
+};
+
+/* ─── Forgot Password Tab ────────────────────────────────────────────────────────────── */
+const ForgotPasswordTab: React.FC<{ onToggle: (tab: Tab) => void }> = ({ onToggle }) => {
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+
+    const handleSend = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(''); setLoading(true); setSuccess(false);
+        const res = await edu.sendPasswordResetEmail(email.trim());
+        setLoading(false);
+        if (!res.success) {
+            setError(te(res.error ?? ''));
+        } else {
+            setSuccess(true);
+        }
+    };
+
+    if (success) {
+        return (
+            <div className="flex flex-col gap-4 text-center py-4">
+                <div className="mx-auto w-12 h-12 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+                    <CheckCircle2 size={24} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">邮件已发送</h3>
+                <p className="text-sm text-slate-500 mb-4">请检查你的邮箱（包括垃圾邮件），点击邮件中的链接重置密码。</p>
+                <button type="button" onClick={() => onToggle('login')} className="text-sm text-sky-500 hover:text-sky-600 font-medium">
+                    返回登录
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSend} className="flex flex-col gap-4">
+            <h3 className="font-bold text-slate-800 dark:text-white mb-2">找回密码</h3>
+            <p className="text-xs text-slate-500 -mt-2 mb-2">如果你之前绑定过邮箱，请输入你的邮箱地址。我们将发送一封密码重置邮件给你。</p>
+            <Field
+                label="绑定的邮箱"
+                type="email"
+                placeholder="example@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+            />
+            {error && <p className="text-red-500 text-xs flex items-center gap-1.5"><AlertCircle size={14} />{error}</p>}
+
+            <button type="submit" disabled={loading || !email.includes('@')}
+                className="w-full mt-2 py-3.5 rounded-2xl bg-sky-400 hover:bg-sky-500 text-white font-bold tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg shadow-sky-400/30">
+                {loading ? <Loader2 size={18} className="animate-spin" /> : '发送重置邮件'}
+            </button>
+
+            <div className="mt-4 text-center">
+                <button type="button" onClick={() => onToggle('login')} className="text-xs text-slate-400 font-medium hover:text-sky-500 transition-colors">
+                    返回登录
                 </button>
             </div>
         </form>
@@ -362,8 +429,12 @@ export const StudentLoginPage: React.FC = () => {
                 </div>
 
                 {/* Card */}
-                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-white/10 p-6">
-                    {activeTab === 'login' ? <LoginTab onToggle={setActiveTab} /> : <ActivateTab onToggle={setActiveTab} />}
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 dark:border-white/10 p-6 overflow-hidden">
+                    <div className="transition-all duration-300">
+                        {activeTab === 'login' && <LoginTab onToggle={setActiveTab} />}
+                        {activeTab === 'activate' && <ActivateTab onToggle={setActiveTab} />}
+                        {activeTab === 'forgot_password' && <ForgotPasswordTab onToggle={setActiveTab} />}
+                    </div>
                 </div>
 
                 <p className="text-center text-[10px] text-slate-400 mt-6">没有邀请码？请联系你的老师</p>

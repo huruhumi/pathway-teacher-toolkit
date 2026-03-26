@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
+import { supabase, isSupabaseEnabled, scrubInvalidSupabaseAuthCache } from '../services/supabaseClient';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthStore {
@@ -15,6 +15,11 @@ interface AuthStore {
     signOut: () => Promise<void>;
     updateDisplayName: (name: string) => Promise<{ error?: string }>;
 }
+
+const isJsonParseAuthError = (message?: string): boolean => {
+    const msg = (message || '').toLowerCase();
+    return msg.includes('unexpected end of json input') || msg.includes('json');
+};
 
 /** Check URL for cross-port auth tokens (landing page SSO) */
 function consumeUrlTokens(): { access_token: string; refresh_token: string } | null {
@@ -94,11 +99,26 @@ export const useAuthStore = create<AuthStore>((set, get) => {
         signIn: async (email: string, password: string) => {
             if (!supabase) return { error: 'Supabase not configured' };
             set({ isAuthLoading: true });
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            set({ isAuthLoading: false });
-            if (error) return { error: error.message };
-            set({ user: data.user, session: data.session });
-            return {};
+            try {
+                let result = await supabase.auth.signInWithPassword({ email, password });
+                if (result.error && isJsonParseAuthError(result.error.message)) {
+                    // Local cached auth token may be malformed; scrub and retry once.
+                    scrubInvalidSupabaseAuthCache();
+                    result = await supabase.auth.signInWithPassword({ email, password });
+                }
+                if (result.error) return { error: result.error.message };
+                set({ user: result.data.user, session: result.data.session });
+                return {};
+            } catch (err: any) {
+                const msg = err?.message || String(err);
+                if (isJsonParseAuthError(msg)) {
+                    scrubInvalidSupabaseAuthCache();
+                    return { error: 'Local auth cache was corrupted. It has been reset, please try signing in again.' };
+                }
+                return { error: msg };
+            } finally {
+                set({ isAuthLoading: false });
+            }
         },
 
         signUp: async (email: string, password: string, username?: string) => {

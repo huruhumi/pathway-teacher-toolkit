@@ -15,7 +15,15 @@ export const LessonKitPage: React.FC<LessonKitPageProps> = ({ onSavePlan }) => {
   const { lang } = useLanguage();
   const { input, setInput, setCurrentPlanId, currentKitLanguage } = useAppStore();
   const { lessonPlan, setLessonPlan } = useSessionStore();
-  const { isLoading, error, handleSubmit, handleStop } = useLessonKitGeneration({
+  const {
+    isLoading,
+    error,
+    factSheetDecision,
+    handleSubmit,
+    handleStop,
+    handleContinueWithoutFactSheet,
+    handleUseFallbackFactSheet,
+  } = useLessonKitGeneration({
     input,
     currentKitLanguage,
     setInput,
@@ -28,6 +36,33 @@ export const LessonKitPage: React.FC<LessonKitPageProps> = ({ onSavePlan }) => {
       {!lessonPlan ? (
         <div className="w-full max-w-3xl mx-auto">
           <InputSection input={input} setInput={setInput} onSubmit={handleSubmit} onStop={handleStop} isLoading={isLoading} />
+          {factSheetDecision && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="text-amber-900 font-semibold mb-2">
+                {lang === 'zh' ? '知识底稿生成失败' : 'Fact sheet generation failed'}
+              </div>
+              <div className="text-sm text-amber-800 mb-4">
+                {factSheetDecision.reason}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleContinueWithoutFactSheet}
+                  className="px-4 py-2 rounded-lg bg-slate-700 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  {lang === 'zh' ? '继续（无知识底稿）' : 'Continue without fact sheet'}
+                </button>
+                <button
+                  onClick={() => void handleUseFallbackFactSheet()}
+                  disabled={factSheetDecision.isFallbackLoading}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:bg-emerald-300 transition-colors"
+                >
+                  {factSheetDecision.isFallbackLoading
+                    ? (lang === 'zh' ? '正在生成 fallback...' : 'Generating fallback...')
+                    : (lang === 'zh' ? '使用 fallback 知识底稿' : 'Use fallback fact sheet')}
+                </button>
+              </div>
+            </div>
+          )}
           {error && <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-center mt-6">{error}</div>}
         </div>
       ) : (

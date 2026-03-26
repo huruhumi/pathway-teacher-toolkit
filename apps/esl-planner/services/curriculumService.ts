@@ -47,6 +47,94 @@ interface CurriculumGroundingOptions {
     groundingSources?: Array<{ id?: string; title?: string; url?: string; status?: string; type?: string }>;
 }
 
+const TRAILBLAZER_LEVEL_PREFIX = 'trailblazer-';
+
+function parseDurationMinutes(duration: string): number {
+    const parsed = Number.parseInt(duration, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+}
+
+function isTrailblazerCurriculum(
+    params: CurriculumParams,
+    grounding: CurriculumGroundingOptions,
+    draft?: ESLCurriculum,
+): boolean {
+    const levelKey = (params.textbookLevelKey || '').trim().toLowerCase();
+    if (levelKey.startsWith(TRAILBLAZER_LEVEL_PREFIX)) return true;
+
+    const haystack = [
+        grounding.textbookLevelLabel,
+        grounding.groundingFactSheet,
+        draft?.seriesName,
+        draft?.textbookTitle,
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return /trailblazer/.test(haystack);
+}
+
+function applyTrailblazerUnitTemplate(
+    curriculum: ESLCurriculum,
+    params: CurriculumParams,
+): ESLCurriculum {
+    const durationMinutes = parseDurationMinutes(params.duration);
+    const maxVocab = durationMinutes <= 45 ? 6 : durationMinutes <= 60 ? 8 : durationMinutes <= 90 ? 10 : 12;
+    const maxObjectives = durationMinutes <= 45 ? 3 : durationMinutes <= 75 ? 4 : 5;
+
+    const lessons = (curriculum.lessons || []).map((lesson, index) => {
+        const unitNumber = Math.floor(index / 5) + 1;
+        const lessonInUnit = (index % 5) + 1;
+        const isReview = lessonInUnit === 5;
+        const trail = lessonInUnit <= 2 ? 'Trail 1' : lessonInUnit <= 4 ? 'Trail 2' : 'Review';
+        const trailPart = lessonInUnit <= 2 ? lessonInUnit : lessonInUnit <= 4 ? lessonInUnit - 2 : 0;
+        const cleanTitle = String(lesson.title || '').trim();
+        const reference = String(lesson.textbookReference || '').trim();
+        const titleNeedsTrail = !/trail\s*1|trail\s*2|review/i.test(cleanTitle);
+        const titleBase = cleanTitle || (isReview ? `Unit ${unitNumber} Review` : `${trail} Focus`);
+        const normalizedTitle = isReview
+            ? (/review/i.test(titleBase) ? titleBase : `Unit ${unitNumber} Review: ${titleBase}`)
+            : (titleNeedsTrail
+                ? `${trail} Part ${trailPart}: ${titleBase}`
+                : titleBase);
+        const normalizedReference = isReview
+            ? (reference ? `${reference} | Unit ${unitNumber} Review` : `Unit ${unitNumber} Review`)
+            : (reference
+                ? `${reference} | ${trail} Part ${trailPart}`
+                : `Unit ${unitNumber} ${trail} Part ${trailPart}`);
+
+        const baseObjectives = Array.isArray(lesson.objectives) ? lesson.objectives.filter(Boolean) : [];
+        const normalizedObjectives = baseObjectives.slice(0, maxObjectives);
+        if (isReview && !normalizedObjectives.some((item) => /review|consolidate|recycle|assess/i.test(item))) {
+            normalizedObjectives.unshift(`Students will be able to review and consolidate Unit ${unitNumber} language targets.`);
+        }
+
+        return {
+            ...lesson,
+            lessonNumber: index + 1,
+            unitNumber,
+            lessonInUnit,
+            lessonType: isReview ? 'review' : (lesson.lessonType || 'regular'),
+            title: normalizedTitle,
+            textbookReference: normalizedReference,
+            objectives: normalizedObjectives.slice(0, maxObjectives),
+            suggestedVocabulary: Array.isArray(lesson.suggestedVocabulary)
+                ? lesson.suggestedVocabulary.filter(Boolean).slice(0, maxVocab)
+                : [],
+            description: isReview
+                ? (String(lesson.description || '').trim() || `Unit ${unitNumber} spiral review for both trails.`)
+                : lesson.description,
+        };
+    });
+
+    return {
+        ...curriculum,
+        totalLessons: lessons.length,
+        lessons,
+    };
+}
+
 export const generateESLCurriculum = async (
     textbookText: string,
     params: CurriculumParams,
@@ -80,19 +168,28 @@ CRITICAL INSTRUCTIONS:
         prompt += `\n\nAdditional Instructions from Teacher:\n${params.customInstructions}`;
     }
 
+    const trailblazerMode = isTrailblazerCurriculum(params, grounding);
+
     if (grounding.groundingFactSheet) {
         prompt += `\n\n--- NOTEBOOKLM GROUNDING CONTEXT (PRIORITY) ---\n${grounding.groundingFactSheet}`;
         prompt += `\nUse this grounding context as a strict curriculum guardrail for scope/sequence, unit coherence, vocabulary progression, and assessment alignment.`;
         prompt += `\nCRITICAL: Keep unit names/order aligned to this grounding context. Prefer grounded vocabulary/grammar evidence over generic ESL defaults.`;
-        prompt += `\n\n--- TRAIL DISTRIBUTION RULE (MANDATORY) ---
-IMPORTANT: If the textbook uses a Trail 1 + Trail 2 structure per unit, you MUST follow these rules:
-1. Each unit = EXACTLY 2 lessons: Lesson A covers Trail 1 ONLY, Lesson B covers Trail 2 ONLY.
-2. Trail 1 lesson focuses on: Trail 1 vocabulary, Trail 1 phonics, Trail 1 reading (typically nonfiction), Trail 1 grammar, Trail 1 speaking activity.
-3. Trail 2 lesson focuses on: Trail 2 vocabulary, Trail 2 phonics, Trail 2 reading (typically fiction), Trail 2 grammar, Trail 2 project activity.
-4. NEVER combine Trail 1 and Trail 2 content in the same lesson.
-5. The vocabulary list for each lesson must contain ONLY the vocabulary from its respective trail (typically 8-10 words per trail).
-6. Review lessons occur after every 2 units (covering 4 trails total).
-7. Each lesson title should indicate which trail it covers, e.g. "Unit 1 Lesson 1: [Trail 1 Theme]" and "Unit 1 Lesson 2: [Trail 2 Theme]".`;
+    }
+
+    if (trailblazerMode) {
+        prompt += `\n\n--- TRAILBLAZER SPLIT RULE (MANDATORY) ---
+Apply the Trailblazer model exactly:
+1. Each unit has 5 lessons total.
+2. Lesson 1-2 = Trail 1 (Part 1 and Part 2).
+3. Lesson 3-4 = Trail 2 (Part 1 and Part 2).
+4. Lesson 5 = Unit review/consolidation lesson for both trails.
+5. Do NOT merge Trail 1 and Trail 2 in a single non-review lesson.
+6. Use NotebookLM "lesson planner" source pattern as the primary reference for trail sequencing when grounding context is available.
+7. Adapt the depth and load to runtime settings:
+   - Respect Total Lessons Required: ${params.lessonCount}.
+   - Respect Lesson Duration: ${params.duration} minutes.
+   - If final unit is partial due to lesson count limits, keep the same order (Trail 1 -> Trail 2 -> Review) and stop at the required lesson count.
+8. Keep vocabulary/grammar/phonics/reading split aligned to the corresponding trail, and reserve lesson 5 for spiral review + formative check.`;
     }
     if (grounding.textbookLevelLabel) {
         prompt += `\nSelected textbook level standard: ${grounding.textbookLevelLabel}`;
@@ -114,7 +211,11 @@ IMPORTANT: If the textbook uses a Trail 1 + Trail 2 structure per unit, you MUST
             responseSchema: CURRICULUM_SCHEMA,
         }
     }), 5, 3000, signal);
-    const curriculum = JSON.parse(response.text || "{}") as ESLCurriculum;
+    let curriculum = JSON.parse(response.text || "{}") as ESLCurriculum;
+
+    if (trailblazerMode) {
+        curriculum = applyTrailblazerUnitTemplate(curriculum, params);
+    }
 
     if (grounding.groundingSources && grounding.groundingSources.length > 0) {
         try {

@@ -425,24 +425,25 @@ export const CurriculumPlanner: React.FC<CurriculumPlannerProps> = ({
             } else if (sourceMode === 'notebook' && levelEntry?.notebookId) {
                 updateGenerationProgress(1, 20, lang === 'zh' ? '正在连接 NotebookLM...' : 'Connecting to NotebookLM...');
                 try {
-                    const backends = await checkBackends();
+                    let backends = await checkBackends();
                     if (!backends.local) {
                         // eslint-disable-next-line no-constant-condition
                         while (true) {
-                            const fbTitle = lang === 'zh' ? '本地 NotebookLM 未连接' : 'Local NotebookLM unavailable';
+                            const fbTitle = lang === 'zh' ? 'Local NotebookLM 不可用' : 'Local NotebookLM unavailable';
                             const fbDetail = lang === 'zh'
-                                ? `主线级别 ${levelEntry.displayName} 绑定 notebook ${levelEntry.notebookId}，需使用本地 dev:nlm 才能命中该笔记。请先运行 npm run dev:nlm。是否改用 fallback 无笔记模式继续生成？`
-                                : `Mainline level ${levelEntry.displayName} is bound to notebook ${levelEntry.notebookId}. Local dev:nlm is required. Switch to fallback mode?`;
+                                ? `主线级别 ${levelEntry.displayName} 绑定了 notebook ${levelEntry.notebookId}，但本地 dev:nlm 代理不可用。`
+                                : `Mainline level ${levelEntry.displayName} is bound to notebook ${levelEntry.notebookId}. Local dev:nlm proxy is unreachable.`;
                             const choice = await askFallbackConfirm(fbTitle, fbDetail);
                             if (choice === 'cancel') throw new Error('AbortError');
                             if (choice === 'retry') {
-                                updateGenerationProgress(1, 22, lang === 'zh' ? '正在重试连接 NLM proxy...' : 'Retrying NLM proxy connection...');
-                                const retryBackends = await checkBackends();
-                                if (retryBackends.local) break; // proxy is back
-                                continue; // still down
+                                updateGenerationProgress(1, 28, lang === 'zh' ? '正在重新连接 NLM 代理...' : 'Retrying NLM proxy connection...');
+                                backends = await checkBackends();
+                                if (backends.local) break; // 代理恢复，继续正常流程
+                                continue; // 仍然不可用，再次弹出提示
                             }
-                            // choice === 'continue' → fallback
+                            // choice === 'continue' → 用户确认使用 fallback
                             setGroundingBanner({ kind: 'fallback', title: fbTitle, detail: fbDetail });
+                            updateGenerationProgress(2, 40, lang === 'zh' ? 'NotebookLM 不可用，已切换至 fallback 模式...' : 'NotebookLM unavailable, switching to fallback mode...');
                             throw new Error('LOCAL_NOTEBOOK_BACKEND_UNAVAILABLE');
                         }
                     }

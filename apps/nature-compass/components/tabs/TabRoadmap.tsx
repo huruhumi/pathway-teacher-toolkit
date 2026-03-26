@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2, Palette, Sparkles, Users, FileText, RefreshCw, MessageSquare, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Info, MapPin, Target, X, Plus, GripVertical, Trash2, BookOpen, Lightbulb, Layout, Wand2, Loader2, Palette, Sparkles, Users, FileText, RefreshCw, Zap, ChevronDown, ChevronRight, Languages } from 'lucide-react';
 import { RichTextEditor } from '../RichTextEditor';
 import { RoadmapItem } from '../../types';
 import { BasicInfoState } from '../../stores/useLessonStore';
@@ -38,12 +38,24 @@ interface TabRoadmapProps {
     handleRoadmapDragStart: (e: React.DragEvent, index: number) => void;
     handleRoadmapDragOver: (e: React.DragEvent) => void;
     handleRoadmapDrop: (e: React.DragEvent, targetIndex: number) => void;
+    handleRoadmapDragEnd?: () => void;
     // Per-phase feedback & regeneration
     onRegeneratePhase?: (index: number, feedback: string) => void;
     regeneratingPhase?: number | null;
+    onSyncPhase?: (index: number) => void;
+    syncingPhaseIndex?: number | null;
+    phaseSyncTargetLanguage?: 'zh' | 'en';
+    contentLanguage?: 'zh' | 'en';
     // Commit
-    onCommit?: () => void;
+    onCommit?: (comment?: string) => void;
     isCommitting?: boolean;
+    commitStatus?: 'idle' | 'generating' | 'done' | 'error';
+    commitError?: string;
+    onCancelCommit?: () => void;
+    commitBlockReason?: string | null;
+    plannerPanel?: React.ReactNode;
+    isPlannerMode?: boolean;
+    onExitPlannerMode?: () => void;
 }
 
 export const TabRoadmap: React.FC<TabRoadmapProps> = ({
@@ -77,13 +89,58 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
     handleRoadmapDragStart,
     handleRoadmapDragOver,
     handleRoadmapDrop,
+    handleRoadmapDragEnd,
     onRegeneratePhase,
     regeneratingPhase = null,
+    onSyncPhase,
+    syncingPhaseIndex = null,
+    phaseSyncTargetLanguage = 'zh',
+    contentLanguage = 'en',
     onCommit,
     isCommitting = false,
+    commitStatus = 'idle',
+    commitError = '',
+    onCancelCommit,
+    commitBlockReason = null,
+    plannerPanel,
+    isPlannerMode = false,
+    onExitPlannerMode,
 }) => {
     const { t, lang } = useLanguage();
     const [phaseFeedback, setPhaseFeedback] = useState<Record<number, string>>({});
+    const [commitFeedback, setCommitFeedback] = useState('');
+    const [expandedPhases, setExpandedPhases] = useState<Record<number, boolean>>({});
+    const [showRoadmapInPlannerMode, setShowRoadmapInPlannerMode] = useState(false);
+
+    useEffect(() => {
+        setExpandedPhases((prev) => {
+            const next: Record<number, boolean> = {};
+            roadmap.forEach((_, idx) => {
+                next[idx] = prev[idx] ?? false;
+            });
+            return next;
+        });
+    }, [roadmap.length]);
+
+    useEffect(() => {
+        if (!isPlannerMode) {
+            setShowRoadmapInPlannerMode(false);
+        }
+    }, [isPlannerMode]);
+
+    const shouldShowRoadmapPhases = !isPlannerMode || showRoadmapInPlannerMode;
+
+    const togglePhaseExpanded = (index: number) => {
+        setExpandedPhases((prev) => ({ ...prev, [index]: !prev[index] }));
+    };
+
+    const setAllPhasesExpanded = (expanded: boolean) => {
+        const next: Record<number, boolean> = {};
+        roadmap.forEach((_, idx) => {
+            next[idx] = expanded;
+        });
+        setExpandedPhases(next);
+    };
     return (
         <div className="space-y-5 animate-fade-in">
             <div className="bg-white dark:bg-slate-900/80 dark:backdrop-blur-xl rounded-xl border border-slate-200 dark:border-white/5 p-4 shadow-sm">
@@ -174,16 +231,71 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
             </div>
 
             <div className="space-y-4">
-                {roadmap.map((item, idx) => (
+                {plannerPanel && (
+                    <div className="mb-1">
+                        {plannerPanel}
+                    </div>
+                )}
+
+                {isPlannerMode && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                        <div className="text-xs text-slate-500">
+                            Planning mode: focus on page allocation first.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowRoadmapInPlannerMode((prev) => !prev)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+                            >
+                                {showRoadmapInPlannerMode ? 'Hide Roadmap' : 'Show Roadmap'}
+                            </button>
+                            {onExitPlannerMode && (
+                                <button
+                                    onClick={onExitPlannerMode}
+                                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+                                >
+                                    Exit Planning Mode
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {shouldShowRoadmapPhases && (
+                    <>
+                        <div className="flex items-center justify-end gap-2 px-1">
+                            <button
+                                onClick={() => setAllPhasesExpanded(true)}
+                                className="px-2.5 py-1 rounded-md border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+                            >
+                                Expand All
+                            </button>
+                            <button
+                                onClick={() => setAllPhasesExpanded(false)}
+                                className="px-2.5 py-1 rounded-md border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50"
+                            >
+                                Collapse All
+                            </button>
+                        </div>
+
+                {roadmap.map((item, idx) => {
+                    const isExpanded = Boolean(expandedPhases[idx]);
+                    const isChineseContent = contentLanguage === 'zh';
+                    const phaseDisplayLabelForContent = isChineseContent ? `阶段 ${idx + 1}` : `Phase ${idx + 1}`;
+                    const phaseSyncLabelForContent = isChineseContent
+                        ? (phaseSyncTargetLanguage === 'zh' ? '同步本阶段到中文' : '同步本阶段到英文')
+                        : (phaseSyncTargetLanguage === 'zh' ? 'Sync This Phase to Chinese' : 'Sync This Phase to English');
+                    return (
                     <div
                         key={idx}
                         draggable
                         onDragStart={(e) => handleRoadmapDragStart(e, idx)}
+                        onDragEnd={() => handleRoadmapDragEnd?.()}
                         onDragOver={handleRoadmapDragOver}
                         onDrop={(e) => handleRoadmapDrop(e, idx)}
                         className={`bg-white dark:bg-slate-900/80 rounded-xl border transition-all ${draggedRoadmapIndex === idx ? 'border-emerald-400 shadow-lg opacity-50' : 'border-slate-200 dark:border-white/5 hover:border-emerald-300 shadow-sm'}`}
                     >
-                        <div className="p-3 bg-slate-50 border-b border-slate-100 dark:border-white/5 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group">
+                        <div className={`p-3 bg-slate-50 border-b border-slate-100 dark:border-white/5 flex items-start gap-3 rounded-t-xl cursor-grab active:cursor-grabbing group ${!isExpanded ? 'rounded-b-xl border-b-0' : ''}`}>
                             <div className="mt-1 text-slate-400 group-hover:text-slate-600">
                                 <GripVertical size={16} />
                             </div>
@@ -201,14 +313,13 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                 </div>
                                 <div className="md:col-span-4">
                                     <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('road.phase')}</label>
-                                    <input
-                                        value={item.phase}
-                                        onChange={(e) => handleRoadmapChange(idx, 'phase', e.target.value)}
-                                        className="w-full font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 outline-none"
+                                    <div
+                                        className="w-full font-bold text-slate-800 dark:text-slate-200 border-b border-transparent py-1"
                                         aria-label="Phase"
                                         title="Phase"
-                                        placeholder="Phase"
-                                    />
+                                    >
+                                        {phaseDisplayLabelForContent}
+                                    </div>
                                 </div>
                                 <div className="md:col-span-6">
                                     <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">{t('road.activityName')}</label>
@@ -222,12 +333,42 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                     />
                                 </div>
                             </div>
-                            <button onClick={() => removeRoadmapItem(idx)} className="text-slate-400 hover:text-red-500 p-1" aria-label="Remove Roadmap Item" title="Remove Roadmap Item">
-                                <Trash2 size={16} />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        togglePhaseExpanded(idx);
+                                    }}
+                                    className="text-slate-500 hover:text-slate-700 p-1"
+                                    aria-label={isExpanded ? 'Collapse phase' : 'Expand phase'}
+                                    title={isExpanded ? 'Collapse phase' : 'Expand phase'}
+                                >
+                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                </button>
+                                <button
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeRoadmapItem(idx);
+                                    }}
+                                    className="text-slate-400 hover:text-red-500 p-1"
+                                    aria-label="Remove Roadmap Item"
+                                    title="Remove Roadmap Item"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="p-4 space-y-4">
+                        {isExpanded && (
+                            <div className="p-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('road.description')}</label>
@@ -411,29 +552,42 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                                                 placeholder={lang === 'zh' ? '对此阶段的修改建议...' : 'Feedback for this phase...'}
                                                 rows={2}
                                                 className="w-full text-sm text-slate-700 dark:text-slate-300 bg-amber-50/60 border border-amber-200/60 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 resize-none placeholder:text-amber-400/70"
-                                                disabled={regeneratingPhase === idx}
+                                                disabled={regeneratingPhase === idx || syncingPhaseIndex === idx}
                                                 aria-label={`Feedback for phase ${idx + 1}`}
                                                 title={`Feedback for phase ${idx + 1}`}
                                             />
                                         </div>
+                                        {onSyncPhase && (
+                                            <button
+                                                onClick={() => onSyncPhase(idx)}
+                                                disabled={syncingPhaseIndex !== null || regeneratingPhase === idx}
+                                                className="mt-0.5 text-xs font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                                                title={phaseSyncLabelForContent}
+                                            >
+                                                {syncingPhaseIndex === idx ? <Loader2 size={14} className="animate-spin" /> : <Languages size={14} />}
+                                                {isChineseContent ? '同步本阶段' : 'Sync Phase'}
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 const fb = phaseFeedback[idx]?.trim();
                                                 if (fb) onRegeneratePhase(idx, fb);
                                             }}
-                                            disabled={regeneratingPhase === idx || !phaseFeedback[idx]?.trim()}
+                                            disabled={regeneratingPhase === idx || !phaseFeedback[idx]?.trim() || syncingPhaseIndex === idx}
                                             className="mt-0.5 text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                                            title={lang === 'zh' ? '重新生成此阶段' : 'Regenerate this phase'}
+                                            title={isChineseContent ? '重新生成此阶段' : 'Regenerate this phase'}
                                         >
                                             {regeneratingPhase === idx ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                                            {lang === 'zh' ? '重新生成' : 'Regen'}
+                                            {isChineseContent ? '重新生成' : 'Regen'}
                                         </button>
                                     </div>
                                 </div>
                             )}
-                        </div>
+                            </div>
+                        )}
                     </div>
-                ))}
+                    );
+                })}
 
                 <button
                     onClick={addRoadmapItem}
@@ -442,19 +596,70 @@ export const TabRoadmap: React.FC<TabRoadmapProps> = ({
                 >
                     {isAddingRoadmapItem ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
                     {t('road.addPhaseBtn')}</button>
+                    </>
+                )}
 
                 {/* Commit Button */}
                 {onCommit && (
-                    <button
-                        onClick={onCommit}
-                        disabled={isCommitting}
-                        className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2.5 text-sm"
-                    >
-                        {isCommitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
-                        {isCommitting
-                            ? (lang === 'zh' ? '正在根据修改后的活动阶段重新生成配套内容...' : 'Regenerating downstream content...')
-                            : (lang === 'zh' ? '✨ Commit — 根据修改重新生成手册和配套内容' : '✨ Commit — Regenerate handbook & downstream')}
-                    </button>
+                    <div className="space-y-2">
+                        <textarea
+                            value={commitFeedback}
+                            onChange={(e) => setCommitFeedback(e.target.value)}
+                            placeholder={lang === 'zh' ? 'Phase2 重生成附加要求（可选）' : 'Optional Phase2 regeneration instructions'}
+                            rows={2}
+                            className="w-full text-sm text-slate-700 dark:text-slate-300 bg-slate-50 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 resize-none"
+                            disabled={isCommitting}
+                            aria-label="Phase2 regeneration instructions"
+                            title="Phase2 regeneration instructions"
+                        />
+                        <button
+                            onClick={() => onCommit(commitFeedback.trim() || undefined)}
+                            disabled={isCommitting || Boolean(commitBlockReason)}
+                            className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-400 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2.5 text-sm"
+                        >
+                            {isCommitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
+                            {isCommitting
+                                ? (lang === 'zh' ? '正在根据修改后的活动阶段重新生成配套内容...' : 'Regenerating downstream content...')
+                                : (lang === 'zh' ? '✨ Commit — 根据修改重新生成手册和配套内容' : '✨ Commit — Regenerate handbook & downstream')}
+                        </button>
+                        {commitBlockReason && (
+                            <div className="px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30 text-sm text-amber-700">
+                                {commitBlockReason}
+                            </div>
+                        )}
+                        {/* Inline progress */}
+                        {commitStatus === 'generating' && (
+                            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-white/10 space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                    <span className="text-xs text-slate-600 dark:text-slate-400 flex-1">
+                                        {lang === 'zh' ? 'AI 正在生成配套内容，约 30-60 秒...' : 'AI generating supporting content (~30-60s)...'}
+                                    </span>
+                                    {onCancelCommit && (
+                                        <button
+                                            onClick={onCancelCommit}
+                                            className="px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+                                        >
+                                            {lang === 'zh' ? '停止' : 'Stop'}
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full animate-pulse" style={{ width: '60%' }} />
+                                </div>
+                            </div>
+                        )}
+                        {commitStatus === 'error' && (
+                            <div className="px-4 py-2.5 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800/30 text-sm text-red-600">
+                                {lang === 'zh' ? '❌ 生成失败' : '❌ Generation failed'}: {commitError}
+                            </div>
+                        )}
+                        {commitStatus === 'done' && (
+                            <div className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800/30 text-sm text-emerald-700 font-medium">
+                                {lang === 'zh' ? '✅ 配套内容已更新！' : '✅ Supporting content updated!'}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div >

@@ -1,8 +1,13 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { LessonPlanResponse, Curriculum, CurriculumParams, SavedLessonPlan, SavedCurriculum, LessonInput } from '../types';
+import type {
+    Curriculum,
+    CurriculumParams,
+    FactSheetResult,
+    LessonInput,
+    LessonPlanResponse,
+} from '../types';
 import { getDefaultPageConfig } from '../constants/handbookDefaults';
-import type { RAGProgress } from '@pathway/notebooklm';
 
 interface SessionState {
     lessonPlan: LessonPlanResponse | null;
@@ -14,19 +19,19 @@ interface SessionState {
         params: CurriculumParams;
         activeLanguage: 'en' | 'zh';
     } | null;
-    setCurriculumResult: (res: any) => void; // Using any for simplicity with complex functional updates
+    setCurriculumResult: (res: any) => void;
 
     externalCurriculum: {
-        curriculum: Curriculum; params: CurriculumParams; language?: 'en' | 'zh';
-        pairedCurriculum?: Curriculum; // The other language version if found
+        curriculum: Curriculum;
+        params: CurriculumParams;
+        language?: 'en' | 'zh';
+        pairedCurriculum?: Curriculum;
     } | null;
     setExternalCurriculum: (cur: any) => void;
 
-    // RAG state — persists across page navigation
-    ragProgress: RAGProgress | null;
-    setRagProgress: (p: RAGProgress | null) => void;
-    ragFactSheets: Array<{ lessonIndex: number; content: string; quality: string }> | null;
-    setRagFactSheets: (fs: Array<{ lessonIndex: number; content: string; quality: string }> | null) => void;
+    /** Shared Google-grounded fact sheet for current curriculum generation session. */
+    sharedFactSheet: FactSheetResult | null;
+    setSharedFactSheet: (fs: FactSheetResult | null) => void;
 
     clearSessionState: () => void;
 }
@@ -39,23 +44,23 @@ export const useSessionStore = create<SessionState>()(
 
             curriculumResult: null,
             setCurriculumResult: (res) => set({
-                curriculumResult: typeof res === 'function' ? res(get().curriculumResult) : res
+                curriculumResult: typeof res === 'function' ? res(get().curriculumResult) : res,
             }),
 
             externalCurriculum: null,
             setExternalCurriculum: (cur) => set({
-                externalCurriculum: typeof cur === 'function' ? cur(get().externalCurriculum) : cur
+                externalCurriculum: typeof cur === 'function' ? cur(get().externalCurriculum) : cur,
             }),
 
-            ragProgress: null,
-            setRagProgress: (p) => set({ ragProgress: p }),
-            ragFactSheets: null,
-            setRagFactSheets: (fs) => set({ ragFactSheets: fs }),
+            sharedFactSheet: null,
+            setSharedFactSheet: (fs) => set({ sharedFactSheet: fs }),
 
             clearSessionState: () => set({
-                lessonPlan: null, curriculumResult: null, externalCurriculum: null,
-                ragProgress: null, ragFactSheets: null,
-            })
+                lessonPlan: null,
+                curriculumResult: null,
+                externalCurriculum: null,
+                sharedFactSheet: null,
+            }),
         }),
         {
             name: 'nc-session-state',
@@ -64,10 +69,10 @@ export const useSessionStore = create<SessionState>()(
                 lessonPlan: state.lessonPlan,
                 curriculumResult: state.curriculumResult,
                 externalCurriculum: state.externalCurriculum,
-                // ragProgress and ragFactSheets excluded — large ephemeral data
+                // sharedFactSheet excluded - ephemeral and potentially large
             }),
-        }
-    )
+        },
+    ),
 );
 
 interface AppState {
@@ -83,21 +88,30 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
     input: {
-        mode: 'school', familyEslEnabled: false,
-        theme: '', topicIntroduction: '', activityFocus: [],
-        weather: 'Sunny', season: 'Spring',
-        studentAge: '6-8 years (Early Primary)', studentCount: 12,
-        duration: 180, cefrLevel: 'A1 (Beginner)',
-        handbookMode: 'auto', handbookPreset: 'deep', handbookPageConfig: getDefaultPageConfig(),
+        mode: 'school',
+        familyEslEnabled: false,
+        theme: '',
+        topicIntroduction: '',
+        activityFocus: [],
+        weather: 'Sunny',
+        season: 'Spring',
+        studentAge: '6-8 years (Early Primary)',
+        studentCount: 12,
+        duration: 180,
+        cefrLevel: 'A1 (Beginner)',
+        handbookMode: 'auto',
+        handbookPreset: 'deep',
+        handbookPageConfig: getDefaultPageConfig(),
         uploadedFiles: [],
     },
     setInput: (input) => set({
-        input: typeof input === 'function' ? input(get().input) : input
+        input: typeof input === 'function' ? input(get().input) : input,
     }),
 
     currentPlanId: null,
     setCurrentPlanId: (id) => set({ currentPlanId: id }),
 
     currentKitLanguage: 'en',
-    setCurrentKitLanguage: (lang) => set({ currentKitLanguage: lang })
+    setCurrentKitLanguage: (lang) => set({ currentKitLanguage: lang }),
 }));
+

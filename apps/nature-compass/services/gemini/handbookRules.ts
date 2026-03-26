@@ -149,19 +149,20 @@ export function buildHandbookRules(input: LessonInput): string {
     6. PROMPT DETAIL:
        - 'visualPrompt': Exact illustration description (style, subject, composition). Always specify WHITE background (to save printer ink), but MUST include instructions for nature-themed decorative borders, page margin elements, and age-appropriate illustration styles so pages aren't visually empty.
        - 'contentPrompt': Exact printed text, questions, worksheet structure.
-    7. TEXT/UI FORMATTING: All student-facing reading pages MUST prioritize text-image integration. Break large text blocks into short sentences paired with small icons, dialogue bubbles, or infographics. DO NOT output dense paragraphs.
-    8. CERTIFICATE: Design a premium certificate that matches the workshop's THEME and Nature Compass outdoor exploration aesthetic. Include nature-themed decorative borders (leaves, vines, compass roses, or elements related to the workshop topic). Use the Pathway Academy color palette for accents on a WHITE background. Include a CIRCULAR dashed-border placeholder (diameter 4cm) labeled 'Place Your Pathway Badge Here', positioned bottom-center. Use decorative serif typography for the award title. Include lines for student name, date, and teacher signature.
-    9. BACK COVER: Pathway Academy branding, inspirational nature quote, contact info. WHITE background.
+    7. TEXT/UI FORMATTING (CLEAN TEXT, NO MARKDOWN TAGS): Break large text blocks into short sentences. DO NOT use raw markdown tags like "#" or "**" as they might bleed into UI presentations or plain text prints. Instead, use ALL CAPS for titles/emphasis, and simple unicode emojis (e.g. 🔹, 📍, 💡) for bullet points.
+    8. AIRTIGHT TEACHER/STUDENT BOUNDARY: 'contentPrompt' is STRICTLY for the STUDENT. 'teacherContentPrompt' is STRICTLY for the TEACHER. NEVER put answer keys, conclusions, or full explanations in the 'contentPrompt' for interactive sections. Use empty underscores "_______" or checkboxes "[  ]" for students to figure out the answers. Provide the actual answers ONLY in the 'teacherContentPrompt'.
+    9. HANDS-ON ACTIVITY TEMPLATES: If a Phase involves crafting, baking, building, or experimenting, the Activity page's 'contentPrompt' MUST explicitly generate: 1. A 'Materials Needed' checklist. 2. A numbered 'Step-by-Step Guide'. 3. A labeled blank placeholder for the student's output (e.g., "[Template Area: Attach your work here]").
+    10. CERTIFICATE: Design a premium certificate that matches the workshop's THEME and Nature Compass outdoor exploration aesthetic. Include nature-themed decorative borders (leaves, vines, compass roses, or elements related to the workshop topic). Use the Pathway Academy color palette for accents on a WHITE background. Include a CIRCULAR dashed-border placeholder (diameter 4cm) labeled 'Place Your Pathway Badge Here', positioned bottom-center. Use decorative serif typography for the award title. Include lines for student name, date, and teacher signature.
+    11. BACK COVER: Pathway Academy branding, inspirational nature quote, contact info. WHITE background.
 
-    
     [CROSS-REFERENCE RULES — MANDATORY]
     The handbook MUST directly reference content from other generated sections. Do NOT generate handbook content in isolation.
-    10. PROP CHECKLIST pages: contentPrompt MUST list the EXACT items from the 'supplies' output (permanent + consumables). ALL teaching aids, tools, or materials mentioned in 'teachingTips' or activities MUST be explicitly included in this list. output (permanent + consumables) — same names, same quantities. Do NOT invent different supply items or rename them.
-    10. SAFETY pages: contentPrompt MUST incorporate the EXACT rules from the 'safetyProtocol' output, reformulated into student-friendly language with icons/illustrations.
-    11. ACTIVITY/WORKSHEET pages: Each page MUST explicitly state which Roadmap phase it corresponds to (e.g. "Phase 2: Explore — Field Observation"). The page title MUST reference the specific activity name from that roadmap phase.
-    12. BACKGROUND KNOWLEDGE pages: contentPrompt MUST contain the 'backgroundInfo' text from the corresponding Roadmap phases, rewritten as age-appropriate student-facing passages with inquiry-based questions.
-    13. READING pages: MUST reference vocabulary words from the 'vocabulary' output where relevant, using bold formatting or call-out boxes for key terms.
-    14. Page ordering MUST follow the Roadmap sequence: pages should appear in the same chronological order as the phases they correspond to.
+    12. PROP CHECKLIST pages: contentPrompt MUST list the EXACT items from the 'supplies' output (permanent + consumables). ALL teaching aids, tools, or materials mentioned in 'teachingTips' or activities MUST be explicitly included in this list. output (permanent + consumables) — same names, same quantities. Do NOT invent different supply items or rename them.
+    13. SAFETY pages: contentPrompt MUST incorporate the EXACT rules from the 'safetyProtocol' output, reformulated into student-friendly language with icons/illustrations.
+    14. ACTIVITY/WORKSHEET pages: Each page MUST explicitly state which Roadmap phase it corresponds to (e.g. "Phase X: Explore — Field Observation"). The page title MUST reference the specific activity name from that roadmap phase.
+    15. BACKGROUND KNOWLEDGE pages: contentPrompt MUST contain the 'backgroundInfo' text from the corresponding Roadmap phases, rewritten as age-appropriate student-facing passages with inquiry-based questions. MUST pull exactly 1 fun fact from the 'FactSheet' for every Background Knowledge page if available.
+    16. READING pages: MUST embed 2-3 target words from the provided 'Vocabulary' list into every Reading page clearly.
+    17. Page ordering MUST follow the Roadmap sequence: pages should appear in the same chronological order as the phases they correspond to.
 
     ${PATHWAY_BRAND_STYLE_BLOCK}
   `;

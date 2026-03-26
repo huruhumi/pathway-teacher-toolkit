@@ -5,6 +5,24 @@ import { LessonPlanResponse, VocabularyItem, VisualReferenceItem, RoadmapItem } 
 import { createAIClient, retryAICall as retryOperation } from '@pathway/ai';
 import { lessonPlanSchema } from './gemini/schema';
 
+const roadmapItemSchema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+        timeRange: { type: Type.STRING },
+        phase: { type: Type.STRING },
+        activity: { type: Type.STRING },
+        activityType: { type: Type.STRING },
+        location: { type: Type.STRING },
+        description: { type: Type.STRING },
+        learningObjective: { type: Type.STRING },
+        steps: { type: Type.ARRAY, items: { type: Type.STRING } },
+        backgroundInfo: { type: Type.ARRAY, items: { type: Type.STRING } },
+        teachingTips: { type: Type.ARRAY, items: { type: Type.STRING } },
+        activityInstructions: { type: Type.STRING }
+    },
+    required: ["timeRange", "phase", "activity", "activityType", "location", "description", "learningObjective", "steps", "backgroundInfo", "teachingTips"]
+};
+
 export const generateSingleStep = async (context: any, currentSteps: string[]): Promise<string> => {
     const ai = createAIClient();
     return await retryOperation(async () => {
@@ -69,22 +87,6 @@ export const generateVisualReferenceItem = async (theme: string, activityType: s
 
 export const generateRoadmapItem = async (theme: string, activityType: string, currentRoadmap: RoadmapItem[]): Promise<RoadmapItem> => {
     const ai = createAIClient();
-    const roadmapItemSchema: Schema = {
-        type: Type.OBJECT,
-        properties: {
-            timeRange: { type: Type.STRING },
-            phase: { type: Type.STRING },
-            activity: { type: Type.STRING },
-            activityType: { type: Type.STRING },
-            location: { type: Type.STRING },
-            description: { type: Type.STRING },
-            learningObjective: { type: Type.STRING },
-            steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-            backgroundInfo: { type: Type.ARRAY, items: { type: Type.STRING } },
-            teachingTips: { type: Type.ARRAY, items: { type: Type.STRING } }
-        },
-        required: ["timeRange", "phase", "activity", "activityType", "location", "description", "learningObjective", "steps", "backgroundInfo", "teachingTips"]
-    };
 
     return await retryOperation(async () => {
         const response = await ai.models.generateContent({
@@ -100,6 +102,40 @@ export const generateRoadmapItem = async (theme: string, activityType: string, c
         });
         return JSON.parse(response.text!) as RoadmapItem;
     });
+};
+
+export const translateRoadmapItem = async (
+    item: RoadmapItem,
+    targetLanguage: 'English' | 'Simplified Chinese',
+    signal?: AbortSignal,
+): Promise<RoadmapItem> => {
+    const ai = createAIClient();
+    return await retryOperation(async () => {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `Translate this single roadmap phase into ${targetLanguage}.
+
+Rules:
+1. Keep JSON structure unchanged.
+2. Translate all human-readable text fields for this phase.
+3. Keep pedagogical meaning and action order.
+4. Keep timeRange unchanged.
+5. Return JSON only.
+
+Input JSON:
+${JSON.stringify(item)}`,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: roadmapItemSchema,
+                temperature: 0.1,
+            },
+        });
+        const parsed = JSON.parse(response.text || '{}') as RoadmapItem;
+        return {
+            ...parsed,
+            timeRange: item.timeRange,
+        };
+    }, signal);
 };
 
 export const generateSingleBackgroundInfo = async (theme: string, activity: string, currentInfo: string[]): Promise<string> => {

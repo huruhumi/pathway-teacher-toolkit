@@ -25,12 +25,12 @@ interface TabHandbookProps {
 // System page types that don't belong to any phase
 const SYSTEM_SECTIONS = new Set([
     'Cover', 'Table of Contents', 'Safety', 'Prop Checklist',
-    'Reflection', 'Certificate', 'Back Cover', 'Introduction'
+    'Reflection', 'Certificate', 'Back Cover', 'Introduction', 'Front Matter', 'FRONT MATTER',
 ]);
 
-const FRONT_SECTIONS = new Set(['Cover', 'Table of Contents', 'Safety', 'Prop Checklist']);
-const BACK_SECTIONS = new Set(['Reflection', 'Certificate', 'Back Cover']);
-const CONTENT_SECTIONS = new Set(['Phase Transition', 'Background Knowledge', 'Activity/Worksheet']);
+const FRONT_SECTIONS = new Set(['Cover', 'Table of Contents', 'Safety', 'Prop Checklist', 'Introduction', 'Front Matter', 'FRONT MATTER']);
+const BACK_SECTIONS = new Set(['Reflection', 'Certificate', 'Back Cover', 'Back Matter', 'BACK MATTER']);
+const CONTENT_SECTIONS = new Set(['Phase Transition', 'Background Knowledge', 'Activity/Worksheet', 'Reading']);
 
 interface PageGroup {
     type: 'front' | 'phase' | 'back';
@@ -75,7 +75,11 @@ function groupPagesByPhase(
     // 2. Phase groups
     const phaseMap = new Map<number, { page: HandbookPage; originalIndex: number }[]>();
     pages.forEach((page, idx) => {
-        if (page.phaseIndex !== undefined && page.phaseIndex !== null) {
+        if (
+            page.phaseIndex !== undefined &&
+            page.phaseIndex !== null &&
+            !SYSTEM_SECTIONS.has(page.section)
+        ) {
             if (!phaseMap.has(page.phaseIndex)) {
                 phaseMap.set(page.phaseIndex, []);
             }
@@ -87,14 +91,18 @@ function groupPagesByPhase(
     const sortedPhaseIndices = [...phaseMap.keys()].sort((a, b) => a - b);
     for (const pi of sortedPhaseIndices) {
         const phaseData = roadmap?.[pi];
-        const phaseName = phaseData ? `${phaseData.phase}: ${phaseData.activity}` : `Phase ${pi + 1}`;
+        const activityPart = (phaseData?.activity || '').trim();
+        const phaseName = activityPart || `Activity ${pi + 1}`;
         const icon = getPhaseIcon(pi);
+        const pagesForPhase = [...(phaseMap.get(pi) || [])].sort(
+            (a, b) => (a.page.pageNumber || 0) - (b.page.pageNumber || 0),
+        );
         groups.push({
             type: 'phase',
             label: `${icon} Phase ${pi + 1}: ${phaseName}`,
             labelZh: `${icon} 阶段 ${pi + 1}: ${phaseName}`,
             phaseIndex: pi,
-            pages: phaseMap.get(pi)!,
+            pages: pagesForPhase,
         });
     }
 
@@ -108,6 +116,24 @@ function groupPagesByPhase(
             label: '📐 System Pages (Back)',
             labelZh: '📐 系统页（后）',
             pages: backPages,
+        });
+    }
+
+    // 4. Orphan pages — not in front/back sets AND no phaseIndex (would otherwise be silently dropped)
+    const accountedIndices = new Set<number>([
+        ...frontPages.map(p => p.originalIndex),
+        ...backPages.map(p => p.originalIndex),
+        ...[...phaseMap.values()].flat().map(p => p.originalIndex),
+    ]);
+    const orphanPages = pages
+        .map((page, idx) => ({ page, originalIndex: idx }))
+        .filter(({ originalIndex }) => !accountedIndices.has(originalIndex));
+    if (orphanPages.length > 0) {
+        groups.push({
+            type: 'phase' as const,
+            label: '📄 Content Pages',
+            labelZh: '📄 内容页',
+            pages: orphanPages,
         });
     }
 

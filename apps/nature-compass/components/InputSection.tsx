@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { LessonInput, UploadedFile, StructuredKnowledge } from '../types';
+import { LessonInput, UploadedFile, StructuredKnowledge, FactSheetSource, FactSheetFreshnessMeta, ThemeFreshnessTier, FreshnessRiskLevel, FreshnessWindow } from '../types';
 import { ACTIVITY_FOCUS_OPTIONS, AGE_RANGES, CEFR_LEVELS, SAMPLE_THEMES, SEASONS } from '../constants';
 import { Sun, CloudRain, Shuffle, Loader2, School, Heart, Layers, Sparkles, Wand2 } from 'lucide-react';
 import { generateRandomTheme } from '../services/themeService';
@@ -10,8 +10,54 @@ import { Input } from '@shared/components/ui/Input';
 import { Select } from '@shared/components/ui/Select';
 import { Textarea } from '@shared/components/ui/Textarea';
 import { Button } from '@shared/components/ui/Button';
-import { HandbookPageSelector } from './HandbookPageSelector';
 import { StructuredHandbookInput } from './StructuredHandbookInput';
+import { isSearchFailedKnowledgeContent } from '../services/knowledgeCache';
+
+const WINDOW_RANK: Record<FreshnessWindow, number> = { '1y': 1, '3y': 2, '5y': 3 };
+const RISK_RANK: Record<FreshnessRiskLevel, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+const TIER_RANK: Record<ThemeFreshnessTier, number> = { LOW: 1, MEDIUM: 2, HIGH: 3 };
+
+function aggregateKnowledgeMeta(knowledge: StructuredKnowledge[]): {
+  sources: FactSheetSource[];
+  freshnessMeta?: FactSheetFreshnessMeta;
+  quality: 'good' | 'low' | 'insufficient';
+} {
+  const sourceMap = new Map<string, FactSheetSource>();
+  const metas: FactSheetFreshnessMeta[] = [];
+
+  for (const item of knowledge) {
+    for (const source of item.sourceDetails || []) {
+      if (!source?.url) continue;
+      if (!sourceMap.has(source.url)) sourceMap.set(source.url, source);
+    }
+    if (item.freshnessMeta) metas.push(item.freshnessMeta);
+  }
+
+  const sources = Array.from(sourceMap.values());
+  const quality: 'good' | 'low' | 'insufficient' =
+    knowledge.length >= 3 && sources.length >= 3 ? 'good' : knowledge.length >= 1 ? 'low' : 'insufficient';
+
+  if (!metas.length) return { sources, quality };
+
+  const worstRisk = metas.reduce((worst, cur) => (RISK_RANK[cur.riskLevel] > RISK_RANK[worst.riskLevel] ? cur : worst));
+  const widestWindow = metas.reduce((widest, cur) => (WINDOW_RANK[cur.effectiveWindow] > WINDOW_RANK[widest.effectiveWindow] ? cur : widest));
+  const highestTier = metas.reduce((highest, cur) => (TIER_RANK[cur.themeTier] > TIER_RANK[highest.themeTier] ? cur : highest));
+  const avgCoverage = metas.reduce((sum, cur) => sum + cur.coverage, 0) / metas.length;
+  const degradeNotes = metas.flatMap((m) => m.degradeNotes || []).slice(0, 12);
+
+  return {
+    sources,
+    quality,
+    freshnessMeta: {
+      themeTier: highestTier.themeTier,
+      targetWindow: '1y',
+      effectiveWindow: widestWindow.effectiveWindow,
+      riskLevel: worstRisk.riskLevel,
+      coverage: Number.isFinite(avgCoverage) ? avgCoverage : 0,
+      degradeNotes: degradeNotes.length ? degradeNotes : undefined,
+    },
+  };
+}
 
 interface InputSectionProps {
   input: LessonInput;
@@ -265,29 +311,32 @@ export const InputSection: React.FC<InputSectionProps> = ({ input, setInput, onS
         </div>
 
         {input.handbookMode !== 'structured' ? (
-          <HandbookPageSelector
-            mode={input.handbookMode === 'structured' ? 'auto' : input.handbookMode}
-            preset={input.handbookPreset}
-            config={input.handbookPageConfig}
-            autoPageTarget={input.autoPageTarget}
-            duration={input.duration}
-            onModeChange={(m) => setInput(prev => ({ ...prev, handbookMode: m }))}
-            onPresetChange={(p) => setInput(prev => ({ ...prev, handbookPreset: p }))}
-            onConfigChange={(c) => setInput(prev => ({ ...prev, handbookPageConfig: c }))}
-            onAutoPageTargetChange={(t) => setInput(prev => ({ ...prev, autoPageTarget: t }))}
-            lang={lang}
-          />
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-3 text-xs text-emerald-700">
+            {lang === 'zh'
+              ? '手册分页配置将放在 Phase1 生成 roadmap 后进行。你可以在每个阶段单独调配页面，再进入 Phase2 生成。'
+              : 'Handbook page allocation is configured after Phase1 roadmap generation. You can tune pages per phase before running Phase2.'}
+          </div>
         ) : (
           <StructuredHandbookInput
             structure={input.customStructure || ''}
             onStructureChange={(text) => setInput(prev => ({ ...prev, customStructure: text }))}
             knowledge={input.structuredKnowledge || []}
-            onKnowledgeReady={(k) => setInput(prev => ({
-              ...prev,
-              structuredKnowledge: k,
-              factSheet: k.filter(item => !item.content.startsWith('(搜索失败')).map(item => `## ${item.topic}\n${item.content}`).join('\n\n---\n\n'),
-              factSheetQuality: k.some(item => !item.content.startsWith('(搜索失败')) ? 'good' : 'insufficient',
-            }))}
+            onKnowledgeReady={(k) => {
+              const usable = k.filter((item) => !isSearchFailedKnowledgeContent(item.content));
+              const { sources, freshnessMeta, quality } = aggregateKnowledgeMeta(usable);
+              const factSheet = usable
+                .map((item) => `## ${item.topic}\n${item.content}`)
+                .join('\n\n---\n\n');
+
+              setInput((prev) => ({
+                ...prev,
+                structuredKnowledge: k,
+                factSheet: factSheet || undefined,
+                factSheetQuality: quality,
+                factSheetSources: sources.length ? sources : undefined,
+                factSheetMeta: freshnessMeta,
+              }));
+            }}
             onMetaReady={({ theme, intro }) => setInput(prev => ({
               ...prev,
               theme: theme || prev.theme,

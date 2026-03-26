@@ -22,6 +22,8 @@ interface SavedProjectsPageProps {
     onDeleteCurriculum: (id: string) => void;
     onRenameCurriculum: (id: string, newName: string) => void;
     onLoadCurriculum: (saved: SavedCurriculum) => void;
+    onDeleteMultiplePlans?: (ids: string[]) => void;
+    onDeleteMultipleCurricula?: (ids: string[]) => void;
 }
 
 const ENGLISH_LEVELS = [
@@ -41,6 +43,7 @@ const LESSON_COUNT_RANGES = [
 export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     savedPlans, savedCurricula, onLoad, onDelete, onRename,
     onDeleteCurriculum, onRenameCurriculum, onLoadCurriculum,
+    onDeleteMultiplePlans, onDeleteMultipleCurricula,
 }) => {
     const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState<'curricula' | 'kits'>('curricula');
@@ -64,6 +67,61 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     const [kLang, setKLang] = useState<'all' | 'en' | 'zh'>('all');
     const [kMode, setKMode] = useState<'all' | 'school' | 'family'>('all');
     const [kQuality, setKQuality] = useState<'all' | 'ok' | 'needs_review'>('all');
+
+    // --- Multi-select state ---
+    const [selectedCurriculaIds, setSelectedCurriculaIds] = useState<Set<string>>(new Set());
+    const [selectedPlanIds, setSelectedPlanIds] = useState<Set<string>>(new Set());
+
+    const toggleCurriculumSelect = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setSelectedCurriculaIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+    const togglePlanSelect = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setSelectedPlanIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+    const selectAllCurricula = () => {
+        if (selectedCurriculaIds.size === filteredCurricula.length) {
+            setSelectedCurriculaIds(new Set());
+        } else {
+            setSelectedCurriculaIds(new Set(filteredCurricula.map(c => c.id)));
+        }
+    };
+    const selectAllPlans = () => {
+        if (selectedPlanIds.size === filteredPlans.length) {
+            setSelectedPlanIds(new Set());
+        } else {
+            setSelectedPlanIds(new Set(filteredPlans.map(p => p.id)));
+        }
+    };
+    const handleBatchDeleteCurricula = () => {
+        if (selectedCurriculaIds.size === 0) return;
+        if (!window.confirm(t('saved.confirmBatchDelete') || `Delete ${selectedCurriculaIds.size} selected items?`)) return;
+        if (onDeleteMultipleCurricula) {
+            onDeleteMultipleCurricula(Array.from(selectedCurriculaIds));
+        } else {
+            selectedCurriculaIds.forEach(id => onDeleteCurriculum(id));
+        }
+        setSelectedCurriculaIds(new Set());
+    };
+    const handleBatchDeletePlans = () => {
+        if (selectedPlanIds.size === 0) return;
+        if (!window.confirm(t('saved.confirmBatchDelete') || `Delete ${selectedPlanIds.size} selected items?`)) return;
+        if (onDeleteMultiplePlans) {
+            onDeleteMultiplePlans(Array.from(selectedPlanIds));
+        } else {
+            selectedPlanIds.forEach(id => onDelete(id));
+        }
+        setSelectedPlanIds(new Set());
+    };
 
     // === Dynamic options ===
     const uniqueCities = useMemo(() =>
@@ -241,35 +299,66 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             description={savedCurricula.length > 0 ? t('saved.adjustFilters') : t('saved.generateFirst')}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredCurricula.map(item => (
-                                <RecordCard
-                                    key={item.id}
-                                    title={item.name}
-                                    description={item.curriculum.overview}
-                                    tags={[
-                                        { icon: <MapPin size={11} />, label: item.params.city },
-                                        { icon: <Users size={11} />, label: item.params.ageGroup.split(' ')[0] },
-                                        { icon: <GraduationCap size={11} />, label: item.params.englishLevel.split(' ')[0] },
-                                        { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} ${t('saved.lessons')}`, accent: true },
-                                        ...(curriculumQualityMap.get(item.id)?.status === 'needs_review'
-                                            ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
-                                            : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
-                                        { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
-                                    ]}
-                                    timestamp={item.timestamp}
-                                    openLabel={t('saved.openCurriculum')}
-                                    onOpen={() => onLoadCurriculum(item)}
-                                    onDelete={() => onDeleteCurriculum(item.id)}
-                                    onExport={() => {
-                                        const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
-                                        downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`);
-                                    }}
-                                    onRename={(newName) => onRenameCurriculum(item.id, newName)}
-                                    accentColor="emerald"
-                                />
-                            ))}
-                        </div>
+                        <>
+                            {/* Batch action bar */}
+                            <div className="flex items-center gap-3 mb-3">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 dark:text-slate-400 select-none" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedCurriculaIds.size === filteredCurricula.length && filteredCurricula.length > 0}
+                                        onChange={selectAllCurricula}
+                                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                    />
+                                    {t('saved.selectAll') || 'Select All'}
+                                </label>
+                                {selectedCurriculaIds.size > 0 && (
+                                    <button
+                                        onClick={handleBatchDeleteCurricula}
+                                        className="px-3 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+                                    >
+                                        {t('saved.deleteSelected') || `Delete Selected (${selectedCurriculaIds.size})`}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredCurricula.map(item => (
+                                    <RecordCard
+                                        key={item.id}
+                                        title={item.name}
+                                        description={item.curriculum.overview}
+                                        tags={[
+                                            { icon: <MapPin size={11} />, label: item.params.city },
+                                            { icon: <Users size={11} />, label: item.params.ageGroup.split(' ')[0] },
+                                            { icon: <GraduationCap size={11} />, label: item.params.englishLevel.split(' ')[0] },
+                                            { icon: <BookOpen size={11} />, label: `${item.curriculum.lessons.length} ${t('saved.lessons')}`, accent: true },
+                                            ...(curriculumQualityMap.get(item.id)?.status === 'needs_review'
+                                                ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
+                                                : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
+                                            { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                        ]}
+                                        timestamp={item.timestamp}
+                                        openLabel={t('saved.openCurriculum')}
+                                        onOpen={() => onLoadCurriculum(item)}
+                                        onDelete={() => onDeleteCurriculum(item.id)}
+                                        onExport={() => {
+                                            const blob = new Blob([JSON.stringify({ curriculum: item.curriculum, params: item.params }, null, 2)], { type: 'application/json' });
+                                            downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - Curriculum.json`);
+                                        }}
+                                        onRename={(newName) => onRenameCurriculum(item.id, newName)}
+                                        accentColor="emerald"
+                                        topLeftSlot={
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCurriculaIds.has(item.id)}
+                                                onChange={() => toggleCurriculumSelect(item.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                            />
+                                        }
+                                    />
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             )}
@@ -333,35 +422,66 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                             description={savedPlans.length > 0 ? t('saved.adjustFilters') : t('saved.generateKitFirst')}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredPlans.map(item => (
-                                <RecordCard
-                                    key={item.id}
-                                    title={item.name}
-                                    tags={[
-                                        { icon: <GraduationCap size={11} />, label: getLevelLabel(item.plan.basicInfo?.targetAudience || '') },
-                                        ...(item.plan.basicInfo?.location ? [{ icon: <MapPin size={11} />, label: item.plan.basicInfo.location }] : []),
-                                        ...(item.plan.basicInfo?.activityType ? [{ icon: <Compass size={11} />, label: item.plan.basicInfo.activityType }] : []),
-                                        ...(planQualityMap.get(item.id)?.status === 'needs_review'
-                                            ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
-                                            : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
-                                        { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} ${item.language === 'zh' ? '个活动' : 'activities'}`, accent: true },
-                                        { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
-                                        { icon: item.mode === 'family' ? <Heart size={11} /> : <School size={11} />, label: item.mode === 'family' ? (item.language === 'zh' ? '亲子' : 'Family') : (item.language === 'zh' ? '学校' : 'School'), className: item.mode === 'family' ? 'bg-pink-50 text-pink-600 font-bold' : 'bg-slate-50 text-slate-600 font-bold' },
-                                    ]}
-                                    timestamp={item.timestamp}
-                                    openLabel={t('saved.openKit')}
-                                    onOpen={() => onLoad(item)}
-                                    onDelete={() => onDelete(item.id)}
-                                    onExport={() => {
-                                        const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
-                                        downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - LessonKit.json`);
-                                    }}
-                                    onRename={(newName) => onRename(item.id, newName)}
-                                    accentColor="emerald"
-                                />
-                            ))}
-                        </div>
+                        <>
+                            {/* Batch action bar */}
+                            <div className="flex items-center gap-3 mb-3">
+                                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 dark:text-slate-400 select-none" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedPlanIds.size === filteredPlans.length && filteredPlans.length > 0}
+                                        onChange={selectAllPlans}
+                                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                    />
+                                    {t('saved.selectAll') || 'Select All'}
+                                </label>
+                                {selectedPlanIds.size > 0 && (
+                                    <button
+                                        onClick={handleBatchDeletePlans}
+                                        className="px-3 py-1 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+                                    >
+                                        {t('saved.deleteSelected') || `Delete Selected (${selectedPlanIds.size})`}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredPlans.map(item => (
+                                    <RecordCard
+                                        key={item.id}
+                                        title={item.name}
+                                        tags={[
+                                            { icon: <GraduationCap size={11} />, label: getLevelLabel(item.plan.basicInfo?.targetAudience || '') },
+                                            ...(item.plan.basicInfo?.location ? [{ icon: <MapPin size={11} />, label: item.plan.basicInfo.location }] : []),
+                                            ...(item.plan.basicInfo?.activityType ? [{ icon: <Compass size={11} />, label: item.plan.basicInfo.activityType }] : []),
+                                            ...(planQualityMap.get(item.id)?.status === 'needs_review'
+                                                ? [{ icon: <ShieldAlert size={11} />, label: 'Needs Review', className: 'bg-amber-50 text-amber-700 font-bold' }]
+                                                : [{ icon: <ShieldCheck size={11} />, label: 'Ready', className: 'bg-emerald-50 text-emerald-700 font-bold' }]),
+                                            { icon: <BookOpen size={11} />, label: `${item.plan.roadmap?.length || 0} ${item.language === 'zh' ? '个活动' : 'activities'}`, accent: true },
+                                            { icon: <Languages size={11} />, label: item.language === 'zh' ? '中文' : 'EN', className: item.language === 'zh' ? 'bg-red-50 text-red-600 font-bold' : 'bg-blue-50 text-blue-600 font-bold' },
+                                            { icon: item.mode === 'family' ? <Heart size={11} /> : <School size={11} />, label: item.mode === 'family' ? (item.language === 'zh' ? '亲子' : 'Family') : (item.language === 'zh' ? '学校' : 'School'), className: item.mode === 'family' ? 'bg-pink-50 text-pink-600 font-bold' : 'bg-slate-50 text-slate-600 font-bold' },
+                                        ]}
+                                        timestamp={item.timestamp}
+                                        openLabel={t('saved.openKit')}
+                                        onOpen={() => onLoad(item)}
+                                        onDelete={() => onDelete(item.id)}
+                                        onExport={() => {
+                                            const blob = new Blob([JSON.stringify(item.plan, null, 2)], { type: 'application/json' });
+                                            downloadBlob(blob, `${item.name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '').trim()} - LessonKit.json`);
+                                        }}
+                                        onRename={(newName) => onRename(item.id, newName)}
+                                        accentColor="emerald"
+                                        topLeftSlot={
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPlanIds.has(item.id)}
+                                                onChange={() => togglePlanSelect(item.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                            />
+                                        }
+                                    />
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             )}

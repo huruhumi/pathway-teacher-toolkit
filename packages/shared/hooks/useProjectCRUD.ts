@@ -27,6 +27,83 @@ export interface BaseRecord {
     [key: string]: any;
 }
 
+function normalizeTimestamp(value: unknown): number {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+        const n = Number(value);
+        if (Number.isFinite(n)) return n;
+    }
+    return 0;
+}
+
+function nonEmptyArray(value: unknown): boolean {
+    return Array.isArray(value) && value.length > 0;
+}
+
+function nonEmptyString(value: unknown, minLen = 1): boolean {
+    return typeof value === 'string' && value.trim().length >= minLen;
+}
+
+function isLikelyRegressedRecord(current: unknown, backup: unknown): boolean {
+    if (!current || !backup || typeof current !== 'object' || typeof backup !== 'object') return false;
+    const currentPlan = (current as any).plan;
+    const backupPlan = (backup as any).plan;
+    if (!currentPlan || !backupPlan || typeof currentPlan !== 'object' || typeof backupPlan !== 'object') return false;
+
+    const currentSignals = [
+        nonEmptyArray(currentPlan.handbook),
+        nonEmptyArray(currentPlan.imagePrompts),
+        nonEmptyArray(currentPlan.visualReferences),
+        nonEmptyString(currentPlan.notebookLMPrompt, 20),
+        nonEmptyArray(currentPlan?.supplies?.permanent) || nonEmptyArray(currentPlan?.supplies?.consumables),
+        nonEmptyString(currentPlan.factSheet, 80),
+    ];
+    const backupSignals = [
+        nonEmptyArray(backupPlan.handbook),
+        nonEmptyArray(backupPlan.imagePrompts),
+        nonEmptyArray(backupPlan.visualReferences),
+        nonEmptyString(backupPlan.notebookLMPrompt, 20),
+        nonEmptyArray(backupPlan?.supplies?.permanent) || nonEmptyArray(backupPlan?.supplies?.consumables),
+        nonEmptyString(backupPlan.factSheet, 80),
+    ];
+
+    let missingRichFields = 0;
+    for (let i = 0; i < backupSignals.length; i += 1) {
+        if (backupSignals[i] && !currentSignals[i]) missingRichFields += 1;
+    }
+    if (missingRichFields >= 2) return true;
+
+    const currentRoadmapLen = Array.isArray(currentPlan.roadmap) ? currentPlan.roadmap.length : 0;
+    const backupRoadmapLen = Array.isArray(backupPlan.roadmap) ? backupPlan.roadmap.length : 0;
+    if (backupRoadmapLen >= 4 && currentRoadmapLen > 0 && currentRoadmapLen <= Math.floor(backupRoadmapLen * 0.5)) {
+        return true;
+    }
+
+    return false;
+}
+
+function shouldPreferIncoming(incoming: unknown, existing: unknown): boolean {
+    const incomingTs = normalizeTimestamp((incoming as any)?.timestamp);
+    const existingTs = normalizeTimestamp((existing as any)?.timestamp);
+    if (incomingTs > existingTs) return true;
+    if (incomingTs < existingTs) return false;
+
+    // Same timestamp: prefer richer/non-regressed payload
+    if (isLikelyRegressedRecord(incoming, existing)) return false;
+    if (isLikelyRegressedRecord(existing, incoming)) return true;
+
+    const incomingSize = JSON.stringify(incoming ?? {}).length;
+    const existingSize = JSON.stringify(existing ?? {}).length;
+    return incomingSize >= existingSize;
+}
+
+const HISTORY_LIMIT_PER_RECORD = 8;
+
+interface RecordHistoryEnvelope<T> {
+    updatedAt: number;
+    itemsById: Record<string, T[]>;
+}
+
 interface RepositoryAdapter<T> {
     create: (userId: string) => RecordRepository<T>;
     toEnvelope: (record: T, userId: string) => RecordEnvelope<T>;
@@ -79,10 +156,83 @@ export const useProjectCRUD = <T extends BaseRecord>(
     }, [mapFromCloud, mapToCloud, migrate, repositoryAdapter, buildIndexEntry]);
 
     const localStorageKey = `${storageKey}:records`;
+    const historyStorageKey = `${storageKey}:history`;
+    const itemsRef = useRef<T[]>([]);
+
+    useEffect(() => {
+        itemsRef.current = items;
+    }, [items]);
 
     const persistLocal = useCallback(async (nextItems: T[]) => {
         await localforage.setItem(localStorageKey, nextItems.slice(0, limit));
     }, [localStorageKey, limit]);
+
+    const readHistory = useCallback(async (): Promise<RecordHistoryEnvelope<T>> => {
+        const raw = await localforage.getItem<RecordHistoryEnvelope<T>>(historyStorageKey);
+        if (raw && typeof raw === 'object' && raw.itemsById) return raw;
+        return { updatedAt: Date.now(), itemsById: {} };
+    }, [historyStorageKey]);
+
+    const persistHistory = useCallback(async (history: RecordHistoryEnvelope<T>) => {
+        await localforage.setItem(historyStorageKey, history);
+    }, [historyStorageKey]);
+
+    const snapshotRecord = useCallback(async (record: T | null | undefined) => {
+        if (!record?.id) return;
+        const history = await readHistory();
+        const bucket = history.itemsById[record.id] || [];
+        const latest = bucket[0];
+        const nextTs = normalizeTimestamp(record.timestamp);
+        const lastTs = normalizeTimestamp(latest?.timestamp);
+        const samePayload = latest && JSON.stringify(latest) === JSON.stringify(record);
+        if (samePayload || (nextTs > 0 && lastTs > 0 && nextTs === lastTs)) return;
+        history.itemsById[record.id] = [record, ...bucket].slice(0, HISTORY_LIMIT_PER_RECORD);
+        history.updatedAt = Date.now();
+        await persistHistory(history);
+    }, [persistHistory, readHistory]);
+
+    const recoverFromHistoryIfNewer = useCallback(async (candidateItems: T[]): Promise<{ merged: T[]; recoveredCount: number; recoveredIds: string[] }> => {
+        if (candidateItems.length === 0) return { merged: candidateItems, recoveredCount: 0, recoveredIds: [] };
+        const history = await readHistory();
+        const merged: T[] = [];
+        let recoveredCount = 0;
+        const recoveredIds: string[] = [];
+        for (const item of candidateItems) {
+            const bucket = history.itemsById[item.id] || [];
+            const latest = bucket[0];
+            if (!latest) {
+                merged.push(item);
+                continue;
+            }
+            const itemTs = normalizeTimestamp(item.timestamp);
+            const backupTs = normalizeTimestamp(latest.timestamp);
+            const itemSize = JSON.stringify(item).length;
+            const backupSize = JSON.stringify(latest).length;
+            const looksRegressed = backupSize > Math.max(2000, Math.floor(itemSize * 1.4));
+            const looksStructurallyRegressed = isLikelyRegressedRecord(item, latest);
+            if (backupTs > itemTs || looksRegressed || looksStructurallyRegressed) {
+                merged.push(latest);
+                recoveredCount += 1;
+                recoveredIds.push(item.id);
+            } else {
+                merged.push(item);
+            }
+        }
+        return { merged, recoveredCount, recoveredIds };
+    }, [readHistory]);
+
+    const syncRecoveredToCloud = useCallback(async (merged: T[], recoveredIds: string[]) => {
+        if (!user || recoveredIds.length === 0) return;
+        const recoveredSet = new Set(recoveredIds);
+        const repoAdapter = repositoryAdapterRef.current;
+        for (const item of merged) {
+            if (!recoveredSet.has(item.id)) continue;
+            await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
+            if (repoAdapter && repoAdapter.dualWrite !== false) {
+                await repoAdapter.create(user.id).save(repoAdapter.toEnvelope(item, user.id));
+            }
+        }
+    }, [cloudTable, user]);
 
     const readLegacyLocalStorage = useCallback((): T[] => {
         if (typeof window === 'undefined') return [];
@@ -233,17 +383,46 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     // This prevents data loss when a cloud save silently failed.
                     if (mapped.length === 0 && localItems.length > 0) {
                         // Cloud returned empty — keep local cache (transient auth/network issue)
-                        setItemsState(localItems);
-                        await persistLocal(localItems);
+                        const recovered = await recoverFromHistoryIfNewer(localItems);
+                        setItemsState(recovered.merged);
+                        await persistLocal(recovered.merged);
+                        if (recovered.recoveredCount > 0) {
+                            useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                            void syncRecoveredToCloud(recovered.merged, recovered.recoveredIds);
+                        }
                     } else if (mapped.length > 0) {
-                        const cloudIds = new Set(mapped.map((m) => m.id));
-                        const localOnly = localItems.filter((l) => !cloudIds.has(l.id));
-                        const merged = [...mapped, ...localOnly].slice(0, limit);
-                        setItemsState(merged);
-                        await persistLocal(merged);
+                        const mergedById = new Map<string, T>();
+                        for (const cloudItem of mapped) {
+                            mergedById.set(cloudItem.id, cloudItem);
+                        }
+                        for (const localItem of localItems) {
+                            const existing = mergedById.get(localItem.id);
+                            if (!existing) {
+                                mergedById.set(localItem.id, localItem);
+                                continue;
+                            }
+                            if (shouldPreferIncoming(localItem, existing)) {
+                                mergedById.set(localItem.id, localItem);
+                            }
+                        }
+                        const merged = Array.from(mergedById.values())
+                            .sort((a, b) => normalizeTimestamp(b.timestamp) - normalizeTimestamp(a.timestamp))
+                            .slice(0, limit);
+                        const recovered = await recoverFromHistoryIfNewer(merged);
+                        setItemsState(recovered.merged);
+                        await persistLocal(recovered.merged);
+                        if (recovered.recoveredCount > 0) {
+                            useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                            void syncRecoveredToCloud(recovered.merged, recovered.recoveredIds);
+                        }
                     } else {
-                        setItemsState(mapped);
-                        await persistLocal(mapped);
+                        const recovered = await recoverFromHistoryIfNewer(mapped);
+                        setItemsState(recovered.merged);
+                        await persistLocal(recovered.merged);
+                        if (recovered.recoveredCount > 0) {
+                            useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                            void syncRecoveredToCloud(recovered.merged, recovered.recoveredIds);
+                        }
                     }
                 }
             } catch (err: any) {
@@ -261,15 +440,26 @@ export const useProjectCRUD = <T extends BaseRecord>(
         return () => {
             cancelled = true;
         };
-    }, [cloudTable, limit, persistLocal, readLocal, user?.id]);
+    }, [cloudTable, limit, persistLocal, readLocal, recoverFromHistoryIfNewer, syncRecoveredToCloud, user?.id]);
 
     const saveItem = useCallback(async (item: T): Promise<SaveResult> => {
+        const previousItem = itemsRef.current.find((p) => p.id === item.id);
+        if (previousItem) {
+            await snapshotRecord(previousItem);
+        }
+        const incomingTs = normalizeTimestamp(item.timestamp);
+        const previousTs = normalizeTimestamp(previousItem?.timestamp);
+        const nowTs = Date.now();
+        const safeTimestamp = Math.max(incomingTs, nowTs, previousTs > 0 ? previousTs + 1 : 0);
+        const itemToSave = safeTimestamp === incomingTs
+            ? item
+            : ({ ...item, timestamp: safeTimestamp } as T);
         let optimistic: T[] = [];
         setItemsState((prev) => {
             const exists = prev.some((p) => p.id === item.id);
             optimistic = exists
-                ? prev.map((p) => (p.id === item.id ? item : p))
-                : [item, ...prev];
+                ? prev.map((p) => (p.id === item.id ? itemToSave : p))
+                : [itemToSave, ...prev];
             optimistic = optimistic.slice(0, limit);
             return optimistic;
         });
@@ -282,7 +472,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
             return { ok: true, source: 'local', pendingSync: true };
         }
 
-        const cloudResult = await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
+        const cloudResult = await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(itemToSave));
         if (!cloudResult.ok) {
             useToast.getState().error(`Save failed. ${cloudResult.message || 'Please retry.'}`);
             return { ...cloudResult, source: 'mixed', pendingSync: true };
@@ -290,7 +480,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
 
         const repoAdapter = repositoryAdapterRef.current;
         if (repoAdapter && repoAdapter.dualWrite !== false) {
-            const repoResult = await repoAdapter.create(user.id).save(repoAdapter.toEnvelope(item, user.id));
+            const repoResult = await repoAdapter.create(user.id).save(repoAdapter.toEnvelope(itemToSave, user.id));
             if (!repoResult.ok) {
                 useToast.getState().warning('Saved to current storage, but repository sync failed. Retry when convenient.');
                 return { ok: true, source: 'mixed', errorCode: repoResult.errorCode, message: repoResult.message, retryable: true };
@@ -299,10 +489,10 @@ export const useProjectCRUD = <T extends BaseRecord>(
 
         const indexBuilder = buildIndexEntryRef.current;
         if (indexBuilder) {
-            const partial = indexBuilder(item);
+            const partial = indexBuilder(itemToSave);
             const indexResult = await upsertRecordIndexEntry({
                 ...partial,
-                recordId: partial.recordId || item.id,
+                recordId: partial.recordId || itemToSave.id,
                 ownerId: user.id,
                 updatedAt: partial.updatedAt || new Date().toISOString(),
             });
@@ -315,9 +505,13 @@ export const useProjectCRUD = <T extends BaseRecord>(
         }
 
         return cloudResult;
-    }, [broadcastSync, cloudTable, limit, persistLocal, user]);
+    }, [broadcastSync, cloudTable, limit, persistLocal, snapshotRecord, user]);
 
     const deleteItem = useCallback(async (id: string): Promise<SaveResult> => {
+        const target = itemsRef.current.find((p) => p.id === id);
+        if (target) {
+            await snapshotRecord(target);
+        }
         // Snapshot for rollback on failure
         let rollbackSnapshot: T[] | null = null;
         let optimistic: T[] = [];
@@ -402,7 +596,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
             console.error('[useProjectCRUD] deleteItem unexpected error:', err);
             return { ok: false, source: 'cloud', errorCode: 'UNEXPECTED_DELETE_ERROR', message, retryable: true };
         }
-    }, [broadcastSync, cloudTable, persistLocal, user]);
+    }, [broadcastSync, cloudTable, persistLocal, snapshotRecord, user]);
 
     const renameItem = useCallback(async (
         id: string,
@@ -474,14 +668,47 @@ export const useProjectCRUD = <T extends BaseRecord>(
             if (migrateRef.current) {
                 mapped = mapped.map((item) => migrateRef.current!(item));
             }
-            setItemsState(mapped);
-            await persistLocal(mapped);
+            const localItems = await readLocal();
+            if (mapped.length > 0 && localItems.length > 0) {
+                const mergedById = new Map<string, T>();
+                for (const cloudItem of mapped) {
+                    mergedById.set(cloudItem.id, cloudItem);
+                }
+                for (const localItem of localItems) {
+                    const existing = mergedById.get(localItem.id);
+                    if (!existing) {
+                        mergedById.set(localItem.id, localItem);
+                        continue;
+                    }
+                    if (shouldPreferIncoming(localItem, existing)) {
+                        mergedById.set(localItem.id, localItem);
+                    }
+                }
+                const merged = Array.from(mergedById.values())
+                    .sort((a, b) => normalizeTimestamp(b.timestamp) - normalizeTimestamp(a.timestamp))
+                    .slice(0, limit);
+                const recovered = await recoverFromHistoryIfNewer(merged);
+                setItemsState(recovered.merged);
+                await persistLocal(recovered.merged);
+                if (recovered.recoveredCount > 0) {
+                    useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                    void syncRecoveredToCloud(recovered.merged, recovered.recoveredIds);
+                }
+            } else {
+                const recovered = await recoverFromHistoryIfNewer(mapped);
+                setItemsState(recovered.merged);
+                await persistLocal(recovered.merged);
+                if (recovered.recoveredCount > 0) {
+                    useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                    void syncRecoveredToCloud(recovered.merged, recovered.recoveredIds);
+                }
+            }
         } catch (err: any) {
             useToast.getState().error(`Refresh failed. ${err?.message || 'Please retry.'}`);
         } finally {
             setIsLoading(false);
         }
-    }, [cloudTable, limit, persistLocal, readLocal, user]);
+    }, [cloudTable, limit, persistLocal, readLocal, recoverFromHistoryIfNewer, syncRecoveredToCloud, user]);
 
     const hydrateByIds = useCallback(async (ids: string[]): Promise<T[]> => {
         if (ids.length === 0) return [];

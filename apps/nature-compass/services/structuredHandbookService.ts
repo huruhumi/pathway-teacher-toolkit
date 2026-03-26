@@ -17,8 +17,8 @@ import {
   buildStructuredPlanSystemInstruction,
   buildStructuredHandbookSystemInstruction,
   buildTopicExtractionPrompt,
-  buildResearchTopicPrompt,
 } from './gemini/structuredPrompts';
+import { generateStructuredTopicKnowledge } from './groundingService';
 
 const BATCH_SIZE = 4;
 const BATCH_DELAY_MS = 2000;
@@ -116,28 +116,24 @@ export async function extractResearchTopics(
   }, signal);
 }
 
-async function researchSingleTopic(topic: string, signal?: AbortSignal): Promise<StructuredKnowledge> {
-  const ai = createAIClient();
-
+async function researchSingleTopic(
+  topic: string,
+  signal?: AbortSignal,
+  contextText?: string,
+): Promise<StructuredKnowledge> {
   try {
-    const response = await retryOperation(
-      () =>
-        ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: buildResearchTopicPrompt(topic),
-          config: {
-            tools: [{ googleSearch: {} }],
-            temperature: 0.2,
-          },
-        }),
+    const grounded = await generateStructuredTopicKnowledge(
+      topic,
+      contextText || 'Structured handbook topic research',
       signal,
     );
-
-    const text = response?.text || '';
-    const sourceMatches = text.match(/\[(\d+)\]/g) || [];
-    const sources = [...new Set(sourceMatches)].map((s) => s.replace(/[\[\]]/g, ''));
-
-    return { topic, content: text, sources };
+    return {
+      topic,
+      content: grounded.content,
+      sources: grounded.sources.map((s) => s.url),
+      sourceDetails: grounded.sources,
+      freshnessMeta: grounded.freshnessMeta,
+    };
   } catch (err: unknown) {
     const message = toErrorMessage(err);
     console.warn(`[StructuredHandbook] Research failed for topic "${topic}":`, message);
@@ -149,6 +145,7 @@ export async function batchResearch(
   topics: string[],
   onProgress?: (completed: number, total: number) => void,
   signal?: AbortSignal,
+  contextText?: string,
 ): Promise<StructuredKnowledge[]> {
   const results: StructuredKnowledge[] = [];
   const total = topics.length;
@@ -157,7 +154,9 @@ export async function batchResearch(
     if (signal?.aborted) throw new Error('Research cancelled');
 
     const batch = topics.slice(i, i + BATCH_SIZE);
-    const batchResults = await Promise.all(batch.map((topic) => researchSingleTopic(topic, signal)));
+    const batchResults = await Promise.all(
+      batch.map((topic) => researchSingleTopic(topic, signal, contextText)),
+    );
     results.push(...batchResults);
     onProgress?.(Math.min(results.length, total), total);
 

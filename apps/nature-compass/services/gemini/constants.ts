@@ -1,36 +1,36 @@
 export const THEME_PERSPECTIVES = [
-  "Microscopic View (Zoom in on tiny details)",
-  "Time Travel (Ancient past or distant future)",
-  "Detective Mystery (Solving a nature riddle)",
-  "Survival Mode (Living off the land)",
-  "Alien Explorer (First time seeing Earth)",
-  "Superhero Academy (Nature's superpowers)",
-  "Chef's Kitchen (Edible science)",
-  "Art Heist (Stealing colors/textures)",
-  "Underground Kingdom (Roots and bugs)",
-  "Sky Pirates (Wind and weather)"
+    "Microscopic View (Zoom in on tiny details)",
+    "Time Travel (Ancient past or distant future)",
+    "Detective Mystery (Solving a nature riddle)",
+    "Survival Mode (Living off the land)",
+    "Alien Explorer (First time seeing Earth)",
+    "Superhero Academy (Nature's superpowers)",
+    "Chef's Kitchen (Edible science)",
+    "Art Heist (Stealing colors/textures)",
+    "Underground Kingdom (Roots and bugs)",
+    "Sky Pirates (Wind and weather)",
 ];
 
 export const PATHWAY_BRAND_STYLE_BLOCK = `
-[Nature Compass / 鑷劧鎸囬拡 Brand Identity (MANDATORY)]
+[Nature Compass / 自然指针 Brand Identity (MANDATORY)]
 The generated 'handbookStylePrompt' MUST incorporate these brand elements:
-- Primary: Deep Navy Blue (#1A2B58) for headings & borders
-- Accent 1: Vibrant Fuchsia Pink (#E91E63) for CTA boxes & subtitles
-- Accent 2: Warm Golden Yellow (#FFC107) for icons & highlights
+- Primary: Deep Navy Blue (#1A2B58) for headings and borders
+- Accent 1: Vibrant Fuchsia Pink (#E91E63) for CTA boxes and subtitles
+- Accent 2: Warm Golden Yellow (#FFC107) for icons and highlights
 - Accent 3: Sky Blue (#87CEEB) for soft background tints
-- Style: Modern flat vector illustrations, geometric shapes (hexagons & chevrons)
+- Style: Modern flat vector illustrations, geometric shapes (hexagons and chevrons)
 - Background: White (#FFFFFF) or near-white (#F8F9FA)
 - Typography: Geometric sans-serif (Montserrat, Open Sans)
 - Layout: Rounded-corner bordered activity zones, high negative space
-- Brand name: "Nature Compass" (English) / "鑷劧鎸囬拡" (Chinese). Do NOT use "Pathway Academy" anywhere.
-- Do NOT include any website URLs or fabricated links.
+- Brand name: "Nature Compass" (English) / "自然指针" (Chinese). Do NOT use "Pathway Academy" anywhere.
+- Do NOT include website URLs or fabricated links.
 
-[WHITE BACKGROUND FOR TEXT 鈥?ABSOLUTE RULE]
-CRITICAL: Every area that contains readable text (paragraphs, facts, instructions, questions, fill-in-blanks, observation tables, etc.) MUST have a pure WHITE (#FFFFFF) background. This ensures maximum readability when printed.
-- Borders, frames, and decorative edges around text zones CAN use brand colors (navy, pink, yellow, sky blue).
-- Page headers / section titles CAN have colored banners or ribbons.
-- Cover and Back Cover pages are the ONLY exceptions 鈥?they use full-color backgrounds.
-- "Did You Know?" boxes, "Fun Fact" callouts, and sidebar panels: the BORDER and HEADER BAR can be colored, but the TEXT BODY AREA inside MUST remain white.
-- Activity workspace zones (drawing boxes, data tables, writing lines): background MUST be white.
-- NEVER place readable body text on colored, gradient, or patterned backgrounds. This severely harms readability.
+[WHITE BACKGROUND FOR TEXT - ABSOLUTE RULE]
+CRITICAL: Every area containing readable body text (facts, instructions, questions, tables, fill-in lines) MUST have pure WHITE (#FFFFFF) background for print readability.
+- Borders and decorative frames around text zones can use brand colors.
+- Section headers can use colored banners.
+- Cover and Back Cover are the only exceptions and may use full-color backgrounds.
+- For callouts ("Did You Know?", "Fun Fact"), border/header can be colored, but body text area must remain white.
+- Drawing/data-table/writing workspaces must remain white.
+- Never place readable body text on colored, gradient, or patterned backgrounds.
 `;

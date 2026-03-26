@@ -1,68 +1,74 @@
 import React, { useRef } from 'react';
 import { CurriculumPlanner } from '../components/CurriculumPlanner';
 import { CurriculumResultDisplay } from '../components/CurriculumResultDisplay';
-import type { Curriculum, CurriculumParams, CurriculumLesson, SavedLessonPlan } from '../types';
+import type { Curriculum, CurriculumParams, CurriculumLesson, SavedLessonPlan, FactSheetResult } from '../types';
 import { useSessionStore, useAppStore } from '../stores/appStore';
 import { useBatchGenerate } from '../hooks/useBatchGenerate';
 import { safeStorage } from '@shared/safeStorage';
 
 export interface CurriculumPageProps {
     onSaveCurriculum: (curriculum: Curriculum, params: CurriculumParams, language: 'en' | 'zh') => void | Promise<unknown>;
-    onGenerateLessonKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => void;
+    onGenerateLessonKit: (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh', weather: 'Sunny' | 'Rainy') => void;
     onNavigate: (view: 'lesson' | 'saved') => void;
     savedPlans: SavedLessonPlan[];
     savePlanDb: (saved: SavedLessonPlan) => void | Promise<unknown>;
 }
 
 export const CurriculumPage: React.FC<CurriculumPageProps> = ({
-    onSaveCurriculum, onGenerateLessonKit, onNavigate, savedPlans, savePlanDb
+    onSaveCurriculum, onGenerateLessonKit, onNavigate, savedPlans, savePlanDb,
 }) => {
-    const { curriculumResult, setCurriculumResult, externalCurriculum, setExternalCurriculum, setRagFactSheets } = useSessionStore();
+    const {
+        curriculumResult,
+        setCurriculumResult,
+        externalCurriculum,
+        setExternalCurriculum,
+        setSharedFactSheet,
+    } = useSessionStore();
     const { setLessonPlan } = useSessionStore();
     const { setCurrentPlanId } = useAppStore();
     const {
-        batchStatus, batchLessonMap, batchRunning, batchProgress,
-        handleBatchGenerate, handleCancelBatch,
+        batchStatus,
+        batchLessonMap,
+        batchRunning,
+        batchProgress,
+        handleBatchGenerate,
+        handleCancelBatch,
     } = useBatchGenerate();
+
+    const sharedFactSheetRef = useRef<FactSheetResult | undefined>();
 
     const handleOpenBatchPlan = (savedId: string) => {
         const found = savedPlans.find((p) => p.id === savedId);
-        if (found) {
-            setLessonPlan(found.plan);
-            setCurrentPlanId(found.id);
-            onNavigate('lesson');
-            setTimeout(() => {
-                document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        }
+        if (!found) return;
+        setLessonPlan(found.plan);
+        setCurrentPlanId(found.id);
+        onNavigate('lesson');
+        setTimeout(() => {
+            document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     };
-    // Store RAG fact sheets between curriculum generation and batch generation
-    const ragFactSheetsRef = useRef<Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }> | undefined>();
 
     const handleCurriculumGenerated = (data: {
         curriculumEN: Curriculum | null;
         curriculumCN: Curriculum | null;
         params: CurriculumParams;
         activeLanguage: 'en' | 'zh';
-        ragFactSheets?: Map<number, { content: string; quality: 'good' | 'low' | 'insufficient' }>;
+        sharedFactSheet?: FactSheetResult;
     }) => {
-        ragFactSheetsRef.current = data.ragFactSheets;
-        // Persist fact sheets as serializable array in session store for handleSavePlan
-        if (data.ragFactSheets && data.ragFactSheets.size > 0) {
-            const arr = Array.from(data.ragFactSheets.entries()).map(([idx, fs]) => ({
-                lessonIndex: idx, content: fs.content, quality: fs.quality
-            }));
-            setRagFactSheets(arr);
-        } else {
-            setRagFactSheets(null);
-        }
-        setCurriculumResult(data);
+        sharedFactSheetRef.current = data.sharedFactSheet;
+        setSharedFactSheet(data.sharedFactSheet || null);
+        setCurriculumResult({
+            curriculumEN: data.curriculumEN,
+            curriculumCN: data.curriculumCN,
+            params: data.params,
+            activeLanguage: data.activeLanguage,
+        });
     };
 
     const handleBackToConfig = () => {
         setExternalCurriculum(null);
         setCurriculumResult(null);
-        // Clear cached curriculum so CurriculumPlanner doesn't auto-restore on mount
+        setSharedFactSheet(null);
         safeStorage.remove('nature-compass-curriculum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -70,6 +76,7 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
     const handleNewCurriculum = () => {
         setExternalCurriculum(null);
         setCurriculumResult(null);
+        setSharedFactSheet(null);
         safeStorage.remove('nature-compass-curriculum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -89,7 +96,9 @@ export const CurriculumPage: React.FC<CurriculumPageProps> = ({
             batchLessonMap={batchLessonMap}
             batchRunning={batchRunning}
             batchProgress={batchProgress}
-            onBatchGenerate={(lessons, params, language) => handleBatchGenerate(lessons, params, language, savePlanDb, ragFactSheetsRef.current)}
+            onBatchGenerate={(lessons, params, language, weatherByLessonIndex) =>
+                handleBatchGenerate(lessons, params, language, savePlanDb, sharedFactSheetRef.current, weatherByLessonIndex)
+            }
             onCancelBatch={handleCancelBatch}
             onOpenPlan={handleOpenBatchPlan}
             onCurriculumUpdate={(updated, language) => {

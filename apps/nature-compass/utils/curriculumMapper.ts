@@ -61,7 +61,8 @@ function parseDuration(durationStr: string): number {
  */
 export function mapLessonToInput(
     lesson: CurriculumLesson,
-    params: CurriculumParams
+    params: CurriculumParams,
+    weatherOverride?: 'Sunny' | 'Rainy'
 ): LessonInput {
     // Inject location into context so AI generates correct basicInfo.location
     const locationContext = lesson.location ? `\n[Location: ${lesson.location}]` : '';
@@ -73,7 +74,7 @@ export function mapLessonToInput(
         theme: lesson.title,
         topicIntroduction: `${lesson.description}${locationContext}${paramsLocation}`,
         activityFocus: parseActivityFocus(lesson.steam_focus),
-        weather: 'Sunny', // default — user can change
+        weather: weatherOverride || params.weather || 'Sunny', // prioritize per-lesson tab choice from curriculum page
         season: 'Spring', // default — user can change
         studentAge: params.ageGroup || AGE_RANGES[0],
         studentCount: params.mode === 'family' ? 2 : 12,

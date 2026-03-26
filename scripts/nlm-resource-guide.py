@@ -7,6 +7,7 @@ Checks/generates resource guide, and queries notebook sources.
 Usage:
     python nlm-resource-guide.py check <notebook_id>
     python nlm-resource-guide.py generate <notebook_id> [--user-input <json>]
+    python nlm-resource-guide.py read <notebook_id>
     python nlm-resource-guide.py query <notebook_id> --prompts <json_array>
 
 Output: JSON to stdout
@@ -200,6 +201,46 @@ Based on the notebook analysis below, generate a Resource Guide that is **AT LEA
     return response.text
 
 
+async def read_guide(notebook_id: str):
+    """Read the full content of the Resource Guide from the notebook via chat."""
+    client = await get_client()
+    try:
+        # First, confirm the guide exists
+        sources = await client.sources.list(notebook_id)
+        guide_source = None
+        for s in sources:
+            title = getattr(s, 'title', '') or ''
+            if GUIDE_TITLE in title or GUIDE_TITLE_ALT in title:
+                guide_source = s
+                break
+
+        if not guide_source:
+            return {"status": "not_found", "error": "Resource Guide source not found in notebook"}
+
+        # Ask NLM to output the full content of the Resource Guide
+        print(f"[read] Found guide source: {getattr(guide_source, 'id', 'unknown')}", file=sys.stderr)
+        read_query = (
+            f'Please output the COMPLETE and FULL text content of the source titled "{GUIDE_TITLE}" '
+            'or "Resource Guide" verbatim, without summarizing or truncating. '
+            'Include every section, every table, every list item exactly as written.'
+        )
+        result = await client.chat.ask(notebook_id, read_query)
+        content = getattr(result, 'text', '') or getattr(result, 'content', '') or str(result)
+        print(f"[read] Retrieved {len(content)} chars", file=sys.stderr)
+
+        if not content or len(content) < 100:
+            return {"status": "error", "error": "Resource Guide content was empty or too short"}
+
+        return {
+            "status": "ok",
+            "content": content,
+            "sourceId": getattr(guide_source, 'id', None),
+            "charCount": len(content),
+        }
+    finally:
+        await client.__aexit__(None, None, None)
+
+
 async def query_notebook(notebook_id: str, prompts: list[str]):
     """Query the notebook's sources for each prompt, returning factSheets."""
     client = await get_client()
@@ -288,6 +329,8 @@ async def main():
             result = await check_guide(notebook_id)
         elif action == 'generate':
             result = await generate_guide(notebook_id, user_input)
+        elif action == 'read':
+            result = await read_guide(notebook_id)
         elif action == 'query':
             if not prompts:
                 result = {"error": "Missing --prompts argument"}

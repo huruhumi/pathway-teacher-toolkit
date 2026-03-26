@@ -21,6 +21,28 @@ export interface HandbookPageConfig {
   enabled: boolean;
 }
 
+export interface HandbookPhasePageConfigItem {
+  phaseIndex: number;
+  backgroundKnowledge: number;
+  activityWorksheet: number;
+  reading: number;
+  phaseTransition: number;
+}
+
+export interface HandbookPhasePagePlan {
+  /** Total handbook pages user explicitly wants (including fixed system pages). */
+  totalPages: number;
+  /** Adjustable system page counts (fixed pages are implied separately). */
+  systemPages: {
+    tableOfContents: number;
+    safety: number;
+    propChecklist: number;
+    reflection: number;
+  };
+  /** Explicit per-phase page allocation, no averaging/default equal split. */
+  phasePages: HandbookPhasePageConfigItem[];
+}
+
 export interface SectionMeta {
   type: HandbookSectionType;
   label: string;
@@ -48,11 +70,16 @@ export interface LessonInput {
   handbookPreset: 'light' | 'standard' | 'full' | 'deep';
   handbookPageConfig: HandbookPageConfig[];
   autoPageTarget?: number;
+  handbookPhasePagePlan?: HandbookPhasePagePlan;
   uploadedFiles: UploadedFile[];
-  /** NotebookLM-generated fact sheet for RAG grounding (optional) */
+  /** Grounded fact sheet for lesson generation (optional). */
   factSheet?: string;
-  /** Quality indicator from NotebookLM fact sheet evaluation */
+  /** Quality indicator from fact sheet evaluation. */
   factSheetQuality?: 'good' | 'low' | 'insufficient';
+  /** Source references used to build the fact sheet. */
+  factSheetSources?: FactSheetSource[];
+  /** Freshness/risk metadata for the fact sheet grounding process. */
+  factSheetMeta?: FactSheetFreshnessMeta;
   /** User-defined page-by-page handbook outline (structured mode) */
   customStructure?: string;
   /** Researched knowledge for structured mode */
@@ -61,10 +88,62 @@ export interface LessonInput {
   handbookStyleId?: string;
 }
 
+/** Snapshot of LessonInput fields needed to reconstruct handbookRules in Phase 2 */
+export interface InputSnapshot {
+  mode: 'school' | 'family';
+  familyEslEnabled?: boolean;
+  weather: 'Sunny' | 'Rainy';
+  studentAge: string;
+  cefrLevel: string;
+  duration: number;
+  handbookMode: 'auto' | 'preset' | 'custom' | 'structured';
+  handbookPreset: 'light' | 'standard' | 'full' | 'deep';
+  handbookPageConfig: HandbookPageConfig[];
+  autoPageTarget?: number;
+  handbookPhasePagePlan?: HandbookPhasePagePlan;
+  factSheet?: string;
+  factSheetQuality?: 'good' | 'low' | 'insufficient';
+  factSheetSources?: FactSheetSource[];
+  factSheetMeta?: FactSheetFreshnessMeta;
+  handbookStyleId?: string;
+  customStructure?: string;
+  structuredKnowledge?: StructuredKnowledge[];
+}
+
+export interface FactSheetSource {
+  title: string;
+  url: string;
+  publishedAt: string | null;
+}
+
+export type ThemeFreshnessTier = 'HIGH' | 'MEDIUM' | 'LOW';
+export type FreshnessWindow = '1y' | '3y' | '5y';
+export type FreshnessRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface FactSheetFreshnessMeta {
+  themeTier: ThemeFreshnessTier;
+  targetWindow: '1y';
+  effectiveWindow: FreshnessWindow;
+  riskLevel: FreshnessRiskLevel;
+  /** 0..1 ratio of sources that meet current effective window. */
+  coverage: number;
+  /** Optional audit notes about grounding policy/runtime decisions. */
+  degradeNotes?: string[];
+}
+
+export interface FactSheetResult {
+  content: string;
+  quality: 'good' | 'low' | 'insufficient';
+  sources: FactSheetSource[];
+  freshnessMeta: FactSheetFreshnessMeta;
+}
+
 export interface StructuredKnowledge {
   topic: string;
   content: string;
   sources?: string[];
+  sourceDetails?: FactSheetSource[];
+  freshnessMeta?: FactSheetFreshnessMeta;
 }
 
 export interface VocabularyItem {
@@ -101,7 +180,7 @@ export interface VisualReferenceItem {
 export interface HandbookPage {
   pageNumber: number;
   title: string;
-  section: 'Introduction' | 'Cover' | 'Table of Contents' | 'Safety' | 'Prop Checklist' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Reflection' | 'Certificate' | 'Back Cover';
+  section: 'Introduction' | 'Cover' | 'Table of Contents' | 'Safety' | 'Prop Checklist' | 'Phase Transition' | 'Background Knowledge' | 'Reading' | 'Instructions' | 'Activity/Worksheet' | 'Reflection' | 'Certificate' | 'Back Cover';
   layoutDescription: string;
   visualPrompt: string;
   contentPrompt: string;
@@ -139,8 +218,16 @@ export interface LessonPlanResponse {
   translatedPlan?: any;
   /** RAG knowledge base / fact sheet used to ground this lesson */
   factSheet?: string;
+  /** Source references used for fact sheet grounding. */
+  factSheetSources?: FactSheetSource[];
+  /** Freshness/risk metadata for the grounded fact sheet. */
+  factSheetMeta?: FactSheetFreshnessMeta;
   /** Structured knowledge entries (topic + content + sources) for cache matching */
   structuredKnowledge?: StructuredKnowledge[];
+  /** Two-stage generation phase marker */
+  generationPhase?: 'roadmap_only' | 'complete';
+  /** Snapshot of original LessonInput for Phase 2 / Commit reconstruction */
+  _inputSnapshot?: InputSnapshot;
 }
 
 export interface SavedLessonPlan {
@@ -152,6 +239,7 @@ export interface SavedLessonPlan {
   coverImage?: string; // Optional badge image for projects
   language?: 'en' | 'zh';
   mode?: 'school' | 'family';
+  generationPhase?: 'roadmap_only' | 'complete';
 }
 
 // --- Curriculum Planning Types (from STEAM Designer) ---
@@ -184,6 +272,7 @@ export interface CurriculumParams {
   preferredLocation: string;
   customTheme: string;
   customDescription?: string;
+  weather?: 'Sunny' | 'Rainy';
 }
 
 export interface SavedCurriculum {

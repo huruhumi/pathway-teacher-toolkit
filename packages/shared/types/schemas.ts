@@ -262,6 +262,7 @@ export const HandbookPageSchema = z.object({
     layoutDescription: z.string(),
     visualPrompt: z.string(),
     contentPrompt: z.string(),
+    teacherContentPrompt: z.string().optional(),
     phaseIndex: z.number().optional()
 });
 
@@ -290,5 +291,38 @@ export const NatureLessonPlanResponseSchema = z.object({
     handbook: z.array(HandbookPageSchema),
     notebookLMPrompt: z.string(),
     imagePrompts: z.array(z.string()),
-    translatedPlan: z.any().optional()
+    translatedPlan: z.any().optional(),
+    generationPhase: z.enum(['roadmap_only', 'complete']).optional(),
+    _inputSnapshot: z.any().optional(),
+});
+
+/**
+ * Relaxed Zod schema for Phase 1 (roadmap_only) validation.
+ * Downstream fields (handbook, supplies, imagePrompts, etc.) are optional
+ * since Gemini only generates roadmap-related content in Phase 1.
+ */
+export const NatureRoadmapOnlySchema = z.object({
+    missionBriefing: z.object({
+        title: z.string(),
+        narrative: z.string()
+    }),
+    basicInfo: z.object({
+        theme: z.string(),
+        activityType: z.string(),
+        targetAudience: z.string(),
+        location: z.string().optional().default(''),
+        learningGoals: z.array(z.string())
+    }),
+    vocabulary: z.object({
+        keywords: z.array(VocabularyItemSchema),
+        phrases: z.array(z.string())
+    }),
+    roadmap: z.array(RoadmapItemSchema),
+    safetyProtocol: z.array(z.string()),
+    visualReferences: z.array(VisualReferenceItemSchema),
+    handbookStructurePlan: z.string().optional(),
+    // Downstream fields — optional in Phase 1
+    translatedPlan: z.any().optional(),
+    generationPhase: z.enum(['roadmap_only', 'complete']).optional(),
+    _inputSnapshot: z.any().optional(),
 });

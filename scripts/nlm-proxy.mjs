@@ -1,7 +1,7 @@
 /**
  * Local NotebookLM MCP Proxy Server
  * 
- * Runs on localhost:3099 and proxies research requests to NotebookLM
+ * Runs on localhost:3199 and proxies research requests to NotebookLM
  * via the notebooklm-mcp tools (using the stored cookies).
  * 
  * Usage: node scripts/nlm-proxy.mjs
@@ -15,7 +15,7 @@ import { createServer } from 'http';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const PORT = 3099;
+const PORT = 3199;
 
 // --- Cookie management ---
 function loadCookies() {
@@ -217,6 +217,60 @@ function extractGroundingUrls(data) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+function runNotebookLMAuthCheck({ test = true } = {}) {
+    return new Promise((resolve, reject) => {
+        const args = ['auth', 'check', '--json'];
+        if (test) args.push('--test');
+        const proc = spawn('notebooklm', args, {
+            shell: true,
+            timeout: 120000,
+        });
+        let stdout = '';
+        let stderr = '';
+        proc.stdout.on('data', (d) => { stdout += d.toString(); });
+        proc.stderr.on('data', (d) => { stderr += d.toString(); });
+        proc.on('close', (code) => {
+            const raw = (stdout || '').trim();
+            if (!raw) {
+                if (code === 0) return resolve({ ok: false, needsLogin: true, message: 'NotebookLM auth check returned empty output.', details: { stderr } });
+                return reject(new Error(`auth check failed (${code}): ${stderr || 'empty output'}`));
+            }
+            try {
+                const parsed = JSON.parse(raw);
+                const status = parsed?.status;
+                const tokenFetch = parsed?.checks?.token_fetch;
+                const detailsError = String(parsed?.details?.error || '').toLowerCase();
+                const authExpired =
+                    status !== 'ok'
+                    || tokenFetch === false
+                    || detailsError.includes('authentication expired')
+                    || detailsError.includes('accounts.google.com')
+                    || detailsError.includes('redirected to:');
+                const message = authExpired
+                    ? 'NotebookLM 登录状态无效或已过期，请先执行: notebooklm login'
+                    : 'NotebookLM auth check passed';
+                resolve({
+                    ok: !authExpired,
+                    needsLogin: authExpired,
+                    message,
+                    details: parsed,
+                });
+            } catch (e) {
+                if (code === 0) {
+                    resolve({
+                        ok: false,
+                        needsLogin: true,
+                        message: 'NotebookLM auth check returned non-JSON output. Please run: notebooklm login',
+                        details: { stdout: raw, stderr },
+                    });
+                    return;
+                }
+                reject(new Error(`auth check parse failed (${code}): ${stderr || raw}`));
+            }
+        });
+    });
+}
+
 // --- HTTP Server ---
 function loadApiKey() {
     // Try .env file
@@ -246,16 +300,24 @@ const server = createServer(async (req, res) => {
         const parsed = JSON.parse(body);
         const { action } = parsed;
 
+        // --- auth-check: preflight NotebookLM auth validity ---
+        if (action === 'auth-check') {
+            const result = await runNotebookLMAuthCheck({ test: true });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(result));
+            return;
+        }
+
         // --- export-slides: SSE stream ---
         if (action === 'export-slides') {
-            const { title, handbookPages, stylePrompt, factSheet, structurePlan, language, mode, versionPref, roadmapJson } = parsed;
+            const { title, handbookPages, stylePrompt, factSheet, factSheetMeta, structurePlan, language, mode, versionPref, roadmapJson } = parsed;
             if (!title || !handbookPages?.length) throw new Error('Missing title or handbookPages');
 
             // Write input to temp file
             const inputPath = join(process.cwd(), `tmp_export_input_${Date.now()}.json`);
             const outputPath = join(process.cwd(), `tmp_export_output_${Date.now()}.json`);
             const { writeFileSync, unlinkSync, existsSync, readFileSync: readSync } = await import('fs');
-            writeFileSync(inputPath, JSON.stringify({ title, handbookPages, stylePrompt, factSheet, structurePlan, language, mode, versionPref, roadmapJson }), 'utf-8');
+            writeFileSync(inputPath, JSON.stringify({ title, handbookPages, stylePrompt, factSheet, factSheetMeta, structurePlan, language, mode, versionPref, roadmapJson }), 'utf-8');
             writeFileSync(outputPath, JSON.stringify({ status: 'starting', progress: 0, message: '启动导出...' }), 'utf-8');
 
             // SSE headers
@@ -388,6 +450,38 @@ const server = createServer(async (req, res) => {
             console.log(`[guide] Guide created: ${genResult.sourceId} (${genResult.guideLength} chars)`);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(genResult));
+            return;
+        }
+
+        // --- read-resource-guide: read full content of Resource Guide from notebook ---
+        if (action === 'read-resource-guide') {
+            const { notebookId } = parsed;
+            if (!notebookId) throw new Error('Missing notebookId');
+
+            const scriptPath = join(process.cwd(), 'scripts', 'nlm-resource-guide.py');
+            const { existsSync } = await import('fs');
+            if (!existsSync(scriptPath)) throw new Error('nlm-resource-guide.py not found');
+
+            const apiKey = loadApiKey();
+            const env = { ...process.env };
+            if (apiKey) env.GEMINI_API_KEY = apiKey;
+
+            console.log(`[read-guide] Reading resource guide from notebook ${notebookId}...`);
+            const result = await new Promise((resolve, reject) => {
+                const proc = spawn('python', [`"${scriptPath}"`, 'read', notebookId], { shell: true, env, timeout: 3 * 60 * 1000 });
+                let stdout = '', stderr = '';
+                proc.stdout.on('data', d => stdout += d.toString());
+                proc.stderr.on('data', d => { stderr += d.toString(); console.log('[read-guide]', d.toString().trim()); });
+                proc.on('close', code => {
+                    if (code !== 0) return reject(new Error(`Read failed (${code}): ${stderr}`));
+                    try { resolve(JSON.parse(stdout.trim())); }
+                    catch { reject(new Error(`Bad JSON from read: ${stdout.slice(0, 200)}`)); }
+                });
+            });
+
+            console.log(`[read-guide] Done: status=${result.status}, chars=${result.charCount}`);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(result));
             return;
         }
 

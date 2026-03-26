@@ -19,6 +19,7 @@ import json
 import sys
 import time
 import argparse
+import re
 from pathlib import Path
 
 
@@ -45,6 +46,39 @@ def split_text(text, max_len=50000):
         chunks.append(text[:cut])
         text = text[cut:]
     return chunks
+
+
+def sanitize_fact_sheet_for_slides(fact_sheet_text):
+    """Remove freshness-risk metadata from fact sheet before NotebookLM ingestion."""
+    if not isinstance(fact_sheet_text, str):
+        return ''
+
+    cleaned = fact_sheet_text
+    cleaned = re.sub(r'##\s*FRESHNESS AUDIT[\s\S]*?(?=\n##\s*SOURCES|\n##\s*PART|\Z)', '\n', cleaned, flags=re.IGNORECASE)
+
+    line_patterns = [
+        r'^\s*⚠\s*Freshness Risk:.*$',
+        r'^\s*⚠\s*时效风险提示：.*$',
+        r'^\s*\[Freshness Risk\]\s*$',
+        r'^\s*\[Freshness Audit\]\s*$',
+        r'^\s*Theme Freshness Tier:.*$',
+        r'^\s*Target Window:.*$',
+        r'^\s*Effective Window:.*$',
+        r'^\s*Risk Level:.*$',
+        r'^\s*Coverage:.*$',
+        r'^\s*-\s*Theme tier:.*$',
+        r'^\s*-\s*Target window:.*$',
+        r'^\s*-\s*Effective window:.*$',
+        r'^\s*-\s*Risk level:.*$',
+        r'^\s*-\s*Coverage:.*$',
+    ]
+    for pattern in line_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE | re.MULTILINE)
+
+    cleaned = re.sub(r'Some evidence is older than one year; please verify with up-to-date authoritative sources\.', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'部分信息可能不是近一年证据，请教师/家长结合最新权威信息复核。?', '', cleaned)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
+    return cleaned
 
 
 def format_chunk(pages, start_idx, style_prompt):
@@ -141,6 +175,121 @@ def build_focus_prompt(style_prompt, chunk_idx, total_chunks, version='teacher')
                 "Start directly with the content.")
 
 
+# Override prompt-format helpers with freshness-risk support (keep latest definition).
+def build_high_risk_footer(language, fact_sheet_meta):
+    if not isinstance(fact_sheet_meta, dict):
+        return None
+    if str(fact_sheet_meta.get('riskLevel', '')).upper() != 'HIGH':
+        return None
+
+    target = fact_sheet_meta.get('targetWindow', '1y')
+    effective = fact_sheet_meta.get('effectiveWindow', '5y')
+    tier = fact_sheet_meta.get('themeTier', 'MEDIUM')
+    coverage = fact_sheet_meta.get('coverage')
+    coverage_text = f"{round(float(coverage) * 100)}%" if isinstance(coverage, (int, float)) else "N/A"
+
+    if language == 'zh':
+        return (
+            f"⚠ 时效风险提示：主题分层={tier}；目标窗口={target}；实际窗口={effective}；覆盖率={coverage_text}。"
+            "部分信息可能不是近一年证据，请教师/家长结合最新权威信息复核。"
+        )
+    return (
+        f"⚠ Freshness Risk: tier={tier}; target window={target}; effective window={effective}; coverage={coverage_text}. "
+        "Some evidence is older than one year; please verify with up-to-date authoritative sources."
+    )
+
+
+def format_chunk(pages, start_idx, style_prompt, mandatory_footer_label=None):
+    lines = [f"=== GLOBAL STYLE PROMPT ===\n{style_prompt}\n"]
+    lines.append(f"=== HANDBOOK PAGES {start_idx + 1}-{start_idx + len(pages)} ===\n")
+    if mandatory_footer_label:
+        lines.append("=== MANDATORY FOOTER LABEL (EVERY SLIDE) ===")
+        lines.append(mandatory_footer_label)
+        lines.append("")
+
+    for i, page in enumerate(pages):
+        n = start_idx + i + 1
+        title = page.get('title', f'Page {n}')
+        section = page.get('section', '')
+        page_type = page.get('pageType', 'Content')
+        content = page.get('contentPrompt', '')
+        teacher_content = page.get('teacherContentPrompt', '')
+        visual = page.get('visualPrompt', '')
+        layout = page.get('layoutDescription', '')
+
+        lines.append(f"--- Page {n}: {title} ---")
+        if section:
+            lines.append(f"Section: {section}")
+        lines.append(f"Page Type: {page_type}")
+        lines.append(f"\nStudent Content:\n{content}")
+        if teacher_content:
+            lines.append(f"\nTeacher/Parent Guide:\n{teacher_content}")
+        if visual:
+            lines.append(f"\nVisual Design:\n{visual}")
+        if layout:
+            lines.append(f"\nLayout:\n{layout}")
+        lines.append("")
+
+    return '\n'.join(lines)
+
+
+def build_focus_prompt(style_prompt, chunk_idx, total_chunks, version='teacher', mandatory_footer_instruction=''):
+    audience_prompts = {
+        'teacher': (
+            "TEACHER VERSION: Preserve ALL details from every page. "
+            "Include teaching tips, background knowledge, assessment rubrics, "
+            "time allocation, differentiation strategies, learning objectives, "
+            "preparation notes, activity steps, vocabulary, safety rules, and quiz questions. "
+            "Do NOT summarize or omit any information. "
+            "Each page should become at least 1-2 detailed slides."
+        ),
+        'student': (
+            "STUDENT VERSION: Include ONLY student-facing content. "
+            "Focus on activity instructions, worksheets, vocabulary cards, fun facts, quizzes, reflection prompts, and hands-on steps. "
+            "Exclude teaching tips, teacher background info, assessment rubrics, time allocation, differentiation strategies, and preparation notes. "
+            "Use simple, engaging language appropriate for the student age group. "
+            "Each page should become 1 clear, visually appealing slide."
+        ),
+        'parent': (
+            "PARENT GUIDE VERSION: Preserve ALL details from every page. "
+            "Include activity overview, safety guidelines, learning objectives, facilitation tips, preparation checklist, discussion prompts, and background knowledge. "
+            "Use warm, encouraging language for parents guiding their children. "
+            "Each page should become at least 1-2 detailed slides."
+        ),
+        'child': (
+            "CHILD VERSION: Include ONLY fun, child-friendly content. "
+            "Focus on activity steps, games, fun facts, vocabulary with pictures, exploration prompts, and reward sections. "
+            "Exclude parent guidance, prep checklists, and adult-facing safety logistics. "
+            "Use playful, simple language. Emphasize visuals and large text. "
+            "Each page should become 1 colorful, engaging slide."
+        ),
+    }
+
+    base = audience_prompts.get(version, audience_prompts['teacher'])
+    footer = mandatory_footer_instruction or ''
+    if total_chunks == 1:
+        return f"{base} {style_prompt}{footer}"
+    if chunk_idx == 0:
+        return (
+            f"{base} {style_prompt}. This is Part 1 of {total_chunks}. "
+            "Include a title/cover slide at the beginning. "
+            "Do NOT include an ending slide or back cover because the presentation continues in the next part."
+            f"{footer}"
+        )
+    if chunk_idx == total_chunks - 1:
+        return (
+            f"{base} {style_prompt}. This is Part {chunk_idx + 1} of {total_chunks} (final). "
+            f"Do NOT include a title/cover slide because this is a continuation from Part {chunk_idx}. "
+            "Include an ending/back cover slide."
+            f"{footer}"
+        )
+    return (
+        f"{base} {style_prompt}. This is Part {chunk_idx + 1} of {total_chunks}. "
+        "Do NOT include a title/cover slide or ending slide because this is a continuation. "
+        f"Start directly with the content.{footer}"
+    )
+
+
 async def retry_async(fn, max_retries=2, backoff=60, label="operation"):
     """Retry an async function with backoff."""
     for attempt in range(max_retries + 1):
@@ -159,10 +308,13 @@ async def run_export(input_data, output_path):
     handbook_pages = input_data['handbookPages']
     style_prompt = input_data['stylePrompt']
     fact_sheet = input_data.get('factSheet') or ''
+    fact_sheet_meta = input_data.get('factSheetMeta') or {}
     structure_plan = input_data.get('structurePlan') or ''
     roadmap_json = input_data.get('roadmapJson') or ''
     language = input_data.get('language', 'en')
     mode = input_data.get('mode', 'school')
+    high_risk_footer_instruction = ""
+    fact_sheet = sanitize_fact_sheet_for_slides(fact_sheet)
 
     import math
     roadmap_text = ""
@@ -202,21 +354,194 @@ async def run_export(input_data, output_path):
         all_labels = {'teacher': '教师版', 'student': '学生版'}
     versions = all_versions.get(version_pref, all_versions['both'])
     version_labels = {v: all_labels[v] for v in versions}
+    if mode == 'family':
+        all_labels = {'parent': 'Parent Guide', 'child': 'Child'}
+    else:
+        all_labels = {'teacher': 'Teacher', 'student': 'Student'}
+    version_labels = {v: all_labels[v] for v in versions}
 
     from notebooklm.client import NotebookLMClient
 
-    # Step 1: Auth — load from storage
+    def has_valid_sid_cookie(storage_path: Path) -> bool:
+        """Whether storage_state.json contains a usable SID cookie."""
+        if not storage_path.exists():
+            return False
+        try:
+            payload = json.loads(storage_path.read_text('utf-8'))
+            cookies = payload.get('cookies') or []
+            if not isinstance(cookies, list):
+                return False
+            for c in cookies:
+                if not isinstance(c, dict):
+                    continue
+                if c.get('name') == 'SID' and '.google.com' in str(c.get('domain', '')) and str(c.get('value', '')):
+                    return True
+        except Exception:
+            return False
+        return False
+
+    def is_auth_expired_error(err: str) -> bool:
+        text = (err or '').lower()
+        return (
+            'authentication expired' in text
+            or 'accounts.google.com' in text
+            or 'redirected to:' in text
+            or ('invalid' in text and 'auth' in text)
+        )
+
+    # --- Robust auth with auto-refresh ---
+    async def try_auth_headless_refresh():
+        """Use the persistent browser profile to headlessly refresh cookies.
+        
+        notebooklm login creates ~/.notebooklm/browser_profile/ which keeps
+        Google session alive for weeks. We launch headless Chromium with that
+        profile, navigate to NLM, and re-save the updated storage state.
+        This avoids manual re-login.
+        """
+        try:
+            from playwright.async_api import async_playwright
+            profile_dir = Path.home() / ".notebooklm" / "browser_profile"
+            storage_path = Path.home() / ".notebooklm" / "storage_state.json"
+            
+            if not profile_dir.exists():
+                print("[auth] No browser_profile found. Run 'notebooklm login' once to create it.", flush=True)
+                return False
+            
+            print("[auth] Attempting headless cookie refresh via persistent browser profile...", flush=True)
+            async with async_playwright() as p:
+                context = await p.chromium.launch_persistent_context(
+                    user_data_dir=str(profile_dir),
+                    headless=True,
+                    args=[
+                        "--disable-blink-features=AutomationControlled",
+                        "--password-store=basic",
+                    ],
+                    ignore_default_args=["--enable-automation"],
+                )
+                page = context.pages[0] if context.pages else await context.new_page()
+                await page.goto("https://notebooklm.google.com/", wait_until="networkidle", timeout=30000)
+                
+                final_url = page.url
+                if "accounts.google.com" in final_url:
+                    print(f"[auth] Headless refresh failed: redirected to login page ({final_url})", flush=True)
+                    await context.close()
+                    return False
+                
+                # Save refreshed cookies
+                await context.storage_state(path=str(storage_path))
+                await context.close()
+                print("[auth] Cookies refreshed successfully via persistent browser profile!", flush=True)
+                return True
+        except Exception as e:
+            print(f"[auth] Headless refresh error: {e}", flush=True)
+            return False
+
+    # Step 1: Auth — try from_storage, auto-refresh if needed
     emit(output_path, {'status': 'authenticating', 'progress': 0.05, 'message': '正在验证 NotebookLM 认证...'})
 
-    auth_path = Path.home() / ".gemini" / "antigravity" / "skills" / "notebooklm" / "data" / "browser_state" / "state.json"
-    async with await NotebookLMClient.from_storage(path=str(auth_path)) as client:
-        # Quick auth check
+    # Sync from notebooklm-mcp auth only when local storage session is missing.
+    # Do NOT overwrite a valid storage_state on every export.
+    auth_file = Path.home() / ".notebooklm-mcp" / "auth.json"
+    storage_state_path = Path.home() / ".notebooklm" / "storage_state.json"
+    should_sync_from_mcp = not has_valid_sid_cookie(storage_state_path)
+    if auth_file.exists() and should_sync_from_mcp:
         try:
-            await client.notebooks.list()
-            print("[auth] [OK] Auth valid", flush=True)
+            auth_data = json.loads(auth_file.read_text('utf-8'))
+            cookies_dict = auth_data.get('cookies', {})
+            pw_cookies = []
+            import time as time_module
+            for name, value in cookies_dict.items():
+                pw_cookies.append({
+                    "name": name,
+                    "value": str(value),
+                    "domain": ".google.com",
+                    "path": "/",
+                    "expires": int(time_module.time()) + 86400 * 30,
+                    "httpOnly": "1PSID" in name or "Secure" in name,
+                    "secure": True,
+                    "sameSite": "None"
+                })
+            storage_state_path.parent.mkdir(exist_ok=True)
+            storage_state_path.write_text(json.dumps({"cookies": pw_cookies}, ensure_ascii=False))
+            print("[auth] Synced cookies from notebooklm-mcp", flush=True)
         except Exception as e:
-            emit(output_path, {'status': 'error', 'progress': 0, 'message': f'NotebookLM 认证失败 (找不到 state.json 或已过期): {e}', 'error': str(e)})
-            return
+            print(f"[auth] Failed to sync cookies: {e}", flush=True)
+    elif auth_file.exists():
+        print("[auth] Skip notebooklm-mcp cookie sync (existing storage session looks valid).", flush=True)
+
+    # Try to create client, auto-refresh on auth failure
+    max_auth_attempts = 2
+    client_ctx = None
+    for attempt in range(max_auth_attempts):
+        try:
+            client_ctx = await NotebookLMClient.from_storage(timeout=240)
+            client = await client_ctx.__aenter__()
+            await client.notebooks.list()
+            print(f"[auth] [OK] Auth valid (attempt {attempt + 1})", flush=True)
+            break
+        except Exception as e:
+            error_str = str(e)
+            print(f"[auth] Auth failed (attempt {attempt + 1}): {error_str}", flush=True)
+            if client_ctx:
+                try:
+                    await client_ctx.__aexit__(None, None, None)
+                except:
+                    pass
+                client_ctx = None
+            
+            friendly_error = (
+                'NotebookLM authentication expired. Run "notebooklm login" and retry export.'
+                if is_auth_expired_error(error_str)
+                else error_str
+            )
+            if attempt < max_auth_attempts - 1:
+                emit(output_path, {
+                    'status': 'authenticating',
+                    'progress': 0.05,
+                    'message': 'Authentication expired, trying auto-refresh...'
+                })
+                refreshed = await try_auth_headless_refresh()
+                if not refreshed:
+                    emit(output_path, {
+                        'status': 'error',
+                        'progress': 0,
+                        'message': 'NotebookLM auth expired and auto-refresh failed. Run "notebooklm login" and retry export.',
+                        'error': friendly_error,
+                    })
+                    return
+                continue
+            else:
+                emit(output_path, {
+                    'status': 'error',
+                    'progress': 0,
+                    'message': 'NotebookLM authentication failed. Run "notebooklm login" and retry export.',
+                    'error': friendly_error,
+                })
+                return
+
+            if attempt < max_auth_attempts - 1:
+                emit(output_path, {'status': 'authenticating', 'progress': 0.05, 'message': '认证过期，正在自动刷新...'})
+                refreshed = await try_auth_headless_refresh()
+                if not refreshed:
+                    emit(output_path, {
+                        'status': 'error', 'progress': 0,
+                        'message': f'NotebookLM 认证过期且自动刷新失败。请在终端运行 "notebooklm login" 重新登录。',
+                        'error': error_str
+                    })
+                    return
+            else:
+                emit(output_path, {
+                    'status': 'error', 'progress': 0,
+                    'message': f'NotebookLM 认证失败。请运行 "notebooklm login" 重新登录。\n错误: {error_str}',
+                    'error': error_str
+                })
+                return
+
+    if not client_ctx:
+        emit(output_path, {'status': 'error', 'progress': 0, 'message': 'NotebookLM 认证失败', 'error': 'Auth failed after all attempts'})
+        return
+
+    try:  # client is already entered via __aenter__ in the loop above
 
         # Step 2: Create notebook
         emit(output_path, {'status': 'creating_notebook', 'progress': 0.1, 'message': f'创建笔记本: {title}'})
@@ -308,7 +633,11 @@ async def run_export(input_data, output_path):
             count = chunk_sizes[ci]
             end = chunk_start_idx + count
             chunk_pages = handbook_pages[chunk_start_idx:end]
-            chunk_text = format_chunk(chunk_pages, chunk_start_idx, style_prompt)
+            chunk_text = format_chunk(
+                chunk_pages,
+                chunk_start_idx,
+                style_prompt,
+            )
             chunk_title = f"Handbook Pages {chunk_start_idx + 1}-{end}"
 
             pct = 0.15 + 0.3 * (uploaded / total_uploads)
@@ -338,9 +667,9 @@ async def run_export(input_data, output_path):
         # 4a. Teacher versions (one deck total per version, using roadmap)
         for version in teacher_versions:
             vlabel = version_labels[version]
-            focus = f"TEACHER VERSION: Based on the Teaching Roadmap, Fact Sheet, and Handbook pages (especially the \ud83d\udc69\u200d\ud83c\udfeb Teacher Guide sections which contain teaching scripts, guided questions, differentiation tips, and time controls), generate a comprehensive lesson guide presentation. Each handbook page's Teacher Guide should become its own dedicated slide(s). Include background knowledge, teaching tips, time allocation, safety rules. Do NOT mention page numbers of a student handbook. Do NOT summarize or omit any information. Make it detailed. {style_prompt}"
+            focus = f"TEACHER VERSION: Based on the Teaching Roadmap, Fact Sheet, and Handbook pages (especially the \ud83d\udc69\u200d\ud83c\udfeb Teacher Guide sections which contain teaching scripts, guided questions, differentiation tips, and time controls), generate a comprehensive lesson guide presentation. Each handbook page's Teacher Guide should become its own dedicated slide(s). Include background knowledge, teaching tips, time allocation, safety rules. Do NOT mention page numbers of a student handbook. Do NOT summarize or omit any information. Make it detailed. {style_prompt}{high_risk_footer_instruction}"
             if version == 'parent':
-                 focus = f"PARENT GUIDE: Based on the Teaching Roadmap, Fact Sheet, and Handbook pages (especially the \ud83d\udc69\u200d\ud83c\udfeb Teacher Guide sections which contain parent dialogue, parent-child discussion prompts, adaptation tips, and pacing guidance), generate a comprehensive parent facilitation presentation. Each handbook page's Teacher Guide should become its own dedicated slide(s). Include activity overview, safety guidelines, facilitation tips for parents, and background knowledge. Use warm, encouraging language. Do NOT mention page numbers of a child workbook. Do NOT summarize or omit any information. Make it detailed. {style_prompt}"
+                 focus = f"PARENT GUIDE: Based on the Teaching Roadmap, Fact Sheet, and Handbook pages (especially the \ud83d\udc69\u200d\ud83c\udfeb Teacher Guide sections which contain parent dialogue, parent-child discussion prompts, adaptation tips, and pacing guidance), generate a comprehensive parent facilitation presentation. Each handbook page's Teacher Guide should become its own dedicated slide(s). Include activity overview, safety guidelines, facilitation tips for parents, and background knowledge. Use warm, encouraging language. Do NOT mention page numbers of a child workbook. Do NOT summarize or omit any information. Make it detailed. {style_prompt}{high_risk_footer_instruction}"
             
             deck_source_ids = shared_source_ids.copy()
             if roadmap_source_id:
@@ -383,7 +712,7 @@ async def run_export(input_data, output_path):
             
             for version in student_versions:
                 vlabel = version_labels[version]
-                focus = build_focus_prompt(style_prompt, ci, num_chunks, version)
+                focus = build_focus_prompt(style_prompt, ci, num_chunks, version, high_risk_footer_instruction)
                 
                 pct = 0.50 + 0.4 * (deck_idx / total_decks)
                 emit(output_path, {
@@ -432,6 +761,13 @@ async def run_export(input_data, output_path):
             }
         })
         print(f"[done] {queued} queued, {failed} failed ({version_summary})", flush=True)
+    finally:
+        # Clean up client context
+        if client_ctx:
+            try:
+                await client_ctx.__aexit__(None, None, None)
+            except:
+                pass
 
 
 def main():

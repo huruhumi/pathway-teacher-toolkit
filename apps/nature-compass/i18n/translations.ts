@@ -51,6 +51,7 @@ export const translations = {
     'cp.noPreference': { en: '-- No preference --', zh: '-- 不限 --' },
     'cp.locationPlaceholder': { en: 'Enter custom location name', zh: '输入自定义地点名称' },
     'cp.themePlaceholder': { en: 'e.g., Marine Biology, Urban Ecology...', zh: '例如：海洋生物、城市生态...' },
+    'cp.descriptionPlaceholder': { en: 'Optional: add objectives, priorities, or special requirements.', zh: '可选：补充教学目标、重点关注方向、特殊要求。' },
 
     // InputSection — additional
     'input.workshopTheme': { en: 'Workshop Theme', zh: '工坊主题' },
@@ -232,6 +233,9 @@ export const translations = {
     'saved.beginner': { en: 'Beginner', zh: '初级' },
     'saved.intermediate': { en: 'Intermediate', zh: '中级' },
     'saved.advanced': { en: 'Advanced', zh: '高级' },
+    'saved.selectAll': { en: 'Select All', zh: '全选' },
+    'saved.deleteSelected': { en: 'Delete Selected', zh: '删除所选' },
+    'saved.confirmBatchDelete': { en: 'Delete selected items?', zh: '确定删除已选项目吗？' },
 
     // Extra TabRoadmap
     'road.workshopDetails': { en: 'Workshop Details', zh: '工坊概览' },
@@ -346,6 +350,7 @@ export const translations = {
     'poster.typeIntro': { en: 'Content Intro', zh: '内容简介页' },
     'poster.typeShowcase': { en: 'Inner Pages', zh: '内页展示页' },
     'poster.typeAllPages': { en: 'All Pages Grid', zh: '全局缩略图' },
+    'poster.posterMode': { en: 'Poster Mode', zh: '海报模式' },
     'poster.uploadInner': { en: 'Upload Inner Pages', zh: '上传课件内页截图' },
     'poster.uploadInnerDesc': { en: 'Upload 1-2 screenshots of the generated slide deck (Ratio: 16:9)', zh: '上传1-2张课件内页截图（建议 16:9）' },
     'poster.uploadGridDesc': { en: 'Upload 1 combined screenshot of all pages layout', zh: '上传1张包含所有页面的缩略拼图' },

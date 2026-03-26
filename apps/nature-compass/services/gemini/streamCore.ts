@@ -1,15 +1,39 @@
+import type { Schema } from "@google/genai";
 import { LessonPlanResponse } from "../../types";
 import { lessonPlanSchema } from "./schema";
 import { extractJSON, tryPartialParse } from "./parsing";
 import { NatureLessonPlanResponseSchema } from "@shared/types/schemas";
 import { createAIClient, retryAICall as retryOperation } from "@pathway/ai";
+import type { z } from "zod";
+
+export interface StreamCoreOptions {
+  systemInstruction: string;
+  contents: any;
+  onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void;
+  signal?: AbortSignal;
+  /** Gemini JSON response schema — defaults to full lessonPlanSchema */
+  responseSchema?: Schema;
+  /** Zod validation schema — defaults to NatureLessonPlanResponseSchema */
+  validationSchema?: z.ZodType<any>;
+}
 
 export async function streamLessonPlanCore(
-  systemInstruction: string,
-  contents: any,
-  onPartialResult: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
+  systemInstructionOrOpts: string | StreamCoreOptions,
+  contents?: any,
+  onPartialResult?: (partial: Partial<LessonPlanResponse>, completedKeys: string[]) => void,
   signal?: AbortSignal,
 ): Promise<LessonPlanResponse> {
+  // Support both legacy positional args and new options object
+  let opts: StreamCoreOptions;
+  if (typeof systemInstructionOrOpts === 'string') {
+    opts = { systemInstruction: systemInstructionOrOpts, contents, onPartialResult: onPartialResult!, signal };
+  } else {
+    opts = systemInstructionOrOpts;
+  }
+
+  const schema = opts.responseSchema ?? lessonPlanSchema;
+  const zodSchema = opts.validationSchema ?? NatureLessonPlanResponseSchema;
+
   const ai = createAIClient();
   let accumulatedText = "";
   let lastKnownKeys: string[] = [];
@@ -22,24 +46,24 @@ export async function streamLessonPlanCore(
     const response = await ai.models.generateContentStream({
       model: "gemini-2.5-flash",
       config: {
-        systemInstruction,
+        systemInstruction: opts.systemInstruction,
         responseMimeType: "application/json",
-        responseSchema: lessonPlanSchema,
+        responseSchema: schema,
         temperature: 0.5,
       },
-      contents,
+      contents: opts.contents,
     });
 
     for await (const chunk of response) {
-      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      if (opts.signal?.aborted) throw new DOMException("Aborted", "AbortError");
       const chunkText = chunk.text;
       if (chunkText) {
         accumulatedText += chunkText;
-        lastKnownKeys = tryPartialParse(accumulatedText, lastKnownKeys, onPartialResult);
+        lastKnownKeys = tryPartialParse(accumulatedText, lastKnownKeys, opts.onPartialResult);
       }
     }
 
     if (!accumulatedText) throw new Error("No response from Gemini stream");
-    return NatureLessonPlanResponseSchema.parse(extractJSON(accumulatedText)) as LessonPlanResponse;
-  }, signal);
+    return zodSchema.parse(extractJSON(accumulatedText)) as LessonPlanResponse;
+  }, opts.signal);
 }

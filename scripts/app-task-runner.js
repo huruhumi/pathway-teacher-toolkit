@@ -81,6 +81,25 @@ function getNpmWorkspaceSpawnCommand(workspace, npmArgs) {
     };
 }
 
+function normalizeWindowsEnvVars(inputEnv) {
+    const env = { ...(inputEnv || {}) };
+    if (process.platform !== 'win32') return env;
+
+    // Node 25 + Windows can fail spawning child processes (EPERM / duplicate key)
+    // when both PATH and Path are present. Keep a single canonical PATH key.
+    const hasPATH = Object.prototype.hasOwnProperty.call(env, 'PATH');
+    const hasPath = Object.prototype.hasOwnProperty.call(env, 'Path');
+    if (hasPATH && hasPath) {
+        env.PATH = String(env.PATH || env.Path || '');
+        delete env.Path;
+    } else if (!hasPATH && hasPath) {
+        env.PATH = String(env.Path || '');
+        delete env.Path;
+    }
+
+    return env;
+}
+
 function spawnCommand({
     command,
     args = [],
@@ -89,11 +108,12 @@ function spawnCommand({
     env = process.env,
     shell = false,
 } = {}) {
+    const normalizedEnv = normalizeWindowsEnvVars(env);
     return spawn(command, args, {
         shell,
         stdio,
         cwd,
-        env: { ...(env || {}) },
+        env: normalizedEnv,
         windowsHide: process.platform === 'win32',
     });
 }

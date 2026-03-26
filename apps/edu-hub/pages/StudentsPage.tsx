@@ -239,6 +239,10 @@ const StudentListView: React.FC = () => {
     const [search, setSearch] = useState('');
     const [form, setForm] = useState({ name: '', english_name: '', contact_info: '', notes: '', classIds: [] as string[] });
 
+    const [resetModal, setResetModal] = useState<{ id: string, name: string } | null>(null);
+    const [newPassword, setNewPassword] = useState('888888');
+    const [resetting, setResetting] = useState(false);
+
     const load = useCallback(async () => {
         if (!teacherId) { setLoading(false); return; }
         setLoading(true);
@@ -305,6 +309,30 @@ const StudentListView: React.FC = () => {
         const code = Math.random().toString(36).substring(2, 8).toUpperCase();
         await edu.upsertStudent({ id, teacher_id: teacherId, invite_code: code } as any);
         await load();
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!resetModal || !newPassword.trim() || !teacherId) return;
+        setResetting(true);
+        const { success, error } = await edu.resetStudentPassword(teacherId, resetModal.id, newPassword.trim());
+        setResetting(false);
+        if (!success) {
+            toast.error(error || 'Reset failed');
+        } else {
+            toast.success(lang === 'zh' ? `已重置密码为: ${newPassword.trim()}` : `Password reset to: ${newPassword.trim()}`);
+            setResetModal(null);
+        }
+    };
+
+    const handleCopyInvite = (stu: Student) => {
+        const url = `${window.location.origin}/student-portal`;
+        const text = lang === 'zh'
+            ? `你好，这是你的专属学生端登录/激活链接：${url}\n你的邀请码为：${stu.invite_code}`
+            : `Hi, here is your portal link: ${url}\nYour invite code is: ${stu.invite_code}`;
+        navigator.clipboard.writeText(text);
+        toast.success(lang === 'zh' ? '完整文案已复制' : 'Full invite copied');
     };
 
     const toggleClass = (cid: string) => setForm(f => ({ ...f, classIds: f.classIds.includes(cid) ? f.classIds.filter(x => x !== cid) : [...f.classIds, cid] }));
@@ -417,20 +445,29 @@ const StudentListView: React.FC = () => {
                                 )}
 
                                 {/* Invite code / linked status */}
-                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+                                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
                                     {stu.auth_user_id ? (
-                                        <span className="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                                            ✓ {lang === 'zh' ? '已绑定学生账号' : 'Student account linked'}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                                ✓ {lang === 'zh' ? '已激活' : 'Active'}
+                                            </span>
+                                            <button onClick={(e) => { e.stopPropagation(); setResetModal({ id: stu.id, name: stu.name }); }}
+                                                className="text-[11px] font-semibold px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                                {lang === 'zh' ? '重置密码' : 'Reset Password'}
+                                            </button>
+                                        </div>
                                     ) : (
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-1.5 flex-1">
+                                            <span className="inline-flex items-center text-[11px] font-semibold px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 flex-shrink-0">
+                                                ⌛ {lang === 'zh' ? '待激活' : 'Pending'}
+                                            </span>
                                             <div className="cursor-pointer inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-600 transition-colors"
-                                                onClick={() => { navigator.clipboard.writeText(stu.invite_code || ''); toast.success('Copied'); }}
-                                                title={lang === 'zh' ? '点击复制邀请码' : 'Copy invite code'}>
-                                                🔑 {stu.invite_code || '------'}
+                                                onClick={(e) => { e.stopPropagation(); handleCopyInvite(stu); }}
+                                                title={lang === 'zh' ? '点击复制完整邀请文案' : 'Copy full invite text'}>
+                                                <Copy size={12} /> <span className="truncate max-w-[80px] sm:max-w-none">{stu.invite_code || '------'}</span>
                                             </div>
                                             <button onClick={(e) => { e.stopPropagation(); handleRegenerateCode(stu.id); }}
-                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-slate-400 hover:text-sky-500"
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-slate-400 hover:text-sky-500 flex-shrink-0"
                                                 title={lang === 'zh' ? '重新生成邀请码' : 'Regenerate'}>
                                                 <RotateCcw size={12} />
                                             </button>
@@ -447,6 +484,42 @@ const StudentListView: React.FC = () => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Reset Password Modal */}
+            {resetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setResetModal(null)}>
+                    <form onSubmit={handleResetPassword} className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+                            <h3 className="font-bold text-slate-800 dark:text-white">
+                                {lang === 'zh' ? `重置密码 - ${resetModal.name}` : `Reset Password - ${resetModal.name}`}
+                            </h3>
+                        </div>
+                        <div className="p-4">
+                            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
+                                {lang === 'zh' ? '设置新密码' : 'New Password'}
+                            </label>
+                            <input
+                                autoFocus
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                            />
+                            <p className="text-xs text-amber-600 mt-2">
+                                {lang === 'zh' ? '重置后请确保将新密码告知学生。' : 'Make sure to share the new password with the student.'}
+                            </p>
+                        </div>
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-700">
+                            <button type="button" onClick={() => setResetModal(null)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg">
+                                {t('common.cancel')}
+                            </button>
+                            <button type="submit" disabled={resetting || !newPassword.trim()} className="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold hover:bg-amber-600 disabled:opacity-50 flex items-center gap-2">
+                                {resetting && <Loader2 size={14} className="animate-spin" />}
+                                {lang === 'zh' ? '确认重置' : 'Confirm'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </div>

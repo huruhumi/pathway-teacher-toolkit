@@ -287,8 +287,8 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                     <Plus className="w-3.5 h-3.5" />
                                     <span>Task</span>
                                 </button>
-                                <button onClick={() => handleAddDayResource(dIdx)} disabled={addingDayResourceIndex === dIdx} className="px-3 py-1.5 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5 disabled:opacity-50">
-                                    {addingDayResourceIndex === dIdx ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Globe className="w-3.5 h-3.5" />}
+                                <button onClick={() => handleManualAddDayResource(dIdx)} className="px-3 py-1.5 bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all flex items-center gap-1.5">
+                                    <Globe className="w-3.5 h-3.5" />
                                     <span>Resource</span>
                                 </button>
                             </div>

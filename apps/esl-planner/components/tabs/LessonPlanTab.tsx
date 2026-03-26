@@ -17,14 +17,9 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     setEditablePlan,
 }) => {
     // Local loading states
-    const [isGeneratingObjective, setIsGeneratingObjective] = useState(false);
-    const [isGeneratingMaterial, setIsGeneratingMaterial] = useState(false);
     const [isGeneratingVocab, setIsGeneratingVocab] = useState(false);
     const [generatingDefFor, setGeneratingDefFor] = useState<number | null>(null);
-    const [isGeneratingSingleGrammar, setIsGeneratingSingleGrammar] = useState(false);
-    const [isGeneratingProblem, setIsGeneratingProblem] = useState(false);
     const [isGeneratingStage, setIsGeneratingStage] = useState(false);
-    const [generatingExtraFor, setGeneratingExtraFor] = useState<{ stageIndex: number; type: 'tip' | 'bg' | 'filler' } | null>(null);
     const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set());
     const [showStageInput, setShowStageInput] = useState(false);
     const [stagePrompt, setStagePrompt] = useState('');
@@ -142,72 +137,22 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         setEditablePlan({ ...editablePlan, stages: newStages });
     };
 
-    const addTeachingTip = async (stageIndex: number) => {
-        setGeneratingExtraFor({ stageIndex, type: 'tip' });
-        try {
-            const stage = editablePlan.stages[stageIndex];
-            const newTip = await generateSingleTeachingTip(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                stage.stage,
-                stage.teachingTips || []
-            );
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], teachingTips: [...(newStages[stageIndex].teachingTips || []), newTip] };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e: unknown) {
-            console.error('Failed to generate teaching tip', e);
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], teachingTips: [...(newStages[stageIndex].teachingTips || []), 'New teaching tip'] };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } finally {
-            setGeneratingExtraFor(null);
-        }
+    const addTeachingTip = (stageIndex: number) => {
+        const newStages = [...editablePlan.stages];
+        newStages[stageIndex] = { ...newStages[stageIndex], teachingTips: [...(newStages[stageIndex].teachingTips || []), ''] };
+        setEditablePlan({ ...editablePlan, stages: newStages });
     };
 
-    const addBackgroundKnowledge = async (stageIndex: number) => {
-        setGeneratingExtraFor({ stageIndex, type: 'bg' });
-        try {
-            const stage = editablePlan.stages[stageIndex];
-            const newInfo = await generateSingleBackgroundKnowledge(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                stage.stage,
-                stage.backgroundKnowledge || []
-            );
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], backgroundKnowledge: [...(newStages[stageIndex].backgroundKnowledge || []), newInfo] };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e: unknown) {
-            console.error('Failed to generate background knowledge', e);
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], backgroundKnowledge: [...(newStages[stageIndex].backgroundKnowledge || []), 'New background knowledge'] };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } finally {
-            setGeneratingExtraFor(null);
-        }
+    const addBackgroundKnowledge = (stageIndex: number) => {
+        const newStages = [...editablePlan.stages];
+        newStages[stageIndex] = { ...newStages[stageIndex], backgroundKnowledge: [...(newStages[stageIndex].backgroundKnowledge || []), ''] };
+        setEditablePlan({ ...editablePlan, stages: newStages });
     };
 
-    const addFillerActivity = async (stageIndex: number) => {
-        setGeneratingExtraFor({ stageIndex, type: 'filler' });
-        try {
-            const stage = editablePlan.stages[stageIndex];
-            const filler = await generateFillerActivity(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                stage.stage
-            );
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], fillerActivity: filler };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } catch (e: unknown) {
-            console.error('Failed to generate filler activity', e);
-            const newStages = [...editablePlan.stages];
-            newStages[stageIndex] = { ...newStages[stageIndex], fillerActivity: 'Quick review activity' };
-            setEditablePlan({ ...editablePlan, stages: newStages });
-        } finally {
-            setGeneratingExtraFor(null);
-        }
+    const addFillerActivity = (stageIndex: number) => {
+        const newStages = [...editablePlan.stages];
+        newStages[stageIndex] = { ...newStages[stageIndex], fillerActivity: '' };
+        setEditablePlan({ ...editablePlan, stages: newStages });
     };
 
     const handleDragEnd = (result: DropResult) => {
@@ -240,44 +185,12 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     };
 
     // --- Generation Functions ---
-    const addObjectiveEntry = async () => {
-        if (isGeneratingObjective) return;
-        setIsGeneratingObjective(true);
-        try {
-            const newObj = await generateSingleObjective(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                editablePlan.lessonDetails.objectives
-            );
-            if (newObj) {
-                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, objectives: [...editablePlan.lessonDetails.objectives, newObj] } });
-            }
-        } catch (e: unknown) {
-            console.error(e);
-            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, objectives: [...editablePlan.lessonDetails.objectives, "New Learning Objective"] } });
-        } finally {
-            setIsGeneratingObjective(false);
-        }
+    const addObjectiveEntry = () => {
+        setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, objectives: [...editablePlan.lessonDetails.objectives, ''] } });
     };
 
-    const addMaterialEntry = async () => {
-        if (isGeneratingMaterial) return;
-        setIsGeneratingMaterial(true);
-        try {
-            const newMat = await generateSingleMaterial(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                editablePlan.lessonDetails.materials
-            );
-            if (newMat) {
-                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, materials: [...editablePlan.lessonDetails.materials, newMat] } });
-            }
-        } catch (e: unknown) {
-            console.error(e);
-            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, materials: [...editablePlan.lessonDetails.materials, "New Material"] } });
-        } finally {
-            setIsGeneratingMaterial(false);
-        }
+    const addMaterialEntry = () => {
+        setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, materials: [...editablePlan.lessonDetails.materials, ''] } });
     };
 
     const addVocabEntry = () => {
@@ -308,46 +221,12 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         }
     };
 
-    const addSentenceEntry = async () => {
-        if (isGeneratingSingleGrammar) return;
-        setIsGeneratingSingleGrammar(true);
-        try {
-            const newSentence = await generateSingleGrammarPoint(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                editablePlan.lessonDetails.grammarSentences
-            );
-            if (newSentence) {
-                const newArray = [...editablePlan.lessonDetails.grammarSentences, newSentence];
-                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, grammarSentences: newArray } });
-            }
-        } catch (e: unknown) {
-            console.error(e);
-            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, grammarSentences: [...editablePlan.lessonDetails.grammarSentences, "New target sentence."] } });
-        } finally {
-            setIsGeneratingSingleGrammar(false);
-        }
+    const addSentenceEntry = () => {
+        setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, grammarSentences: [...editablePlan.lessonDetails.grammarSentences, ''] } });
     };
 
-    const addProblemEntry = async () => {
-        if (isGeneratingProblem) return;
-        setIsGeneratingProblem(true);
-        try {
-            const existing = editablePlan.lessonDetails.anticipatedProblems;
-            const newP = await generateSingleAnticipatedProblem(
-                editablePlan.classInformation.level as CEFRLevel,
-                editablePlan.classInformation.topic,
-                existing
-            );
-            if (newP) {
-                setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, newP] } });
-            }
-        } catch (e: unknown) {
-            console.error(e);
-            setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, { problem: "Anticipated Problem", solution: "Suggested Solution" }] } });
-        } finally {
-            setIsGeneratingProblem(false);
-        }
+    const addProblemEntry = () => {
+        setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, { problem: '', solution: '' }] } });
     };
 
     const addStageEntry = async (index?: number, customPrompt?: string) => {
@@ -574,8 +453,8 @@ Requirements:
                                         </Draggable>
                                     ))}
                                     {provided.placeholder}
-                                    <button onClick={addObjectiveEntry} disabled={isGeneratingObjective} className="text-xs font-bold text-violet-600 hover:text-violet-700 flex items-center gap-1 mt-2 no-print">
-                                        {isGeneratingObjective ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add Objective
+                                    <button onClick={addObjectiveEntry} className="text-xs font-bold text-violet-600 hover:text-violet-700 flex items-center gap-1 mt-2 no-print">
+                                        <Plus size={14} /> Add Objective
                                     </button>
                                 </div>
                             )}
@@ -642,8 +521,8 @@ Requirements:
                             <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                                 <Layers size={16} className="text-indigo-500" /> Grammar & Sentences
                             </h4>
-                            <button onClick={addSentenceEntry} disabled={isGeneratingSingleGrammar} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold no-print">
-                                {isGeneratingSingleGrammar ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} ADD
+                            <button onClick={addSentenceEntry} className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 text-xs font-bold no-print">
+                                <Plus size={12} /> ADD
                             </button>
                         </div>
                         <Droppable droppableId="sentences-list" type="grammarSentences">
@@ -677,8 +556,8 @@ Requirements:
                         <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
                             <List size={16} className="text-violet-500" /> Materials & Equipment
                         </h4>
-                        <button onClick={addMaterialEntry} disabled={isGeneratingMaterial} className="text-violet-600 hover:text-violet-800 flex items-center gap-1 text-xs font-bold no-print">
-                            {isGeneratingMaterial ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} ADD
+                        <button onClick={addMaterialEntry} className="text-violet-600 hover:text-violet-800 flex items-center gap-1 text-xs font-bold no-print">
+                            <Plus size={12} /> ADD
                         </button>
                     </div>
                     <Droppable droppableId="materials-list" type="materials">
@@ -712,8 +591,8 @@ Requirements:
                         <label className="block text-xs font-bold text-amber-600 dark:text-amber-400 uppercase flex items-center gap-1">
                             <AlertCircle size={14} /> Anticipated Problems & Solutions
                         </label>
-                        <button onClick={addProblemEntry} disabled={isGeneratingProblem} className="text-xs font-semibold text-amber-600 hover:text-amber-800 flex items-center gap-1 no-print">
-                            {isGeneratingProblem ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Add Pair
+                        <button onClick={addProblemEntry} className="text-xs font-semibold text-amber-600 hover:text-amber-800 flex items-center gap-1 no-print">
+                            <Plus size={12} /> Add Pair
                         </button>
                     </div>
                     <Droppable droppableId="problems-list" type="anticipatedProblems">
@@ -832,10 +711,9 @@ Requirements:
                                                         <div className="flex justify-end mt-2 no-print">
                                                             <button
                                                                 onClick={() => addBackgroundKnowledge(i)}
-                                                                disabled={generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'bg'}
                                                                 className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
                                                             >
-                                                                {generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'bg' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                                <Plus size={12} />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -864,10 +742,9 @@ Requirements:
                                                         <div className="flex justify-end mt-2 no-print">
                                                             <button
                                                                 onClick={() => addTeachingTip(i)}
-                                                                disabled={generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'tip'}
                                                                 className="text-xs font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1"
                                                             >
-                                                                {generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'tip' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                                <Plus size={12} />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -896,10 +773,9 @@ Requirements:
                                                             <div className="flex justify-end mt-2 no-print">
                                                                 <button
                                                                     onClick={() => addFillerActivity(i)}
-                                                                    disabled={generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'filler'}
                                                                     className="text-xs font-semibold text-amber-600 hover:text-amber-800 flex items-center gap-1"
                                                                 >
-                                                                    {generatingExtraFor?.stageIndex === i && generatingExtraFor?.type === 'filler' ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                                                    <Plus size={12} />
                                                                 </button>
                                                             </div>
                                                         )}

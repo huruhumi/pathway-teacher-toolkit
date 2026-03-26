@@ -57,12 +57,12 @@ export const App: React.FC = () => {
 
   // Global Stores
   const { user } = useAuthStore();
-  const { clearSessionState, setLessonPlan, setExternalCurriculum, curriculumResult } = useSessionStore();
+  const { clearSessionState, setLessonPlan, setExternalCurriculum } = useSessionStore();
   const {
     currentPlanId, setCurrentPlanId, currentKitLanguage, setCurrentKitLanguage,
     setInput, input
   } = useAppStore();
-  const ragFactSheets = useSessionStore((s) => s.ragFactSheets);
+  const sharedFactSheet = useSessionStore((s) => s.sharedFactSheet);
   const indexSyncSignatureRef = useRef('');
 
   const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
@@ -76,12 +76,17 @@ export const App: React.FC = () => {
         coverImage: p.coverImage || null,
         mode: p.mode || 'school',
         language: p.language || 'en',
+        timestamp: p.timestamp,
       },
     }),
     mapFromCloud: (row: any) => ({
       id: row.id,
       name: row.name,
-      timestamp: new Date(row.updated_at || row.created_at).getTime(),
+      timestamp: Number(
+        row.content_data?.timestamp
+        || row.plan_data?.timestamp
+        || new Date(row.created_at || row.updated_at).getTime(),
+      ),
       description: row.description || '',
       plan: row.content_data?.plan || row.content_data || row.plan_data,
       coverImage: row.content_data?.coverImage || row.cover_image || undefined,
@@ -121,12 +126,17 @@ export const App: React.FC = () => {
         curriculum: c.curriculum,
         params: c.params,
         language: c.language,
+        timestamp: c.timestamp,
       },
     }),
     mapFromCloud: (row: any) => ({
       id: row.id,
       name: row.name,
-      timestamp: new Date(row.updated_at || row.created_at).getTime(),
+      timestamp: Number(
+        row.content_data?.timestamp
+        || row.curriculum_data?.timestamp
+        || new Date(row.created_at || row.updated_at).getTime(),
+      ),
       curriculum: row.content_data?.curriculum || row.content_data || row.curriculum_data,
       params: row.content_data?.params || row.params_data,
       language: row.content_data?.language || row.language || 'en',
@@ -280,7 +290,8 @@ export const App: React.FC = () => {
 
 
     const newSavedPlan: SavedLessonPlan = {
-      id: planId, timestamp: Date.now(),
+      id: planId,
+      timestamp: Date.now(),
       name: existing?.name || planToSave.basicInfo?.theme || planToSave.missionBriefing.title || `Untitled Plan ${new Date().toLocaleDateString()}`,
       description: existing?.description || generateNCKitDescription(planToSave),
       plan: planToSave, language: currentKitLanguage,
@@ -305,6 +316,62 @@ export const App: React.FC = () => {
   };
 
   const handleLoadPlan = (saved: SavedLessonPlan) => {
+    // Restore the full input form state from the saved record so that
+    // LessonPlanDisplay receives the correct mode, and if the user clicks
+    // "Back to Generator" the form is pre-populated rather than blank.
+    const snap = saved.plan?._inputSnapshot;
+    const bi = saved.plan?.basicInfo;
+    if (snap || bi) {
+      setInput((prev) => ({
+        ...prev,
+        // From _inputSnapshot (handbook config, mode, weather, age, etc.)
+        ...(snap?.mode != null && { mode: snap.mode }),
+        ...(snap?.familyEslEnabled != null && { familyEslEnabled: snap.familyEslEnabled }),
+        ...(snap?.weather != null && { weather: snap.weather }),
+        ...(snap?.studentAge != null && { studentAge: snap.studentAge }),
+        ...(snap?.cefrLevel != null && { cefrLevel: snap.cefrLevel }),
+        ...(snap?.duration != null && { duration: snap.duration }),
+        ...(snap?.handbookMode != null && { handbookMode: snap.handbookMode }),
+        ...(snap?.handbookPreset != null && { handbookPreset: snap.handbookPreset }),
+        ...(snap?.handbookPageConfig != null && { handbookPageConfig: snap.handbookPageConfig }),
+        ...(snap?.autoPageTarget != null && { autoPageTarget: snap.autoPageTarget }),
+        ...(snap?.factSheet != null && { factSheet: snap.factSheet }),
+        ...(snap?.factSheetQuality != null && { factSheetQuality: snap.factSheetQuality }),
+        ...(snap?.factSheetSources != null && { factSheetSources: snap.factSheetSources }),
+        ...(snap?.factSheetMeta != null && { factSheetMeta: snap.factSheetMeta }),
+        ...(snap?.handbookStyleId != null && { handbookStyleId: snap.handbookStyleId }),
+        // From basicInfo (theme, activity, audience)
+        // Fall back to saved.name when bi.theme is an empty string (incomplete save)
+        theme: bi?.theme || saved.name || prev.theme,
+        ...(bi?.activityType ? { activityFocus: [bi.activityType] } : {}),
+      }));
+    }
+
+    // Restore language so re-generation uses the correct AI pipeline
+    if (saved.language) {
+      setCurrentKitLanguage(saved.language as 'en' | 'zh');
+    }
+
+    // Detect incomplete plan (saved as shell before generation finished).
+    // roadmap.length === 0 && basicInfo.theme === '' means the record has no real content.
+    const hasRoadmap = (saved.plan?.roadmap?.length ?? 0) > 0;
+    const hasTheme = Boolean(saved.plan?.basicInfo?.theme);
+    const isIncomplete = !hasRoadmap && !hasTheme;
+
+    if (isIncomplete) {
+      // Don't load the empty plan — show InputSection with pre-filled form.
+      // Keep the currentPlanId so that when user generates and saves, it overwrites this record.
+      setLessonPlan(null);
+      setCurrentPlanId(saved.id);
+      setView('lesson');
+      useToast.getState().info(
+        currentKitLanguage === 'zh'
+          ? '该记录内容尚未生成完毕，已为你恢复设置，点击「生成」重新生成。'
+          : 'This record was saved incomplete. Settings restored — click Generate to re-run.',
+      );
+      return;
+    }
+
     setLessonPlan(saved.plan);
     setCurrentPlanId(saved.id);
     setView('lesson');
@@ -329,7 +396,13 @@ export const App: React.FC = () => {
     const id = existing ? existing.id : crypto.randomUUID();
 
     const savedCurriculum: SavedCurriculum = {
-      id, timestamp: Date.now(), name, description: existing?.description || curriculum.overview, curriculum, params, language
+      id,
+      timestamp: Date.now(),
+      name,
+      description: existing?.description || curriculum.overview,
+      curriculum,
+      params,
+      language,
     };
     const saveResult = await saveCurriculumDb(savedCurriculum);
     if (!saveResult.ok) {
@@ -346,20 +419,19 @@ export const App: React.FC = () => {
     await renameCurriculumDb(id, newName);
   };
 
-  const handleGenerateLessonKit = (lesson: CurriculumLesson, params: CurriculumParams, language: 'en' | 'zh') => {
-    const mappedInput = mapLessonToInput(lesson, params);
+  const handleGenerateLessonKit = (
+    lesson: CurriculumLesson,
+    params: CurriculumParams,
+    language: 'en' | 'zh',
+    weather: 'Sunny' | 'Rainy',
+  ) => {
+    const mappedInput = mapLessonToInput(lesson, { ...params, weather });
 
-    // Attach RAG fact sheet if available from curriculum generation
-    if (ragFactSheets && curriculumResult) {
-      const curriculum = language === 'zh' ? curriculumResult.curriculumCN : curriculumResult.curriculumEN;
-      const lessonIndex = curriculum?.lessons.findIndex(l => l.title === lesson.title) ?? -1;
-      if (lessonIndex >= 0) {
-        const fs = ragFactSheets.find(f => f.lessonIndex === lessonIndex);
-        if (fs) {
-          mappedInput.factSheet = fs.content;
-          mappedInput.factSheetQuality = fs.quality as 'good' | 'low' | 'insufficient';
-        }
-      }
+    if (sharedFactSheet) {
+      mappedInput.factSheet = sharedFactSheet.content;
+      mappedInput.factSheetQuality = sharedFactSheet.quality;
+      mappedInput.factSheetSources = sharedFactSheet.sources;
+      mappedInput.factSheetMeta = sharedFactSheet.freshnessMeta;
     }
 
     setInput(mappedInput);

@@ -49,8 +49,42 @@ function resolveAgeStyleGuide(studentAge: LessonInput['studentAge']): string {
   return 'Sophisticated flat/infographic style with cleaner data-oriented composition.';
 }
 
+function buildFactSheetGroundingBlock(input: LessonInput): string {
+  if (!input.factSheet) return '';
+  const freshness = input.factSheetMeta
+    ? `
+Freshness metadata:
+- Theme tier: ${input.factSheetMeta.themeTier}
+- Target window: ${input.factSheetMeta.targetWindow}
+- Effective window: ${input.factSheetMeta.effectiveWindow}
+- Risk level: ${input.factSheetMeta.riskLevel}
+- Coverage: ${(input.factSheetMeta.coverage * 100).toFixed(0)}%`
+    : '';
+
+  return `
+[FACT SHEET GROUNDING]
+The generated output must stay grounded in the fact sheet.
+Do not add unsupported claims.
+${input.factSheetQuality === 'insufficient' ? '- Fact sheet quality is insufficient: mark uncertain additions as [Unverified].' : ''}
+${input.factSheetQuality === 'low' ? '- Fact sheet quality is low: use cautious wording and avoid over-claiming.' : ''}
+${freshness}
+Fact sheet excerpt:
+${input.factSheet.slice(0, 8000)}
+`;
+}
+
 export function buildStructuredPlanSystemInstruction(args: PlanPromptArgs): string {
   const { isCN, structure, knowledgeBlock, input } = args;
+  const roadmapLensRule = input.mode === 'family'
+    ? 'Roadmap steps must be direct parent read-aloud lines; activityInstructions must follow "story/fact explanation + mission task" for child execution.'
+    : 'Roadmap steps must be direct teacher read-aloud lines; activityInstructions must be worksheet/task-sheet style for students.';
+  const weatherRule = input.weather === 'Rainy'
+    ? 'RAINY mode: every phase must provide indoor-safe equivalent execution. Do not output outdoor-only instructions unless explicitly marked optional for clear weather.'
+    : 'SUNNY mode: prioritize outdoor observation/action while keeping safety and feasibility clear.';
+  const modeRule = input.mode === 'family'
+    ? `Family mode (parent + child). ${input.familyEslEnabled ? 'English exploration is ON: add only light English touchpoints.' : 'Pure exploration mode: do not force ESL routines.'}`
+    : `School mode (teacher + class). ESL target level: ${input.cefrLevel || 'A1 (Beginner)'}.`;
+  const factSheetGroundingBlock = buildFactSheetGroundingBlock(input);
 
   return `You are a STEAM outdoor curriculum design expert.
 Generate a teaching plan from the user-defined handbook outline and knowledge base.
@@ -60,6 +94,13 @@ ${structure}
 
 [KNOWLEDGE BASE]
 ${knowledgeBlock || '(empty)'}
+${factSheetGroundingBlock}
+
+[EXECUTION CONTEXT]
+- Weather: ${input.weather}
+- Mode: ${modeRule}
+- Target age: ${input.studentAge}
+- Duration: ${input.duration} minutes
 
 [REQUIREMENTS]
 1. Generate roadmap phases aligned to the outline structure.
@@ -68,7 +109,9 @@ ${knowledgeBlock || '(empty)'}
 4. Extract 8-12 vocabulary items with concise definitions.
 5. safetyProtocol must match activity risks and be actionable.
 6. Output language: ${isCN ? 'Simplified Chinese' : 'English'}.
-7. Target age: ${input.studentAge}; duration: ${input.duration} minutes.`;
+7. ${weatherRule}
+8. ${roadmapLensRule}
+9. Include actionable safety cues in each phase (ratio, boundaries, tool handling, allergy/weather risk).`;
 }
 
 export function buildStructuredHandbookSystemInstruction(args: HandbookPromptArgs): string {
@@ -77,8 +120,16 @@ export function buildStructuredHandbookSystemInstruction(args: HandbookPromptArg
   const hasKnowledge = Boolean(knowledgeBlock.trim());
   const teacherPromptRule =
     input.mode === 'family'
-      ? 'parent facilitation objective, dialogue lines, discussion prompts, adaptation tips, pacing, parent background notes.'
-      : 'teaching objective, opening script, guided questions, differentiation tips, time control, extended teacher notes.';
+      ? 'direct read-aloud parent facilitation script with EXACT labels: Do Together, Ask Together, Reflect Together.'
+      : 'direct read-aloud teacher script with: Objective, Opening Script, Guided Questions (3-5), Differentiation & Time Control.';
+  const studentContentRule =
+    input.mode === 'family'
+      ? 'For Activity/Worksheet and Reading pages, contentPrompt MUST follow "story/fact explanation + mission task".'
+      : 'For Activity/Worksheet pages, contentPrompt MUST be worksheet/task-sheet style: Task Goal, Materials Checklist, numbered Steps, and response spaces.';
+  const weatherRule = input.weather === 'Rainy'
+    ? 'RAINY mode: handbook activity execution must be indoor-safe by default.'
+    : 'SUNNY mode: prioritize outdoor observation/exploration when feasible.';
+  const factSheetGroundingBlock = buildFactSheetGroundingBlock(input);
 
   return `You are a student-handbook visual/content designer.
 Generate handbook pages strictly from the outline.
@@ -91,6 +142,13 @@ ${roadmapSummary}
 
 [KNOWLEDGE BASE]
 ${knowledgeBlock || '(empty)'}
+${factSheetGroundingBlock}
+
+[EXECUTION CONTEXT]
+- Weather: ${input.weather}
+- Mode: ${input.mode}
+- Target age: ${input.studentAge}
+- Duration: ${input.duration} minutes
 
 [BRAND RULES]
 ${PATHWAY_BRAND_STYLE_BLOCK}
@@ -110,5 +168,7 @@ ${PATHWAY_BRAND_STYLE_BLOCK}
   }
 9. Background Knowledge and Activity/Worksheet pages MUST include teacherContentPrompt:
    - ${teacherPromptRule}
-10. Output language: ${isCN ? 'Simplified Chinese' : 'English'}.`;
+10. ${studentContentRule}
+11. ${weatherRule}
+12. Output language: ${isCN ? 'Simplified Chinese' : 'English'}.`;
 }

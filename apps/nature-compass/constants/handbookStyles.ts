@@ -36,6 +36,10 @@ Typography: Clean modern sans-serif like Source Han Sans (思源黑体) or Micro
 Layout: Clean grid-based layouts with rounded-corner bordered activity zones. High negative space. Color-coded section headers. Professional infographic quality.
 Illustration Style: Modern flat vector illustrations with bold outlines. Geometric shapes (hexagons, chevrons). Subject-matter icons in Nature Compass brand colors. Consistent icon set throughout.
 Theme Integration: All decorative elements, borders, and illustrations must relate to the workshop theme "{{THEME}}". Use thematic icons in headers and page corners.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -51,6 +55,10 @@ Typography: Clean, highly legible sans-serif like Source Han Sans (思源黑体)
 Layout: Freeform whiteboard aesthetic with drawn boxes, arrows, and connection lines. Dashed borders, hand-drawn circles around key concepts. Sticky-note style call-out boxes. Casual, approachable layout.
 Illustration Style: Sketch-style line drawings as if drawn on a whiteboard with markers. Simple diagrams, mind maps, and doodle-style icons. Imperfect hand-drawn feel with natural variations.
 Theme Integration: Whiteboard sketches of "{{THEME}}" related concepts. Hand-drawn diagrams and labeled illustrations specific to the topic.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -66,6 +74,10 @@ Typography: Clean rounded sans-serif like Source Han Sans (思源黑体) for all
 Layout: Rounded everything — rounded corners, circular badges, pill-shaped buttons. Generous spacing. Large illustration-to-text ratio (70:30). Sticker-like labels. Chunky bordered sections with dotted lines.
 Illustration Style: Kawaii cute characters with oversized heads, big sparkly eyes, tiny bodies. Blushing cheeks, star sparkles. Soft pastel color fills. Cute animal mascots (bunny scientists, fox explorers, bear teachers). Every page has at least one character guiding the student.
 Theme Integration: Kawaii mascot characters exploring and learning about "{{THEME}}". Characters interact with topic-specific props and environments in an adorable way.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -81,6 +93,10 @@ Typography: Clean sans-serif like Source Han Sans (思源黑体) for all body te
 Layout: Comic panel-style page divisions. Speed lines and action borders. Dramatic reveal layouts. Two-column manga reading sections. Star-burst call-out boxes. Dynamic diagonal compositions.
 Illustration Style: Anime-style character illustrations with expressive faces, dynamic poses, and detailed hair. Cel-shaded coloring with visible highlights. Action lines for movement. Sparkle and glow effects. Characters aged to match student demographic.
 Theme Integration: Anime characters on an exciting adventure exploring "{{THEME}}". Dynamic scenes showing discovery, experiments, and team collaboration in anime style.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -96,6 +112,10 @@ Typography: Clean sans-serif like Source Han Sans (思源黑体) body text on wh
 Layout: Organic, flowing layouts. No harsh geometric borders — use watercolor splashes as section dividers. Torn-paper edges for content boxes. Botanical frame borders. Plenty of breathing room with natural negative space.
 Illustration Style: Delicate watercolor illustrations with visible brush strokes and color gradients. Botanical watercolor paintings for nature elements. Soft edges, transparent overlays, paint splatter accents. Realistic yet artistic rendering. No hard outlines.
 Theme Integration: Beautiful watercolor scenes depicting "{{THEME}}" — painted landscapes, flora, fauna, and cultural elements. Each page features a unique watercolor vignette related to the lesson content.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -111,6 +131,10 @@ Typography: Retro rounded sans-serif like Source Han Sans (思源黑体) for all
 Layout: Newspaper/zine-inspired multi-column layouts. Thick rule lines as dividers. Circular badge stamps. Vintage label banners. Pull-quote boxes with ornamental borders. Numbered lists with retro bullet styles.
 Illustration Style: Risograph/screen-print aesthetic — limited color, visible grain texture, halftone dots. Woodcut-style simplified illustrations. Vintage scientific diagrams. Retro botanical prints. Mid-century modern icon style.
 Theme Integration: Retro-printed field guide aesthetic for "{{THEME}}". Vintage scientific illustrations, stamp-collection style visuals, and old-school educational poster design.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -126,6 +150,10 @@ Typography: Clean modern sans-serif like Source Han Sans (思源黑体) for all 
 Layout: Scroll-inspired page headers. Traditional cloud/wave (云纹/水波纹) pattern borders. Lattice window (窗棂) frame layouts for content sections. Red seal stamps as bullet points. Symmetric, balanced compositions honoring traditional design principles.
 Illustration Style: Traditional Chinese painting (国画) inspired illustrations — ink wash landscapes, detailed line drawings of cultural artifacts, architectural elements in traditional style. Gold foil accents. Embroidery-inspired pattern borders. Cultural motifs specific to the region.
 Theme Integration: Heritage-style illustrations of "{{THEME}}" — traditional paintings of the location, cultural artifacts rendered in classical style, historical elements with traditional artistic treatment.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -141,6 +169,10 @@ Typography: Clean sans-serif like Source Han Sans (思源黑体) body text on wh
 Layout: Scrapbook-style compositions with layered paper elements. Torn-edge borders. Paper clip and tape attachments holding content boxes. Folded paper tab dividers. Envelope/pocket elements for activities. 3D paper shadow effects showing depth.
 Illustration Style: Paper craft aesthetic — cut paper silhouettes, origami figures, paper collage compositions. Layered paper with visible depth and shadows. Tissue paper transparency effects. Construction paper landscapes. Paper plate/cup craft-inspired characters.
 Theme Integration: Paper craft representations of "{{THEME}}" — cut-paper dioramas of the location, origami animals and objects related to the topic, collage-style information displays.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {
@@ -156,6 +188,10 @@ Typography: Clean modern sans-serif like Source Han Sans (思源黑体), Montser
 Layout: Editorial magazine-style layouts. Full-width and half-width photo placements. Photo-caption pairs. Info cards with rounded corners overlaid on images. Clean grid system with generous whitespace. Photo-strip sections for step-by-step activities.
 Illustration Style: HIGH-FIDELITY REALISTIC PHOTOGRAPHY and 3D-rendered objects. Real photographs of locations, animals, plants, artifacts, and cultural items. Studio-quality product shots for activity materials and tools. Photorealistic close-ups of textures, specimens, and details. Real maps and satellite imagery. NO cartoons, NO vector illustrations, NO hand-drawn elements — everything must look like a real photograph or photorealistic 3D render.
 Theme Integration: Real photographs and photorealistic images of "{{THEME}}" — actual locations, real specimens, genuine cultural artifacts, authentic materials. Each page features documentary-style photography that educates through visual authenticity.
+UNIVERSAL RULES (apply to ALL pages regardless of style):
+1. BRAND COLOR ACCENTS ONLY: Do NOT use brand colors (Navy #1A2B58, Fuchsia #E91E63, Gold #FFC107) as large fills or body backgrounds. Reserve them exclusively for small decorative details: thin border lines, corner ornaments, bullet dot accents, divider rules, icon outlines, and badge trims.
+2. PHYSICAL OBJECT IMAGES - REALISTIC + FRAMED: Any image depicting a real physical object (materials, tools, food, plants, animals, specimens, artifacts, activity supplies) MUST use a photorealistic/high-fidelity photograph style - never cartoon or flat vector. Each such image MUST be placed inside a clearly defined square photo frame (thin solid border or subtle drop-shadow), functioning as a swappable photo placeholder.
+3. TEXT AREAS - SOLID OPAQUE BACKGROUNDS: Every text region (body copy, captions, labels, callout boxes, instruction blocks) MUST sit on a solid-color opaque panel (white #FFFFFF, light grey #F8F9FA, or a pale brand-color tint). No text should appear directly over a photograph, illustration, or textured background without a solid color shield underneath.
 CRITICAL RULE: Except for the Cover and Back Cover (which should be fully colored), all other content pages MUST have a pure white (#FFFFFF) background to save printer ink. Colors should be restricted to borders, headers, and illustrations.`,
     },
     {

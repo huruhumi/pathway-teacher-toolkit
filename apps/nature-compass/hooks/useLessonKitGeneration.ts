@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@shared/stores/useToast';
 import type { LessonInput, LessonPlanResponse } from '../types';
 import {
+  buildInputSnapshot,
   generateFactSheet,
+  generateFactSheetFallback,
   generateLessonPlanStreaming,
   generateLessonPlanStreamingCN,
 } from '../services/lessonKitService';
@@ -13,7 +15,7 @@ const LOADING_STEPS = [
   'Researching background knowledge...',
   'Consulting the Curriculum Oracle...',
   'Designing the teaching roadmap...',
-  'Drafting the student handbook...',
+  'Building vocabulary & safety protocols...',
   'Curating specialized vocabulary...',
   'Translating materials to Chinese...',
   'Applying final polish...',
@@ -44,16 +46,33 @@ type UseLessonKitGenerationResult = {
   isLoading: boolean;
   error: string | null;
   loadingStep: number;
+  factSheetDecision: {
+    reason: string;
+    isFallbackLoading: boolean;
+  } | null;
   handleSubmit: () => Promise<void>;
   handleStop: () => void;
+  handleContinueWithoutFactSheet: () => void;
+  handleUseFallbackFactSheet: () => Promise<void>;
 };
+
+class FactSheetGenerationError extends Error {
+  readonly code = 'FACT_SHEET_GENERATION_FAILED' as const;
+}
 
 export function useLessonKitGeneration(params: UseLessonKitGenerationParams): UseLessonKitGenerationResult {
   const { input, currentKitLanguage, setInput, setCurrentPlanId, setLessonPlan } = params;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [factSheetDecision, setFactSheetDecision] = useState<{
+    reason: string;
+    isFallbackLoading: boolean;
+  } | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pendingInputRef = useRef<LessonInput | null>(null);
+  const decisionResolverRef = useRef<((value: LessonInput) => void) | null>(null);
+  const decisionRejectRef = useRef<((reason?: any) => void) | null>(null);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -69,13 +88,29 @@ export function useLessonKitGeneration(params: UseLessonKitGenerationParams): Us
     if (!abortControllerRef.current) return;
     abortControllerRef.current.abort();
     abortControllerRef.current = null;
+    decisionRejectRef.current?.(new DOMException('Aborted', 'AbortError'));
+    decisionResolverRef.current = null;
+    decisionRejectRef.current = null;
+    pendingInputRef.current = null;
+    setFactSheetDecision(null);
     setIsLoading(false);
     setError('Generation stopped by user.');
   };
 
   const finalizeGeneratedPlan = (result: LessonPlanResponse, enrichedInput: LessonInput) => {
+    // Inject _inputSnapshot so Phase 2 / Commit can reconstruct full context (Issue #2 / #5)
+    if (!result._inputSnapshot) {
+      result._inputSnapshot = buildInputSnapshot(enrichedInput);
+    }
+
     if (enrichedInput.factSheet) {
       result.factSheet = enrichedInput.factSheet;
+    }
+    if (enrichedInput.factSheetSources?.length) {
+      result.factSheetSources = enrichedInput.factSheetSources;
+    }
+    if (enrichedInput.factSheetMeta) {
+      result.factSheetMeta = enrichedInput.factSheetMeta;
     }
     if (enrichedInput.structuredKnowledge?.length) {
       result.structuredKnowledge = enrichedInput.structuredKnowledge;
@@ -119,7 +154,12 @@ export function useLessonKitGeneration(params: UseLessonKitGenerationParams): Us
 
     try {
       const translatedResult = await translateLessonPlan(result, 'Simplified Chinese', signal);
-      result.translatedPlan = translatedResult;
+      // Issue #12 fix: preserve _inputSnapshot and generationPhase — translateLessonPlan's schema strips them
+      result.translatedPlan = {
+        ...translatedResult,
+        _inputSnapshot: result._inputSnapshot,
+        generationPhase: result.generationPhase,
+      };
     } catch (transErr) {
       if (mode === 'structured') {
         console.error('Translation failed for structured mode:', transErr);
@@ -145,13 +185,82 @@ export function useLessonKitGeneration(params: UseLessonKitGenerationParams): Us
         ...currentInput,
         factSheet: fs.content,
         factSheetQuality: fs.quality,
+        factSheetSources: fs.sources,
+        factSheetMeta: fs.freshnessMeta,
       };
       setInput(enriched);
       return enriched;
     } catch (fsErr: any) {
       if (fsErr.name === 'AbortError') throw fsErr;
-      console.warn('Fact sheet generation failed, continuing without:', fsErr);
-      return currentInput;
+      throw new FactSheetGenerationError(
+        fsErr?.message || 'Google grounding fact sheet generation failed.',
+      );
+    }
+  };
+
+  const awaitFactSheetDecision = (
+    baseInput: LessonInput,
+    reason: string,
+  ): Promise<LessonInput> => {
+    pendingInputRef.current = baseInput;
+    setFactSheetDecision({
+      reason,
+      isFallbackLoading: false,
+    });
+
+    return new Promise<LessonInput>((resolve, reject) => {
+      decisionResolverRef.current = resolve;
+      decisionRejectRef.current = reject;
+    });
+  };
+
+  const clearFactSheetDecisionState = () => {
+    setFactSheetDecision(null);
+    decisionResolverRef.current = null;
+    decisionRejectRef.current = null;
+    pendingInputRef.current = null;
+  };
+
+  const handleContinueWithoutFactSheet = () => {
+    const baseInput = pendingInputRef.current || input;
+    const resolve = decisionResolverRef.current;
+    if (!resolve) return;
+    clearFactSheetDecisionState();
+    useToast.getState().info('Continuing without fact sheet grounding.');
+    resolve(baseInput);
+  };
+
+  const handleUseFallbackFactSheet = async () => {
+    const baseInput = pendingInputRef.current;
+    const signal = abortControllerRef.current?.signal;
+    const resolve = decisionResolverRef.current;
+    const reject = decisionRejectRef.current;
+    if (!baseInput || !signal || !resolve || !reject) return;
+
+    setFactSheetDecision((prev) => (prev ? { ...prev, isFallbackLoading: true } : prev));
+
+    try {
+      const fs = await generateFactSheetFallback(baseInput, signal);
+      const enriched: LessonInput = {
+        ...baseInput,
+        factSheet: fs.content || undefined,
+        factSheetQuality: fs.quality,
+        factSheetSources: fs.sources,
+        factSheetMeta: fs.freshnessMeta,
+      };
+      setInput(enriched);
+      clearFactSheetDecisionState();
+      useToast.getState().success('Fallback fact sheet generated. Continuing...');
+      resolve(enriched);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        clearFactSheetDecisionState();
+        reject(err);
+        return;
+      }
+      const msg = err?.message || 'Fallback fact sheet generation failed.';
+      setFactSheetDecision((prev) => (prev ? { ...prev, isFallbackLoading: false, reason: msg } : prev));
+      useToast.getState().error(`Fallback failed: ${msg}`);
     }
   };
 
@@ -200,7 +309,22 @@ export function useLessonKitGeneration(params: UseLessonKitGenerationParams): Us
     abortControllerRef.current = controller;
 
     try {
-      const enrichedInput = await ensureFactSheetForGeneration({ ...input }, controller.signal);
+      let enrichedInput: LessonInput;
+      try {
+        enrichedInput = await ensureFactSheetForGeneration({ ...input }, controller.signal);
+      } catch (err: any) {
+        if (err?.name === 'AbortError') throw err;
+        if ((err as FactSheetGenerationError).code === 'FACT_SHEET_GENERATION_FAILED') {
+          const decisionInput = await awaitFactSheetDecision(
+            { ...input },
+            err?.message || 'Google grounding fact sheet generation failed.',
+          );
+          enrichedInput = decisionInput;
+        } else {
+          throw err;
+        }
+      }
+
       const handledByStructuredFlow = await runStructuredModeIfApplicable(enrichedInput, controller.signal);
       if (!handledByStructuredFlow) {
         await runNormalModeFlow(enrichedInput, controller.signal);
@@ -227,7 +351,10 @@ export function useLessonKitGeneration(params: UseLessonKitGenerationParams): Us
     isLoading,
     error,
     loadingStep,
+    factSheetDecision,
     handleSubmit,
     handleStop,
+    handleContinueWithoutFactSheet,
+    handleUseFallbackFactSheet,
   };
 }

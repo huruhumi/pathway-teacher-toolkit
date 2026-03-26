@@ -16,8 +16,9 @@ import { UpNextWidget } from './components/UpNextWidget';
 import { EmptyState } from './components/EmptyState';
 import { RewardCenter } from './components/RewardCenter';
 import { StudentLoginPage, ProfileStep } from './components/StudentLoginPage';
+import { ProfilePage } from './pages/ProfilePage';
 
-type View = 'assignments' | 'schedule' | 'reading';
+type View = 'assignments' | 'schedule' | 'reading' | 'profile';
 
 
 
@@ -522,10 +523,19 @@ const AppContent: React.FC = () => {
                         activeTab={view}
                         onTabChange={(key) => setView(key as View)}
                         rightContent={
-                            <button onClick={() => setLang(lang === 'en' ? 'zh' : 'en')} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                <Languages size={15} />
-                                <span>{lang === 'en' ? '中文' : 'EN'}</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setLang(lang === 'en' ? 'zh' : 'en')} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <Languages size={15} />
+                                    <span>{lang === 'en' ? '中文' : 'EN'}</span>
+                                </button>
+                                <button onClick={() => setView('profile')} title="个人中心"
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${view === 'profile'
+                                            ? 'bg-sky-500 text-white'
+                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                        }`}>
+                                    <User size={15} />
+                                </button>
+                            </div>
                         }
                         hideSignIn
                         pointsBalance={pointsBalance}
@@ -535,10 +545,16 @@ const AppContent: React.FC = () => {
                     <RouteGuard>
                         <main className="w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1 max-w-6xl">
                             <BodyContainer className="w-full">
-                                <WelcomeBanner />
-                                {view === 'assignments' && <AssignmentsView />}
-                                {view === 'schedule' && <ScheduleView />}
-                                {view === 'reading' && <ReadingView />}
+                                {view === 'profile' ? (
+                                    <ProfilePage onBack={() => setView('assignments')} />
+                                ) : (
+                                    <>
+                                        {(view !== 'profile') && <WelcomeBanner />}
+                                        {view === 'assignments' && <AssignmentsView />}
+                                        {view === 'schedule' && <ScheduleView />}
+                                        {view === 'reading' && <ReadingView />}
+                                    </>
+                                )}
                             </BodyContainer>
                         </main>
                     </RouteGuard>
