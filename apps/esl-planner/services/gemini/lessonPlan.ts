@@ -2,7 +2,7 @@ import { createAIClient, fileToBase64 } from '@pathway/ai';
 import { deriveQualityGate } from '@shared/config/eslAssessmentRegistry';
 import { ESLGeneratedContentSchema, ESLPlanOnlySchema } from '@shared/types/schemas';
 import type { GroundingStatus } from '@shared/types/quality';
-import { CEFRLevel, GeneratedContent } from '../../types';
+import { CEFRLevel, GeneratedContent, CustomStageInput } from '../../types';
 import { buildESLScoreReport } from '../scoring/scoreReport';
 import { mapSentenceCitations } from './citationMapper';
 import { RESPONSE_SCHEMA, PLAN_ONLY_RESPONSE_SCHEMA } from './schema';
@@ -31,6 +31,8 @@ interface LessonPlanGenerationOptions {
    * - none: no usable video transcript evidence
    */
   videoEvidenceMode?: 'none' | 'transcript_verified' | 'manual_verified' | 'fallback_web_unverified';
+  /** Teacher's custom stage instructions overriding default generation */
+  customStages?: CustomStageInput[];
 }
 
 const URL_REGEX = /https?:\/\/[^\s<>"'`]+/gi;
@@ -201,62 +203,89 @@ CRITICAL: The official title of this lesson is "${lessonTitle}". Use this exactl
   const promptText = isPlanOnly ? planOnlyInstructions : fullInstructions;
 
   const sharedSuffixes: string[] = [];
+
+  if (options.customStages && options.customStages.length > 0) {
+    const customRules = options.customStages.map((stage, idx) => {
+      let rule = `Stage ${idx + 1} (${stage.stageName}):\n- Core Description: ${stage.description}`;
+      if (stage.activityDesign) rule += `\n- Activity Design: ${stage.activityDesign}`;
+      if (stage.videoName || stage.videoUrl) rule += `\n- Multimedia Integration: Include video "${stage.videoName || stage.videoUrl}"`;
+      if (stage.videoContent) rule += `\n- Video Content/Lyrics to use:\n"""\n${stage.videoContent}\n"""`;
+      return rule;
+    }).join('\n\n');
+
+    sharedSuffixes.push(`
+[TEACHER CUSTOM STAGE INSTRUCTIONS - STRICT ADHERENCE REQUIRED]
+The teacher has provided specific manual instructions for ${options.customStages.length} custom lesson stages. You MUST strictly follow these descriptions and activity designs for each corresponding stage.
+
+${customRules}
+
+CRITICAL constraint for custom stages:
+- Generate EXACTLY ${options.customStages.length} stages, following the specific stage names and sequence defined above.
+- Ignore the default "5 stages minimum" and "Standard stage sequence" rules. Completely replace the lesson flow with these custom stages.
+- Do NOT hallucinate or invent any multimedia resources, songs, or videos that are not explicitly provided above.
+- If a stage has manual Activity Design, incorporate it exactly into the teacherActivity and studentActivity steps for that stage.
+- You must EXPAND and POLISH the teacher's input to make it a fully-fledged lesson stage, but you MUST NEVER omit, delete, or ignore any detail, concept, or instruction provided by the teacher.
+- ALL generated output MUST BE WRITTEN ENTIRELY IN ENGLISH, even if the teacher's input descriptions or activity designs are provided in Chinese or another language.
+- teachingTips and backgroundKnowledge for these stages should still be generated normally.
+`);
+  }
+
   if (hasCustomInstructions) {
     sharedSuffixes.push(`
-[Instruction Priority Policy]
-Treat "Source Material" as teacher custom instructions with HIGHEST priority.
+    [Instruction Priority Policy]
+      Treat "Source Material" as teacher custom instructions with HIGHEST priority.
 - If teacher custom instructions conflict with backend default pedagogical preferences, follow teacher custom instructions.
-- Apply backend/default rules only when they do NOT conflict with teacher custom instructions.
+- Apply backend /default rules only when they do NOT conflict with teacher custom instructions.
 - Keep safety rules and valid JSON schema compliance mandatory at all times.`);
   }
   if (factSheet) {
     sharedSuffixes.push(`
-[Factual Grounding]
+    [Factual Grounding]
 The following fields must be strictly sourced from the fact sheet:
-- stages[].backgroundKnowledge
+    - stages[].backgroundKnowledge
 ${isPlanOnly ? '' : '- readingCompanion.days[].trivia'}
 Do not invent facts outside the fact sheet for these fields.`);
   }
   if (!isPlanOnly && validUrls && validUrls.length > 0) {
     sharedSuffixes.push(`
-[URL Constraint]
-readingCompanion.days[].resources[].url must only use this verified list:
+    [URL Constraint]
+    readingCompanion.days[].resources[].url must only use this verified list:
 ${validUrls.join('\n')}
 If you need more resources, you may reuse URLs from this list.`);
   }
   if (options.assessmentPackPrompt) {
     sharedSuffixes.push(`
-[Assessment Standard - Textbook Level Locked]
+    [Assessment Standard - Textbook Level Locked]
 ${options.assessmentPackPrompt}
-IMPORTANT: Keep assessment criteria stable for the selected textbook level regardless of class theme differences.`);
+    IMPORTANT: Keep assessment criteria stable for the selected textbook level regardless of class theme differences.`);
   }
   if (hasYouTubeUrls) {
     sharedSuffixes.push(`
-[Referenced Video URLs]
-${youtubeUrls.map((url) => `- ${url}`).join('\n')}`);
+    [Referenced Video URLs]
+${youtubeUrls.map((url) => `- ${url}`).join('\n')} `);
     if (videoEvidenceMode === 'transcript_verified' || videoEvidenceMode === 'manual_verified') {
       sharedSuffixes.push(`
-[Video Evidence Policy: VERIFIED]
-Transcript/key-point evidence is available.
-You may reference specific song/video details ONLY when those details are explicitly present in Source Material or Teaching Background Fact Sheet.
-Do NOT add any ungrounded title/artist/lyrics.`);
+    [Video Evidence Policy: VERIFIED]
+    Transcript / key - point evidence is available.
+You may reference specific song / video details ONLY when those details are explicitly present in Source Material or Teaching Background Fact Sheet.
+Do NOT add any ungrounded title / artist / lyrics.`);
     } else if (videoEvidenceMode === 'fallback_web_unverified') {
       sharedSuffixes.push(`
-[Video Evidence Policy: FALLBACK (UNVERIFIED)]
+    [Video Evidence Policy: FALLBACK(UNVERIFIED)]
 Fallback web evidence was used and may be incorrect.
 You MUST NOT output specific song title, artist name, exact lyrics, or concrete scene claims from the video.
-Use generic phrasing only (e.g., "selected video clip", "teacher-provided video").
+Use generic phrasing only(e.g., "selected video clip", "teacher-provided video").
 For any needed specifics, insert placeholder text exactly:
-"Teacher verifies and inserts exact title/lyrics from the original video here."`);
+    "Teacher verifies and inserts exact title/lyrics from the original video here."`);
       localQualityIssues.push('Fallback web evidence mode: video details forced to generic placeholders pending teacher verification.');
     } else {
       sharedSuffixes.push(`
-[Video Evidence Limitation]
-The request includes video URLs, but this prompt does not provide guaranteed machine-readable transcript content.
+    [Video Evidence Limitation]
+The request includes video URLs, but this prompt does not provide guaranteed machine - readable transcript content.
 You MUST NOT invent exact lyrics, spoken lines, scene details, or factual claims from those videos.
 Only use explicit text provided in Source Material and grounded fact sheets.
-If a video-based activity is requested, provide a reusable activity template and mark:
-"Teacher inserts clip transcript/key points here."`);
+If a video - based activity is requested, provide a reusable activity template and mark:
+    "Teacher inserts clip transcript/key points here."`);
     }
     if (!hasTranscriptHints && videoEvidenceMode === 'none') {
       localQualityIssues.push('Video URLs were provided without transcript text; video-specific details were intentionally not inferred.');
@@ -270,7 +299,7 @@ If a video-based activity is requested, provide a reusable activity template and
 
   if (factSheet) {
     parts.push({
-      text: `[Teaching Background Fact Sheet]\n${factSheet.slice(0, 20000)}`,
+      text: `[Teaching Background Fact Sheet]\n${factSheet.slice(0, 20000)} `,
     });
   }
 
@@ -407,20 +436,20 @@ If a video-based activity is requested, provide a reusable activity template and
         }
         (validatedContent.structuredLessonPlan?.lessonDetails?.objectives || []).forEach((objective: string, index: number) => {
           targets.push({
-            section: `structuredLessonPlan.lessonDetails.objectives.${index}`,
+            section: `structuredLessonPlan.lessonDetails.objectives.${index} `,
             text: objective,
           });
         });
         (validatedContent.structuredLessonPlan?.lessonDetails?.grammarSentences || []).forEach((sentence: string, index: number) => {
           targets.push({
-            section: `structuredLessonPlan.lessonDetails.grammarSentences.${index}`,
+            section: `structuredLessonPlan.lessonDetails.grammarSentences.${index} `,
             text: sentence,
           });
         });
         (validatedContent.structuredLessonPlan?.stages || []).forEach((stage: any, stageIndex: number) => {
           (stage?.backgroundKnowledge || []).forEach((item: string, infoIndex: number) => {
             targets.push({
-              section: `structuredLessonPlan.stages.${stageIndex}.backgroundKnowledge.${infoIndex}`,
+              section: `structuredLessonPlan.stages.${stageIndex}.backgroundKnowledge.${infoIndex} `,
               text: item,
             });
           });

@@ -13,4 +13,7 @@ export type {
   StudentSubmissionView,
   StudentWithClasses,
   Submission,
+  EduStudentPackage,
+  EduFinancialTransaction,
+  EduClassDeduction,
 } from '../../shared/types/education';

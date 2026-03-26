@@ -371,7 +371,7 @@ export async function deleteReadingLog(id: string): Promise<void> {
 }
 
 // ====== STUDENT SCHEDULE ======
-export type ClassSessionWithClass = ClassSession & { class: { name: string } | null };
+export type ClassSessionWithClass = ClassSession & { class: { name: string } | null; attendance?: { student_signed_in_at?: string | null } };
 
 export async function fetchStudentSessions(studentId: string): Promise<ClassSessionWithClass[]> {
     const sb = ensureSupabase();
@@ -379,6 +379,7 @@ export async function fetchStudentSessions(studentId: string): Promise<ClassSess
     if (!cs?.length) return [];
     const classIds = cs.map((c: any) => c.class_id);
     const today = new Date().toISOString().split('T')[0];
+
     const { data, error } = await sb.from('class_sessions')
         .select('*, class:classes(name)')
         .in('class_id', classIds)
@@ -386,6 +387,21 @@ export async function fetchStudentSessions(studentId: string): Promise<ClassSess
         .order('date')
         .order('start_time');
     if (error) { console.error('[edu] fetchStudentSessions:', error.message); return []; }
+
+    // Fetch attendance for these sessions to see if student signed in
+    const sessionIds = (data ?? []).map((s: any) => s.id);
+    if (sessionIds.length > 0) {
+        const { data: att } = await sb.from('attendance')
+            .select('session_id, student_signed_in_at')
+            .eq('student_id', studentId)
+            .in('session_id', sessionIds);
+
+        return (data ?? []).map((s: any) => ({
+            ...s,
+            attendance: att?.find((a: any) => a.session_id === s.id)
+        })) as ClassSessionWithClass[];
+    }
+
     return (data ?? []) as ClassSessionWithClass[];
 }
 
@@ -917,6 +933,83 @@ export async function updateStudentProfile(
     const sb = ensureSupabase();
     const { error } = await sb.from('students').update(patch).eq('id', studentId);
     if (error) { console.error('[edu] updateStudentProfile:', error.message); return false; }
+    return true;
+}
+
+// ====== FINANCE & CLASS DEDUCTIONS (Phase 8) ======
+
+export async function fetchStudentPackages(studentId: string): Promise<any[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('edu_student_packages').select('*').eq('student_id', studentId).order('created_at', { ascending: false });
+    if (error) { console.error('[edu] fetchStudentPackages:', error.message); return []; }
+    return data ?? [];
+}
+
+export async function fetchAllPackages(teacherId: string): Promise<any[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('edu_student_packages').select('*').eq('teacher_id', teacherId).order('created_at', { ascending: false });
+    if (error) { console.error('[edu] fetchAllPackages:', error.message); return []; }
+    return data ?? [];
+}
+
+export async function upsertStudentPackage(pkg: any): Promise<any | null> {
+    const sb = ensureSupabase();
+    const { id, ...rest } = pkg;
+    const { data, error } = id
+        ? await sb.from('edu_student_packages').update(rest).eq('id', id).select().single()
+        : await sb.from('edu_student_packages').insert(rest).select().single();
+    if (error) { console.error('[edu] upsertStudentPackage:', error.message); return null; }
+    return data;
+}
+
+export async function fetchFinancialTransactions(studentId: string): Promise<any[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('edu_financial_transactions').select('*').eq('student_id', studentId).order('transaction_date', { ascending: false });
+    if (error) { console.error('[edu] fetchFinancialTransactions:', error.message); return []; }
+    return data ?? [];
+}
+
+export async function createFinancialTransaction(transaction: any): Promise<any | null> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('edu_financial_transactions').insert(transaction).select().single();
+    if (error) { console.error('[edu] createFinancialTransaction:', error.message); return null; }
+    return data;
+}
+
+export async function fetchClassDeductions(studentId: string): Promise<any[]> {
+    const sb = ensureSupabase();
+    const { data, error } = await sb.from('edu_class_deductions').select('*, session:class_sessions(date, start_time, topic)').eq('student_id', studentId).order('deduction_date', { ascending: false });
+    if (error) { console.error('[edu] fetchClassDeductions:', error.message); return []; }
+    return data ?? [];
+}
+
+export async function manualClassDeduction(deduction: any): Promise<any | null> {
+    const sb = ensureSupabase();
+    // 1. Insert deduction record
+    const { data: dedRecord, error: dedErr } = await sb.from('edu_class_deductions').insert(deduction).select().single();
+    if (dedErr) { console.error('[edu] manualClassDeduction (insert):', dedErr.message); return null; }
+
+    // 2. Update package used_classes
+    if (deduction.package_id) {
+        const { data: pkg } = await sb.from('edu_student_packages').select('used_classes, total_classes').eq('id', deduction.package_id).single();
+        if (pkg) {
+            const newUsed = pkg.used_classes + deduction.deduction_amount;
+            const status = newUsed >= pkg.total_classes ? 'exhausted' : 'active';
+            await sb.from('edu_student_packages').update({ used_classes: newUsed, status }).eq('id', deduction.package_id);
+        }
+    }
+
+    return dedRecord;
+}
+
+export async function studentSignInAttendance(studentId: string, sessionId: string): Promise<boolean> {
+    const sb = ensureSupabase();
+    // Mark student_signed_in_at = now()
+    const { error } = await sb.from('attendance')
+        .update({ student_signed_in_at: new Date().toISOString() })
+        .eq('student_id', studentId)
+        .eq('session_id', sessionId);
+    if (error) { console.error('[edu] studentSignInAttendance:', error.message); return false; }
     return true;
 }
 

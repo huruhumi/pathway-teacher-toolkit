@@ -63,6 +63,7 @@ export interface Attendance {
     session_id: string;
     student_id: string;
     status: 'present' | 'absent' | 'late' | 'leave';
+    student_signed_in_at?: string | null;
 }
 
 export interface Assignment {
@@ -129,4 +130,41 @@ export interface AssignmentWithSubmissions extends Assignment {
 export interface StudentSubmissionView extends Submission {
     assignment_title: string;
     assignment_due_date?: string;
+}
+
+// ====== FINANCE & DEDUCTIONS (Phase 8) ======
+
+export interface EduStudentPackage {
+    id: string;
+    student_id: string;
+    teacher_id: string;
+    package_name: string;
+    total_classes: number;
+    used_classes: number;
+    price: number;
+    amount_paid: number;
+    payment_status: 'unpaid' | 'paid';
+    status: 'active' | 'exhausted' | 'refunded' | 'cancelled';
+    created_at: string;
+}
+
+export interface EduFinancialTransaction {
+    id: string;
+    package_id: string;
+    student_id: string;
+    amount: number;
+    payment_method: 'wechat' | 'alipay' | 'bank_transfer' | 'cash' | 'other';
+    transaction_date: string;
+    notes?: string;
+}
+
+export interface EduClassDeduction {
+    id: string;
+    student_id: string;
+    package_id: string;
+    session_id?: string | null;
+    deduction_amount: number;
+    deduction_date: string;
+    deduction_type: 'attendance_auto' | 'manual_adjustment';
+    notes?: string;
 }

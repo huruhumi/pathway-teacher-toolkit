@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ReadingCompanionContent, ReadingTask, WebResource, StructuredLessonPlan, CEFRLevel, SentenceCitation } from '../../types';
 import { generateWebResource, generateNewCompanionDay, generateTrivia, translateTaskText } from '../../services/worksheetService';
-import { Settings2, BookOpen, Clock, Loader2, Sparkles, Plus, ExternalLink, RefreshCw, Layers, Book, Wand2, RefreshCcw, Save, MessageSquare, Download, Check, AlertCircle, Globe, Lightbulb, Trash2, X, List, Languages, GripVertical } from 'lucide-react';
+import { extractCompanionFromPDF } from '../../services/gemini/companionParser';
+import { Settings2, BookOpen, Clock, Loader2, Sparkles, Plus, ExternalLink, RefreshCw, Layers, Book, Wand2, RefreshCcw, Save, MessageSquare, Download, Check, AlertCircle, Globe, Lightbulb, Trash2, X, List, Languages, GripVertical, Upload, Copy, ClipboardPaste } from 'lucide-react';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { AssignModal } from '../AssignModal';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -32,12 +33,45 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     const [translatingTask, setTranslatingTask] = useState<string | null>(null); // "dIdx-tIdx"
     const [dragTask, setDragTask] = useState<{ dIdx: number; tIdx: number } | null>(null);
     const [dragOverTask, setDragOverTask] = useState<{ dIdx: number; tIdx: number } | null>(null);
+    const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [copiedResource, setCopiedResource] = useState<WebResource | null>(null);
 
     const { t } = useLanguage();
     const teacherId = useAuthStore(s => s.user?.id);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
     const [isAssigning, setIsAssigning] = useState(false);
     const getCitationTitle = (section: string, text: string) => getCitationTooltip(sentenceCitations, section, text);
+
+    const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            useToast.getState().error('Please upload a valid PDF file.');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
+        setIsUploadingPdf(true);
+        try {
+            const buffer = await file.arrayBuffer();
+            const base64 = btoa(new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+            const parsed = await extractCompanionFromPDF(base64);
+            if (parsed.days && parsed.days.length > 0) {
+                setEditableReadingCompanion(parsed);
+                useToast.getState().success('Successfully imported Learning Companion from PDF.');
+            } else {
+                useToast.getState().error('Failed to parse PDF content.');
+            }
+        } catch (error) {
+            console.error(error);
+            useToast.getState().error('Error analyzing PDF.');
+        } finally {
+            setIsUploadingPdf(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
 
     const handleTaskChange = (dIdx: number, tIdx: number, field: keyof ReadingTask, value: any) => {
         const newDays = [...editableReadingCompanion.days];
@@ -240,6 +274,22 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                     <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">7-Day Learning Companion</h3>
                 </div>
                 <div className="flex gap-2 no-print">
+                    <input
+                        type="file"
+                        accept=".pdf"
+                        ref={fileInputRef}
+                        onChange={handlePdfUpload}
+                        className="hidden"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingPdf}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:border-violet-400 hover:text-violet-600 transition-all disabled:opacity-50"
+                        title="Upload old Learning Companion PDF to autofill"
+                    >
+                        {isUploadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Import PDF
+                    </button>
                     <button
                         onClick={() => setIsAssignOpen(true)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg transition-transform hover:-translate-y-0.5"
@@ -404,27 +454,55 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                 )}
 
                                 <div className="space-y-2 relative">
-                                    <div className="flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1.5">
-                                        <div className="bg-orange-100 text-orange-600 p-1 rounded-md">
-                                            <Globe size={12} />
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="bg-orange-100 text-orange-600 p-1 rounded-md">
+                                                <Globe size={12} />
+                                            </div>
+                                            <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Web Resources</h5>
                                         </div>
-                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Web Resources</h5>
+                                        {copiedResource && (
+                                            <button
+                                                onClick={() => {
+                                                    const newDays = [...editableReadingCompanion.days];
+                                                    newDays[dIdx] = {
+                                                        ...newDays[dIdx],
+                                                        resources: [...(newDays[dIdx].resources || []), { ...copiedResource }]
+                                                    };
+                                                    setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+                                                    useToast.getState().success('Resource pasted!');
+                                                }}
+                                                className="text-[10px] flex items-center gap-1 text-orange-500 hover:text-orange-700 font-bold uppercase tracking-wider bg-orange-50/80 hover:bg-orange-100 transition-colors px-1.5 py-0.5 rounded print:hidden"
+                                                title="Paste copied resource"
+                                            >
+                                                <ClipboardPaste className="w-3 h-3" />
+                                                Paste
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         {day.resources?.map((res, rIdx) => (
                                             <div key={rIdx} className="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 dark:border-white/5/60 shadow-sm relative group hover:border-slate-300 transition-colors print:border-slate-200 print:shadow-none">
-                                                <button onClick={() => handleDeleteDayResource(dIdx, rIdx)} className="absolute top-2 right-2 p-0.5 text-slate-300 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded print:hidden">
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                                <div className="flex items-center mb-1 pr-5">
+                                                <div className="flex items-center mb-1 gap-2">
                                                     <input
                                                         value={res.title}
                                                         onChange={(e) => handleDayResourceChange(dIdx, rIdx, 'title', e.target.value)}
                                                         className="flex-1 text-[11px] font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-orange-400 outline-none transition-colors"
                                                     />
-                                                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="text-orange-400 hover:text-orange-600 transition-colors ml-1.5 shrink-0 print:hidden" title="Open Link">
-                                                        <ExternalLink className="w-3 h-3" />
-                                                    </a>
+                                                    <div className="flex items-center gap-1 shrink-0 print:hidden opacity-0 group-hover:opacity-100 transition-all">
+                                                        <a href={res.url} target="_blank" rel="noopener noreferrer" className="p-0.5 text-orange-400 hover:bg-orange-50 hover:text-orange-600 rounded transition-colors" title="Open Link">
+                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                        </a>
+                                                        <button onClick={() => {
+                                                            setCopiedResource(res);
+                                                            useToast.getState().success('Resource copied!');
+                                                        }} className="p-0.5 text-slate-400 hover:bg-blue-50 hover:text-blue-500 rounded transition-colors" title="Copy Resource">
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button onClick={() => handleDeleteDayResource(dIdx, rIdx)} className="p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded transition-colors" title="Delete Resource">
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <input
                                                     value={res.url}

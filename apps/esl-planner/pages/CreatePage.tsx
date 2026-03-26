@@ -6,7 +6,7 @@ import { OutputDisplay } from '../components/OutputDisplay';
 import { ErrorModal } from '../components/ErrorModal';
 import { generateLessonPlan } from '../services/lessonKitService';
 import { useLanguage } from '../i18n/LanguageContext';
-import type { CEFRLevel, GeneratedContent } from '../types';
+import type { CEFRLevel, GeneratedContent, CustomStageInput } from '../types';
 import {
     findAssessmentPackById,
     findTextbookLevelEntry,
@@ -52,6 +52,7 @@ type PendingGenerationRequest = {
     textbookLevelKey: string;
     sourceMode: GenerationSourceMode;
     ageGroup?: string;
+    customStages?: CustomStageInput[];
 };
 
 type VideoTranscriptRequest = {
@@ -331,6 +332,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
         textbookLevelKey: string,
         sourceMode: GenerationSourceMode,
         ageGroup?: string,
+        customStages?: CustomStageInput[],
         manualEvidenceInput?: string,
         manualEvidenceUrls?: string[],
         manualEvidenceSources?: GroundingSourceItem[],
@@ -350,6 +352,7 @@ export const CreatePage: React.FC<CreatePageProps> = () => {
             textbookLevelKey,
             sourceMode,
             ageGroup,
+            customStages,
         });
         setVideoTranscriptRequest(null);
         setVideoTranscriptEvidenceReview(null);
@@ -912,6 +915,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                     mode: 'plan_only', // Fix A: Phase 1 only generates lesson plan
                     ageGroup,
                     videoEvidenceMode,
+                    customStages,
                 },
             );
 
@@ -1000,6 +1004,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             req.textbookLevelKey,
             req.sourceMode,
             req.ageGroup,
+            req.customStages,
             manualVideoEvidence.trim(),
             undefined,
             undefined,
@@ -1022,6 +1027,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             req.textbookLevelKey,
             req.sourceMode,
             req.ageGroup,
+            req.customStages,
             manualVideoEvidence.trim(),
             videoTranscriptEvidenceReview.evidenceUrls,
             videoTranscriptEvidenceReview.sources,
@@ -1045,6 +1051,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             req.textbookLevelKey,
             req.sourceMode,
             req.ageGroup,
+            req.customStages,
             undefined,
             undefined,
             undefined,
@@ -1081,6 +1088,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
             req.textbookLevelKey,
             req.sourceMode,
             req.ageGroup,
+            req.customStages,
             manualVideoEvidence.trim(),
             videoFallbackEvidenceReview.evidenceUrls,
             videoFallbackEvidenceReview.sources,

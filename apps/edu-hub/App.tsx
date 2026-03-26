@@ -3,7 +3,7 @@ import { useHashTab } from '@shared/hooks/useHashTab';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { AppFooter, AppHeader, AppLayout, BodyContainer, ErrorBoundary, HeaderToggles, HeroBanner, PageLayout, RouteGuard, ToastContainer } from '@pathway/ui';
 import {
-    LayoutDashboard, GraduationCap, Library, Gift,
+    LayoutDashboard, GraduationCap, Library, Gift, Wallet,
 } from 'lucide-react';
 
 // Lazy-loaded pages
@@ -12,13 +12,14 @@ const TeachingPage = React.lazy(() => import('./pages/TeachingPage'));
 const LibraryPage = React.lazy(() => import('./pages/LibraryPage'));
 const RewardsManagementPage = React.lazy(() => import('./pages/RewardsManagementPage'));
 const ParentFormPage = React.lazy(() => import('./pages/ParentFormPage'));
+const FinancePage = React.lazy(() => import('./pages/FinancePage'));
 
-type View = 'dashboard' | 'teaching' | 'library' | 'rewards';
+type View = 'dashboard' | 'teaching' | 'library' | 'rewards' | 'finance';
 
 
 const AppContent: React.FC = () => {
     const { t, lang, setLang } = useLanguage();
-    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'teaching', 'library', 'rewards']);
+    const [view, setView] = useHashTab<View>('dashboard', ['dashboard', 'teaching', 'library', 'rewards', 'finance']);
 
     // Computed once on mount — parent form routes bypass the full app shell
     const isParentForm = useMemo(() =>
@@ -40,6 +41,7 @@ const AppContent: React.FC = () => {
         { key: 'teaching', label: lang === 'zh' ? '教学' : 'Teaching', icon: <GraduationCap className="w-4 h-4" /> },
         { key: 'library', label: lang === 'zh' ? '图书馆' : 'Library', icon: <Library className="w-4 h-4" /> },
         { key: 'rewards', label: lang === 'zh' ? '积分' : 'Rewards', icon: <Gift className="w-4 h-4" /> },
+        { key: 'finance', label: lang === 'zh' ? '财务' : 'Finance', icon: <Wallet className="w-4 h-4" /> },
     ];
 
     return (
@@ -82,6 +84,7 @@ const AppContent: React.FC = () => {
                             {view === 'teaching' && <RouteGuard><TeachingPage /></RouteGuard>}
                             {view === 'library' && <RouteGuard><LibraryPage /></RouteGuard>}
                             {view === 'rewards' && <RouteGuard><RewardsManagementPage /></RouteGuard>}
+                            {view === 'finance' && <RouteGuard><FinancePage /></RouteGuard>}
                         </BodyContainer>
                     </React.Suspense>
                 </PageLayout>

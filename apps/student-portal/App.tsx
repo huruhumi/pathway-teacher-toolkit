@@ -381,17 +381,44 @@ const ScheduleView: React.FC = () => {
                             {items.map((item: any) => {
                                 if (item._type === 'session') {
                                     return (
-                                        <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-                                            <div className="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 font-bold text-sm shrink-0">
-                                                {item.start_time ? item.start_time.slice(0, 5) : '—'}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-semibold text-slate-800 dark:text-white truncate">{item.class?.name || '—'}</div>
-                                                <div className="text-xs text-slate-400 mt-0.5">
-                                                    {item.start_time && item.end_time ? `${item.start_time.slice(0, 5)} – ${item.end_time.slice(0, 5)}` : ''}
-                                                    {item.topic && <span className="ml-2">• {item.topic}</span>}
+                                        <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-12 h-12 rounded-xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400 font-bold text-sm shrink-0">
+                                                    {item.start_time ? item.start_time.slice(0, 5) : '—'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-semibold text-slate-800 dark:text-white truncate">{item.class?.name || '—'}</div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">
+                                                        {item.start_time && item.end_time ? `${item.start_time.slice(0, 5)} – ${item.end_time.slice(0, 5)}` : ''}
+                                                        {item.topic && <span className="ml-2">• {item.topic}</span>}
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            {/* Sign In Button for today's sessions */}
+                                            {item.date === new Date().toISOString().split('T')[0] && (
+                                                <div className="shrink-0">
+                                                    {item.attendance?.student_signed_in_at ? (
+                                                        <span className="flex items-center gap-1 text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded">
+                                                            <CheckCircle2 size={14} /> {lang === 'zh' ? '已签到' : 'Signed In'}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (!authUserId) return;
+                                                                const profile = await edu.fetchStudentProfile(authUserId);
+                                                                if (profile) {
+                                                                    const res = await edu.studentSignInAttendance(profile.id, item.id);
+                                                                    if (res) fetchData();
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-bold shadow-md bg-sky-500 hover:bg-sky-600 text-white transition-colors">
+                                                            {lang === 'zh' ? '⭐ 签到' : 'Sign In'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 } else if (item._type === 'companion_task') {
@@ -530,8 +557,8 @@ const AppContent: React.FC = () => {
                                 </button>
                                 <button onClick={() => setView('profile')} title="个人中心"
                                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${view === 'profile'
-                                            ? 'bg-sky-500 text-white'
-                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                        ? 'bg-sky-500 text-white'
+                                        : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600'
                                         }`}>
                                     <User size={15} />
                                 </button>

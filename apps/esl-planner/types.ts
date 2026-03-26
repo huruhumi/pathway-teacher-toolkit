@@ -62,6 +62,15 @@ export interface ReadingCompanionContent {
   webResources: WebResource[];
 }
 
+export interface CustomStageInput {
+  stageName: string; // e.g., "WARM-UP & REVIEW"
+  description: string; // Required simple description
+  videoName?: string; // Optional
+  videoUrl?: string; // Optional
+  videoContent?: string; // Optional lyrics/script
+  activityDesign?: string; // Optional
+}
+
 export interface LessonStage {
   stage: string;
   stageAim: string;

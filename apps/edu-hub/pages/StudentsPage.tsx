@@ -8,7 +8,7 @@ import type { Student, EduClass, StudentSubmissionView, BookLoan, ReadingLog } f
 import {
     Plus, Search, Edit3, Trash2, X, Loader2, Users, RotateCcw,
     User, ClipboardList, Library, BookOpen,
-    Link as LinkIcon, Copy, BarChart3,
+    Link as LinkIcon, Copy, BarChart3, Wallet
 } from 'lucide-react';
 import { TeacherSubmissionViewer } from '../components/TeacherSubmissionViewer';
 
@@ -22,14 +22,19 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 /* ── Student 360 Detail Panel ─────────────────────────── */
-type DetailTab = 'info' | 'assignments' | 'books' | 'reading' | 'diagnostics';
+type DetailTab = 'info' | 'assignments' | 'books' | 'reading' | 'diagnostics' | 'finance';
 
 const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; studentClassIds: string[]; lang: string }> = ({ student, classes, studentClassIds, lang }) => {
     const [tab, setTab] = useState<DetailTab>('info');
     const [submissions, setSubmissions] = useState<StudentSubmissionView[]>([]);
     const [loans, setLoans] = useState<BookLoan[]>([]);
     const [logs, setLogs] = useState<ReadingLog[]>([]);
+    const [packages, setPackages] = useState<edu.EduStudentPackage[]>([]);
+    const [deductions, setDeductions] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(false);
+    const [showAddPackage, setShowAddPackage] = useState(false);
+    const [newPkgParams, setNewPkgParams] = useState({ name: 'Tailblazer Starter A', classes: 60, price: 6000, paid: 6000 });
+    const [isSavingPkg, setIsSavingPkg] = useState(false);
     const toast = useToast();
 
     useEffect(() => {
@@ -42,6 +47,16 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
         } else if (tab === 'reading' && logs.length === 0) {
             setLoadingData(true);
             edu.fetchStudentReadingLogs(student.id).then(d => { setLogs(d); setLoadingData(false); });
+        } else if (tab === 'finance' && packages.length === 0) {
+            setLoadingData(true);
+            Promise.all([
+                edu.fetchStudentPackages(student.id),
+                edu.fetchClassDeductions(student.id)
+            ]).then(([pkgs, deds]) => {
+                setPackages(pkgs);
+                setDeductions(deds);
+                setLoadingData(false);
+            });
         }
     }, [tab, student.id]);
 
@@ -51,6 +66,7 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
         { key: 'books' as DetailTab, label: lang === 'zh' ? '借书' : 'Books', icon: <Library size={13} />, count: loans.length },
         { key: 'reading' as DetailTab, label: lang === 'zh' ? '阅读日志' : 'Reading', icon: <BookOpen size={13} />, count: logs.length },
         { key: 'diagnostics' as DetailTab, label: lang === 'zh' ? '学情诊断' : 'Diagnostics', icon: <BarChart3 size={13} /> },
+        { key: 'finance' as DetailTab, label: lang === 'zh' ? '财务' : 'Finance', icon: <Wallet size={13} /> },
     ];
 
     const copyFormLink = () => {
@@ -131,6 +147,50 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
                 </div>
             )}
 
+            {/* Finance Tab */}
+            {tab === 'finance' && !loadingData && (
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-slate-500">{lang === 'zh' ? '有效课时包' : 'Active Packages'}</span>
+                        <button onClick={() => setShowAddPackage(true)} className="text-xs text-amber-600 font-semibold flex items-center gap-1"><Plus size={12} /> {lang === 'zh' ? '新增' : 'Add'}</button>
+                    </div>
+                    {packages.length === 0 ? <div className="text-xs text-slate-400">{lang === 'zh' ? '暂无课时包' : 'No packages'}</div> : (
+                        packages.map(p => (
+                            <div key={p.id} className="p-3 border border-slate-200 dark:border-slate-700/50 rounded-lg">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="font-semibold text-sm">{p.package_name}</div>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${p.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{p.status}</span>
+                                </div>
+                                <div className="flex justify-between text-xs text-slate-500">
+                                    <span>{lang === 'zh' ? '剩余课时:' : 'Remaining:'}  <span className="font-bold text-slate-800 dark:text-slate-200">{p.total_classes - p.used_classes}</span> / {p.total_classes}</span>
+                                    <span>{lang === 'zh' ? '已付:' : 'Paid:'} ¥{p.amount_paid} / ¥{p.price}</span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+
+                    <div className="mt-4 flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-slate-500">{lang === 'zh' ? '划消记录' : 'Deductions'}</span>
+                        <button className="text-xs text-slate-500 hover:text-amber-600 font-semibold">{lang === 'zh' ? '手动划消' : 'Manual Deduct'}</button>
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                        {deductions.length === 0 ? <div className="text-xs text-slate-400">{lang === 'zh' ? '暂无划消记录' : 'No deduction records'}</div> : (
+                            deductions.map(d => (
+                                <div key={d.id} className="text-xs flex justify-between items-center py-1.5 border-b border-slate-50 dark:border-slate-800">
+                                    <div>
+                                        <div className="font-medium">{d.session?.topic || (lang === 'zh' ? '自动考勤扣课' : 'Attendance deduction')}</div>
+                                        <div className="text-[10px] text-slate-400 mt-0.5">
+                                            {new Date(d.deduction_date).toLocaleDateString()} · {d.deduction_type === 'manual_adjustment' ? 'Manual' : 'Auto'}
+                                        </div>
+                                    </div>
+                                    <span className="text-rose-500 font-bold">-{d.deduction_amount}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Assignments Tab */}
             {tab === 'assignments' && !loadingData && (
                 <div className="space-y-1.5">
@@ -195,13 +255,86 @@ const Student360Panel: React.FC<{ student: Student; classes: EduClass[]; student
                 <TeacherSubmissionViewer
                     assignment={viewingAssignment.a}
                     submission={viewingAssignment.sub}
-                    onClose={() => setViewingAssignment(null)}
-                    onSubmissionUpdated={async (updatedSub) => {
-                        // Refresh the submissions list summary immediately
-                        setSubmissions(prev => prev.map(s => s.id === updatedSub.id ? { ...s, score: updatedSub.score, status: updatedSub.status, teacher_notes: updatedSub.teacher_notes } : s));
-                        setViewingAssignment(prev => prev ? { ...prev, sub: updatedSub } : null);
+                    onClose={async () => {
+                        setViewingAssignment(null);
+                        const data = await edu.fetchStudentSubmissions(student.id);
+                        setSubmissions(data);
                     }}
                 />
+            )}
+
+            {/* Add Package Modal */}
+            {showAddPackage && (
+                <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <h3 className="font-bold">{lang === 'zh' ? '添加课时包' : 'Add Package'}</h3>
+                            <button onClick={() => setShowAddPackage(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+                        </div>
+                        <div className="p-4 space-y-3 test-sm">
+                            <div>
+                                <label className="block text-xs text-slate-500 mb-1">{lang === 'zh' ? '课包名称' : 'Package Name'}</label>
+                                <input type="text" value={newPkgParams.name} onChange={e => setNewPkgParams(p => ({ ...p, name: e.target.value }))} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800" />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 mb-1">{lang === 'zh' ? '总课时' : 'Total Classes'}</label>
+                                <input type="number" value={newPkgParams.classes} onChange={e => setNewPkgParams(p => ({ ...p, classes: Number(e.target.value) }))} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">{lang === 'zh' ? '总价' : 'Price'}</label>
+                                    <input type="number" value={newPkgParams.price} onChange={e => setNewPkgParams(p => ({ ...p, price: Number(e.target.value) }))} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-500 mb-1">{lang === 'zh' ? '实付' : 'Paid'}</label>
+                                    <input type="number" value={newPkgParams.paid} onChange={e => setNewPkgParams(p => ({ ...p, paid: Number(e.target.value) }))} className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm dark:bg-slate-800" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-2">
+                            <button onClick={() => setShowAddPackage(false)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg">
+                                {lang === 'zh' ? '取消' : 'Cancel'}
+                            </button>
+                            <button
+                                disabled={isSavingPkg}
+                                onClick={async () => {
+                                    setIsSavingPkg(true);
+                                    try {
+                                        const teacherId = useAuthStore.getState().user?.id;
+                                        if (!teacherId) throw new Error('No user');
+                                        const res = await edu.upsertStudentPackage({
+                                            student_id: student.id,
+                                            teacher_id: teacherId,
+                                            package_name: newPkgParams.name,
+                                            total_classes: newPkgParams.classes,
+                                            used_classes: 0,
+                                            price: newPkgParams.price,
+                                            amount_paid: newPkgParams.paid,
+                                            payment_status: newPkgParams.paid >= newPkgParams.price ? 'paid' : 'unpaid',
+                                            status: 'active'
+                                        });
+                                        if (res) {
+                                            toast.success(lang === 'zh' ? '添加成功' : 'Added');
+                                            setShowAddPackage(false);
+                                            // Refresh packages
+                                            const pkgs = await edu.fetchStudentPackages(student.id);
+                                            setPackages(pkgs);
+                                        } else {
+                                            toast.error('Failed to add');
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                    } finally {
+                                        setIsSavingPkg(false);
+                                    }
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg flex items-center gap-2">
+                                {isSavingPkg && <Loader2 size={14} className="animate-spin" />}
+                                {lang === 'zh' ? '保存' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
