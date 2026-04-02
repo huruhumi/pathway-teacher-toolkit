@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { SavedRecord, StudentGrade, CEFRLevel } from '../types';
 import ReportDisplay from './ReportDisplay';
-import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { History, Trash2, ChevronRight, ArrowLeft, School, Gauge, Calendar, Award, FileText, Filter, ShieldAlert, ShieldCheck, Archive, RotateCcw, Loader2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuthStore } from '@shared/stores/useAuthStore';
 import { useToast } from '@shared/stores/useToast';
-import { fetchCloudRecords, upsertRecordIndexEntry } from '@shared/services/cloudSync';
-import { deleteRecord, getRecords, setRecords as persistRecords } from '../services/recordsService';
+import { Modal } from '@shared/components/ui/Modal';
+import { fetchCloudRecordsResult, upsertRecordIndexEntry } from '@shared/services/cloudSync';
+import { deleteRecord, getRecords, listDeletedRecords, purgeRecord, readDeletedMeta, restoreRecord, setRecords as persistRecords } from '../services/recordsService';
 import { assessEssayRecordQuality } from '@shared/config/recordQuality';
 
 const MAX_RECORDS = 100;
@@ -19,6 +20,10 @@ const CorrectionRecords: React.FC = () => {
     const [filterCefr, setFilterCefr] = useState<string>('all');
     const [filterQuality, setFilterQuality] = useState<'all' | 'ok' | 'needs_review'>('all');
     const [isLoaded, setIsLoaded] = useState(false);
+    const [showRecycleBin, setShowRecycleBin] = useState(false);
+    const [deletedRecords, setDeletedRecords] = useState<SavedRecord[]>([]);
+    const [isRecycleLoading, setIsRecycleLoading] = useState(false);
+    const [recycleActionId, setRecycleActionId] = useState<string | null>(null);
 
     React.useEffect(() => {
         (async () => {
@@ -30,26 +35,33 @@ const CorrectionRecords: React.FC = () => {
             // Merge cloud records if logged in
             const user = useAuthStore.getState().user;
             if (user) {
-                const cloudRows = await fetchCloudRecords<any>('essay_records', user.id, 'updated_at', MAX_RECORDS);
-                if (cloudRows.length > 0) {
-                    const localIds = new Set(local.map((r: SavedRecord) => r.id));
-                    const newFromCloud: SavedRecord[] = [];
-                    for (const row of cloudRows) {
-                        if (!localIds.has(row.id)) {
-                            newFromCloud.push({
-                                id: row.id, timestamp: new Date(row.updated_at).getTime(),
-                                grade: row.grade, cefr: row.cefr,
-                                topicText: row.topic_text || undefined, essayText: row.essay_text || undefined,
-                                report: row.report_data,
-                            });
+                const cloudRows = await fetchCloudRecordsResult<any>('essay_records', user.id, 'updated_at', MAX_RECORDS, { includeDeleted: false });
+                if (cloudRows.ok) {
+                    const mergedById = new Map<string, SavedRecord>();
+                    for (const localRecord of local) {
+                        mergedById.set(localRecord.id, localRecord);
+                    }
+                    for (const row of cloudRows.items) {
+                        const mapped: SavedRecord = {
+                            id: row.id,
+                            timestamp: new Date(row.updated_at || row.created_at).getTime(),
+                            grade: row.grade,
+                            cefr: row.cefr,
+                            topicText: row.topic_text || undefined,
+                            essayText: row.essay_text || undefined,
+                            report: row.report_data,
+                        };
+                        const existing = mergedById.get(mapped.id);
+                        if (!existing || mapped.timestamp >= existing.timestamp) {
+                            mergedById.set(mapped.id, mapped);
                         }
                     }
-                    if (newFromCloud.length > 0) {
-                        const merged = [...newFromCloud, ...local].slice(0, MAX_RECORDS);
-                        setRecords(merged);
-                        await persistRecords(merged);
-                        recordsForIndex = merged;
-                    }
+                    const merged = Array.from(mergedById.values())
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, MAX_RECORDS);
+                    setRecords(merged);
+                    await persistRecords(merged);
+                    recordsForIndex = merged;
                 }
 
                 for (const record of recordsForIndex.slice(0, MAX_RECORDS)) {
@@ -110,6 +122,61 @@ const CorrectionRecords: React.FC = () => {
         setRecords(updated);
     };
 
+    const loadRecycleBin = async () => {
+        setIsRecycleLoading(true);
+        try {
+            const deleted = await listDeletedRecords();
+            setDeletedRecords(deleted);
+        } catch (err: any) {
+            useToast.getState().error(`Failed to load recycle bin. ${err?.message || 'Unexpected error'}`);
+        } finally {
+            setIsRecycleLoading(false);
+        }
+    };
+
+    const openRecycleBin = async () => {
+        setShowRecycleBin(true);
+        await loadRecycleBin();
+    };
+
+    const handleRestore = async (record: SavedRecord) => {
+        setRecycleActionId(record.id);
+        try {
+            const result = await restoreRecord(record.id);
+            if (!result.ok) {
+                useToast.getState().error(`Restore failed. ${result.message || 'Please retry.'}`);
+                return;
+            }
+            useToast.getState().success('Record restored.');
+            const updated = await getRecords();
+            setRecords(updated);
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionId(null);
+        }
+    };
+
+    const handlePurge = async (record: SavedRecord) => {
+        const title = record.topicText || record.report?.topicText || 'Essay Report';
+        const firstConfirmed = window.confirm(`Permanently delete "${title}"? This cannot be undone.`);
+        if (!firstConfirmed) return;
+        const secondConfirmed = window.confirm(`Please confirm again: permanently remove "${title}" now?`);
+        if (!secondConfirmed) return;
+
+        setRecycleActionId(record.id);
+        try {
+            const result = await purgeRecord(record.id);
+            if (!result.ok) {
+                useToast.getState().error(`Permanent delete failed. ${result.message || 'Please retry.'}`);
+                return;
+            }
+            useToast.getState().success('Record permanently deleted.');
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionId(null);
+        }
+    };
+
     if (viewingReport) {
         return (
             <div className="max-w-5xl mx-auto px-4 py-6">
@@ -135,6 +202,14 @@ const CorrectionRecords: React.FC = () => {
                     {t('records.title')}
                     <span className="text-sm font-normal text-slate-400 ml-1">({filtered.length})</span>
                 </h2>
+                <button
+                    type="button"
+                    onClick={() => { void openRecycleBin(); }}
+                    className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                >
+                    <Archive className="w-4 h-4" />
+                    Recycle Bin
+                </button>
             </div>
 
             {/* Filters */}
@@ -246,6 +321,71 @@ const CorrectionRecords: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <Modal isOpen={showRecycleBin} onClose={() => setShowRecycleBin(false)} maxWidth="max-w-3xl">
+                <div className="p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Recycle Bin (30 days)</h3>
+                            <p className="text-sm text-slate-500">Restore deleted records or permanently delete with double confirmation.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { void loadRecycleBin(); }}
+                            disabled={isRecycleLoading}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            {isRecycleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                            Refresh
+                        </button>
+                    </div>
+
+                    {isRecycleLoading ? (
+                        <div className="py-10 flex items-center justify-center text-slate-500">
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            Loading...
+                        </div>
+                    ) : deletedRecords.length === 0 ? (
+                        <div className="py-12 text-center text-slate-500">Recycle bin is empty.</div>
+                    ) : (
+                        <div className="space-y-2 max-h-[70vh] overflow-auto pr-1">
+                            {deletedRecords.map((record) => {
+                                const deletedMeta = readDeletedMeta(record);
+                                const title = record.topicText || record.report?.topicText || 'Essay Report';
+                                return (
+                                    <div key={`deleted-${record.id}`} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="font-medium text-slate-800 truncate">{title}</div>
+                                            <div className="text-xs text-slate-500">
+                                                Deleted: {new Date(deletedMeta.deletedAt).toLocaleString()}
+                                                {deletedMeta.purgeAt ? ` · Purge: ${new Date(deletedMeta.purgeAt).toLocaleString()}` : ''}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                type="button"
+                                                disabled={recycleActionId === record.id}
+                                                onClick={() => { void handleRestore(record); }}
+                                                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                            >
+                                                Restore
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={recycleActionId === record.id}
+                                                onClick={() => { void handlePurge(record); }}
+                                                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                            >
+                                                Delete Forever
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };

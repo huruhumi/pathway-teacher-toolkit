@@ -77,7 +77,10 @@ export const LessonStageSchema = z.object({
     teachingTips: z.array(z.string()).optional(),
     backgroundKnowledge: z.array(z.string()).optional(),
     fillerActivity: z.string().optional(),
-    suggestedGameName: z.string().optional()
+    suggestedGameName: z.string().optional(),
+    videoName: z.string().optional(),
+    videoUrl: z.string().optional(),
+    videoContent: z.string().optional()
 });
 
 export const StructuredLessonPlanSchema = z.object({

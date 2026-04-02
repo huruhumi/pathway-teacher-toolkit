@@ -55,8 +55,8 @@ export interface RecordCardProps {
     /** If true, shows a loading spinner on export button */
     exporting?: boolean;
 
-    /** Called when rename is saved. If omitted, rename button is hidden. */
-    onRename?: (newName: string) => void;
+    /** Called when rename is saved. Return false (or Promise<false>) to keep edit mode open. */
+    onRename?: (newName: string) => unknown | Promise<unknown>;
 
     /** Custom action buttons to display next to the edit/delete buttons */
     customActions?: React.ReactNode;
@@ -104,6 +104,7 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
     const colors = COLOR_MAP[accentColor];
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState(title);
+    const [isRenaming, setIsRenaming] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const confirmTimerRef = React.useRef<number | null>(null);
 
@@ -113,12 +114,25 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
         setEditing(true);
     };
 
-    const saveEdit = (e: React.MouseEvent | React.KeyboardEvent) => {
+    const saveEdit = async (e: React.MouseEvent | React.KeyboardEvent) => {
         e.stopPropagation();
-        if (editValue.trim() && onRename) {
-            onRename(editValue.trim());
+        if (isRenaming) return;
+        const nextTitle = editValue.trim();
+        if (!nextTitle) return;
+        if (!onRename || nextTitle === title) {
+            setEditing(false);
+            return;
         }
-        setEditing(false);
+        try {
+            setIsRenaming(true);
+            const result = await onRename(nextTitle);
+            if (result === false) return;
+            setEditing(false);
+        } catch {
+            // Keep edit mode open; caller handles user-facing error messaging.
+        } finally {
+            setIsRenaming(false);
+        }
     };
 
     const cancelEdit = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -152,6 +166,12 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
         };
     }, []);
 
+    React.useEffect(() => {
+        if (!editing) {
+            setEditValue(title);
+        }
+    }, [editing, title]);
+
     const ts = new Date(timestamp);
     const dateStr = `${ts.toLocaleDateString()} ${ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
@@ -178,18 +198,19 @@ export const RecordCard: React.FC<RecordCardProps> = React.memo(({
                         <input
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
+                            disabled={isRenaming}
                             className="flex-1 border border-violet-300 rounded-lg px-2 py-1 text-base font-bold text-slate-800 dark:text-slate-200 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 min-w-0"
                             autoFocus
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEdit(e);
+                                if (e.key === 'Enter') void saveEdit(e);
                                 if (e.key === 'Escape') cancelEdit(e);
                             }}
                         />
-                        <button onClick={saveEdit} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded shadow-sm">
+                        <button onClick={(e) => { void saveEdit(e); }} disabled={isRenaming} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded shadow-sm disabled:opacity-50">
                             <Check className="w-4 h-4" />
                         </button>
-                        <button onClick={cancelEdit} className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 rounded shadow-sm">
+                        <button onClick={cancelEdit} disabled={isRenaming} className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 rounded shadow-sm disabled:opacity-50">
                             <X className="w-4 h-4" />
                         </button>
                     </div>

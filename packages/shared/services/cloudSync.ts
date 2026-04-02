@@ -27,6 +27,24 @@ export interface RecordIndexListResult {
     errorCode?: string;
 }
 
+export interface CloudQueryOptions {
+    includeDeleted?: boolean;
+    deletedOnly?: boolean;
+}
+
+export interface CloudQueryResult<T extends CloudRecord> {
+    ok: boolean;
+    items: T[];
+    errorCode?: string;
+    message?: string;
+}
+
+export interface DeleteCloudRecordOptions {
+    mode?: 'soft' | 'hard';
+    retentionDays?: number;
+    allowHardDeleteFallback?: boolean;
+}
+
 function fromSupabaseError(error: PostgrestError | null): SaveResult {
     if (!error) return { ok: true, source: 'cloud' };
     return {
@@ -48,46 +66,106 @@ function disabledResult(): SaveResult {
     };
 }
 
+function isMissingColumnError(error: PostgrestError | null, columnName: string): boolean {
+    if (!error) return false;
+    const msg = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`.toLowerCase();
+    return error.code === '42703' || msg.includes(columnName.toLowerCase());
+}
+
+async function queryCloudRecords<T extends CloudRecord>(
+    tableName: string,
+    userId: string,
+    orderBy: string = 'updated_at',
+    limit?: number,
+    options?: CloudQueryOptions,
+): Promise<CloudQueryResult<T>> {
+    if (!isSupabaseEnabled() || !supabase) {
+        return { ok: false, items: [], errorCode: 'SUPABASE_DISABLED', message: 'Supabase is not configured.' };
+    }
+
+    const run = async (withDeleteFilter: boolean) => {
+        let query = supabase
+            .from(tableName)
+            .select('*')
+            .eq('user_id', userId)
+            .order(orderBy, { ascending: false });
+
+        if (withDeleteFilter) {
+            if (options?.deletedOnly) query = query.not('deleted_at', 'is', null);
+            else if (!options?.includeDeleted) query = query.is('deleted_at', null);
+        }
+
+        if (typeof limit === 'number') {
+            query = query.limit(limit);
+        }
+
+        return query;
+    };
+
+    let { data, error } = await run(true);
+    if (error && isMissingColumnError(error, 'deleted_at') && !options?.deletedOnly) {
+        ({ data, error } = await run(false));
+    }
+
+    if (error) {
+        console.error(`[cloudSync] fetch ${tableName}:`, error.message);
+        return {
+            ok: false,
+            items: [],
+            errorCode: error.code || 'SUPABASE_ERROR',
+            message: error.message,
+        };
+    }
+
+    return { ok: true, items: (data ?? []) as T[] };
+}
+
 export async function fetchCloudRecords<T extends CloudRecord>(
     tableName: string,
     userId: string,
     orderBy: string = 'updated_at',
     limit?: number,
 ): Promise<T[]> {
-    if (!isSupabaseEnabled() || !supabase) return [];
+    const result = await queryCloudRecords<T>(tableName, userId, orderBy, limit, { includeDeleted: true });
+    return result.items;
+}
 
-    let query = supabase
-        .from(tableName)
-        .select('*')
-        .eq('user_id', userId)
-        .order(orderBy, { ascending: false });
-
-    if (typeof limit === 'number') {
-        query = query.limit(limit);
-    }
-
-    const { data, error } = await query;
-    if (error) {
-        console.error(`[cloudSync] fetch ${tableName}:`, error.message);
-        return [];
-    }
-
-    return (data ?? []) as T[];
+export async function fetchCloudRecordsResult<T extends CloudRecord>(
+    tableName: string,
+    userId: string,
+    orderBy: string = 'updated_at',
+    limit?: number,
+    options?: CloudQueryOptions,
+): Promise<CloudQueryResult<T>> {
+    return queryCloudRecords<T>(tableName, userId, orderBy, limit, options);
 }
 
 export async function fetchCloudRecordsByIds<T extends CloudRecord>(
     tableName: string,
     userId: string,
     ids: string[],
+    options?: CloudQueryOptions,
 ): Promise<T[]> {
     if (!isSupabaseEnabled() || !supabase || ids.length === 0) return [];
 
-    const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
-        .eq('user_id', userId)
-        .in('id', ids);
+    const run = async (withDeleteFilter: boolean) => {
+        let query = supabase
+            .from(tableName)
+            .select('*')
+            .eq('user_id', userId)
+            .in('id', ids);
 
+        if (withDeleteFilter) {
+            if (options?.deletedOnly) query = query.not('deleted_at', 'is', null);
+            else if (!options?.includeDeleted) query = query.is('deleted_at', null);
+        }
+        return query;
+    };
+
+    let { data, error } = await run(true);
+    if (error && isMissingColumnError(error, 'deleted_at') && !options?.deletedOnly) {
+        ({ data, error } = await run(false));
+    }
     if (error) {
         console.error(`[cloudSync] fetchByIds ${tableName}:`, error.message);
         return [];
@@ -139,24 +217,129 @@ export async function deleteCloudRecord(
     tableName: string,
     userId: string,
     recordId: string,
+    options?: DeleteCloudRecordOptions,
 ): Promise<SaveResult> {
     if (!isSupabaseEnabled() || !supabase) return disabledResult();
 
+    const mode = options?.mode || 'hard';
+    const retentionDays = Number.isFinite(options?.retentionDays as number)
+        ? Math.max(1, Math.floor(options!.retentionDays as number))
+        : 30;
+
     try {
-        const { error } = await supabase
+        if (mode === 'soft') {
+            const now = new Date();
+            const purgeAt = new Date(now.getTime() + (retentionDays * 24 * 60 * 60 * 1000)).toISOString();
+            const { error, count } = await supabase
+                .from(tableName)
+                .update(
+                    {
+                        deleted_at: now.toISOString(),
+                        purge_at: purgeAt,
+                        deleted_by: userId,
+                        updated_at: now.toISOString(),
+                    },
+                    { count: 'exact' },
+                )
+                .eq('id', recordId)
+                .eq('user_id', userId)
+                .is('deleted_at', null);
+
+            if (error) {
+                if (isMissingColumnError(error, 'deleted_at') && options?.allowHardDeleteFallback) {
+                    return deleteCloudRecord(tableName, userId, recordId, { mode: 'hard' });
+                }
+                console.error(`[cloudSync] soft-delete ${tableName}:`, error.message);
+                return fromSupabaseError(error);
+            }
+            if (typeof count === 'number' && count === 0) {
+                return {
+                    ok: false,
+                    source: 'cloud',
+                    errorCode: 'ZERO_ROWS_AFFECTED',
+                    message: `Delete wrote 0 rows in ${tableName}. Record may not exist, may already be deleted, or RLS blocked the operation.`,
+                    retryable: true,
+                };
+            }
+            return { ok: true, source: 'cloud' };
+        }
+
+        const { error, count } = await supabase
             .from(tableName)
-            .delete()
+            .delete({ count: 'exact' })
             .eq('id', recordId)
             .eq('user_id', userId);
 
         if (error) {
             console.error(`[cloudSync] delete ${tableName}:`, error.message);
+            return fromSupabaseError(error);
         }
-        return fromSupabaseError(error);
+        if (typeof count === 'number' && count === 0) {
+            return {
+                ok: false,
+                source: 'cloud',
+                errorCode: 'ZERO_ROWS_AFFECTED',
+                message: `Delete wrote 0 rows in ${tableName}. Record may not exist or RLS blocked the operation.`,
+                retryable: true,
+            };
+        }
+        return { ok: true, source: 'cloud' };
     } catch (err: any) {
         console.error(`[cloudSync] network error deleting ${tableName}:`, err?.message);
         return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };
     }
+}
+
+export async function restoreCloudRecord(
+    tableName: string,
+    userId: string,
+    recordId: string,
+): Promise<SaveResult> {
+    if (!isSupabaseEnabled() || !supabase) return disabledResult();
+
+    try {
+        const { error, count } = await supabase
+            .from(tableName)
+            .update(
+                {
+                    deleted_at: null,
+                    purge_at: null,
+                    deleted_by: null,
+                    updated_at: new Date().toISOString(),
+                },
+                { count: 'exact' },
+            )
+            .eq('id', recordId)
+            .eq('user_id', userId)
+            .not('deleted_at', 'is', null);
+
+        if (error) {
+            console.error(`[cloudSync] restore ${tableName}:`, error.message);
+            return fromSupabaseError(error);
+        }
+        if (typeof count === 'number' && count === 0) {
+            return {
+                ok: false,
+                source: 'cloud',
+                errorCode: 'ZERO_ROWS_AFFECTED',
+                message: `Restore wrote 0 rows in ${tableName}. Record may already be active, missing, or blocked by RLS.`,
+                retryable: true,
+            };
+        }
+        return { ok: true, source: 'cloud' };
+    } catch (err: any) {
+        console.error(`[cloudSync] network error restoring ${tableName}:`, err?.message);
+        return { ok: false, source: 'cloud', errorCode: 'NETWORK_ERROR', message: err?.message || 'Network error', retryable: true };
+    }
+}
+
+export async function listDeletedCloudRecords<T extends CloudRecord>(
+    tableName: string,
+    userId: string,
+    orderBy: string = 'deleted_at',
+    limit?: number,
+): Promise<CloudQueryResult<T>> {
+    return queryCloudRecords<T>(tableName, userId, orderBy, limit, { deletedOnly: true });
 }
 
 export async function renameCloudRecord(

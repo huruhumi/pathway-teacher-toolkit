@@ -4,13 +4,13 @@ import { GeneratedContent, SavedLesson, SavedCurriculum, ESLCurriculum, Curricul
 import { imageStorage } from '@shared/imageStorage';
 import { imageStore } from '@shared/imageStore';
 import { isToday, isThisWeek, isThisMonth } from '../utils/dateHelpers';
-import { useAppStore } from '../stores/appStore';
+import { useAppStore, useSessionStore } from '../stores/appStore';
 import { useAuthStore } from '@pathway/platform';
 import { useProjectCRUD } from '@shared/hooks/useProjectCRUD';
 import type { SaveResult, RecordIndexEntry } from '@shared/types';
 import type { TeacherReview } from '@shared/types/scoring';
 import { useToast } from '@shared/stores/useToast';
-import { upsertRecordIndexEntry, updateRecordIndexQualityStatus, deleteRecordIndexEntry } from '@shared/services/cloudSync';
+import { upsertRecordIndexEntry, updateRecordIndexQualityStatus } from '@shared/services/cloudSync';
 import {
     assessESLCurriculumQuality,
     assessESLLessonKitQuality,
@@ -335,6 +335,67 @@ function generateCurriculumDescription(curriculum: ESLCurriculum): string {
     return curriculum.overview || `A ${curriculum.targetLevel} curriculum with ${curriculum.totalLessons} lessons covering "${curriculum.textbookTitle}".`;
 }
 
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceTopicText(value: string | undefined, oldTopic: string, newTopic: string): string | undefined {
+    if (!value) return value;
+    if (!oldTopic || oldTopic === newTopic) return value;
+    const matcher = new RegExp(escapeRegExp(oldTopic), 'g');
+    return value.replace(matcher, newTopic);
+}
+
+function applyRenamedLessonTopic(lesson: SavedLesson, newTopicRaw: string): SavedLesson {
+    const newTopic = newTopicRaw.trim();
+    const oldTopic = (lesson.topic || lesson.content?.structuredLessonPlan?.classInformation?.topic || '').trim();
+    const baseContent = lesson.content;
+    const nextPlan = {
+        ...baseContent.structuredLessonPlan,
+        classInformation: {
+            ...baseContent.structuredLessonPlan.classInformation,
+            topic: newTopic,
+        },
+    };
+
+    const assignmentSheet = baseContent.assignmentSheet
+        ? {
+            ...baseContent.assignmentSheet,
+            lessonSummary: baseContent.assignmentSheet.lessonSummary?.startsWith('本课学习主题：')
+                ? `本课学习主题：${newTopic}`
+                : replaceTopicText(baseContent.assignmentSheet.lessonSummary, oldTopic, newTopic) || baseContent.assignmentSheet.lessonSummary,
+            keyPoints: (baseContent.assignmentSheet.keyPoints || []).map((entry) => replaceTopicText(entry, oldTopic, newTopic) || entry),
+        }
+        : baseContent.assignmentSheet;
+
+    const nextContent: GeneratedContent = {
+        ...baseContent,
+        structuredLessonPlan: nextPlan,
+        lessonPlanMarkdown: replaceTopicText(baseContent.lessonPlanMarkdown, oldTopic, newTopic) || baseContent.lessonPlanMarkdown,
+        notebookLMPrompt: replaceTopicText(baseContent.notebookLMPrompt, oldTopic, newTopic) || baseContent.notebookLMPrompt,
+        assignmentSheet,
+        _generationContext: baseContent._generationContext
+            ? {
+                ...baseContent._generationContext,
+                topic: newTopic,
+                lessonTitle: newTopic,
+            }
+            : baseContent._generationContext,
+    };
+
+    const nextDescription = lesson.description
+        ? replaceTopicText(lesson.description, oldTopic, newTopic) || lesson.description
+        : generateLessonDescription(nextContent);
+
+    return {
+        ...lesson,
+        topic: newTopic,
+        description: nextDescription,
+        lastModified: Date.now(),
+        content: nextContent,
+    };
+}
+
 function stripLessonMetaFromContent(content: any): GeneratedContent {
     if (!content || typeof content !== 'object') return content as GeneratedContent;
     const next = { ...content };
@@ -413,6 +474,9 @@ function useLessonHistoryState() {
         saveItem: saveLessonDb,
         deleteItem: deleteLessonDb,
         hydrateByIds: hydrateLessonRowsByIds,
+        listDeletedItems: listDeletedLessonsDb,
+        restoreItem: restoreLessonDb,
+        purgeItem: purgeLessonDb,
     } = useProjectCRUD<SavedLesson>('esl_smart_planner_history', 300, {
         cloudTable: 'esl_lessons',
         repositoryAdapter: lessonRepositoryAdapter,
@@ -447,6 +511,9 @@ function useLessonHistoryState() {
         saveItem: saveCurriculumDb,
         deleteItem: deleteCurriculumDb,
         hydrateByIds: hydrateCurriculumRowsByIds,
+        listDeletedItems: listDeletedCurriculaDb,
+        restoreItem: restoreCurriculumDb,
+        purgeItem: purgeCurriculumDb,
     } = useProjectCRUD<SavedCurriculum>('esl_planner_curricula', 200, {
         cloudTable: 'esl_curricula',
         repositoryAdapter: curriculumRepositoryAdapter,
@@ -576,9 +643,20 @@ function useLessonHistoryState() {
         const hasRefs = fc && Object.values(fc).some(v => typeof v === 'string' && !v.startsWith('data:') && v.length > 0);
         if (!fc && !lesson.content.grammarInfographicUrl && !lesson.content.blackboardImageUrl) return;
         console.log('[Hydrate] Starting hydration for lesson', activeLessonId, hasRefs ? '(has refs)' : '(no refs)');
+        let cancelled = false;
         hydrateImages(lesson).then(hydrated => {
-            setSavedLessons(prev => prev.map(l => l.id === hydrated.id ? hydrated : l));
+            if (cancelled) return;
+            // Merge only hydrated content so stale async hydration cannot overwrite
+            // newer metadata edits (e.g. renamed titles from Records page).
+            setSavedLessons(prev => prev.map(l => (
+                l.id === hydrated.id
+                    ? { ...l, content: hydrated.content }
+                    : l
+            )));
         });
+        return () => {
+            cancelled = true;
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeLessonId, savedLessons.length]);
 
@@ -767,14 +845,7 @@ function useLessonHistoryState() {
 
     const handleDeleteCurriculum = async (id: string, e?: React.MouseEvent): Promise<SaveResult> => {
         e?.stopPropagation();
-        const result = deleteCurriculumDb(id);
-        // Clean up record_index so sidebar Review Queue stays in sync
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser) {
-            deleteRecordIndexEntry(currentUser.id, id).catch((err) =>
-                console.warn('[useLessonHistory] failed to delete record_index entry:', err)
-            );
-        }
+        const result = await deleteCurriculumDb(id);
         return result;
     };
 
@@ -782,16 +853,39 @@ function useLessonHistoryState() {
         e?.preventDefault();
         e?.stopPropagation();
         const result = await deleteLessonDb(id);
-        if (activeLessonId === id) setActiveLessonId(null);
-        // Clean up IndexedDB images
-        await imageStorage.removeByPrefix(`esl-${id}-`);
-        // Clean up record_index so sidebar Review Queue stays in sync
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser) {
-            deleteRecordIndexEntry(currentUser.id, id).catch((err) =>
-                console.warn('[useLessonHistory] failed to delete record_index entry:', err)
-            );
+        if (result.ok) {
+            if (activeLessonId === id) setActiveLessonId(null);
+            // Clean up IndexedDB images after delete is confirmed.
+            await imageStorage.removeByPrefix(`esl-${id}-`);
         }
+        return result;
+    };
+
+    const listDeletedLessons = async (): Promise<SavedLesson[]> => listDeletedLessonsDb();
+
+    const listDeletedCurricula = async (): Promise<SavedCurriculum[]> => listDeletedCurriculaDb();
+
+    const handleRestoreLesson = async (id: string): Promise<SaveResult> => {
+        const result = await restoreLessonDb(id);
+        return result;
+    };
+
+    const handleRestoreCurriculum = async (id: string): Promise<SaveResult> => {
+        const result = await restoreCurriculumDb(id);
+        return result;
+    };
+
+    const handlePurgeLesson = async (id: string): Promise<SaveResult> => {
+        const result = await purgeLessonDb(id);
+        if (result.ok) {
+            if (activeLessonId === id) setActiveLessonId(null);
+            await imageStorage.removeByPrefix(`esl-${id}-`);
+        }
+        return result;
+    };
+
+    const handlePurgeCurriculum = async (id: string): Promise<SaveResult> => {
+        const result = await purgeCurriculumDb(id);
         return result;
     };
 
@@ -806,21 +900,7 @@ function useLessonHistoryState() {
         if (!editTitle.trim()) return;
         const lesson = savedLessons.find(l => l.id === id);
         if (lesson) {
-            const updated = {
-                ...lesson,
-                topic: editTitle,
-                lastModified: Date.now(),
-                content: {
-                    ...lesson.content,
-                    structuredLessonPlan: {
-                        ...lesson.content.structuredLessonPlan,
-                        classInformation: {
-                            ...lesson.content.structuredLessonPlan.classInformation,
-                            topic: editTitle
-                        }
-                    }
-                }
-            };
+            const updated = applyRenamedLessonTopic(lesson, editTitle);
             await saveLessonDb(updated);
         }
         setEditingLessonId(null);
@@ -828,13 +908,26 @@ function useLessonHistoryState() {
 
     const cancelEditing = (e: React.MouseEvent) => { e.stopPropagation(); setEditingLessonId(null); };
 
-    const handleRenameLesson = async (id: string, newName: string) => {
-        if (!newName.trim()) return;
+    const handleRenameLesson = async (id: string, newName: string): Promise<SaveResult> => {
+        if (!newName.trim()) return { ok: false, source: 'local', message: 'Title cannot be empty.' };
         const lesson = savedLessons.find(l => l.id === id);
         if (lesson) {
-            const updated = { ...lesson, topic: newName, lastModified: Date.now(), content: { ...lesson.content, structuredLessonPlan: { ...lesson.content.structuredLessonPlan, classInformation: { ...lesson.content.structuredLessonPlan.classInformation, topic: newName } } } };
-            await saveLessonDb(updated);
+            const nextTitle = newName.trim();
+            if (lesson.topic === nextTitle) {
+                return { ok: true, source: 'local' };
+            }
+            const updated = applyRenamedLessonTopic(lesson, nextTitle);
+            const result = await saveLessonDb(updated);
+            if (result.ok && activeLessonId === id) {
+                // Keep Create page state in sync to avoid hidden auto-save writing stale title back.
+                useSessionStore.getState().setState((prev) => ({
+                    ...prev,
+                    generatedContent: updated.content,
+                }));
+            }
+            return result;
         }
+        return { ok: false, source: 'local', message: 'Lesson not found.' };
     };
 
     const hydrateLessonsByIds = async (ids: string[]) => hydrateLessonRowsByIds(ids);
@@ -912,6 +1005,12 @@ function useLessonHistoryState() {
         handleSaveCurriculum,
         handleDeleteCurriculum,
         handleDeleteRecord,
+        listDeletedLessons,
+        listDeletedCurricula,
+        handleRestoreLesson,
+        handleRestoreCurriculum,
+        handlePurgeLesson,
+        handlePurgeCurriculum,
         handleRenameLesson,
         handleTeacherReview,
 

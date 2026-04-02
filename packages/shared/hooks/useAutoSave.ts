@@ -7,6 +7,7 @@ interface UseAutoSaveProps<T> {
     onSave: (content: T) => void | Promise<unknown>;
     editablePlan: any;
     debounceMs?: number;
+    enabled?: boolean;
 }
 
 export const useAutoSave = <T>({
@@ -14,6 +15,7 @@ export const useAutoSave = <T>({
     onSave,
     editablePlan,
     debounceMs = 3000,
+    enabled = true,
 }: UseAutoSaveProps<T>) => {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -32,7 +34,7 @@ export const useAutoSave = <T>({
     }, []);
 
     const performSave = useCallback(async () => {
-        if (!editablePlan || !isMountedRef.current || isSavingRef.current) return;
+        if (!enabled || !editablePlan || !isMountedRef.current || isSavingRef.current) return;
         isSavingRef.current = true;
         setSaveStatus('saving');
         try {
@@ -57,11 +59,15 @@ export const useAutoSave = <T>({
         } finally {
             isSavingRef.current = false;
         }
-    }, [editablePlan, getCurrentContentObject, onSave]);
+    }, [editablePlan, enabled, getCurrentContentObject, onSave]);
 
     // Watch for changes and debounce
     useEffect(() => {
         if (!editablePlan) return;
+        if (!enabled) {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            return;
+        }
         if (isSavingRef.current) return;
 
         let currentSnapshot: string;
@@ -86,19 +92,19 @@ export const useAutoSave = <T>({
                 void performSave();
             }, debounceMs);
         }
-    }, [debounceMs, editablePlan, getCurrentContentObject, performSave]);
+    }, [debounceMs, editablePlan, enabled, getCurrentContentObject, performSave]);
 
     // beforeunload warning
     useEffect(() => {
         const handler = (e: BeforeUnloadEvent) => {
-            if (saveStatus === 'unsaved') {
+            if (enabled && saveStatus === 'unsaved') {
                 e.preventDefault();
                 e.returnValue = '';
             }
         };
         window.addEventListener('beforeunload', handler);
         return () => window.removeEventListener('beforeunload', handler);
-    }, [saveStatus]);
+    }, [enabled, saveStatus]);
 
     const saveNow = useCallback(() => {
         if (timerRef.current) clearTimeout(timerRef.current);

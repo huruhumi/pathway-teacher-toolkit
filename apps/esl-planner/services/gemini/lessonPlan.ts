@@ -65,6 +65,13 @@ function extractUniqueUrls(text: string): string[] {
   return result;
 }
 
+const normalizeStageKey = (value: string) => String(value || '').trim().toLowerCase();
+
+const toOptionalText = (value?: string) => {
+  const trimmed = String(value || '').trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 export const generateLessonPlan = async (
   textInput: string,
   images: File[],
@@ -373,6 +380,34 @@ If a video - based activity is requested, provide a reusable activity template a
         stageAim: stripHtml(stage.stageAim || ''),
         stage: stripHtml(stage.stage || ''),
       }));
+    }
+
+    // Persist teacher-provided multimedia fields from custom stage input so downstream
+    // companion generation can reuse exact video names/URLs.
+    if (validatedContent.structuredLessonPlan?.stages && options.customStages && options.customStages.length > 0) {
+      const normalizedCustomStages = options.customStages.map((custom) => ({
+        stageNameKey: normalizeStageKey(custom.stageName),
+        videoName: toOptionalText(custom.videoName),
+        videoUrl: toOptionalText(custom.videoUrl),
+        videoContent: toOptionalText(custom.videoContent),
+      }));
+
+      validatedContent.structuredLessonPlan.stages = validatedContent.structuredLessonPlan.stages.map((stage: any, index: number) => {
+        const directMatch = normalizedCustomStages[index];
+        const nameMatch = normalizedCustomStages.find((custom) => custom.stageNameKey === normalizeStageKey(stage.stage));
+        const matched = (directMatch && (directMatch.videoName || directMatch.videoUrl || directMatch.videoContent))
+          ? directMatch
+          : nameMatch;
+
+        if (!matched) return stage;
+
+        return {
+          ...stage,
+          videoName: matched.videoName || stage.videoName,
+          videoUrl: matched.videoUrl || stage.videoUrl,
+          videoContent: matched.videoContent || stage.videoContent,
+        };
+      });
     }
 
     // ---------- Grounding & scoring (full mode only for scoreReport) ----------

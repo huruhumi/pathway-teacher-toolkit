@@ -18,7 +18,7 @@ import {
   AssignmentSheet,
   GenerationContext,
 } from "../types";
-import { generateSupportingContent, regenerateSlides } from "../services/gemini/supportingContent";
+import { generateSupportingContent, regenerateCompanion, regenerateSlides } from "../services/gemini/supportingContent";
 import {
   BookOpen,
   Presentation,
@@ -92,6 +92,7 @@ import { generateLessonImage } from "../services/lessonKitService";
 import { useExportUtils } from "../hooks/useExportUtils";
 import { useSlideExport } from "../hooks/useSlideExport";
 import { useAutoSave } from "@shared/hooks/useAutoSave";
+import { useToast } from "@shared/stores/useToast";
 import { LessonPlanTab } from "./tabs/LessonPlanTab";
 import { SlidesTab } from "./tabs/SlidesTab";
 import { ActivitiesTab } from "./tabs/ActivitiesTab";
@@ -107,6 +108,7 @@ import { WorksheetsTab } from "./tabs/materials/WorksheetsTab";
 interface OutputDisplayProps {
   content: GeneratedContent;
   onSave: (content: GeneratedContent) => void | Promise<unknown>;
+  autoSaveEnabled?: boolean;
 }
 
 const ASPECT_RATIOS = [
@@ -164,6 +166,7 @@ const CorrectionLegend = () => (
 export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   content,
   onSave,
+  autoSaveEnabled = true,
 }) => {
   const viewLang = "en";
 
@@ -214,25 +217,63 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
 
   // --- Regenerate Slides Only ---
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [editableReadingCompanion, setEditableReadingCompanion] =
+    useState<ReadingCompanionContent>(content.readingCompanion);
+  const [editableGames, setEditableGames] = useState<Game[]>(
+    content.games || [],
+  );
+  const [worksheets, setWorksheets] = useState<Worksheet[]>(
+    content.worksheets || [],
+  );
+  const resolveGenerationContext = useCallback((): GenerationContext | null => {
+    if (!editablePlan) return null;
+
+    const stageMediaUrls = (editablePlan.stages || [])
+      .map((stage) => String(stage?.videoUrl || "").trim())
+      .filter(Boolean);
+    const companionUrls = [
+      ...(editableReadingCompanion.webResources || []),
+      ...editableReadingCompanion.days.flatMap((day) => day.resources || []),
+    ]
+      .map((resource) => String(resource?.url || "").trim())
+      .filter(Boolean);
+    const validUrls = Array.from(
+      new Set([...(content._generationContext?.validUrls || []), ...stageMediaUrls, ...companionUrls]),
+    );
+
+    if (content._generationContext) {
+      return {
+        ...content._generationContext,
+        validUrls: validUrls.length > 0 ? validUrls : content._generationContext.validUrls,
+        textbookLevelKey: content.textbookLevelKey || content._generationContext.textbookLevelKey,
+      };
+    }
+
+    return {
+      level: (editablePlan.classInformation.level || "A1") as CEFRLevel,
+      topic: editablePlan.classInformation.topic || "",
+      lessonTitle: editablePlan.classInformation.topic || "ESL Lesson",
+      ageGroup: content.ageGroup || undefined,
+      duration: content._generationContext?.duration || "40",
+      studentCount: editablePlan.classInformation.students || content._generationContext?.studentCount || "20",
+      slideCount: editableSlides.length || content.slides.length || 15,
+      factSheet: content._generationContext?.factSheet,
+      validUrls: validUrls.length > 0 ? validUrls : undefined,
+      textbookLevelKey: content.textbookLevelKey || content._generationContext?.textbookLevelKey,
+      assessmentPackPrompt: content._generationContext?.assessmentPackPrompt,
+      sourceMode: content._generationContext?.sourceMode || "direct",
+    };
+  }, [content, editablePlan, editableReadingCompanion, editableSlides]);
+
   const handleRegenerateSlides = useCallback(async () => {
     if (!editablePlan) return;
     setIsRegenerating(true);
     try {
-      // Build fallback context if _generationContext is missing (old lesson kits)
-      const ctx: GenerationContext = content._generationContext || {
-        level: (editablePlan.classInformation.level || 'A1') as CEFRLevel,
-        topic: editablePlan.classInformation.topic || '',
-        lessonTitle: editablePlan.classInformation.topic || 'ESL Lesson',
-        ageGroup: content.ageGroup || undefined,
-        duration: '40',
-        studentCount: editablePlan.classInformation.students || '20',
-        slideCount: editableSlides.length || 15,
-        sourceMode: 'direct',
-      };
+      const ctx = resolveGenerationContext();
+      if (!ctx) return;
       const inputPrompt = (content as any).inputPrompt as string | undefined;
       const result = await regenerateSlides(editablePlan, ctx, inputPrompt, ctx.factSheet);
       setEditableSlides(result.slides || []);
-      // Update content with new slides + prompt, then save
       const updated = { ...content, slides: result.slides, notebookLMPrompt: result.notebookLMPrompt };
       await onSave(updated);
       alert('Slides Regenerated Successfully');
@@ -242,15 +283,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     } finally {
       setIsRegenerating(false);
     }
-  }, [editablePlan, editableSlides, content, onSave]);
-  const [editableReadingCompanion, setEditableReadingCompanion] =
-    useState<ReadingCompanionContent>(content.readingCompanion);
-  const [editableGames, setEditableGames] = useState<Game[]>(
-    content.games || [],
-  );
-  const [worksheets, setWorksheets] = useState<Worksheet[]>(
-    content.worksheets || [],
-  );
+  }, [editablePlan, content, onSave, resolveGenerationContext]);
 
   // Migration logic for decodableText -> decodableTexts and adding Prompts
   const initialPhonics = useMemo(() => {
@@ -300,7 +333,10 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
   const [imageStyle, setImageStyle] = useState<'cartoon' | 'realistic'>('cartoon');
   const [customStylePrompt, setCustomStylePrompt] = useState('');
   const [isGeneratingSupporting, setIsGeneratingSupporting] = useState(false);
+  const [isRegeneratingCompanion, setIsRegeneratingCompanion] = useState(false);
   const [supportingError, setSupportingError] = useState<string | null>(null);
+  const [companionRegenerateError, setCompanionRegenerateError] = useState<string | null>(null);
+  const [companionRegenerateSuccess, setCompanionRegenerateSuccess] = useState<string | null>(null);
   const supportingAbortRef = useRef<AbortController | null>(null);
 
   /** Phase 2: Generate supporting content from finalized lesson plan */
@@ -470,10 +506,49 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
     assignmentSheet: assignmentSheet,
   });
 
+  const handleRegenerateCompanion = useCallback(async () => {
+    if (!editablePlan) return;
+
+    const ctx = resolveGenerationContext();
+    if (!ctx) {
+      const message = 'Missing lesson context. Please reopen the lesson kit and try again.';
+      setCompanionRegenerateError(message);
+      setCompanionRegenerateSuccess(null);
+      useToast.getState().error(message);
+      return;
+    }
+
+    setIsRegeneratingCompanion(true);
+    setCompanionRegenerateError(null);
+    setCompanionRegenerateSuccess(null);
+
+    try {
+      const baseContent = getCurrentContentObject();
+      const merged = await regenerateCompanion(
+        editablePlan,
+        ctx,
+        baseContent,
+      );
+      setEditableReadingCompanion(merged.readingCompanion || { days: [], webResources: [] });
+      await onSave(merged);
+      const successMessage = 'Companion regenerated with the latest lesson plan, prompt, and stage media.';
+      setCompanionRegenerateSuccess(successMessage);
+      useToast.getState().success(successMessage);
+    } catch (err: any) {
+      console.error('Companion regeneration failed:', err);
+      const message = err.message || 'Companion regeneration failed. Please try again.';
+      setCompanionRegenerateError(message);
+      useToast.getState().error(message);
+    } finally {
+      setIsRegeneratingCompanion(false);
+    }
+  }, [editablePlan, onSave, getCurrentContentObject, resolveGenerationContext]);
+
   const { saveStatus, lastSaved, saveNow } = useAutoSave({
     getCurrentContentObject,
     onSave,
     editablePlan,
+    enabled: autoSaveEnabled,
   });
 
   const handlePlanInfoChange = (
@@ -1119,7 +1194,7 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
               {isGeneratingSupporting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> 生成中...</>
               ) : (
-                <><Rocket className="w-4 h-4" /> 🚀 生成配套内容</>
+                <><Rocket className="w-4 h-4" /> 生成配套内容</>
               )}
             </button>
           </div>
@@ -1302,6 +1377,10 @@ export const OutputDisplay: React.FC<OutputDisplayProps> = ({
             editablePlan={editablePlan}
             ageGroup={content.ageGroup || content._generationContext?.ageGroup}
             sentenceCitations={content.sentenceCitations}
+            onRegenerate={handleRegenerateCompanion}
+            isRegenerating={isRegeneratingCompanion}
+            regenerateError={companionRegenerateError}
+            regenerateSuccessMessage={companionRegenerateSuccess}
           />
         )}
 

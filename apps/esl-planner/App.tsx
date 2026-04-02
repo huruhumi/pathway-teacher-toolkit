@@ -130,7 +130,7 @@ const AppContent: React.FC = () => {
                                 </div>
 
                                 <div style={{ display: viewMode === 'create' ? 'block' : 'none' }}>
-                                    <CreatePage />
+                                    <CreatePage isActive={viewMode === 'create'} />
                                 </div>
 
                                 <div style={{ display: viewMode === 'history' ? 'block' : 'none' }}>

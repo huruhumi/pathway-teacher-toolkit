@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, BookOpen, GraduationCap, Download, Layers, FileText, ChevronRight, FolderOpen, Library, Hash, CheckSquare, Square, FolderPlus, X, FileCheck, Wrench, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
+import { Sparkles, BookOpen, GraduationCap, Download, Layers, FileText, ChevronRight, FolderOpen, Library, Hash, CheckSquare, Square, FolderPlus, X, FileCheck, Wrench, AlertTriangle, Trash2, Loader2, Archive, RotateCcw } from 'lucide-react';
 import { RecordCard } from '@shared/components/RecordCard';
 import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
 import { Modal } from '@shared/components/ui/Modal';
@@ -112,6 +112,22 @@ type TextbookLevelTreeNode = {
     }[];
 };
 
+type DeletedMetaLike = {
+    __deletedMeta?: {
+        deletedAt?: number;
+        purgeAt?: number;
+    };
+};
+
+function getDeletedMeta(record: DeletedMetaLike): { deletedAt: number; purgeAt: number | null } {
+    const deletedAt = Number(record?.__deletedMeta?.deletedAt || 0);
+    const purgeAt = Number(record?.__deletedMeta?.purgeAt || 0);
+    return {
+        deletedAt: Number.isFinite(deletedAt) && deletedAt > 0 ? deletedAt : Date.now(),
+        purgeAt: Number.isFinite(purgeAt) && purgeAt > 0 ? purgeAt : null,
+    };
+}
+
 function getRiskReasonLabel(code: string): string {
     const mapping: Record<LessonRiskCode, string> = {
         missing_score_report: 'Missing score report',
@@ -161,6 +177,11 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     const [assignUnit, setAssignUnit] = useState<number | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+    const [showRecycleBin, setShowRecycleBin] = useState(false);
+    const [isRecycleLoading, setIsRecycleLoading] = useState(false);
+    const [deletedLessons, setDeletedLessons] = useState<SavedLesson[]>([]);
+    const [deletedCurricula, setDeletedCurricula] = useState<SavedCurriculum[]>([]);
+    const [recycleActionId, setRecycleActionId] = useState<string | null>(null);
 
     // Ref to always access latest savedLessons inside async callbacks (avoids stale closure)
     const savedLessonsRef = useRef(savedLessons);
@@ -291,6 +312,68 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
         }
     };
 
+    const loadRecycleBin = async () => {
+        setIsRecycleLoading(true);
+        try {
+            const [lessons, curricula] = await Promise.all([
+                history.listDeletedLessons(),
+                history.listDeletedCurricula(),
+            ]);
+            setDeletedLessons(lessons);
+            setDeletedCurricula(curricula);
+        } catch (err: any) {
+            useToast.getState().error(`Failed to load recycle bin. ${err?.message || 'Unexpected error'}`);
+        } finally {
+            setIsRecycleLoading(false);
+        }
+    };
+
+    const openRecycleBin = async () => {
+        setShowRecycleBin(true);
+        await loadRecycleBin();
+    };
+
+    const handleRestoreFromRecycle = async (kind: 'curriculum' | 'lesson', id: string, title: string) => {
+        const actionKey = `${kind}:${id}`;
+        setRecycleActionId(actionKey);
+        try {
+            const result = kind === 'curriculum'
+                ? await history.handleRestoreCurriculum(id)
+                : await history.handleRestoreLesson(id);
+            if (!result.ok) {
+                useToast.getState().error(`Restore failed for "${title}". Please retry.`);
+                return;
+            }
+            useToast.getState().success(`Restored "${title}".`);
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionId(null);
+        }
+    };
+
+    const handlePurgeFromRecycle = async (kind: 'curriculum' | 'lesson', id: string, title: string) => {
+        const firstConfirmed = window.confirm(`Permanently delete "${title}"? This cannot be undone.`);
+        if (!firstConfirmed) return;
+        const secondConfirmed = window.confirm(`Please confirm again: permanently remove "${title}" now?`);
+        if (!secondConfirmed) return;
+
+        const actionKey = `${kind}:${id}`;
+        setRecycleActionId(actionKey);
+        try {
+            const result = kind === 'curriculum'
+                ? await history.handlePurgeCurriculum(id)
+                : await history.handlePurgeLesson(id);
+            if (!result.ok) {
+                useToast.getState().error(`Permanent delete failed for "${title}". Please retry.`);
+                return;
+            }
+            useToast.getState().success(`Permanently deleted "${title}".`);
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionId(null);
+        }
+    };
+
     // --- Textbook Tree (for Lesson Kits index) ---
     const textbookTree = useMemo(() => {
         const tree: { name: string; level: string; curriculumIds: Set<string>; units: Map<number, CurriculumLesson[]> }[] = [];
@@ -380,23 +463,6 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
             });
         });
 
-        const curriculumById = new Map<string, SavedCurriculum>(savedCurricula.map((record) => [record.id, record]));
-        savedLessons.forEach((lesson) => {
-            const levelKey = lesson.content?.textbookLevelKey;
-            if (!levelKey) return;
-            const matchedCurriculum = lesson.curriculumId ? curriculumById.get(lesson.curriculumId) : null;
-            const rawName = matchedCurriculum?.curriculum?.seriesName
-                || matchedCurriculum?.textbookTitle?.replace(/\s*Student(?:'|\u2019)?s?\s*Book/gi, '').trim()
-                || matchedCurriculum?.textbookTitle
-                || 'Standalone';
-            const textbookName = rawName === 'Standalone' ? rawName : normalizeSeriesFamily(rawName);
-            const levelLabel = getLevelLabel(levelKey, lesson.level);
-            const levelNode = ensureLevelNode(textbookName, levelKey, levelLabel);
-            if (lesson.curriculumId) {
-                levelNode.curriculumIds.add(lesson.curriculumId);
-            }
-        });
-
         return Array.from(tree.entries())
             .map(([name, levelMap]) => ({
                 name,
@@ -410,7 +476,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                     .sort((a, b) => a.levelLabel.localeCompare(b.levelLabel)),
             }))
             .sort((a, b) => a.name.localeCompare(b.name));
-    }, [savedCurricula, savedLessons]);
+    }, [savedCurricula]);
 
     const selectedTextbookNode = useMemo(
         () => textbookLevelTree.find((node) => node.name === selectedTextbook) || null,
@@ -423,21 +489,14 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     );
 
     // --- Ungrouped kits (no curriculum metadata) ---
-    const ungroupedKits = useMemo(() =>
-        history.filteredKits.filter(lk => !lk.curriculumId),
-        [history.filteredKits]);
+    const ungroupedKits = useMemo(() => {
+        const curriculumIds = new Set(savedCurricula.map((item) => item.id));
+        return history.filteredKits.filter((kit) => !kit.curriculumId || !curriculumIds.has(kit.curriculumId));
+    }, [history.filteredKits, savedCurricula]);
 
     // --- Lessons filtered by tree selection (metadata-based) ---
     const treeFilteredKits = useMemo(() => {
         if (!selectedTextbook) return null;
-        // Standalone: flat list — bypass level/unit drill-down
-        if (selectedTextbook === 'Standalone' && selectedTextbookNode) {
-            const allCurrIds = new Set<string>();
-            selectedTextbookNode.levels.forEach(lvl => lvl.curriculumIds.forEach(id => allCurrIds.add(id)));
-            return history.filteredKits.filter(lk =>
-                lk.curriculumId && allCurrIds.has(lk.curriculumId)
-            );
-        }
         if (!selectedLevelNode) return null;
         if (selectedUnit === null) {
             // Level selected but no unit — show all kits for this level
@@ -498,7 +557,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
     const displayedKits = riskViewOnly
         ? governanceRows.filter((item) => item.unresolved).map((item) => item.lesson)
         : displayedKitsBase;
-    const showKitCards = selectedUnit !== null || textbookLevelTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0) || selectedTextbook === 'Standalone';
+    const showKitCards = selectedUnit !== null || textbookLevelTree.length === 0 || (!selectedTextbook && ungroupedKits.length > 0);
     const reviewTargetLesson = useMemo(
         () => [...savedLessons, ...displayedKits].find((item) => item.id === reviewLessonId) ?? null,
         [savedLessons, displayedKits, reviewLessonId],
@@ -664,6 +723,16 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                 onTabChange={(key) => setRecordsTab(key as typeof recordsTab)}
                 accentColor="violet"
             />
+            <div className="mt-3 flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => { void openRecycleBin(); }}
+                    className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
+                >
+                    <Archive className="w-4 h-4" />
+                    {lang === 'zh' ? '回收站' : 'Recycle Bin'}
+                </button>
+            </div>
 
             {recordsTab === 'curricula' && (
                 <div className="space-y-6">
@@ -836,12 +905,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                                 <div>
                                                     <div className="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-violet-700">{tb.name}</div>
                                                     <div className="text-xs text-slate-400 mt-0.5">
-                                                        {tb.name === 'Standalone' ? (() => {
-                                                            const allCids = new Set<string>();
-                                                            tb.levels.forEach(lvl => lvl.curriculumIds.forEach(id => allCids.add(id)));
-                                                            const kitCount = history.filteredKits.filter(lk => lk.curriculumId && allCids.has(lk.curriculumId)).length;
-                                                            return `${kitCount} ${lang === 'zh' ? '课件' : kitCount === 1 ? 'kit' : 'kits'}`;
-                                                        })() : `${levelCount} ${lang === 'zh' ? '级别' : levelCount === 1 ? 'level' : 'levels'} · ${unitCount} ${lang === 'zh' ? '单元' : 'units'} · ${lessonCount} ${lang === 'zh' ? '课时' : 'lessons'}`}
+                                                        {`${levelCount} ${lang === 'zh' ? '级别' : levelCount === 1 ? 'level' : 'levels'} · ${unitCount} ${lang === 'zh' ? '单元' : 'units'} · ${lessonCount} ${lang === 'zh' ? '课时' : 'lessons'}`}
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={16} className="text-slate-300 group-hover:text-violet-400 ml-auto" />
@@ -852,7 +916,7 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                             )}
 
                             {/* Level 1: Level pills (within selected textbook) */}
-                            {selectedTextbook && selectedTextbook !== 'Standalone' && !selectedLevelKey && selectedTextbookNode && (
+                            {selectedTextbook && !selectedLevelKey && selectedTextbookNode && (
                                 <div className="flex flex-wrap gap-2">
                                     {selectedTextbookNode.levels.map(lvl => {
                                         const unitCount = lvl.units.size;
@@ -1030,7 +1094,19 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                                             onOpen={() => handleLoadRecord(lesson)}
                                             openLabel={activeLessonId === lesson.id ? t('rec.currentlyEditing') : t('rec.openKit')}
 
-                                            onRename={(newName) => history.handleRenameLesson(lesson.id, newName)}
+                                            onRename={async (newName) => {
+                                                const result = await history.handleRenameLesson(lesson.id, newName);
+                                                if (!result.ok) {
+                                                    useToast.getState().error(`Rename failed for "${lesson.topic}". Please retry.`);
+                                                    return false;
+                                                }
+                                                if (result.pendingSync) {
+                                                    useToast.getState().warning(`Renamed to "${newName}" and synced to all local title fields. Cloud sync pending.`);
+                                                } else {
+                                                    useToast.getState().success(`Renamed to "${newName}" and synced to all title-related fields.`);
+                                                }
+                                                return true;
+                                            }}
                                             onDelete={() => executeDelete('lesson', lesson.id, lesson.topic)}
                                             customActions={(
                                                 <button
@@ -1161,6 +1237,129 @@ export const RecordsPage: React.FC<RecordsPageProps> = ({
                     </div>
                 </div>
             )}
+
+            <Modal isOpen={showRecycleBin} onClose={() => setShowRecycleBin(false)} maxWidth="max-w-3xl">
+                <div className="p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                {lang === 'zh' ? '回收站（30 天）' : 'Recycle Bin (30 days)'}
+                            </h3>
+                            <p className="text-sm text-slate-500">
+                                {lang === 'zh'
+                                    ? '可恢复已删除记录；永久删除需二次确认。'
+                                    : 'Restore deleted records or permanently delete with double confirmation.'}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { void loadRecycleBin(); }}
+                            disabled={isRecycleLoading}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            {isRecycleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                            {lang === 'zh' ? '刷新' : 'Refresh'}
+                        </button>
+                    </div>
+
+                    {isRecycleLoading ? (
+                        <div className="py-10 flex items-center justify-center text-slate-500">
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            {lang === 'zh' ? '加载中…' : 'Loading...'}
+                        </div>
+                    ) : (deletedCurricula.length + deletedLessons.length) === 0 ? (
+                        <div className="py-12 text-center text-slate-500">
+                            {lang === 'zh' ? '回收站为空。' : 'Recycle bin is empty.'}
+                        </div>
+                    ) : (
+                        <div className="space-y-4 max-h-[70vh] overflow-auto pr-1">
+                            <section className="space-y-2">
+                                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {lang === 'zh' ? `教材大纲 (${deletedCurricula.length})` : `Curricula (${deletedCurricula.length})`}
+                                </h4>
+                                {deletedCurricula.map((item) => {
+                                    const meta = getDeletedMeta(item as DeletedMetaLike);
+                                    const actionKey = `curriculum:${item.id}`;
+                                    return (
+                                        <div key={`recycle-cur-${item.id}`} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="font-medium text-slate-800 truncate">{item.textbookTitle}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    {(lang === 'zh' ? '删除于: ' : 'Deleted: ')}
+                                                    {new Date(meta.deletedAt).toLocaleString()}
+                                                    {meta.purgeAt
+                                                        ? `${lang === 'zh' ? ' · 到期: ' : ' · Purge: '}${new Date(meta.purgeAt).toLocaleString()}`
+                                                        : ''}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionId === actionKey}
+                                                    onClick={() => { void handleRestoreFromRecycle('curriculum', item.id, item.textbookTitle || 'Untitled Curriculum'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                                >
+                                                    {lang === 'zh' ? '恢复' : 'Restore'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionId === actionKey}
+                                                    onClick={() => { void handlePurgeFromRecycle('curriculum', item.id, item.textbookTitle || 'Untitled Curriculum'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                                >
+                                                    {lang === 'zh' ? '永久删除' : 'Delete Forever'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </section>
+
+                            <section className="space-y-2">
+                                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    {lang === 'zh' ? `Lesson Kit (${deletedLessons.length})` : `Lesson Kits (${deletedLessons.length})`}
+                                </h4>
+                                {deletedLessons.map((item) => {
+                                    const meta = getDeletedMeta(item as DeletedMetaLike);
+                                    const actionKey = `lesson:${item.id}`;
+                                    return (
+                                        <div key={`recycle-lesson-${item.id}`} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="font-medium text-slate-800 truncate">{item.topic}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    {(lang === 'zh' ? '删除于: ' : 'Deleted: ')}
+                                                    {new Date(meta.deletedAt).toLocaleString()}
+                                                    {meta.purgeAt
+                                                        ? `${lang === 'zh' ? ' · 到期: ' : ' · Purge: '}${new Date(meta.purgeAt).toLocaleString()}`
+                                                        : ''}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionId === actionKey}
+                                                    onClick={() => { void handleRestoreFromRecycle('lesson', item.id, item.topic || 'Untitled Lesson'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                                >
+                                                    {lang === 'zh' ? '恢复' : 'Restore'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionId === actionKey}
+                                                    onClick={() => { void handlePurgeFromRecycle('lesson', item.id, item.topic || 'Untitled Lesson'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                                >
+                                                    {lang === 'zh' ? '永久删除' : 'Delete Forever'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </section>
+                        </div>
+                    )}
+                </div>
+            </Modal>
 
             <Modal isOpen={Boolean(reviewTargetLesson)} onClose={closeReviewModal} maxWidth="max-w-lg">
                 <div className="p-5 space-y-4">

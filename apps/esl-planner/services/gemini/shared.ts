@@ -31,7 +31,10 @@ const STAGE_ITEM_SCHEMA = {
     teachingTips: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 practical ESL teaching methodology tips for this specific stage (e.g., scaffolding techniques, TPR suggestions, visual aids, sentence frames, error correction strategies)." },
     backgroundKnowledge: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 relevant background knowledge points for the teacher about this stage's content (cultural context, linguistic notes, common misconceptions, subject matter facts)." },
     fillerActivity: { type: Type.STRING, description: "A quick 2-3 minute optional filler/extension activity for this stage in case students finish early or need extra practice. Keep it simple and equipment-free." },
-    suggestedGameName: { type: Type.STRING, description: "Name of a game/activity that would work well at this stage. This will be used to generate a matching activity card." }
+    suggestedGameName: { type: Type.STRING, description: "Name of a game/activity that would work well at this stage. This will be used to generate a matching activity card." },
+    videoName: { type: Type.STRING, description: "Optional multimedia video title for this stage." },
+    videoUrl: { type: Type.STRING, description: "Optional multimedia video URL for this stage." },
+    videoContent: { type: Type.STRING, description: "Optional multimedia lyrics/script for this stage." }
   },
   required: ["stage", "stageAim", "timing", "interaction", "teacherActivity", "studentActivity", "teachingTips", "backgroundKnowledge", "fillerActivity", "suggestedGameName"]
 } as const;

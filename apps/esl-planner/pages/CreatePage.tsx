@@ -20,7 +20,9 @@ import { useAppStore, useSessionStore } from '../stores/appStore';
 import { useLessonHistory } from '../hooks/useLessonHistory';
 import { extractVideoEvidenceWithDirectGemini } from '../services/videoEvidenceGemini';
 
-export interface CreatePageProps { }
+export interface CreatePageProps {
+    isActive?: boolean;
+}
 
 type GenerationSourceMode = 'notebook' | 'direct';
 
@@ -257,7 +259,7 @@ const parseVideoUrlEvidencePreview = (
     });
 };
 
-export const CreatePage: React.FC<CreatePageProps> = () => {
+export const CreatePage: React.FC<CreatePageProps> = ({ isActive = true }) => {
     const { state, setState } = useSessionStore();
     const { activeLessonId, setActiveLessonId, prefilledValues, setPrefilledValues } = useAppStore();
     const history = useLessonHistory();
@@ -1390,7 +1392,7 @@ If notebook sources are missing/insufficient, include marker: NO_USABLE_SOURCE.`
                         }}
                     />
 
-                    <OutputDisplay key={activeLessonId || 'new'} content={state.generatedContent} onSave={(c) => {
+                    <OutputDisplay key={activeLessonId || 'new'} content={state.generatedContent} autoSaveEnabled={isActive} onSave={(c) => {
                         // Update local state so UI re-renders (critical for Phase 2 -> tab unlock)
                         setState(prev => ({ ...prev, generatedContent: c }));
                         onSaveLesson(c);

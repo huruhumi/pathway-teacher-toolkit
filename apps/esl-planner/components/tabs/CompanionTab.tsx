@@ -18,6 +18,10 @@ interface CompanionTabProps {
     editablePlan: StructuredLessonPlan | null;
     ageGroup?: string;
     sentenceCitations?: SentenceCitation[];
+    onRegenerate?: () => Promise<void> | void;
+    isRegenerating?: boolean;
+    regenerateError?: string | null;
+    regenerateSuccessMessage?: string | null;
 }
 
 export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
@@ -26,6 +30,10 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     editablePlan,
     ageGroup,
     sentenceCitations,
+    onRegenerate,
+    isRegenerating = false,
+    regenerateError,
+    regenerateSuccessMessage,
 }) => {
     const [isAddingDay, setIsAddingDay] = useState(false);
     const [addingDayResourceIndex, setAddingDayResourceIndex] = useState<number | null>(null);
@@ -33,9 +41,12 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
     const [translatingTask, setTranslatingTask] = useState<string | null>(null); // "dIdx-tIdx"
     const [dragTask, setDragTask] = useState<{ dIdx: number; tIdx: number } | null>(null);
     const [dragOverTask, setDragOverTask] = useState<{ dIdx: number; tIdx: number } | null>(null);
+    const [dragDayIdx, setDragDayIdx] = useState<number | null>(null);
+    const [dragOverDayTarget, setDragOverDayTarget] = useState<{ idx: number; position: 'before' | 'after' } | null>(null);
     const [isUploadingPdf, setIsUploadingPdf] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [copiedResource, setCopiedResource] = useState<WebResource | null>(null);
+    const [copiedTask, setCopiedTask] = useState<ReadingTask | null>(null);
 
     const { t } = useLanguage();
     const teacherId = useAuthStore(s => s.user?.id);
@@ -110,6 +121,31 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
         setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
     };
 
+    const handleCopyTask = (task: ReadingTask) => {
+        setCopiedTask({
+            text: String(task.text || ''),
+            text_cn: String(task.text_cn || ''),
+            isCompleted: false,
+        });
+        useToast.getState().success('Task copied!');
+    };
+
+    const handlePasteTask = (dIdx: number) => {
+        if (!copiedTask) return;
+        const newDays = [...editableReadingCompanion.days];
+        newDays[dIdx] = {
+            ...newDays[dIdx],
+            tasks: [...(newDays[dIdx].tasks || []), { ...copiedTask, isCompleted: false }],
+        };
+        setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+        useToast.getState().success('Task pasted!');
+    };
+
+    const handleCancelCopiedTask = () => {
+        setCopiedTask(null);
+        useToast.getState().info('Task paste cancelled.');
+    };
+
     const handleDayResourceChange = (dIdx: number, rIdx: number, field: keyof WebResource, value: string) => {
         const newDays = [...editableReadingCompanion.days];
         const resources = [...(newDays[dIdx].resources || [])];
@@ -124,6 +160,22 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
         resources.splice(rIdx, 1);
         newDays[dIdx].resources = resources;
         setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+    };
+
+    const handlePasteResource = (dIdx: number) => {
+        if (!copiedResource) return;
+        const newDays = [...editableReadingCompanion.days];
+        newDays[dIdx] = {
+            ...newDays[dIdx],
+            resources: [...(newDays[dIdx].resources || []), { ...copiedResource }],
+        };
+        setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
+        useToast.getState().success('Resource pasted!');
+    };
+
+    const handleCancelCopiedResource = () => {
+        setCopiedResource(null);
+        useToast.getState().info('Resource paste cancelled.');
     };
 
     const handleDayTriviaChange = (dIdx: number, field: 'en' | 'cn', value: string) => {
@@ -210,6 +262,23 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
         setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
     };
 
+    const handleDayDrop = (targetIdx: number, position: 'before' | 'after') => {
+        if (dragDayIdx === null) return;
+        const newDays = [...editableReadingCompanion.days];
+        const [movedDay] = newDays.splice(dragDayIdx, 1);
+        let insertIdx = position === 'before' ? targetIdx : targetIdx + 1;
+        if (dragDayIdx < insertIdx) insertIdx -= 1;
+        insertIdx = Math.max(0, Math.min(insertIdx, newDays.length));
+        newDays.splice(insertIdx, 0, movedDay);
+        const renumberedDays = newDays.map((day, idx) => ({ ...day, day: idx + 1 }));
+        setEditableReadingCompanion({ ...editableReadingCompanion, days: renumberedDays });
+    };
+
+    const handleDayDragEnd = () => {
+        setDragDayIdx(null);
+        setDragOverDayTarget(null);
+    };
+
     const handleAddNewDay = async () => {
         if (!editablePlan || isAddingDay) return;
         setIsAddingDay(true);
@@ -291,6 +360,15 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                         Import PDF
                     </button>
                     <button
+                        onClick={() => onRegenerate?.()}
+                        disabled={!onRegenerate || isRegenerating}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:border-violet-400 hover:text-violet-600 transition-all disabled:opacity-50"
+                        title="Regenerate companion with current lesson plan and prompt"
+                    >
+                        {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        Regenerate
+                    </button>
+                    <button
                         onClick={() => setIsAssignOpen(true)}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium rounded-xl hover:shadow-lg transition-transform hover:-translate-y-0.5"
                         title={t('assign.title') as string}
@@ -300,12 +378,70 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                 </div>
             </div>
 
+            {(isRegenerating || regenerateError || regenerateSuccessMessage) && (
+                <div
+                    className={`rounded-2xl border px-4 py-3 flex items-start gap-3 text-sm ${
+                        regenerateError
+                            ? 'border-red-200 bg-red-50 text-red-700'
+                            : regenerateSuccessMessage
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-violet-200 bg-violet-50 text-violet-700'
+                    }`}
+                >
+                    {isRegenerating ? (
+                        <Loader2 className="w-4 h-4 mt-0.5 animate-spin shrink-0" />
+                    ) : regenerateError ? (
+                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    ) : (
+                        <Check className="w-4 h-4 mt-0.5 shrink-0" />
+                    )}
+                    <span>
+                        {isRegenerating
+                            ? 'Regenerating companion with the latest lesson plan, prompt, and stage media...'
+                            : regenerateError || regenerateSuccessMessage}
+                    </span>
+                </div>
+            )}
+
             <div className="space-y-6">
                 {editableReadingCompanion.days.map((day, dIdx) => (
-                    <div key={dIdx} className="bg-white dark:bg-slate-900/80 border rounded-xl overflow-hidden shadow-sm flex flex-col border-slate-200 dark:border-white/10 print:break-inside-avoid print:shadow-none print:border-slate-300">
+                    <div
+                        key={dIdx}
+                        onDragOver={(e) => {
+                            if (dragDayIdx === null) return;
+                            e.preventDefault();
+                            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                            const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+                            setDragOverDayTarget({ idx: dIdx, position });
+                        }}
+                        onDrop={(e) => {
+                            if (dragDayIdx === null) return;
+                            e.preventDefault();
+                            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                            const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+                            handleDayDrop(dIdx, position);
+                            handleDayDragEnd();
+                        }}
+                        className={`bg-white dark:bg-slate-900/80 border rounded-xl overflow-hidden shadow-sm flex flex-col border-slate-200 dark:border-white/10 print:break-inside-avoid print:shadow-none print:border-slate-300 ${dragOverDayTarget?.idx === dIdx && dragDayIdx !== null ? 'ring-2 ring-violet-300 border-violet-300' : ''}`}
+                    >
+                        {dragDayIdx !== null && dragOverDayTarget?.idx === dIdx && dragOverDayTarget.position === 'before' && (
+                            <div className="h-1 bg-violet-400/80" />
+                        )}
                         {/* Compact Top Header */}
                         <div className="w-full bg-slate-50/80 px-4 py-3 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 print:bg-slate-50">
                             <div className="flex items-center gap-3 w-full sm:w-auto flex-1 min-w-0">
+                                <button
+                                    draggable
+                                    onDragStart={() => {
+                                        setDragDayIdx(dIdx);
+                                        setDragOverDayTarget({ idx: dIdx, position: 'before' });
+                                    }}
+                                    onDragEnd={handleDayDragEnd}
+                                    className="p-1.5 rounded-md text-slate-300 hover:text-slate-500 hover:bg-slate-100 cursor-grab active:cursor-grabbing print:hidden"
+                                    title="Drag to reorder day cards"
+                                >
+                                    <GripVertical className="w-4 h-4" />
+                                </button>
                                 <div className="px-3 shrink-0 h-10 bg-white dark:bg-slate-900/80 rounded-lg flex items-center justify-center text-violet-600 font-bold text-sm border border-slate-200 dark:border-white/10 shadow-sm print:shadow-none whitespace-nowrap">
                                     Day {day.day}
                                 </div>
@@ -349,11 +485,33 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                             {/* Left Column: Step-by-Step */}
                             <div className="flex-1 flex flex-col gap-4">
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-1.5 border-b border-slate-100 dark:border-white/5 pb-1.5">
-                                        <div className="bg-emerald-100 text-emerald-600 p-1 rounded-md">
-                                            <List size={12} />
+                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="bg-emerald-100 text-emerald-600 p-1 rounded-md">
+                                                <List size={12} />
+                                            </div>
+                                            <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Step-by-Step Tasks</h5>
                                         </div>
-                                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Step-by-Step Tasks</h5>
+                                        {copiedTask && (
+                                            <div className="flex items-center gap-1 print:hidden">
+                                                <button
+                                                    onClick={() => handlePasteTask(dIdx)}
+                                                    className="text-[10px] flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-bold uppercase tracking-wider bg-emerald-50 hover:bg-emerald-100 transition-colors px-1.5 py-0.5 rounded"
+                                                    title="Paste copied task"
+                                                >
+                                                    <ClipboardPaste className="w-3 h-3" />
+                                                    Paste
+                                                </button>
+                                                <button
+                                                    onClick={handleCancelCopiedTask}
+                                                    className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-700 font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 transition-colors px-1.5 py-0.5 rounded"
+                                                    title="Cancel copied task"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         {day.tasks?.map((task, tIdx) => (
@@ -399,6 +557,13 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                                     title="Auto-translate EN↔CN"
                                                 >
                                                     {translatingTask === `${dIdx}-${tIdx}` ? <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" /> : <Languages className="w-3.5 h-3.5" />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCopyTask(task)}
+                                                    className="shrink-0 text-slate-300 hover:text-blue-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                                                    title="Copy task"
+                                                >
+                                                    <Copy className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button onClick={() => handleDeleteTask(dIdx, tIdx)} className="shrink-0 text-slate-300 hover:text-red-500 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity print:hidden" title="Delete task">
                                                     <Trash2 className="w-3.5 h-3.5" />
@@ -462,22 +627,24 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                             <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Web Resources</h5>
                                         </div>
                                         {copiedResource && (
-                                            <button
-                                                onClick={() => {
-                                                    const newDays = [...editableReadingCompanion.days];
-                                                    newDays[dIdx] = {
-                                                        ...newDays[dIdx],
-                                                        resources: [...(newDays[dIdx].resources || []), { ...copiedResource }]
-                                                    };
-                                                    setEditableReadingCompanion({ ...editableReadingCompanion, days: newDays });
-                                                    useToast.getState().success('Resource pasted!');
-                                                }}
-                                                className="text-[10px] flex items-center gap-1 text-orange-500 hover:text-orange-700 font-bold uppercase tracking-wider bg-orange-50/80 hover:bg-orange-100 transition-colors px-1.5 py-0.5 rounded print:hidden"
-                                                title="Paste copied resource"
-                                            >
-                                                <ClipboardPaste className="w-3 h-3" />
-                                                Paste
-                                            </button>
+                                            <div className="flex items-center gap-1 print:hidden">
+                                                <button
+                                                    onClick={() => handlePasteResource(dIdx)}
+                                                    className="text-[10px] flex items-center gap-1 text-orange-500 hover:text-orange-700 font-bold uppercase tracking-wider bg-orange-50/80 hover:bg-orange-100 transition-colors px-1.5 py-0.5 rounded"
+                                                    title="Paste copied resource"
+                                                >
+                                                    <ClipboardPaste className="w-3 h-3" />
+                                                    Paste
+                                                </button>
+                                                <button
+                                                    onClick={handleCancelCopiedResource}
+                                                    className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-slate-700 font-bold uppercase tracking-wider bg-slate-100 hover:bg-slate-200 transition-colors px-1.5 py-0.5 rounded"
+                                                    title="Cancel copied resource"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                    Cancel
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                     <div className="space-y-2">
@@ -494,7 +661,13 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                                             <ExternalLink className="w-3.5 h-3.5" />
                                                         </a>
                                                         <button onClick={() => {
-                                                            setCopiedResource(res);
+                                                            setCopiedResource({
+                                                                title: String(res.title || ''),
+                                                                title_cn: String(res.title_cn || ''),
+                                                                url: String(res.url || ''),
+                                                                description: String(res.description || ''),
+                                                                description_cn: String(res.description_cn || ''),
+                                                            });
                                                             useToast.getState().success('Resource copied!');
                                                         }} className="p-0.5 text-slate-400 hover:bg-blue-50 hover:text-blue-500 rounded transition-colors" title="Copy Resource">
                                                             <Copy className="w-3.5 h-3.5" />
@@ -528,6 +701,9 @@ export const CompanionTab: React.FC<CompanionTabProps> = React.memo(({
                                 </div>
                             </div>
                         </div>
+                        {dragDayIdx !== null && dragOverDayTarget?.idx === dIdx && dragOverDayTarget.position === 'after' && (
+                            <div className="h-1 bg-violet-400/80" />
+                        )}
                     </div>
                 ))}
             </div>

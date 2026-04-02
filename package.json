@@ -34,6 +34,8 @@
         "nlm:bulk-import-drive": "node scripts/notebooklm-bulk-import-drive.js",
         "nlm:sync-level-kb": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/notebooklm-sync-level-kb.ps1",
         "nlm:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/notebooklm-sync-level-kb.ps1",
+        "records:backup": "node scripts/records-backup.js",
+        "records:restore": "node scripts/records-restore.js",
         "audit:esl-storage": "node scripts/audit-esl-storage-alignment.js",
         "dedupe:esl-lessons": "node scripts/dedupe-esl-lessons.js",
         "build:planner": "npm -w apps/esl-planner run build",

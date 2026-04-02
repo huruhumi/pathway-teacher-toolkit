@@ -65,7 +65,16 @@ export const App: React.FC = () => {
   const sharedFactSheet = useSessionStore((s) => s.sharedFactSheet);
   const indexSyncSignatureRef = useRef('');
 
-  const { items: savedPlans, setItems: setSavedPlans, saveItem: savePlanDb, deleteItem: deletePlanDb, renameItem: renamePlanDb } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
+  const {
+    items: savedPlans,
+    setItems: setSavedPlans,
+    saveItem: savePlanDb,
+    deleteItem: deletePlanDb,
+    renameItem: renamePlanDb,
+    listDeletedItems: listDeletedPlansDb,
+    restoreItem: restorePlanDb,
+    purgeItem: purgePlanDb,
+  } = useProjectCRUD<SavedLessonPlan>('nature-compass-plans', 50, {
     cloudTable: 'lesson_plans',
     mapToCloud: (p: SavedLessonPlan) => ({
       id: p.id,
@@ -116,7 +125,15 @@ export const App: React.FC = () => {
     },
     migrate: migrateSavedPlan,
   });
-  const { items: savedCurricula, saveItem: saveCurriculumDb, deleteItem: deleteCurriculumDb, renameItem: renameCurriculumDb } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50, {
+  const {
+    items: savedCurricula,
+    saveItem: saveCurriculumDb,
+    deleteItem: deleteCurriculumDb,
+    renameItem: renameCurriculumDb,
+    listDeletedItems: listDeletedCurriculaDb,
+    restoreItem: restoreCurriculumDb,
+    purgeItem: purgeCurriculumDb,
+  } = useProjectCRUD<SavedCurriculum>('nature-compass-curricula', 50, {
     cloudTable: 'curricula',
     mapToCloud: (c: SavedCurriculum) => ({
       id: c.id,
@@ -381,9 +398,12 @@ export const App: React.FC = () => {
   };
 
   const handleDeletePlan = async (id: string) => {
-    await deletePlanDb(id);
-    await imageStorage.removeByPrefix(`nc-${id}-`);
-    if (currentPlanId === id) setCurrentPlanId(null);
+    const result = await deletePlanDb(id);
+    if (result.ok) {
+      await imageStorage.removeByPrefix(`nc-${id}-`);
+      if (currentPlanId === id) setCurrentPlanId(null);
+    }
+    return result;
   };
 
   const handleRenamePlan = async (id: string, newName: string) => {
@@ -412,8 +432,23 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteCurriculum = async (id: string) => {
-    await deleteCurriculumDb(id);
+    const result = await deleteCurriculumDb(id);
+    return result;
   };
+
+  const listDeletedPlans = async () => listDeletedPlansDb();
+  const listDeletedCurricula = async () => listDeletedCurriculaDb();
+  const handleRestorePlan = async (id: string) => restorePlanDb(id);
+  const handleRestoreCurriculum = async (id: string) => restoreCurriculumDb(id);
+  const handlePurgePlan = async (id: string) => {
+    const result = await purgePlanDb(id);
+    if (result.ok) {
+      await imageStorage.removeByPrefix(`nc-${id}-`);
+      if (currentPlanId === id) setCurrentPlanId(null);
+    }
+    return result;
+  };
+  const handlePurgeCurriculum = async (id: string) => purgeCurriculumDb(id);
 
   const handleRenameCurriculum = async (id: string, newName: string) => {
     await renameCurriculumDb(id, newName);
@@ -498,6 +533,12 @@ export const App: React.FC = () => {
                         onRenamePlan={handleRenamePlan}
                         onDeleteCurriculum={handleDeleteCurriculum}
                         onRenameCurriculum={handleRenameCurriculum}
+                        onListDeletedPlans={listDeletedPlans}
+                        onListDeletedCurricula={listDeletedCurricula}
+                        onRestorePlan={handleRestorePlan}
+                        onRestoreCurriculum={handleRestoreCurriculum}
+                        onPurgePlan={handlePurgePlan}
+                        onPurgeCurriculum={handlePurgeCurriculum}
                         onLoadCurriculum={(saved) => {
                           // Find the paired language version (same theme & params but different language)
                           const otherLang = saved.language === 'en' ? 'zh' : 'en';

@@ -124,7 +124,7 @@ export const CustomStagesForm: React.FC<CustomStagesFormProps> = ({ customStages
                                         value={stage.description}
                                         onChange={(e) => handleUpdate(index, 'description', e.target.value)}
                                         placeholder={`E.g. Briefly describe what will happen in ${stage.stageName}...`}
-                                        className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        className="w-full px-3 py-2 text-sm leading-relaxed rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         minRows={2}
                                     />
                                 </div>
@@ -138,7 +138,7 @@ export const CustomStagesForm: React.FC<CustomStagesFormProps> = ({ customStages
                                         value={stage.activityDesign || ''}
                                         onChange={(e) => handleUpdate(index, 'activityDesign', e.target.value)}
                                         placeholder="Specific activity rules, groupings, or games..."
-                                        className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        className="w-full px-3 py-2 text-sm leading-relaxed rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         minRows={2}
                                     />
                                 </div>
@@ -155,7 +155,7 @@ export const CustomStagesForm: React.FC<CustomStagesFormProps> = ({ customStages
                                                 value={stage.videoName || ''}
                                                 onChange={(e) => handleUpdate(index, 'videoName', e.target.value)}
                                                 placeholder="Video Name (e.g. Hello Song)"
-                                                className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                className="w-full px-3 py-2 text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                             />
                                         </div>
                                         <div className="flex gap-2">
@@ -164,7 +164,7 @@ export const CustomStagesForm: React.FC<CustomStagesFormProps> = ({ customStages
                                                 value={stage.videoUrl || ''}
                                                 onChange={(e) => handleUpdate(index, 'videoUrl', e.target.value)}
                                                 placeholder="YouTube URL"
-                                                className="flex-1 text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                className="flex-1 px-3 py-2 text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                             />
                                             <button
                                                 type="button"
@@ -188,7 +188,7 @@ export const CustomStagesForm: React.FC<CustomStagesFormProps> = ({ customStages
                                             value={stage.videoContent || ''}
                                             onChange={(e) => handleUpdate(index, 'videoContent', e.target.value)}
                                             placeholder="Paste the lyrics here or use the Magic Wand to extract from URL..."
-                                            className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono text-xs"
+                                            className="w-full px-3 py-2 text-sm leading-relaxed rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono text-xs"
                                             minRows={3}
                                         />
                                     </div>

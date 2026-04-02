@@ -24,6 +24,7 @@ export type {
     RecordRepository,
     RecordIndexEntry,
     RecordQualityStatus,
+    DeletedRecordEnvelope,
 } from './storage';
 export type {
     ScoreReport,

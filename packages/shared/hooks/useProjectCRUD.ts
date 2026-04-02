@@ -9,10 +9,12 @@ import type {
 import { useAuthStore } from '../stores/useAuthStore';
 import { useToast } from '../stores/useToast';
 import {
-    fetchCloudRecords,
     fetchCloudRecordsByIds,
+    fetchCloudRecordsResult,
+    listDeletedCloudRecords,
     upsertCloudRecord,
     deleteCloudRecord,
+    restoreCloudRecord,
     renameCloudRecord,
     upsertRecordIndexEntry,
     deleteRecordIndexEntry,
@@ -122,7 +124,24 @@ interface UseProjectCRUDOptions<T> {
         recordId?: string;
         updatedAt?: string;
     };
+    recycleBin?: {
+        enabled?: boolean;
+        retentionDays?: number;
+    };
 }
+
+interface PendingOp {
+    id: string;
+    action: 'delete';
+    at: number;
+}
+
+interface DeletedLocalMeta {
+    deletedAt?: number;
+    purgeAt?: number;
+}
+
+const DELETED_META_KEY = '__deletedMeta';
 
 export const useProjectCRUD = <T extends BaseRecord>(
     storageKey: string,
@@ -139,6 +158,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
         migrate,
         repositoryAdapter,
         buildIndexEntry,
+        recycleBin,
     } = options;
     const mapFromCloudRef = useRef(mapFromCloud);
     const mapToCloudRef = useRef(mapToCloud);
@@ -146,6 +166,10 @@ export const useProjectCRUD = <T extends BaseRecord>(
     const repositoryAdapterRef = useRef(repositoryAdapter);
     const buildIndexEntryRef = useRef(buildIndexEntry);
     const syncedLocalUserIdRef = useRef<string | null>(null);
+    const recycleBinEnabled = recycleBin?.enabled !== false;
+    const recycleRetentionDays = Number.isFinite(recycleBin?.retentionDays as number)
+        ? Math.max(1, Math.floor(recycleBin!.retentionDays as number))
+        : 30;
 
     useEffect(() => {
         mapFromCloudRef.current = mapFromCloud;
@@ -157,6 +181,8 @@ export const useProjectCRUD = <T extends BaseRecord>(
 
     const localStorageKey = `${storageKey}:records`;
     const historyStorageKey = `${storageKey}:history`;
+    const deletedStorageKey = `${storageKey}:deleted`;
+    const pendingOpsStorageKey = `${storageKey}:pending-ops`;
     const itemsRef = useRef<T[]>([]);
 
     useEffect(() => {
@@ -166,6 +192,59 @@ export const useProjectCRUD = <T extends BaseRecord>(
     const persistLocal = useCallback(async (nextItems: T[]) => {
         await localforage.setItem(localStorageKey, nextItems.slice(0, limit));
     }, [localStorageKey, limit]);
+
+    const readDeletedLocal = useCallback(async (): Promise<T[]> => {
+        const raw = await localforage.getItem<T[]>(deletedStorageKey);
+        return (raw ?? []).slice(0, limit);
+    }, [deletedStorageKey, limit]);
+
+    const persistDeletedLocal = useCallback(async (nextItems: T[]) => {
+        await localforage.setItem(deletedStorageKey, nextItems.slice(0, limit));
+    }, [deletedStorageKey, limit]);
+
+    const readPendingOps = useCallback(async (): Promise<PendingOp[]> => {
+        const raw = await localforage.getItem<PendingOp[]>(pendingOpsStorageKey);
+        if (!Array.isArray(raw)) return [];
+        return raw.filter((item) => item?.id && item.action === 'delete');
+    }, [pendingOpsStorageKey]);
+
+    const persistPendingOps = useCallback(async (ops: PendingOp[]) => {
+        await localforage.setItem(pendingOpsStorageKey, ops.slice(-500));
+    }, [pendingOpsStorageKey]);
+
+    const upsertPendingDelete = useCallback(async (id: string) => {
+        const ops = await readPendingOps();
+        const next = [...ops.filter((item) => item.id !== id), { id, action: 'delete' as const, at: Date.now() }];
+        await persistPendingOps(next);
+    }, [persistPendingOps, readPendingOps]);
+
+    const clearPendingDelete = useCallback(async (id: string) => {
+        const ops = await readPendingOps();
+        const next = ops.filter((item) => item.id !== id);
+        await persistPendingOps(next);
+    }, [persistPendingOps, readPendingOps]);
+
+    const attachDeletedMeta = useCallback((record: T, deletedAt: number, purgeAt: number): T => (
+        {
+            ...(record as any),
+            [DELETED_META_KEY]: {
+                deletedAt,
+                purgeAt,
+            } satisfies DeletedLocalMeta,
+        } as T
+    ), []);
+
+    const readDeletedMeta = useCallback((record: T): DeletedLocalMeta => (
+        ((record as any)?.[DELETED_META_KEY] as DeletedLocalMeta) || {}
+    ), []);
+
+    const stripDeletedMeta = useCallback((record: T): T => {
+        const next = { ...(record as any) };
+        if (DELETED_META_KEY in next) {
+            delete next[DELETED_META_KEY];
+        }
+        return next as T;
+    }, []);
 
     const readHistory = useCallback(async (): Promise<RecordHistoryEnvelope<T>> => {
         const raw = await localforage.getItem<RecordHistoryEnvelope<T>>(historyStorageKey);
@@ -224,15 +303,17 @@ export const useProjectCRUD = <T extends BaseRecord>(
     const syncRecoveredToCloud = useCallback(async (merged: T[], recoveredIds: string[]) => {
         if (!user || recoveredIds.length === 0) return;
         const recoveredSet = new Set(recoveredIds);
+        const pendingDeletes = new Set((await readPendingOps()).map((item) => item.id));
         const repoAdapter = repositoryAdapterRef.current;
         for (const item of merged) {
             if (!recoveredSet.has(item.id)) continue;
+            if (pendingDeletes.has(item.id)) continue;
             await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
             if (repoAdapter && repoAdapter.dualWrite !== false) {
                 await repoAdapter.create(user.id).save(repoAdapter.toEnvelope(item, user.id));
             }
         }
-    }, [cloudTable, user]);
+    }, [cloudTable, readPendingOps, user]);
 
     const readLegacyLocalStorage = useCallback((): T[] => {
         if (typeof window === 'undefined') return [];
@@ -308,8 +389,15 @@ export const useProjectCRUD = <T extends BaseRecord>(
             setIsLoading(true);
             try {
                 const localItems = await readLocal();
-                if (!cancelled) {
-                    setItemsState(localItems);
+                const localDeleted = await readDeletedLocal();
+                const pendingDeleteIds = new Set((await readPendingOps()).map((item) => item.id));
+                const blockedIds = new Set<string>([
+                    ...localDeleted.map((item) => item.id),
+                    ...pendingDeleteIds,
+                ]);
+                const visibleLocal = localItems.filter((item) => !blockedIds.has(item.id));
+                if (!cancelled && (visibleLocal.length > 0 || !user)) {
+                    setItemsState(visibleLocal);
                 }
 
                 if (!user) {
@@ -325,24 +413,26 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     // records already deleted on the server, causing "resurrection".
                     const repoAdapter = repositoryAdapterRef.current;
                     const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
-                    let cloudHasData = false;
+                    let cloudHasData: boolean | null = null;
 
                     if (canReadFromRepo) {
                         try {
                             const repo = repoAdapter!.create(user.id);
-                            const existing = await repo.list({ ownerId: user.id, limit: 1 });
+                            const existing = await repo.list({ ownerId: user.id, limit: 1, includeDeleted: true });
                             cloudHasData = existing.length > 0;
                         } catch { /* ignore — will fall through to cloud table check */ }
                     }
-                    if (!cloudHasData) {
-                        const existingRows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', 1);
-                        cloudHasData = existingRows.length > 0;
+                    if (cloudHasData === null) {
+                        const existingRows = await fetchCloudRecordsResult<any>(cloudTable, user.id, 'updated_at', 1, { includeDeleted: true });
+                        if (existingRows.ok) {
+                            cloudHasData = existingRows.items.length > 0;
+                        }
                     }
 
-                    if (!cloudHasData) {
+                    if (cloudHasData === false) {
                         // Cloud is empty — push local drafts up (genuine first sync)
                         const repo = repoAdapter ? repoAdapter.create(user.id) : null;
-                        for (const item of localItems) {
+                        for (const item of visibleLocal) {
                             await upsertCloudRecord(cloudTable, user.id, mapToCloudRef.current(item));
                             if (repo && repoAdapter?.dualWrite !== false) {
                                 await repo.save(repoAdapter.toEnvelope(item, user.id));
@@ -355,22 +445,27 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 const repoAdapter = repositoryAdapterRef.current;
                 const canReadFromRepo = Boolean(repoAdapter && repoAdapter.readFromRepository !== false);
                 let mapped: T[] = [];
+                let cloudReadOk = false;
 
                 if (canReadFromRepo) {
                     try {
                         const repo = repoAdapter!.create(user.id);
-                        const envelopes = await repo.list({ ownerId: user.id, limit });
+                        const envelopes = await repo.list({ ownerId: user.id, limit, includeDeleted: false });
                         mapped = envelopes
                             .slice(0, limit)
                             .map((envelope) => repoAdapter!.fromEnvelope(envelope));
+                        cloudReadOk = true;
                     } catch (repoErr: any) {
                         console.warn('[useProjectCRUD] repository list failed, falling back to cloud table:', repoErr?.message || repoErr);
                     }
                 }
 
-                if (mapped.length === 0) {
-                    const rows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', limit);
-                    mapped = rows.map((row) => mapFromCloudRef.current(row));
+                if (!cloudReadOk) {
+                    const rowsResult = await fetchCloudRecordsResult<any>(cloudTable, user.id, 'updated_at', limit, { includeDeleted: false });
+                    if (rowsResult.ok) {
+                        mapped = rowsResult.items.map((row) => mapFromCloudRef.current(row));
+                        cloudReadOk = true;
+                    }
                 }
 
                 if (migrateRef.current) {
@@ -381,9 +476,16 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     // Merge strategy: cloud records take precedence, but keep local-only
                     // records that are missing from cloud (they may be pending sync).
                     // This prevents data loss when a cloud save silently failed.
-                    if (mapped.length === 0 && localItems.length > 0) {
+                    if (!cloudReadOk) {
+                        const recovered = await recoverFromHistoryIfNewer(visibleLocal);
+                        setItemsState(recovered.merged);
+                        await persistLocal(recovered.merged);
+                        if (recovered.recoveredCount > 0) {
+                            useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                        }
+                    } else if (mapped.length === 0 && visibleLocal.length > 0) {
                         // Cloud returned empty — keep local cache (transient auth/network issue)
-                        const recovered = await recoverFromHistoryIfNewer(localItems);
+                        const recovered = await recoverFromHistoryIfNewer(visibleLocal);
                         setItemsState(recovered.merged);
                         await persistLocal(recovered.merged);
                         if (recovered.recoveredCount > 0) {
@@ -393,9 +495,11 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     } else if (mapped.length > 0) {
                         const mergedById = new Map<string, T>();
                         for (const cloudItem of mapped) {
+                            if (blockedIds.has(cloudItem.id)) continue;
                             mergedById.set(cloudItem.id, cloudItem);
                         }
-                        for (const localItem of localItems) {
+                        for (const localItem of visibleLocal) {
+                            if (blockedIds.has(localItem.id)) continue;
                             const existing = mergedById.get(localItem.id);
                             if (!existing) {
                                 mergedById.set(localItem.id, localItem);
@@ -440,7 +544,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
         return () => {
             cancelled = true;
         };
-    }, [cloudTable, limit, persistLocal, readLocal, recoverFromHistoryIfNewer, syncRecoveredToCloud, user?.id]);
+    }, [cloudTable, limit, persistLocal, readDeletedLocal, readLocal, readPendingOps, recoverFromHistoryIfNewer, syncRecoveredToCloud, user?.id]);
 
     const saveItem = useCallback(async (item: T): Promise<SaveResult> => {
         const previousItem = itemsRef.current.find((p) => p.id === item.id);
@@ -467,6 +571,12 @@ export const useProjectCRUD = <T extends BaseRecord>(
         // (broadcastSync triggers onSync → readLocal which would read stale data)
         await persistLocal(optimistic);
         broadcastSync();
+        await clearPendingDelete(itemToSave.id);
+        const deletedLocal = await readDeletedLocal();
+        const nextDeleted = deletedLocal.filter((entry) => entry.id !== itemToSave.id);
+        if (nextDeleted.length !== deletedLocal.length) {
+            await persistDeletedLocal(nextDeleted);
+        }
 
         if (!user) {
             return { ok: true, source: 'local', pendingSync: true };
@@ -505,7 +615,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
         }
 
         return cloudResult;
-    }, [broadcastSync, cloudTable, limit, persistLocal, snapshotRecord, user]);
+    }, [broadcastSync, clearPendingDelete, cloudTable, limit, persistDeletedLocal, persistLocal, readDeletedLocal, snapshotRecord, user]);
 
     const deleteItem = useCallback(async (id: string): Promise<SaveResult> => {
         const target = itemsRef.current.find((p) => p.id === id);
@@ -522,21 +632,39 @@ export const useProjectCRUD = <T extends BaseRecord>(
         });
         // IMPORTANT: await persist BEFORE broadcast to avoid race condition
         await persistLocal(optimistic);
+        const deletedRollback = await readDeletedLocal();
+        if (recycleBinEnabled && target) {
+            const deletedAt = Date.now();
+            const purgeAt = deletedAt + (recycleRetentionDays * 24 * 60 * 60 * 1000);
+            const tagged = attachDeletedMeta(target, deletedAt, purgeAt);
+            const nextDeleted = [tagged, ...deletedRollback.filter((entry) => entry.id !== id)].slice(0, limit);
+            await persistDeletedLocal(nextDeleted);
+        }
         broadcastSync();
 
         if (!user) {
+            await upsertPendingDelete(id);
             return { ok: true, source: 'local', pendingSync: true };
         }
 
         try {
-            const cloudResult = await deleteCloudRecord(cloudTable, user.id, id);
+            const cloudResult = await deleteCloudRecord(cloudTable, user.id, id, {
+                mode: recycleBinEnabled ? 'soft' : 'hard',
+                retentionDays: recycleRetentionDays,
+            });
             if (!cloudResult.ok) {
+                const softDeleteColumnMissing =
+                    cloudResult.errorCode === '42703'
+                    || cloudResult.errorCode === 'PGRST204'
+                    || /deleted_at/i.test(String(cloudResult.message || ''));
                 const recoverable =
                     cloudResult.errorCode === 'NETWORK_ERROR'
-                    || cloudResult.errorCode === 'SUPABASE_DISABLED';
+                    || cloudResult.errorCode === 'SUPABASE_DISABLED'
+                    || (recycleBinEnabled && softDeleteColumnMissing);
 
                 // Local-first delete: keep optimistic local deletion on transient cloud/network failure.
                 if (recoverable) {
+                    await upsertPendingDelete(id);
                     return {
                         ok: true,
                         source: 'mixed',
@@ -552,6 +680,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
                     setItemsState(rollbackSnapshot);
                     await persistLocal(rollbackSnapshot);
                 }
+                await persistDeletedLocal(deletedRollback);
                 useToast.getState().error(`Delete failed. ${cloudResult.message || 'Please retry.'}`);
                 return { ...cloudResult, source: 'mixed', pendingSync: true };
             }
@@ -559,6 +688,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
             // NOTE: skip repo.delete for delete operations — repo.delete internally calls
             // deleteCloudRecord on the same table, so it would be a redundant duplicate request.
 
+            await clearPendingDelete(id);
             const indexResult = await deleteRecordIndexEntry(user.id, id);
             if (!indexResult.ok && indexResult.errorCode !== '42P01') {
                 useToast.getState().warning('Deleted record, but search index cleanup failed. Finder results may lag.');
@@ -578,6 +708,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
             const message = err?.message || 'Unexpected error';
             const isNetworkLike = /Failed to fetch|NetworkError|network/i.test(String(message));
             if (isNetworkLike) {
+                await upsertPendingDelete(id);
                 return {
                     ok: true,
                     source: 'mixed',
@@ -593,10 +724,25 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 setItemsState(rollbackSnapshot);
                 await persistLocal(rollbackSnapshot);
             }
+            await persistDeletedLocal(deletedRollback);
             console.error('[useProjectCRUD] deleteItem unexpected error:', err);
             return { ok: false, source: 'cloud', errorCode: 'UNEXPECTED_DELETE_ERROR', message, retryable: true };
         }
-    }, [broadcastSync, cloudTable, persistLocal, snapshotRecord, user]);
+    }, [
+        attachDeletedMeta,
+        broadcastSync,
+        clearPendingDelete,
+        cloudTable,
+        limit,
+        persistDeletedLocal,
+        persistLocal,
+        readDeletedLocal,
+        recycleBinEnabled,
+        recycleRetentionDays,
+        snapshotRecord,
+        upsertPendingDelete,
+        user,
+    ]);
 
     const renameItem = useCallback(async (
         id: string,
@@ -640,7 +786,13 @@ export const useProjectCRUD = <T extends BaseRecord>(
         try {
             if (!user) {
                 const localItems = await readLocal();
-                setItemsState(localItems);
+                const localDeleted = await readDeletedLocal();
+                const pendingDeleteIds = new Set((await readPendingOps()).map((item) => item.id));
+                const blockedIds = new Set<string>([
+                    ...localDeleted.map((item) => item.id),
+                    ...pendingDeleteIds,
+                ]);
+                setItemsState(localItems.filter((item) => !blockedIds.has(item.id)));
                 return;
             }
 
@@ -651,7 +803,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
             if (canReadFromRepo) {
                 try {
                     const repo = repoAdapter!.create(user.id);
-                    const envelopes = await repo.list({ ownerId: user.id, limit });
+                    const envelopes = await repo.list({ ownerId: user.id, limit, includeDeleted: false });
                     mapped = envelopes
                         .slice(0, limit)
                         .map((envelope) => repoAdapter!.fromEnvelope(envelope));
@@ -660,21 +812,41 @@ export const useProjectCRUD = <T extends BaseRecord>(
                 }
             }
 
-            if (mapped.length === 0) {
-                const rows = await fetchCloudRecords<any>(cloudTable, user.id, 'updated_at', limit);
-                mapped = rows.map((row) => mapFromCloudRef.current(row));
+            let cloudReadOk = mapped.length > 0;
+            if (!cloudReadOk) {
+                const rows = await fetchCloudRecordsResult<any>(cloudTable, user.id, 'updated_at', limit, { includeDeleted: false });
+                if (rows.ok) {
+                    mapped = rows.items.map((row) => mapFromCloudRef.current(row));
+                    cloudReadOk = true;
+                }
             }
 
             if (migrateRef.current) {
                 mapped = mapped.map((item) => migrateRef.current!(item));
             }
             const localItems = await readLocal();
-            if (mapped.length > 0 && localItems.length > 0) {
+            const localDeleted = await readDeletedLocal();
+            const pendingDeleteIds = new Set((await readPendingOps()).map((item) => item.id));
+            const blockedIds = new Set<string>([
+                ...localDeleted.map((item) => item.id),
+                ...pendingDeleteIds,
+            ]);
+            const visibleLocal = localItems.filter((item) => !blockedIds.has(item.id));
+            if (!cloudReadOk) {
+                const recovered = await recoverFromHistoryIfNewer(visibleLocal);
+                setItemsState(recovered.merged);
+                await persistLocal(recovered.merged);
+                if (recovered.recoveredCount > 0) {
+                    useToast.getState().info(`Recovered ${recovered.recoveredCount} newer draft(s) from local history.`);
+                }
+            } else if (mapped.length > 0 && visibleLocal.length > 0) {
                 const mergedById = new Map<string, T>();
                 for (const cloudItem of mapped) {
+                    if (blockedIds.has(cloudItem.id)) continue;
                     mergedById.set(cloudItem.id, cloudItem);
                 }
-                for (const localItem of localItems) {
+                for (const localItem of visibleLocal) {
+                    if (blockedIds.has(localItem.id)) continue;
                     const existing = mergedById.get(localItem.id);
                     if (!existing) {
                         mergedById.set(localItem.id, localItem);
@@ -708,15 +880,23 @@ export const useProjectCRUD = <T extends BaseRecord>(
         } finally {
             setIsLoading(false);
         }
-    }, [cloudTable, limit, persistLocal, readLocal, recoverFromHistoryIfNewer, syncRecoveredToCloud, user]);
+    }, [cloudTable, limit, persistLocal, readDeletedLocal, readLocal, readPendingOps, recoverFromHistoryIfNewer, syncRecoveredToCloud, user]);
 
     const hydrateByIds = useCallback(async (ids: string[]): Promise<T[]> => {
         if (ids.length === 0) return [];
 
         if (!user) {
             const localItems = await readLocal();
+            const localDeleted = await readDeletedLocal();
+            const pendingDeleteIds = new Set((await readPendingOps()).map((item) => item.id));
+            const blockedIds = new Set<string>([
+                ...localDeleted.map((item) => item.id),
+                ...pendingDeleteIds,
+            ]);
             const map = new Map(localItems.map((item) => [item.id, item]));
-            return ids.map((id) => map.get(id)).filter(Boolean) as T[];
+            return ids
+                .map((id) => map.get(id))
+                .filter((item): item is T => Boolean(item) && !blockedIds.has((item as T).id));
         }
 
         const repoAdapter = repositoryAdapterRef.current;
@@ -736,7 +916,7 @@ export const useProjectCRUD = <T extends BaseRecord>(
         }
 
         if (mapped.length === 0) {
-            const rows = await fetchCloudRecordsByIds<any>(cloudTable, user.id, ids);
+            const rows = await fetchCloudRecordsByIds<any>(cloudTable, user.id, ids, { includeDeleted: false });
             mapped = rows.map((row) => mapFromCloudRef.current(row));
         }
 
@@ -744,7 +924,136 @@ export const useProjectCRUD = <T extends BaseRecord>(
             mapped = mapped.map((item) => migrateRef.current!(item));
         }
         return mapped;
-    }, [cloudTable, readLocal, user]);
+    }, [cloudTable, readDeletedLocal, readLocal, readPendingOps, user]);
+
+    const listDeletedItems = useCallback(async (): Promise<T[]> => {
+        const localDeleted = await readDeletedLocal();
+        const localById = new Map<string, T>();
+        for (const item of localDeleted) {
+            localById.set(item.id, item);
+        }
+
+        if (!user) {
+            return localDeleted
+                .slice()
+                .sort((a, b) => (readDeletedMeta(b).deletedAt || 0) - (readDeletedMeta(a).deletedAt || 0));
+        }
+
+        const cloudDeleted = await listDeletedCloudRecords<any>(cloudTable, user.id, 'deleted_at', limit);
+        if (cloudDeleted.ok) {
+            for (const row of cloudDeleted.items) {
+                const mapped = mapFromCloudRef.current(row);
+                const deletedAt = Date.parse(row.deleted_at || row.updated_at || new Date().toISOString());
+                const purgeAt = Date.parse(row.purge_at || '');
+                const tagged = attachDeletedMeta(
+                    mapped,
+                    Number.isFinite(deletedAt) ? deletedAt : Date.now(),
+                    Number.isFinite(purgeAt) ? purgeAt : Date.now() + (recycleRetentionDays * 24 * 60 * 60 * 1000),
+                );
+                const existing = localById.get(tagged.id);
+                if (!existing) {
+                    localById.set(tagged.id, tagged);
+                    continue;
+                }
+                const existingDeletedAt = readDeletedMeta(existing).deletedAt || 0;
+                const nextDeletedAt = readDeletedMeta(tagged).deletedAt || 0;
+                if (nextDeletedAt >= existingDeletedAt) {
+                    localById.set(tagged.id, tagged);
+                }
+            }
+        }
+
+        const merged = Array.from(localById.values())
+            .sort((a, b) => (readDeletedMeta(b).deletedAt || 0) - (readDeletedMeta(a).deletedAt || 0))
+            .slice(0, limit);
+        await persistDeletedLocal(merged);
+        return merged;
+    }, [
+        attachDeletedMeta,
+        cloudTable,
+        limit,
+        persistDeletedLocal,
+        readDeletedLocal,
+        readDeletedMeta,
+        recycleRetentionDays,
+        user,
+    ]);
+
+    const restoreItem = useCallback(async (id: string): Promise<SaveResult> => {
+        const deletedLocal = await readDeletedLocal();
+        const target = deletedLocal.find((item) => item.id === id);
+        const nextDeleted = deletedLocal.filter((item) => item.id !== id);
+        await persistDeletedLocal(nextDeleted);
+
+        if (target) {
+            const restored = stripDeletedMeta(target);
+            const nextActive = [restored, ...itemsRef.current.filter((item) => item.id !== id)].slice(0, limit);
+            setItemsState(nextActive);
+            await persistLocal(nextActive);
+        }
+        await clearPendingDelete(id);
+        broadcastSync();
+
+        if (!user) {
+            return { ok: true, source: 'local', pendingSync: true };
+        }
+
+        const cloudResult = await restoreCloudRecord(cloudTable, user.id, id);
+        if (!cloudResult.ok) {
+            // Rollback local restore if cloud restore fails.
+            await persistDeletedLocal(deletedLocal);
+            if (target) {
+                const rollbackActive = itemsRef.current.filter((item) => item.id !== id);
+                setItemsState(rollbackActive);
+                await persistLocal(rollbackActive);
+            }
+            return { ...cloudResult, source: 'mixed', pendingSync: true };
+        }
+
+        if (target && buildIndexEntryRef.current) {
+            const restored = stripDeletedMeta(target);
+            const partial = buildIndexEntryRef.current(restored);
+            await upsertRecordIndexEntry({
+                ...partial,
+                recordId: partial.recordId || restored.id,
+                ownerId: user.id,
+                updatedAt: partial.updatedAt || new Date().toISOString(),
+            });
+        }
+
+        return cloudResult;
+    }, [
+        broadcastSync,
+        clearPendingDelete,
+        cloudTable,
+        limit,
+        persistDeletedLocal,
+        persistLocal,
+        readDeletedLocal,
+        stripDeletedMeta,
+        user,
+    ]);
+
+    const purgeItem = useCallback(async (id: string): Promise<SaveResult> => {
+        const deletedLocal = await readDeletedLocal();
+        const nextDeleted = deletedLocal.filter((item) => item.id !== id);
+        await persistDeletedLocal(nextDeleted);
+        await clearPendingDelete(id);
+        broadcastSync();
+
+        if (!user) {
+            return { ok: true, source: 'local', pendingSync: false };
+        }
+
+        const cloudResult = await deleteCloudRecord(cloudTable, user.id, id, { mode: 'hard' });
+        if (!cloudResult.ok) {
+            await persistDeletedLocal(deletedLocal);
+            return { ...cloudResult, source: 'mixed', pendingSync: true };
+        }
+
+        await deleteRecordIndexEntry(user.id, id);
+        return cloudResult;
+    }, [broadcastSync, clearPendingDelete, cloudTable, persistDeletedLocal, readDeletedLocal, user]);
 
     return {
         items,
@@ -755,5 +1064,8 @@ export const useProjectCRUD = <T extends BaseRecord>(
         renameItem,
         refresh,
         hydrateByIds,
+        listDeletedItems,
+        restoreItem,
+        purgeItem,
     };
 };

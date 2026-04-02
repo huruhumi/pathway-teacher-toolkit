@@ -112,19 +112,43 @@ export const generateVocabDefinition = async (word: string, level: CEFRLevel): P
 
 export const generateSingleStage = async (level: CEFRLevel, topic: string, existingStages: any[], customPrompt?: string): Promise<LessonStage> => {
     const ai = createAIClient();
-    const userContent = customPrompt
+    const baseUserContent = customPrompt
         ? `Level: ${level}\nTopic: ${topic}\nPrevious stages: ${JSON.stringify(existingStages)}\nUser requirement: ${customPrompt}`
         : `Level: ${level}\nTopic: ${topic}\nPrevious stages: ${JSON.stringify(existingStages)}`;
-    const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userContent,
-        config: {
-            systemInstruction: "Generate exactly ONE cohesive teaching stage. It must complement the previous stages logically. If the user provides a specific requirement, follow it closely to design the stage accordingly. IMPORTANT: The 'interaction' field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use exactly these codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. Return valid JSON.",
-            responseMimeType: "application/json",
-            responseSchema: responseSchemaFragments.lessonStage
-        }
-    }));
-    return JSON.parse(response.text || "{}");
+
+    const stageContainsCjk = (stage: LessonStage): boolean => {
+        const values = [
+            stage.stage,
+            stage.stageAim,
+            stage.timing,
+            stage.interaction,
+            stage.teacherActivity,
+            stage.studentActivity,
+            ...(stage.teachingTips || []),
+            ...(stage.backgroundKnowledge || []),
+            stage.fillerActivity || '',
+        ];
+        return values.some((text) => /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(String(text || '')));
+    };
+
+    const runGenerate = async (forceEnglishRetry: boolean): Promise<LessonStage> => {
+        const response: GenerateContentResponse = await retryApiCall(() => ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: forceEnglishRetry
+                ? `${baseUserContent}\n\nLANGUAGE OVERRIDE (MUST FOLLOW): Return all fields in natural ENGLISH ONLY. Do not output Chinese or any other non-English language.`
+                : baseUserContent,
+            config: {
+                systemInstruction: "Generate exactly ONE cohesive teaching stage. It must complement the previous stages logically. If the user provides a specific requirement, follow it closely to design the stage accordingly. IMPORTANT: The 'interaction' field must be a COMMA-SEPARATED list of interaction modes, one per numbered step in teacherActivity/studentActivity. Use exactly these codes: T-S, S-T, S-S, S-S (pairs), S-S (groups), T-Ss. LANGUAGE REQUIREMENT: Output all fields in English only, even if the user requirement contains other languages. Return valid JSON.",
+                responseMimeType: "application/json",
+                responseSchema: responseSchemaFragments.lessonStage
+            }
+        }));
+        return JSON.parse(response.text || "{}");
+    };
+
+    const first = await runGenerate(false);
+    if (!stageContainsCjk(first)) return first;
+    return runGenerate(true);
 };
 
 export const generateSinglePhonicsPoint = async (level: CEFRLevel, topic: string, existingPoints: string[], vocab: string[]): Promise<string> => {

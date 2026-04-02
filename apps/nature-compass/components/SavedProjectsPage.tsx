@@ -3,11 +3,14 @@ import { RecordCard } from '@shared/components/RecordCard';
 import { EmptyState } from '@shared/components/EmptyState';
 import { FilterBar, FilterSelect } from '@shared/components/FilterBar';
 import { RecordsTabSwitcher } from '@shared/components/RecordsTabSwitcher';
+import { Modal } from '@shared/components/ui/Modal';
 import { downloadBlob } from '@shared/utils/download';
+import { useToast } from '@shared/stores/useToast';
+import type { SaveResult } from '@shared/types';
 import { SavedLessonPlan, SavedCurriculum } from '../types';
 import {
     Filter, ArrowUpDown, BookOpen, Languages,
-    MapPin, Users, GraduationCap, FileText, Compass, School, Heart, ShieldAlert, ShieldCheck
+    MapPin, Users, GraduationCap, FileText, Compass, School, Heart, ShieldAlert, ShieldCheck, Archive, RotateCcw, Loader2
 } from 'lucide-react';
 import { AGE_RANGES } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -24,6 +27,12 @@ interface SavedProjectsPageProps {
     onLoadCurriculum: (saved: SavedCurriculum) => void;
     onDeleteMultiplePlans?: (ids: string[]) => void;
     onDeleteMultipleCurricula?: (ids: string[]) => void;
+    onListDeletedPlans: () => Promise<SavedLessonPlan[]>;
+    onListDeletedCurricula: () => Promise<SavedCurriculum[]>;
+    onRestorePlan: (id: string) => Promise<SaveResult>;
+    onRestoreCurriculum: (id: string) => Promise<SaveResult>;
+    onPurgePlan: (id: string) => Promise<SaveResult>;
+    onPurgeCurriculum: (id: string) => Promise<SaveResult>;
 }
 
 const ENGLISH_LEVELS = [
@@ -40,12 +49,32 @@ const LESSON_COUNT_RANGES = [
     { label: '10+ Lessons', min: 10, max: 99 },
 ];
 
+type DeletedMetaLike = {
+    __deletedMeta?: {
+        deletedAt?: number;
+        purgeAt?: number;
+    };
+};
+
+function getDeletedMeta(record: DeletedMetaLike): { deletedAt: number; purgeAt: number | null } {
+    const deletedAt = Number(record?.__deletedMeta?.deletedAt || 0);
+    const purgeAt = Number(record?.__deletedMeta?.purgeAt || 0);
+    return {
+        deletedAt: Number.isFinite(deletedAt) && deletedAt > 0 ? deletedAt : Date.now(),
+        purgeAt: Number.isFinite(purgeAt) && purgeAt > 0 ? purgeAt : null,
+    };
+}
+
 export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     savedPlans, savedCurricula, onLoad, onDelete, onRename,
     onDeleteCurriculum, onRenameCurriculum, onLoadCurriculum,
     onDeleteMultiplePlans, onDeleteMultipleCurricula,
+    onListDeletedPlans, onListDeletedCurricula,
+    onRestorePlan, onRestoreCurriculum,
+    onPurgePlan, onPurgeCurriculum,
 }) => {
     const { t } = useLanguage();
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState<'curricula' | 'kits'>('curricula');
 
     // --- Curricula filter state ---
@@ -71,6 +100,11 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
     // --- Multi-select state ---
     const [selectedCurriculaIds, setSelectedCurriculaIds] = useState<Set<string>>(new Set());
     const [selectedPlanIds, setSelectedPlanIds] = useState<Set<string>>(new Set());
+    const [showRecycleBin, setShowRecycleBin] = useState(false);
+    const [isRecycleLoading, setIsRecycleLoading] = useState(false);
+    const [deletedPlans, setDeletedPlans] = useState<SavedLessonPlan[]>([]);
+    const [deletedCurricula, setDeletedCurricula] = useState<SavedCurriculum[]>([]);
+    const [recycleActionKey, setRecycleActionKey] = useState<string | null>(null);
 
     const toggleCurriculumSelect = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -121,6 +155,68 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
             selectedPlanIds.forEach(id => onDelete(id));
         }
         setSelectedPlanIds(new Set());
+    };
+
+    const loadRecycleBin = async () => {
+        setIsRecycleLoading(true);
+        try {
+            const [plans, curricula] = await Promise.all([
+                onListDeletedPlans(),
+                onListDeletedCurricula(),
+            ]);
+            setDeletedPlans(plans);
+            setDeletedCurricula(curricula);
+        } catch (err: any) {
+            toast.error(`Failed to load recycle bin. ${err?.message || 'Unexpected error'}`);
+        } finally {
+            setIsRecycleLoading(false);
+        }
+    };
+
+    const openRecycleBin = async () => {
+        setShowRecycleBin(true);
+        await loadRecycleBin();
+    };
+
+    const restoreDeleted = async (kind: 'plan' | 'curriculum', id: string, name: string) => {
+        const actionKey = `${kind}:${id}`;
+        setRecycleActionKey(actionKey);
+        try {
+            const result = kind === 'plan'
+                ? await onRestorePlan(id)
+                : await onRestoreCurriculum(id);
+            if (!result.ok) {
+                toast.error(`Restore failed for "${name}". Please retry.`);
+                return;
+            }
+            toast.success(`Restored "${name}".`);
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionKey(null);
+        }
+    };
+
+    const purgeDeleted = async (kind: 'plan' | 'curriculum', id: string, name: string) => {
+        const firstConfirmed = window.confirm(`Permanently delete "${name}"? This cannot be undone.`);
+        if (!firstConfirmed) return;
+        const secondConfirmed = window.confirm(`Please confirm again: permanently remove "${name}" now?`);
+        if (!secondConfirmed) return;
+
+        const actionKey = `${kind}:${id}`;
+        setRecycleActionKey(actionKey);
+        try {
+            const result = kind === 'plan'
+                ? await onPurgePlan(id)
+                : await onPurgeCurriculum(id);
+            if (!result.ok) {
+                toast.error(`Permanent delete failed for "${name}". Please retry.`);
+                return;
+            }
+            toast.success(`Permanently deleted "${name}".`);
+            await loadRecycleBin();
+        } finally {
+            setRecycleActionKey(null);
+        }
     };
 
     // === Dynamic options ===
@@ -243,6 +339,16 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                 onTabChange={(key) => setActiveTab(key as 'curricula' | 'kits')}
                 accentColor="emerald"
             />
+            <div className="mt-3 flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => { void openRecycleBin(); }}
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                >
+                    <Archive className="w-4 h-4" />
+                    Recycle Bin
+                </button>
+            </div>
 
             {/* ===== CURRICULA TAB ===== */}
             {activeTab === 'curricula' && (
@@ -485,6 +591,115 @@ export const SavedProjectsPage: React.FC<SavedProjectsPageProps> = ({
                     )}
                 </div>
             )}
+
+            <Modal isOpen={showRecycleBin} onClose={() => setShowRecycleBin(false)} maxWidth="max-w-3xl">
+                <div className="p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Recycle Bin (30 days)</h3>
+                            <p className="text-sm text-slate-500">Restore deleted records or permanently delete with double confirmation.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => { void loadRecycleBin(); }}
+                            disabled={isRecycleLoading}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                            {isRecycleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                            Refresh
+                        </button>
+                    </div>
+
+                    {isRecycleLoading ? (
+                        <div className="py-10 flex items-center justify-center text-slate-500">
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            Loading...
+                        </div>
+                    ) : (deletedCurricula.length + deletedPlans.length) === 0 ? (
+                        <div className="py-12 text-center text-slate-500">Recycle bin is empty.</div>
+                    ) : (
+                        <div className="space-y-4 max-h-[70vh] overflow-auto pr-1">
+                            <section className="space-y-2">
+                                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Curricula ({deletedCurricula.length})
+                                </h4>
+                                {deletedCurricula.map((item) => {
+                                    const meta = getDeletedMeta(item as DeletedMetaLike);
+                                    const actionKey = `curriculum:${item.id}`;
+                                    return (
+                                        <div key={`recycle-cur-${item.id}`} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="font-medium text-slate-800 truncate">{item.name}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    Deleted: {new Date(meta.deletedAt).toLocaleString()}
+                                                    {meta.purgeAt ? ` · Purge: ${new Date(meta.purgeAt).toLocaleString()}` : ''}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionKey === actionKey}
+                                                    onClick={() => { void restoreDeleted('curriculum', item.id, item.name || 'Untitled Curriculum'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                                >
+                                                    Restore
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionKey === actionKey}
+                                                    onClick={() => { void purgeDeleted('curriculum', item.id, item.name || 'Untitled Curriculum'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                                >
+                                                    Delete Forever
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </section>
+
+                            <section className="space-y-2">
+                                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Lesson Kits ({deletedPlans.length})
+                                </h4>
+                                {deletedPlans.map((item) => {
+                                    const meta = getDeletedMeta(item as DeletedMetaLike);
+                                    const actionKey = `plan:${item.id}`;
+                                    return (
+                                        <div key={`recycle-plan-${item.id}`} className="rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="font-medium text-slate-800 truncate">{item.name}</div>
+                                                <div className="text-xs text-slate-500">
+                                                    Deleted: {new Date(meta.deletedAt).toLocaleString()}
+                                                    {meta.purgeAt ? ` · Purge: ${new Date(meta.purgeAt).toLocaleString()}` : ''}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionKey === actionKey}
+                                                    onClick={() => { void restoreDeleted('plan', item.id, item.name || 'Untitled Plan'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                                >
+                                                    Restore
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={recycleActionKey === actionKey}
+                                                    onClick={() => { void purgeDeleted('plan', item.id, item.name || 'Untitled Plan'); }}
+                                                    className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                                                >
+                                                    Delete Forever
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </section>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };

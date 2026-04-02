@@ -66,7 +66,10 @@ export const RESPONSE_SCHEMA = {
               teachingTips: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 practical ESL teaching methodology tips for this specific stage (e.g., scaffolding techniques, TPR suggestions, visual aids, sentence frames, error correction strategies)." },
               backgroundKnowledge: { type: Type.ARRAY, items: { type: Type.STRING }, description: "2-3 relevant background knowledge points for the teacher about this stage's content (cultural context, linguistic notes, common misconceptions, subject matter facts)." },
               fillerActivity: { type: Type.STRING, description: "SHORT NAME ONLY (2-5 words, e.g. 'Vocabulary Hot Seat'). A quick filler/extension activity name for this stage. Do NOT include instructions or descriptions — just the activity name." },
-              suggestedGameName: { type: Type.STRING, description: "SHORT NAME ONLY (2-5 words, e.g. 'Information Gap Race'). Name of a game/activity for this stage. Do NOT include instructions — just the activity name." }
+              suggestedGameName: { type: Type.STRING, description: "SHORT NAME ONLY (2-5 words, e.g. 'Information Gap Race'). Name of a game/activity for this stage. Do NOT include instructions — just the activity name." },
+              videoName: { type: Type.STRING, description: "Optional multimedia video title captured from teacher stage setup. Preserve exactly when provided." },
+              videoUrl: { type: Type.STRING, description: "Optional multimedia video URL captured from teacher stage setup. Preserve exactly when provided." },
+              videoContent: { type: Type.STRING, description: "Optional multimedia lyrics/script captured from teacher stage setup." }
             },
             required: ["stage", "stageAim", "timing", "interaction", "teacherActivity", "studentActivity", "teachingTips", "backgroundKnowledge", "fillerActivity", "suggestedGameName"]
           }

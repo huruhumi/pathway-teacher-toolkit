@@ -1,9 +1,28 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { StructuredLessonPlan, CEFRLevel, LessonStage } from '../../types';
-import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Loader2, Plus, Trash2, ExternalLink, GripVertical, Info, Target, List, AlertCircle, BookOpen, Layers, Users, Lightbulb, Zap, X, ChevronDown, ChevronRight, Check, Wand2 } from 'lucide-react';
 import { generateSingleObjective, generateSingleMaterial, generateSingleVocabItem, generateVocabDefinition, generateSingleAnticipatedProblem, generateSingleStage, generateSingleGrammarPoint, generateSingleTeachingTip, generateSingleBackgroundKnowledge, generateFillerActivity } from '../../services/itemGenerators';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { AutoResizeTextarea } from '../common/AutoResizeTextarea';
+import { analyzeVideoWithGemini } from '../../services/gemini/videoAnalyzer';
+
+interface StageDraftInput {
+    stageName: string;
+    description: string;
+    activityDesign: string;
+    videoName: string;
+    videoUrl: string;
+    videoContent: string;
+}
+
+const EMPTY_STAGE_DRAFT: StageDraftInput = {
+    stageName: '',
+    description: '',
+    activityDesign: '',
+    videoName: '',
+    videoUrl: '',
+    videoContent: '',
+};
 
 
 
@@ -22,7 +41,8 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
     const [isGeneratingStage, setIsGeneratingStage] = useState(false);
     const [expandedStages, setExpandedStages] = useState<Set<number>>(new Set());
     const [showStageInput, setShowStageInput] = useState(false);
-    const [stagePrompt, setStagePrompt] = useState('');
+    const [stageDraft, setStageDraft] = useState<StageDraftInput>(EMPTY_STAGE_DRAFT);
+    const [isAnalyzingStageVideo, setIsAnalyzingStageVideo] = useState(false);
     const [stageComments, setStageComments] = useState<string[]>([]);
     const [regeneratingStageIndex, setRegeneratingStageIndex] = useState<number | null>(null);
     const [stageRegenerationErrors, setStageRegenerationErrors] = useState<Record<number, string>>({});
@@ -229,16 +249,21 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
         setEditablePlan({ ...editablePlan, lessonDetails: { ...editablePlan.lessonDetails, anticipatedProblems: [...editablePlan.lessonDetails.anticipatedProblems, { problem: '', solution: '' }] } });
     };
 
-    const addStageEntry = async (index?: number, customPrompt?: string) => {
+    const addStageEntry = async (
+        index?: number,
+        customPrompt?: string,
+        media?: { videoName?: string; videoUrl?: string; videoContent?: string },
+    ) => {
         if (isGeneratingStage) return;
         setIsGeneratingStage(true);
         try {
-            const newStage = await generateSingleStage(
+            const generatedStage = await generateSingleStage(
                 editablePlan.classInformation.level as CEFRLevel,
                 editablePlan.classInformation.topic,
                 editablePlan.stages,
                 customPrompt || undefined
             );
+            const newStage = applyStageMedia(generatedStage, media);
             const newStages = [...editablePlan.stages];
             if (typeof index === 'number') {
                 newStages.splice(index + 1, 0, newStage);
@@ -254,17 +279,105 @@ export const LessonPlanTab: React.FC<LessonPlanTabProps> = React.memo(({
                 timing: "5 mins",
                 interaction: "T-Ss",
                 teacherActivity: "1. Teacher introduces context...",
-                studentActivity: "1. Students respond..."
+                studentActivity: "1. Students respond...",
             };
+            const stageWithMedia = applyStageMedia(fallbackStage, media);
             const newStages = [...editablePlan.stages];
             if (typeof index === 'number') {
-                newStages.splice(index + 1, 0, fallbackStage);
+                newStages.splice(index + 1, 0, stageWithMedia);
             } else {
-                newStages.push(fallbackStage);
+                newStages.push(stageWithMedia);
             }
             setEditablePlan({ ...editablePlan, stages: newStages });
         } finally {
             setIsGeneratingStage(false);
+        }
+    };
+
+    const updateStageDraft = (field: keyof StageDraftInput, value: string) => {
+        setStageDraft((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const getStageDraftMedia = () => {
+        const videoName = stageDraft.videoName.trim();
+        const videoUrl = stageDraft.videoUrl.trim();
+        const videoContent = stageDraft.videoContent.trim();
+        return {
+            videoName: videoName || undefined,
+            videoUrl: videoUrl || undefined,
+            videoContent: videoContent || undefined,
+        };
+    };
+
+    const applyStageMedia = (
+        stage: LessonStage,
+        media?: { videoName?: string; videoUrl?: string; videoContent?: string },
+    ): LessonStage => {
+        if (!media) return stage;
+        return {
+            ...stage,
+            videoName: media.videoName || stage.videoName,
+            videoUrl: media.videoUrl || stage.videoUrl,
+            videoContent: media.videoContent || stage.videoContent,
+        };
+    };
+
+    const buildStagePromptFromDraft = (): string => {
+        const parts: string[] = [];
+        const stageName = stageDraft.stageName.trim();
+        const description = stageDraft.description.trim();
+        const activityDesign = stageDraft.activityDesign.trim();
+        const videoName = stageDraft.videoName.trim();
+        const videoUrl = stageDraft.videoUrl.trim();
+        const videoContent = stageDraft.videoContent.trim();
+
+        if (stageName) parts.push(`Preferred stage name: ${stageName}`);
+        if (description) parts.push(`Stage description: ${description}`);
+        if (activityDesign) parts.push(`Activity design requirements: ${activityDesign}`);
+        if (videoName || videoUrl || videoContent) {
+            parts.push(
+                [
+                    'Video integration:',
+                    videoName ? `- Video name: ${videoName}` : '',
+                    videoUrl ? `- Video URL: ${videoUrl}` : '',
+                    videoContent ? `- Video content/script: ${videoContent}` : '',
+                ].filter(Boolean).join('\n')
+            );
+        }
+
+        if (parts.length === 0) return '';
+        return [
+            'Generate one new teaching stage using the details below.',
+            ...parts,
+            'Output language must be English only, regardless of the input language.',
+            'Return a complete stage with timing, interaction, numbered teacher steps, and numbered student steps.',
+        ].join('\n\n');
+    };
+
+    const submitAddStage = async () => {
+        const prompt = buildStagePromptFromDraft();
+        await addStageEntry(undefined, prompt || undefined, getStageDraftMedia());
+        setStageDraft(EMPTY_STAGE_DRAFT);
+        setShowStageInput(false);
+    };
+
+    const handleAnalyzeStageVideo = async () => {
+        const url = stageDraft.videoUrl.trim();
+        if (!url || isAnalyzingStageVideo) return;
+
+        setIsAnalyzingStageVideo(true);
+        try {
+            const script = await analyzeVideoWithGemini(
+                url,
+                editablePlan.classInformation.topic,
+                stageDraft.videoName.trim(),
+            );
+            updateStageDraft('videoContent', script);
+        } catch (error) {
+            console.error(error);
+            alert('Video analysis failed. Please paste lyrics or script manually.');
+        } finally {
+            setIsAnalyzingStageVideo(false);
         }
     };
 
@@ -352,6 +465,10 @@ Requirements:
                 teachingTips: Array.isArray(regenerated.teachingTips) ? regenerated.teachingTips : (currentStage.teachingTips || []),
                 backgroundKnowledge: Array.isArray(regenerated.backgroundKnowledge) ? regenerated.backgroundKnowledge : (currentStage.backgroundKnowledge || []),
                 fillerActivity: regenerated.fillerActivity || currentStage.fillerActivity || '',
+                suggestedGameName: regenerated.suggestedGameName || currentStage.suggestedGameName || '',
+                videoName: currentStage.videoName,
+                videoUrl: currentStage.videoUrl,
+                videoContent: currentStage.videoContent,
             };
 
             const newStages = [...editablePlan.stages];
@@ -912,26 +1029,87 @@ Requirements:
                     </Droppable>
 
                     {showStageInput ? (
-                        <div className="border-2 border-dashed border-violet-300 dark:border-violet-700 rounded-xl p-4 space-y-3 bg-violet-50/50 dark:bg-violet-500/5 no-print">
-                            <label className="text-xs font-bold text-violet-600 uppercase">Describe the stage you want (or leave empty for auto)</label>
-                            <textarea
-                                value={stagePrompt}
-                                onChange={(e) => setStagePrompt(e.target.value)}
-                                placeholder="e.g. A competitive team game to review vocabulary from this lesson..."
-                                className="w-full border border-violet-200 dark:border-violet-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500 resize-none"
-                                rows={2}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        addStageEntry(undefined, stagePrompt.trim());
-                                        setStagePrompt('');
-                                        setShowStageInput(false);
-                                    }
-                                }}
-                            />
+                        <div className="border border-violet-200 dark:border-violet-700 rounded-xl p-4 space-y-4 bg-white dark:bg-slate-900/70 no-print">
+                            <div className="grid grid-cols-1 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Stage Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={stageDraft.stageName}
+                                        onChange={(e) => updateStageDraft('stageName', e.target.value)}
+                                        placeholder="e.g. CONTROLLED PRACTICE"
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Stage Description <span className="text-red-500">*</span>
+                                    </label>
+                                    <AutoResizeTextarea
+                                        value={stageDraft.description}
+                                        onChange={(e) => updateStageDraft('description', e.target.value)}
+                                        placeholder="E.g. Briefly describe what will happen in this stage..."
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500 resize-none"
+                                        minRows={2}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Activity Design <span className="text-slate-400 font-normal">(Optional)</span>
+                                    </label>
+                                    <AutoResizeTextarea
+                                        value={stageDraft.activityDesign}
+                                        onChange={(e) => updateStageDraft('activityDesign', e.target.value)}
+                                        placeholder="Specific activity rules, groupings, or games..."
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500 resize-none"
+                                        minRows={2}
+                                    />
+                                </div>
+                                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg border border-slate-100 dark:border-slate-700 space-y-3">
+                                    <h5 className="text-sm font-medium text-slate-700 dark:text-slate-300">Multimedia / Video Integration</h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-center">
+                                        <input
+                                            type="text"
+                                            value={stageDraft.videoName}
+                                            onChange={(e) => updateStageDraft('videoName', e.target.value)}
+                                            placeholder="Video Name (e.g. Hello Song)"
+                                            className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={stageDraft.videoUrl}
+                                            onChange={(e) => updateStageDraft('videoUrl', e.target.value)}
+                                            placeholder="YouTube URL"
+                                            className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAnalyzeStageVideo}
+                                            disabled={!stageDraft.videoUrl.trim() || isAnalyzingStageVideo}
+                                            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400 text-white hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            title="Extract lyrics/script from URL"
+                                        >
+                                            {isAnalyzingStageVideo ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Wand2 className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    <AutoResizeTextarea
+                                        value={stageDraft.videoContent}
+                                        onChange={(e) => updateStageDraft('videoContent', e.target.value)}
+                                        placeholder="Paste the lyrics or script here, or use Magic Wand to extract from URL..."
+                                        className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 outline-none focus:border-violet-500 resize-none"
+                                        minRows={3}
+                                    />
+                                </div>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => { addStageEntry(undefined, stagePrompt.trim()); setStagePrompt(''); setShowStageInput(false); }}
+                                    onClick={submitAddStage}
                                     disabled={isGeneratingStage}
                                     className="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors flex items-center gap-1.5"
                                 >
@@ -939,7 +1117,7 @@ Requirements:
                                     Generate
                                 </button>
                                 <button
-                                    onClick={() => { setShowStageInput(false); setStagePrompt(''); }}
+                                    onClick={() => { setShowStageInput(false); setStageDraft(EMPTY_STAGE_DRAFT); }}
                                     className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-500 hover:text-slate-700 transition-colors"
                                 >
                                     Cancel

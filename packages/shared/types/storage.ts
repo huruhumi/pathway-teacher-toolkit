@@ -32,6 +32,8 @@ export interface RecordQuery {
     curriculumId?: string;
     unitNumber?: number;
     qualityStatus?: RecordQualityStatus;
+    includeDeleted?: boolean;
+    deletedOnly?: boolean;
     limit?: number;
     offset?: number;
 }
@@ -42,6 +44,12 @@ export interface RecordRepository<TPayload = unknown> {
     list: (query?: RecordQuery) => Promise<RecordEnvelope<TPayload>[]>;
     delete: (id: string) => Promise<SaveResult>;
     rename: (id: string, title: string) => Promise<SaveResult>;
+}
+
+export interface DeletedRecordEnvelope<TPayload = unknown> extends RecordEnvelope<TPayload> {
+    deletedAt: string;
+    purgeAt?: string | null;
+    originalUpdatedAt?: string | null;
 }
 
 export interface RecordIndexEntry {

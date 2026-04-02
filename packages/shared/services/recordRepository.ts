@@ -1,6 +1,6 @@
 import type { RecordEnvelope, RecordQuery, RecordRepository, SaveResult } from '@shared/types';
 import {
-    fetchCloudRecords,
+    fetchCloudRecordsResult,
     upsertCloudRecord,
     deleteCloudRecord,
     renameCloudRecord,
@@ -25,14 +25,17 @@ export function createSupabaseRecordRepository<TPayload>({
         ),
 
         getById: async (id: string): Promise<RecordEnvelope<TPayload> | null> => {
-            const rows = await fetchCloudRecords<any>(tableName, userId, 'updated_at');
-            const hit = rows.find((row) => row.id === id);
+            const result = await fetchCloudRecordsResult<any>(tableName, userId, 'updated_at', undefined, { includeDeleted: false });
+            const hit = result.items.find((row) => row.id === id);
             return hit ? mapFromRow(hit) : null;
         },
 
-        list: async (_query?: RecordQuery): Promise<RecordEnvelope<TPayload>[]> => {
-            const rows = await fetchCloudRecords<any>(tableName, userId, 'updated_at');
-            return rows.map((row) => mapFromRow(row));
+        list: async (query?: RecordQuery): Promise<RecordEnvelope<TPayload>[]> => {
+            const result = await fetchCloudRecordsResult<any>(tableName, userId, 'updated_at', query?.limit, {
+                includeDeleted: query?.includeDeleted,
+                deletedOnly: query?.deletedOnly,
+            });
+            return result.items.map((row) => mapFromRow(row));
         },
 
         delete: async (id: string): Promise<SaveResult> => (

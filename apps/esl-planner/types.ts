@@ -82,6 +82,10 @@ export interface LessonStage {
   backgroundKnowledge?: string[];
   fillerActivity?: string;
   suggestedGameName?: string;
+  /** Optional multimedia metadata captured from stage customization input */
+  videoName?: string;
+  videoUrl?: string;
+  videoContent?: string;
 }
 
 export interface StructuredLessonPlan {
